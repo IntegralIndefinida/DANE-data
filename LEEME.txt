@@ -1,0 +1,24 @@
+dane-data - Microdatos del DANE (GEIH y EAM)
+=============================================
+
+COMO ABRIR LA APLICACION
+  Windows : doble clic en  "Abrir dane-data (Windows).bat"
+  Mac     : doble clic en  "Abrir dane-data (Mac).command"
+  Linux   : ejecute         ./abrir-dane-data.sh
+
+  - La primera vez necesita internet y tarda de 1 a 3 minutos: instala lo
+    necesario automaticamente. No hace falta tener Python.
+  - El navegador se abre solo. Para cerrar la aplicacion, cierre la ventana
+    negra (terminal) que aparece.
+
+AVISOS LA PRIMERA VEZ
+  Windows: si aparece "Windows protegio su PC", haga clic en
+           "Mas informacion" y luego en "Ejecutar de todas formas".
+  Mac:     si dice "desarrollador no identificado", haga clic derecho
+           sobre el archivo > Abrir > Abrir.
+
+DONDE QUEDAN LOS DATOS
+  Por defecto en la carpeta "dane_data_datos" dentro de su carpeta de
+  usuario. Se puede cambiar en la pagina Inicio de la aplicacion.
+
+Mas informacion: README.md

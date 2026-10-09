@@ -1,0 +1,3235 @@
+{
+ "NORDEMP": {
+  "etiqueta": "Número de identificación de la empresa",
+  "pregunta": "Número de identificación de la empresa",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "NORDEST": {
+  "etiqueta": "Número de identificación del establecimiento",
+  "pregunta": "Número de identificación del establecimiento",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "DPTO": {
+  "etiqueta": "Departamento de ubicación del establecimiento",
+  "pregunta": "Departamento de ubicación del establecimiento",
+  "categorias": {
+   "5": "ANTIOQUIA",
+   "8": "ATLÁNTICO",
+   "11": "BOGOTÁ, D.C.",
+   "13": "BOLÍVAR",
+   "15": "BOYACÁ",
+   "17": "CALDAS",
+   "18": "CAQUETÁ",
+   "19": "CAUCA",
+   "20": "CESAR",
+   "23": "CÓRDOBA",
+   "25": "CUNDINAMARCA",
+   "27": "CHOCÓ",
+   "41": "HUILA",
+   "44": "LA GUAJIRA",
+   "47": "MAGDALENA",
+   "50": "META",
+   "52": "NARIÑO",
+   "54": "NORTE DE SANTANDER",
+   "63": "QUINDÍO",
+   "66": "RISARALDA",
+   "68": "SANTANDER",
+   "70": "SUCRE",
+   "73": "TOLIMA",
+   "76": "VALLE DEL CAUCA",
+   "81": "ARAUCA",
+   "85": "CASANARE",
+   "86": "PUTUMAYO",
+   "88": "ARCHIPIÉLAGO DE SAN ANDRÉS, PROVIDENCIA Y SANTA CATALINA",
+   "91": "AMAZONAS",
+   "94": "GUAINÍA",
+   "95": "GUAVIARE",
+   "97": "VAUPÉS",
+   "99": "VICHADA"
+  },
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "CIIU4": {
+  "etiqueta": "Clasificación Industrial Internacional Uniforme Rev. 4. A.C.",
+  "pregunta": "Clasificación Industrial Internacional Uniforme Rev. 4. A.C.",
+  "categorias": {
+   "1011": "Procesamiento y conservación de carne y productos cárnicos",
+   "1012": "Procesamiento y conservación de pescados, crustáceos y moluscos",
+   "1020": "Procesamiento y conservación de frutas, legumbres, hortalizas y tubérculos",
+   "1031": "Extracción de aceites de origen vegetal crudos",
+   "1032": "Elaboración de aceites y grasas de origen vegetal refinados",
+   "1033": "Elaboración de aceites y grasas de origen animal",
+   "1040": "Elaboración de productos lácteos",
+   "1051": "Elaboración de productos de molinería",
+   "1052": "Elaboración de almidones y productos derivados del almidón",
+   "1061": "Trilla de café",
+   "1062": "Descafeinado, tostión y molienda del café",
+   "1071": "Elaboración y refinación de azúcar",
+   "1072": "Elaboración de panela",
+   "1081": "Elaboración de productos de panadería",
+   "1082": "Elaboración de cacao, chocolate y productos de confitería",
+   "1083": "Elaboración de macarrones, fideos, alcuzcuz y productos farináceos similares",
+   "1084": "Elaboración de comidas y platos preparados",
+   "1089": "Elaboración de otros productos alimenticios n.c.p.",
+   "1090": "Elaboración de alimentos preparados para animales",
+   "1101": "Destilación, rectificación y mezcla de bebidas alcohólicas",
+   "1102": "Elaboración de bebidas fermentadas no destiladas",
+   "1103": "Producción de malta, elaboración de cervezas y otras bebidas malteadas",
+   "1104": "Elaboración de bebidas no alcohólicas, producción de aguas minerales y otras aguas embotelladas",
+   "1311": "Preparación e hilatura de fibras textiles",
+   "1312": "Tejeduría de productos textiles",
+   "1313": "Acabado de productos textiles",
+   "1391": "Fabricación de tejidos de punto y ganchillo",
+   "1392": "Confección de artículos con materiales textiles, excepto prendas de vestir",
+   "1393": "Fabricación de tapetes y alfombras para pisos",
+   "1394": "Fabricación de cuerdas, cordeles, cables, bramantes y redes",
+   "1399": "Fabricación de otros artículos textiles n.c.p.",
+   "1410": "Confección de prendas de vestir, excepto prendas de piel",
+   "1430": "Fabricación de artículos de punto y ganchillo",
+   "1511": "Curtido y recurtido de cueros; recurtido y teñido de pieles",
+   "1512": "Fabricación de artículos de viaje, bolsos de mano y artículos similares elaborados en cuero, y fabricación de artículos de talabartería y guarnicionería",
+   "1513": "Fabricación de artículos de viaje, bolsos de mano y artículos similares; artículos de talabartería y guarnicionería elaborados en otros materiales",
+   "1521": "Fabricación de calzado de cuero y piel, con cualquier tipo de suela",
+   "1522": "Fabricación de otros tipos de calzado, excepto calzado de cuero y piel",
+   "1523": "Fabricación de partes del calzado",
+   "1610": "Aserrado, acepillado e impregnación de la madera",
+   "1630": "Fabricación de partes y piezas de madera, de carpintería y ebanistería para la construcción",
+   "1640": "Fabricación de recipientes de madera",
+   "1690": "Fabricación de otros productos de madera; fabricación de artículos de corcho, cestería y espartería",
+   "1701": "Fabricación de pulpas (pastas) celulósicas; papel y cartón",
+   "1702": "Fabricación de papel y cartón ondulado (corrugado); fabricación de envases, empaques y de embalajes de papel y cartón",
+   "1709": "Fabricación de otros artículos de papel y cartón",
+   "1811": "Actividades de impresión",
+   "1812": "Actividades de servicios relacionados con la impresión",
+   "1910": "Fabricación de productos de hornos de coque",
+   "1921": "Fabricación de productos de la refinación del petróleo",
+   "1922": "Actividad de mezcla de combustibles",
+   "2011": "Fabricación de sustancias y productos químicos básicos",
+   "2012": "Fabricación de abonos y compuestos inorgánicos nitrogenados",
+   "2013": "Fabricación de plásticos en formas primarias",
+   "2021": "Fabricación de plaguicidas y otros productos químicos de uso agropecuario",
+   "2022": "Fabricación de pinturas, barnices y revestimientos similares, tintas para impresión y masillas",
+   "2023": "Fabricación de jabones y detergentes, preparados para limpiar y pulir; perfumes y preparados de tocador",
+   "2029": "Fabricación de otros productos químicos n.c.p.",
+   "2100": "Fabricación de productos farmacéuticos, sustancias químicas medicinales y productos botánicos de uso farmacéutico",
+   "2212": "Reencauche de llantas usadas",
+   "2219": "Fabricación de formas básicas de caucho y otros productos de caucho n.c.p.",
+   "2221": "Fabricación de formas básicas de plástico",
+   "2229": "Fabricación de artículos de plástico n.c.p.",
+   "2310": "Fabricación de vidrio y productos de vidrio",
+   "2391": "Fabricación de productos refractarios",
+   "2392": "Fabricación de materiales de arcilla para la construcción",
+   "2393": "Fabricación de otros productos de cerámica y porcelana",
+   "2394": "Fabricación de cemento, cal y yeso",
+   "2395": "Fabricación de artículos de hormigón, cemento y yeso",
+   "2396": "Corte, tallado y acabado de la piedra",
+   "2399": "Fabricación de otros productos minerales no metálicos n.c.p.",
+   "2410": "Industrias básicas de hierro y de acero",
+   "2421": "Industrias básicas de metales preciosos",
+   "2429": "Industrias básicas de otros metales no ferrosos",
+   "2511": "Fabricación de productos metálicos para uso estructural",
+   "2512": "Fabricación de tanques, depósitos y recipientes de metal, excepto los utilizados para el envase o el transporte de mercancías",
+   "2592": "Tratamiento y revestimiento de metales; mecanizado",
+   "2593": "Fabricación de artículos de cuchillería, herramientas de mano y artículos de ferretería",
+   "2599": "Fabricación de otros productos elaborados de metal n.c.p.",
+   "2711": "Fabricación de motores, generadores y transformadores eléctricos",
+   "2712": "Fabricación de aparatos de distribución y control de la energía eléctrica",
+   "2720": "Fabricación de pilas, baterías y acumuladores eléctricos",
+   "2732": "Fabricación de dispositivos de cableado",
+   "2740": "Fabricación de equipos eléctricos de iluminación",
+   "2750": "Fabricación de aparatos de uso doméstico",
+   "2790": "Fabricación de otros tipos de equipo eléctrico n.c.p.",
+   "2813": "Fabricación de otras bombas, compresores, grifos y válvulas",
+   "2814": "Fabricación de cojinetes, engranajes, trenes de engranajes y piezas de transmisión",
+   "2815": "Fabricación de hornos, hogares y quemadores industriales",
+   "2816": "Fabricación de equipo de elevación y manipulación",
+   "2819": "Fabricación de otros tipos de maquinaria y equipo de uso general n.c.p.",
+   "2821": "Fabricación de maquinaria agropecuaria y forestal",
+   "2822": "Fabricación de máquinas formadoras de metal y de máquinas herramienta",
+   "2824": "Fabricación de maquinaria para explotación de minas y canteras y para obras de construcción",
+   "2825": "Fabricación de maquinaria para la elaboración de alimentos, bebidas y tabaco",
+   "2829": "Fabricación de otros tipos de maquinaria y equipo de uso especial n.c.p.",
+   "2920": "Fabricación de carrocerías para vehículos automotores; fabricación de remolques y semirremolques",
+   "2930": "Fabricación de partes, piezas (autopartes) y accesorios (lujos) para vehículos automotores",
+   "3011": "Construcción de barcos y de estructuras flotantes",
+   "3012": "Construcción de embarcaciones de recreo y deporte",
+   "3091": "Fabricación de motocicletas",
+   "3092": "Fabricación de bicicletas y de sillas de ruedas para personas con discapacidad",
+   "3099": "Fabricación de otros tipos de equipo de transporte n.c.p.",
+   "3110": "Fabricación de muebles",
+   "3120": "Fabricación de colchones y somieres",
+   "3211": "Fabricación de joyas y artículos conexos",
+   "3230": "Fabricación de artículos y equipo para la práctica del deporte",
+   "3240": "Fabricación de juegos, juguetes y rompecabezas",
+   "3250": "Fabricación de instrumentos, aparatos y materiales médicos y odontológicos (incluido mobiliario)",
+   "3290": "Otras industrias manufactureras n.c.p."
+  },
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "PERIODO": {
+  "etiqueta": "Año de la EAM",
+  "pregunta": "Año de la EAM",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R1C1N": {
+  "etiqueta": "Personal promedio ocupado en el año - mujeres nacionales profesionales, técnicos y tecnólogos vinculadas al proceso de producción - que son propietarios, socios o familiares sin remuneración fija.",
+  "pregunta": "Personal promedio ocupado en el año - mujeres nacionales profesionales, técnicos y tecnólogos vinculadas al proceso de producción - que son propietarios, socios o familiares sin remuneración fija.",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R1C2N": {
+  "etiqueta": "Personal promedio ocupado en el año - hombres nacionales profesionales, técnicos y tecnólogos vinculadas al proceso de producción - que son propietarios, socios o familiares sin remuneración fija.",
+  "pregunta": "Personal promedio ocupado en el año - hombres nacionales profesionales, técnicos y tecnólogos vinculadas al proceso de producción - que son propietarios, socios o familiares sin remuneración fija.",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R2C1E": {
+  "etiqueta": "Personal promedio ocupado en el año - mujeres extranjeras profesionales, técnicos y tecnólogos vinculadas al proceso de producción - que son propietarios, socios o familiares sin remuneración fija.",
+  "pregunta": "Personal promedio ocupado en el año - mujeres extranjeras profesionales, técnicos y tecnólogos vinculadas al proceso de producción - que son propietarios, socios o familiares sin remuneración fija.",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R2C2E": {
+  "etiqueta": "Personal promedio ocupado en el año - hombres extranjeros profesionales, técnicos y tecnólogos vinculadas al proceso de producción - que son propietarios, socios o familiares sin remuneración fija.",
+  "pregunta": "Personal promedio ocupado en el año - hombres extranjeros profesionales, técnicos y tecnólogos vinculadas al proceso de producción - que son propietarios, socios o familiares sin remuneración fija.",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R1C1": {
+  "etiqueta": "Personal promedio ocupado en el año - mujeres obreros y operarios vinculadas al proceso de producción - que son propietarios, socios o familiares sin remuneración fija.",
+  "pregunta": "Personal promedio ocupado en el año - mujeres obreros y operarios vinculadas al proceso de producción - que son propietarios, socios o familiares sin remuneración fija.",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R1C2": {
+  "etiqueta": "Personal promedio ocupado en el año - hombres obreros y operarios vinculadas al proceso de producción - que son propietarios, socios o familiares sin remuneración fija.",
+  "pregunta": "Personal promedio ocupado en el año - hombres obreros y operarios vinculadas al proceso de producción - que son propietarios, socios o familiares sin remuneración fija.",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R1C3": {
+  "etiqueta": "Personal promedio ocupado en el año - mujeres \"Directivos y empleados de administración y ventas\" - que son propietarios, socios o familiares sin remuneración fija.",
+  "pregunta": "Personal promedio ocupado en el año - mujeres \"Directivos y empleados de administración y ventas\" - que son propietarios, socios o familiares sin remuneración fija.",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R1C4": {
+  "etiqueta": "Personal promedio ocupado en el año - hombres \"Directivos y empleados de administración y ventas\" - que son propietarios, socios o familiares sin remuneración fija.",
+  "pregunta": "Personal promedio ocupado en el año - hombres \"Directivos y empleados de administración y ventas\" - que son propietarios, socios o familiares sin remuneración fija.",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R4C1T": {
+  "etiqueta": "Total personal promedio ocupado en el año - mujeres - que son propietarios, socios o familiares sin remuneración fija.",
+  "pregunta": "Total personal promedio ocupado en el año - mujeres - que son propietarios, socios o familiares sin remuneración fija.",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R4C2T": {
+  "etiqueta": "Total personal promedio ocupado en el año - hombres - que son propietarios, socios o familiares sin remuneración fija.",
+  "pregunta": "Total personal promedio ocupado en el año - hombres - que son propietarios, socios o familiares sin remuneración fija.",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R1C3N": {
+  "etiqueta": "Personal promedio ocupado en el año - mujeres nacionales profesionales, técnicos y tecnólogos vinculadas al proceso de producción - Personal permanente contratado a término indefinido",
+  "pregunta": "Personal promedio ocupado en el año - mujeres nacionales profesionales, técnicos y tecnólogos vinculadas al proceso de producción - Personal permanente contratado a término indefinido",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R1C4N": {
+  "etiqueta": "Personal promedio ocupado en el año - hombres nacionales profesionales, técnicos y tecnólogos vinculadas al proceso de producción - Personal permanente contratado a término indefinido",
+  "pregunta": "Personal promedio ocupado en el año - hombres nacionales profesionales, técnicos y tecnólogos vinculadas al proceso de producción - Personal permanente contratado a término indefinido",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R2C3E": {
+  "etiqueta": "Personal promedio ocupado en el año - mujeres extranjeras profesionales, técnicos y tecnólogos vinculadas al proceso de producción - Personal permanente contratado a término indefinido",
+  "pregunta": "Personal promedio ocupado en el año - mujeres extranjeras profesionales, técnicos y tecnólogos vinculadas al proceso de producción - Personal permanente contratado a término indefinido",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R2C4E": {
+  "etiqueta": "Personal promedio ocupado en el año - hombres extranjeros profesionales, técnicos y tecnólogos vinculadas al proceso de producción - Personal permanente contratado a término indefinido",
+  "pregunta": "Personal promedio ocupado en el año - hombres extranjeros profesionales, técnicos y tecnólogos vinculadas al proceso de producción - Personal permanente contratado a término indefinido",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R2C1": {
+  "etiqueta": "Personal promedio ocupado en el año - mujeres obreros y operarios vinculadas al proceso de producción - Personal permanente contratado a término indefinido",
+  "pregunta": "Personal promedio ocupado en el año - mujeres obreros y operarios vinculadas al proceso de producción - Personal permanente contratado a término indefinido",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R2C2": {
+  "etiqueta": "Personal promedio ocupado en el año - hombres obreros y operarios vinculadas al proceso de producción - Personal permanente contratado a término indefinido",
+  "pregunta": "Personal promedio ocupado en el año - hombres obreros y operarios vinculadas al proceso de producción - Personal permanente contratado a término indefinido",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R2C3": {
+  "etiqueta": "Personal promedio ocupado en el año - mujeres \"Directivos y empleados de administración y ventas\" - Personal permanente contratado a término indefinido",
+  "pregunta": "Personal promedio ocupado en el año - mujeres \"Directivos y empleados de administración y ventas\" - Personal permanente contratado a término indefinido",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R2C4": {
+  "etiqueta": "Personal promedio ocupado en el año - hombres \"Directivos y empleados de administración y ventas\" - Personal permanente contratado a término indefinido",
+  "pregunta": "Personal promedio ocupado en el año - hombres \"Directivos y empleados de administración y ventas\" - Personal permanente contratado a término indefinido",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R4C3T": {
+  "etiqueta": "Total personal promedio ocupado en el año - mujeres - Personal permanente contratado a término indefinido",
+  "pregunta": "Total personal promedio ocupado en el año - mujeres - Personal permanente contratado a término indefinido",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R4C4T": {
+  "etiqueta": "Total personal promedio ocupado en el año - hombres - Personal permanente contratado a término indefinido",
+  "pregunta": "Total personal promedio ocupado en el año - hombres - Personal permanente contratado a término indefinido",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R1C5N": {
+  "etiqueta": "Personal promedio ocupado en el año - mujeres nacionales profesionales, técnicos y tecnólogos vinculadas al proceso de producción - Personal temporal contratado directamente por el establecimiento",
+  "pregunta": "Personal promedio ocupado en el año - mujeres nacionales profesionales, técnicos y tecnólogos vinculadas al proceso de producción - Personal temporal contratado directamente por el establecimiento",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R1C6N": {
+  "etiqueta": "Personal promedio ocupado en el año - hombres nacionales profesionales, técnicos y tecnólogos vinculadas al proceso de producción - Personal temporal contratado directamente por el establecimiento",
+  "pregunta": "Personal promedio ocupado en el año - hombres nacionales profesionales, técnicos y tecnólogos vinculadas al proceso de producción - Personal temporal contratado directamente por el establecimiento",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R2C5E": {
+  "etiqueta": "Personal promedio ocupado en el año - mujeres extranjeras profesionales, técnicos y tecnólogos vinculadas al proceso de producción - Personal temporal contratado directamente por el establecimiento",
+  "pregunta": "Personal promedio ocupado en el año - mujeres extranjeras profesionales, técnicos y tecnólogos vinculadas al proceso de producción - Personal temporal contratado directamente por el establecimiento",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R2C6E": {
+  "etiqueta": "Personal promedio ocupado en el año - hombres extranjeros profesionales, técnicos y tecnólogos vinculadas al proceso de producción - Personal temporal contratado directamente por el establecimiento",
+  "pregunta": "Personal promedio ocupado en el año - hombres extranjeros profesionales, técnicos y tecnólogos vinculadas al proceso de producción - Personal temporal contratado directamente por el establecimiento",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R3C1": {
+  "etiqueta": "Personal promedio ocupado en el año - mujeres obreros y operarios vinculadas al proceso de producción - Personal temporal contratado directamente por el establecimiento",
+  "pregunta": "Personal promedio ocupado en el año - mujeres obreros y operarios vinculadas al proceso de producción - Personal temporal contratado directamente por el establecimiento",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R3C2": {
+  "etiqueta": "Personal promedio ocupado en el año - hombres obreros y operarios vinculadas al proceso de producción - Personal temporal contratado directamente por el establecimiento",
+  "pregunta": "Personal promedio ocupado en el año - hombres obreros y operarios vinculadas al proceso de producción - Personal temporal contratado directamente por el establecimiento",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R3C3": {
+  "etiqueta": "Personal promedio ocupado en el año - mujeres \"Directivos y empleados de administración y ventas\" - Personal temporal contratado directamente por el establecimiento",
+  "pregunta": "Personal promedio ocupado en el año - mujeres \"Directivos y empleados de administración y ventas\" - Personal temporal contratado directamente por el establecimiento",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R3C4": {
+  "etiqueta": "Personal promedio ocupado en el año - hombres \"Directivos y empleados de administración y ventas\" - Personal temporal contratado directamente por el establecimiento",
+  "pregunta": "Personal promedio ocupado en el año - hombres \"Directivos y empleados de administración y ventas\" - Personal temporal contratado directamente por el establecimiento",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R4C5T": {
+  "etiqueta": "Total personal promedio ocupado en el año - mujeres - Personal temporal contratado directamente por el establecimiento",
+  "pregunta": "Total personal promedio ocupado en el año - mujeres - Personal temporal contratado directamente por el establecimiento",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R4C6T": {
+  "etiqueta": "Total personal promedio ocupado en el año - hombres - Personal temporal contratado directamente por el establecimiento",
+  "pregunta": "Total personal promedio ocupado en el año - hombres - Personal temporal contratado directamente por el establecimiento",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R1C7N": {
+  "etiqueta": "Personal promedio ocupado en el año - mujeres nacionales profesionales, técnicos y tecnólogos vinculadas al proceso de producción - Personal temporal contratado a través de empresas especializadas",
+  "pregunta": "Personal promedio ocupado en el año - mujeres nacionales profesionales, técnicos y tecnólogos vinculadas al proceso de producción - Personal temporal contratado a través de empresas especializadas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R1C8N": {
+  "etiqueta": "Personal promedio ocupado en el año - hombres nacionales profesionales, técnicos y tecnólogos vinculadas al proceso de producción - Personal temporal contratado a través de empresas especializadas",
+  "pregunta": "Personal promedio ocupado en el año - hombres nacionales profesionales, técnicos y tecnólogos vinculadas al proceso de producción - Personal temporal contratado a través de empresas especializadas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R2C7E": {
+  "etiqueta": "Personal promedio ocupado en el año - mujeres extranjeras profesionales, técnicos y tecnólogos vinculadas al proceso de producción - Personal temporal contratado a través de empresas especializadas",
+  "pregunta": "Personal promedio ocupado en el año - mujeres extranjeras profesionales, técnicos y tecnólogos vinculadas al proceso de producción - Personal temporal contratado a través de empresas especializadas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R2C8E": {
+  "etiqueta": "Personal promedio ocupado en el año - hombres extranjeros profesionales, técnicos y tecnólogos vinculadas al proceso de producción - Personal temporal contratado a través de empresas especializadas",
+  "pregunta": "Personal promedio ocupado en el año - hombres extranjeros profesionales, técnicos y tecnólogos vinculadas al proceso de producción - Personal temporal contratado a través de empresas especializadas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R4C1": {
+  "etiqueta": "Personal promedio ocupado en el año - mujeres obreros y operarios vinculadas al proceso de producción - Personal temporal contratado a través de empresas especializadas",
+  "pregunta": "Personal promedio ocupado en el año - mujeres obreros y operarios vinculadas al proceso de producción - Personal temporal contratado a través de empresas especializadas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R4C2": {
+  "etiqueta": "Personal promedio ocupado en el año - hombres obreros y operarios vinculadas al proceso de producción - Personal temporal contratado a través de empresas especializadas",
+  "pregunta": "Personal promedio ocupado en el año - hombres obreros y operarios vinculadas al proceso de producción - Personal temporal contratado a través de empresas especializadas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R4C3": {
+  "etiqueta": "Personal promedio ocupado en el año - mujeres \"Directivos y empleados de administración y ventas\" - Personal temporal contratado a través de empresas especializadas",
+  "pregunta": "Personal promedio ocupado en el año - mujeres \"Directivos y empleados de administración y ventas\" - Personal temporal contratado a través de empresas especializadas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R4C4": {
+  "etiqueta": "Personal promedio ocupado en el año - hombres \"Directivos y empleados de administración y ventas\" - Personal temporal contratado a través de empresas especializadas",
+  "pregunta": "Personal promedio ocupado en el año - hombres \"Directivos y empleados de administración y ventas\" - Personal temporal contratado a través de empresas especializadas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R4C7T": {
+  "etiqueta": "Total personal promedio ocupado en el año - mujeres - Personal temporal contratado a través de empresas especializadas",
+  "pregunta": "Total personal promedio ocupado en el año - mujeres - Personal temporal contratado a través de empresas especializadas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R4C8T": {
+  "etiqueta": "Total personal promedio ocupado en el año - hombres - Personal temporal contratado a través de empresas especializadas",
+  "pregunta": "Total personal promedio ocupado en el año - hombres - Personal temporal contratado a través de empresas especializadas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R6MN": {
+  "etiqueta": "Personal promedio ocupado en el año - mujeres nacionales profesionales, técnicos y tecnólogos vinculadas al proceso de producción - Personal aprendices y pasantes",
+  "pregunta": "Personal promedio ocupado en el año - mujeres nacionales profesionales, técnicos y tecnólogos vinculadas al proceso de producción - Personal aprendices y pasantes",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R6HN": {
+  "etiqueta": "Personal promedio ocupado en el año - hombres nacionales profesionales, técnicos y tecnólogos vinculadas al proceso de producción - Personal aprendices y pasantes",
+  "pregunta": "Personal promedio ocupado en el año - hombres nacionales profesionales, técnicos y tecnólogos vinculadas al proceso de producción - Personal aprendices y pasantes",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R6ME": {
+  "etiqueta": "Personal promedio ocupado en el año - mujeres extranjeras profesionales, técnicos y tecnólogos vinculadas al proceso de producción - Personal aprendices y pasantes",
+  "pregunta": "Personal promedio ocupado en el año - mujeres extranjeras profesionales, técnicos y tecnólogos vinculadas al proceso de producción - Personal aprendices y pasantes",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R6HE": {
+  "etiqueta": "Personal promedio ocupado en el año - hombres extranjeros profesionales, técnicos y tecnólogos vinculadas al proceso de producción - Personal aprendices y pasantes",
+  "pregunta": "Personal promedio ocupado en el año - hombres extranjeros profesionales, técnicos y tecnólogos vinculadas al proceso de producción - Personal aprendices y pasantes",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R6OM": {
+  "etiqueta": "Personal promedio ocupado en el año - mujeres obreros y operarios vinculadas al proceso de producción - Personal aprendices y pasantes",
+  "pregunta": "Personal promedio ocupado en el año - mujeres obreros y operarios vinculadas al proceso de producción - Personal aprendices y pasantes",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R6OH": {
+  "etiqueta": "Personal promedio ocupado en el año - hombres obreros y operarios vinculadas al proceso de producción - Personal aprendices y pasantes",
+  "pregunta": "Personal promedio ocupado en el año - hombres obreros y operarios vinculadas al proceso de producción - Personal aprendices y pasantes",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R6DM": {
+  "etiqueta": "Personal promedio ocupado en el año - mujeres \"Directivos y empleados de administración y ventas\" - Personal aprendices y pasantes",
+  "pregunta": "Personal promedio ocupado en el año - mujeres \"Directivos y empleados de administración y ventas\" - Personal aprendices y pasantes",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R6DH": {
+  "etiqueta": "Personal promedio ocupado en el año - hombres \"Directivos y empleados de administración y ventas\" - Personal aprendices y pasantes",
+  "pregunta": "Personal promedio ocupado en el año - hombres \"Directivos y empleados de administración y ventas\" - Personal aprendices y pasantes",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R6TM": {
+  "etiqueta": "Total personal promedio ocupado en el año - mujeres - Personal aprendices y pasantes",
+  "pregunta": "Total personal promedio ocupado en el año - mujeres - Personal aprendices y pasantes",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R6TH": {
+  "etiqueta": "Total personal promedio ocupado en el año - hombres - Personal aprendices y pasantes",
+  "pregunta": "Total personal promedio ocupado en el año - hombres - Personal aprendices y pasantes",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R1C9N": {
+  "etiqueta": "Total personal promedio ocupado en el año - mujeres nacionales profesionales, técnicos y tecnólogos vinculadas al proceso de producción",
+  "pregunta": "Total personal promedio ocupado en el año - mujeres nacionales profesionales, técnicos y tecnólogos vinculadas al proceso de producción",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R1C10N": {
+  "etiqueta": "Total personal promedio ocupado en el año - hombres nacionales profesionales, técnicos y tecnólogos vinculadas al proceso de producción",
+  "pregunta": "Total personal promedio ocupado en el año - hombres nacionales profesionales, técnicos y tecnólogos vinculadas al proceso de producción",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R2C9E": {
+  "etiqueta": "Total personal promedio ocupado en el año - mujeres extranjeras profesionales, técnicos y tecnólogos vinculadas al proceso de producción",
+  "pregunta": "Total personal promedio ocupado en el año - mujeres extranjeras profesionales, técnicos y tecnólogos vinculadas al proceso de producción",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R2C10E": {
+  "etiqueta": "Total personal promedio ocupado en el año - hombres extranjeros profesionales, técnicos y tecnólogos vinculadas al proceso de producción",
+  "pregunta": "Total personal promedio ocupado en el año - hombres extranjeros profesionales, técnicos y tecnólogos vinculadas al proceso de producción",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R5C1": {
+  "etiqueta": "Total personal promedio ocupado en el año - mujeres obreros y operarios vinculadas al proceso de producción",
+  "pregunta": "Total personal promedio ocupado en el año - mujeres obreros y operarios vinculadas al proceso de producción",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R5C2": {
+  "etiqueta": "Total personal promedio ocupado en el año - hombres obreros y operarios vinculadas al proceso de producción",
+  "pregunta": "Total personal promedio ocupado en el año - hombres obreros y operarios vinculadas al proceso de producción",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R5C3": {
+  "etiqueta": "Total personal promedio ocupado en el año - mujeres \"Directivos y empleados de administración y ventas\"",
+  "pregunta": "Total personal promedio ocupado en el año - mujeres \"Directivos y empleados de administración y ventas\"",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R5C4": {
+  "etiqueta": "Total personal promedio ocupado en el año - hombres \"Directivos y empleados de administración y ventas\"",
+  "pregunta": "Total personal promedio ocupado en el año - hombres \"Directivos y empleados de administración y ventas\"",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R4C9T": {
+  "etiqueta": "Total personal promedio ocupado en el año - mujeres",
+  "pregunta": "Total personal promedio ocupado en el año - mujeres",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C4R4C10T": {
+  "etiqueta": "Total personal promedio ocupado en el año - hombres",
+  "pregunta": "Total personal promedio ocupado en el año - hombres",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R2PT": {
+  "etiqueta": "Sueldos y salarios del personal permanente; profesional, técnico o tecnólogo; vinculado directamente al proceso de producción.",
+  "pregunta": "Sueldos y salarios del personal permanente; profesional, técnico o tecnólogo; vinculado directamente al proceso de producción.",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R2C1": {
+  "etiqueta": "Sueldos y salarios del personal permanente; obreros y operarios; vinculado directamente al proceso de producción",
+  "pregunta": "Sueldos y salarios del personal permanente; obreros y operarios; vinculado directamente al proceso de producción",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R2C2": {
+  "etiqueta": "Sueldos y salarios del personal permanente; directivos y empleados de administración y ventas",
+  "pregunta": "Sueldos y salarios del personal permanente; directivos y empleados de administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R2C3": {
+  "etiqueta": "Total sueldos y salarios del personal permanente",
+  "pregunta": "Total sueldos y salarios del personal permanente",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R3PT": {
+  "etiqueta": "Prestaciones sociales del personal permanente; profesional, técnico o tecnólogo; vinculado directamente al proceso de producción.",
+  "pregunta": "Prestaciones sociales del personal permanente; profesional, técnico o tecnólogo; vinculado directamente al proceso de producción.",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R3C1": {
+  "etiqueta": "Prestaciones sociales del personal permanente; obreros y operarios; vinculado directamente al proceso de producción",
+  "pregunta": "Prestaciones sociales del personal permanente; obreros y operarios; vinculado directamente al proceso de producción",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R3C2": {
+  "etiqueta": "Prestaciones sociales del personal permanente; directivos y empleados de administración y ventas",
+  "pregunta": "Prestaciones sociales del personal permanente; directivos y empleados de administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R3C3": {
+  "etiqueta": "Total prestaciones sociales del personal permanente",
+  "pregunta": "Total prestaciones sociales del personal permanente",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R4PT": {
+  "etiqueta": "Sueldos, salarios y prestaciones sociales causadas por el personal temporal contratado directamente; profesional, técnico o tecnólogo; vinculado directamente al proceso de producción.",
+  "pregunta": "Sueldos, salarios y prestaciones sociales causadas por el personal temporal contratado directamente; profesional, técnico o tecnólogo; vinculado directamente al proceso de producción.",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R4C1": {
+  "etiqueta": "Sueldos, salarios y prestaciones sociales causadas por el personal temporal contratado directamente; obreros y operarios; vinculado directamente al proceso de producción",
+  "pregunta": "Sueldos, salarios y prestaciones sociales causadas por el personal temporal contratado directamente; obreros y operarios; vinculado directamente al proceso de producción",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R4C2": {
+  "etiqueta": "Sueldos, salarios y prestaciones sociales causadas por el personal temporal contratado directamente; directivos y empleados de administración y ventas",
+  "pregunta": "Sueldos, salarios y prestaciones sociales causadas por el personal temporal contratado directamente; directivos y empleados de administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R4C3": {
+  "etiqueta": "Total sueldos, salarios y prestaciones sociales causadas por el personal temporal contratado directamente",
+  "pregunta": "Total sueldos, salarios y prestaciones sociales causadas por el personal temporal contratado directamente",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R5PT": {
+  "etiqueta": "Cotizaciones patronales obligatorias, salud, ARP y pensión del personal ocupado; profesional, técnico o tecnólogo; vinculado directamente al proceso de producción.",
+  "pregunta": "Cotizaciones patronales obligatorias, salud, ARP y pensión del personal ocupado; profesional, técnico o tecnólogo; vinculado directamente al proceso de producción.",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R5C1": {
+  "etiqueta": "Cotizaciones patronales obligatorias, salud, ARP y pensión del personal ocupado; obreros y operarios; vinculado directamente al proceso de producción",
+  "pregunta": "Cotizaciones patronales obligatorias, salud, ARP y pensión del personal ocupado; obreros y operarios; vinculado directamente al proceso de producción",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R5C2": {
+  "etiqueta": "Cotizaciones patronales obligatorias, salud, ARP y pensión del personal ocupado; directivos y empleados de administración y ventas",
+  "pregunta": "Cotizaciones patronales obligatorias, salud, ARP y pensión del personal ocupado; directivos y empleados de administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R5C3": {
+  "etiqueta": "Total cotizaciones patronales obligatorias, salud, ARP y pensión del personal ocupado",
+  "pregunta": "Total cotizaciones patronales obligatorias, salud, ARP y pensión del personal ocupado",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R6PT": {
+  "etiqueta": "Aportes sobre nómina (SENA, cajas de compensación familiar, ICBF); profesional, técnico o tecnólogo; vinculado directamente al proceso de producción.",
+  "pregunta": "Aportes sobre nómina (SENA, cajas de compensación familiar, ICBF); profesional, técnico o tecnólogo; vinculado directamente al proceso de producción.",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R6C1": {
+  "etiqueta": "Aportes sobre nómina (SENA, cajas de compensación familiar, ICBF); obreros y operarios; vinculado directamente al proceso de producción",
+  "pregunta": "Aportes sobre nómina (SENA, cajas de compensación familiar, ICBF); obreros y operarios; vinculado directamente al proceso de producción",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R6C2": {
+  "etiqueta": "Aportes sobre nómina (SENA, cajas de compensación familiar, ICBF); directivos y empleados de administración y ventas",
+  "pregunta": "Aportes sobre nómina (SENA, cajas de compensación familiar, ICBF); directivos y empleados de administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R6C3": {
+  "etiqueta": "Total aportes sobre nómina (SENA, cajas de compensación familiar, ICBF)",
+  "pregunta": "Total aportes sobre nómina (SENA, cajas de compensación familiar, ICBF)",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R7PT": {
+  "etiqueta": "Aportes voluntarios a compañías de seguros de vida que ampara al personal ocupado; profesional, técnico o tecnólogo; vinculado directamente al proceso de producción.",
+  "pregunta": "Aportes voluntarios a compañías de seguros de vida que ampara al personal ocupado; profesional, técnico o tecnólogo; vinculado directamente al proceso de producción.",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R7C1": {
+  "etiqueta": "Aportes voluntarios a compañías de seguros de vida que ampara al personal ocupado; obreros y operarios; vinculado directamente al proceso de producción",
+  "pregunta": "Aportes voluntarios a compañías de seguros de vida que ampara al personal ocupado; obreros y operarios; vinculado directamente al proceso de producción",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R7C2": {
+  "etiqueta": "Aportes voluntarios a compañías de seguros de vida que ampara al personal ocupado; directivos y empleados de administración y ventas",
+  "pregunta": "Aportes voluntarios a compañías de seguros de vida que ampara al personal ocupado; directivos y empleados de administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R7C3": {
+  "etiqueta": "Total aportes voluntarios a compañías de seguros de vida que ampara al personal ocupado",
+  "pregunta": "Total aportes voluntarios a compañías de seguros de vida que ampara al personal ocupado",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R8PT": {
+  "etiqueta": "Valor causado por las empresas que suministran personal temporal al establecimiento; profesional, técnico o tecnólogo; vinculado directamente al proceso de producción.",
+  "pregunta": "Valor causado por las empresas que suministran personal temporal al establecimiento; profesional, técnico o tecnólogo; vinculado directamente al proceso de producción.",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R8C1": {
+  "etiqueta": "Valor causado por las empresas que suministran personal temporal al establecimiento; obreros y operarios; vinculado directamente al proceso de producción",
+  "pregunta": "Valor causado por las empresas que suministran personal temporal al establecimiento; obreros y operarios; vinculado directamente al proceso de producción",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R8C2": {
+  "etiqueta": "Valor causado por las empresas que suministran personal temporal al establecimiento; directivos y empleados de administración y ventas",
+  "pregunta": "Valor causado por las empresas que suministran personal temporal al establecimiento; directivos y empleados de administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R8C3": {
+  "etiqueta": "Total valor causado por las empresas que suministran personal temporal al establecimiento",
+  "pregunta": "Total valor causado por las empresas que suministran personal temporal al establecimiento",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "R1CSAP": {
+  "etiqueta": "Valor del apoyo de sostenimiento causado por los aprendices y pasantes; profesional, técnico o tecnólogo; vinculado directamente al proceso de producción.",
+  "pregunta": "Valor del apoyo de sostenimiento causado por los aprendices y pasantes; profesional, técnico o tecnólogo; vinculado directamente al proceso de producción.",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "R2CSAP": {
+  "etiqueta": "Valor del apoyo de sostenimiento causado por los aprendices y pasantes; obreros y operarios; vinculado directamente al proceso de producción",
+  "pregunta": "Valor del apoyo de sostenimiento causado por los aprendices y pasantes; obreros y operarios; vinculado directamente al proceso de producción",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "R3CSAP": {
+  "etiqueta": "Valor del apoyo de sostenimiento causado por los aprendices y pasantes; directivos y empleados de administración y ventas",
+  "pregunta": "Valor del apoyo de sostenimiento causado por los aprendices y pasantes; directivos y empleados de administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "R4CSAP": {
+  "etiqueta": "Total valor del apoyo de sostenimiento causado por los aprendices y pasantes",
+  "pregunta": "Total valor del apoyo de sostenimiento causado por los aprendices y pasantes",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R9PT": {
+  "etiqueta": "Otros gastos del personal no incluidos antes; profesional, técnico o tecnólogo; vinculado directamente al proceso de producción.",
+  "pregunta": "Otros gastos del personal no incluidos antes; profesional, técnico o tecnólogo; vinculado directamente al proceso de producción.",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R9C1": {
+  "etiqueta": "Otros gastos del personal no incluidos antes; obreros y operarios; vinculado directamente al proceso de producción",
+  "pregunta": "Otros gastos del personal no incluidos antes; obreros y operarios; vinculado directamente al proceso de producción",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R9C2": {
+  "etiqueta": "Otros gastos del personal no incluidos antes; directivos y empleados de administración y ventas",
+  "pregunta": "Otros gastos del personal no incluidos antes; directivos y empleados de administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R9C3": {
+  "etiqueta": "Total otros gastos del personal no incluidos antes",
+  "pregunta": "Total otros gastos del personal no incluidos antes",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R10PT": {
+  "etiqueta": "Total sueldos, salarios, prestaciones, cotizaciones patronales, aportes, apoyo de sostenimiento y otros gastos; profesional, técnico o tecnólogo; vinculado directamente al proceso de producción.",
+  "pregunta": "Total sueldos, salarios, prestaciones, cotizaciones patronales, aportes, apoyo de sostenimiento y otros gastos; profesional, técnico o tecnólogo; vinculado directamente al proceso de producción.",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R10C1": {
+  "etiqueta": "Total sueldos, salarios, prestaciones, cotizaciones patronales, aportes, apoyo de sostenimiento y otros gastos; obreros y operarios; vinculado directamente al proceso de producción",
+  "pregunta": "Total sueldos, salarios, prestaciones, cotizaciones patronales, aportes, apoyo de sostenimiento y otros gastos; obreros y operarios; vinculado directamente al proceso de producción",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R10C2": {
+  "etiqueta": "Total sueldos, salarios, prestaciones, cotizaciones patronales, aportes, apoyo de sostenimiento y otros gastos; directivos y empleados de administración y ventas",
+  "pregunta": "Total sueldos, salarios, prestaciones, cotizaciones patronales, aportes, apoyo de sostenimiento y otros gastos; directivos y empleados de administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R10C3": {
+  "etiqueta": "Total sueldos, salarios, prestaciones, cotizaciones patronales, aportes, apoyo de sostenimiento y otros gastos",
+  "pregunta": "Total sueldos, salarios, prestaciones, cotizaciones patronales, aportes, apoyo de sostenimiento y otros gastos",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R44C2": {
+  "etiqueta": "Costo de venta de productos no fabricados por el establecimiento; Gastos de administración y ventas",
+  "pregunta": "Costo de venta de productos no fabricados por el establecimiento; Gastos de administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R44C3": {
+  "etiqueta": "Total costo de venta de productos no fabricados por el establecimiento; Gastos de administración y ventas",
+  "pregunta": "Total costo de venta de productos no fabricados por el establecimiento; Gastos de administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R40C2": {
+  "etiqueta": "Costo de venta de materias primas, materiales y empaques vendidos sin transformar ; Gastos de administración y ventas",
+  "pregunta": "Costo de venta de materias primas, materiales y empaques vendidos sin transformar ; Gastos de administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R40C3": {
+  "etiqueta": "Total costo de venta de materias primas, materiales y empaques vendidos sin transformar ; Costos y gastos de producción, administración y ventas",
+  "pregunta": "Total costo de venta de materias primas, materiales y empaques vendidos sin transformar ; Costos y gastos de producción, administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R14C1": {
+  "etiqueta": "Costos y gastos de productos y servicios industriales elaborados por terceros; Costos y gastos de producción",
+  "pregunta": "Costos y gastos de productos y servicios industriales elaborados por terceros; Costos y gastos de producción",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R14C3": {
+  "etiqueta": "Total costos y gastos de productos y servicios industriales elaborados por terceros; Costos y gastos de producción, administración y ventas",
+  "pregunta": "Total costos y gastos de productos y servicios industriales elaborados por terceros; Costos y gastos de producción, administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R41C1": {
+  "etiqueta": "Costos y gastos por servicios contratados con terceros (outsourcing) excepto los de manufactura; Costos y gastos de producción",
+  "pregunta": "Costos y gastos por servicios contratados con terceros (outsourcing) excepto los de manufactura; Costos y gastos de producción",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R41C2": {
+  "etiqueta": "Costos y gastos por servicios contratados con terceros (outsourcing) excepto los de manufactura; Gastos de administración y ventas",
+  "pregunta": "Costos y gastos por servicios contratados con terceros (outsourcing) excepto los de manufactura; Gastos de administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R41C3": {
+  "etiqueta": "Total costos y gastos por servicios contratados con terceros (outsourcing) excepto los de manufactura; Costos y gastos de producción, administración y ventas",
+  "pregunta": "Total costos y gastos por servicios contratados con terceros (outsourcing) excepto los de manufactura; Costos y gastos de producción, administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R13C1": {
+  "etiqueta": "Costos y gastos por muestras gratis; Costos y gastos de producción",
+  "pregunta": "Costos y gastos por muestras gratis; Costos y gastos de producción",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R13C2": {
+  "etiqueta": "Costos y gastos por muestras gratis; Gastos de administración y ventas",
+  "pregunta": "Costos y gastos por muestras gratis; Gastos de administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R13C3": {
+  "etiqueta": "Total costos y gastos por muestras gratis; Costos y gastos de producción, administración y ventas",
+  "pregunta": "Total costos y gastos por muestras gratis; Costos y gastos de producción, administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R45C2": {
+  "etiqueta": "Costos y gastos de transporte de productos; Gastos de administración y ventas",
+  "pregunta": "Costos y gastos de transporte de productos; Gastos de administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R45C3": {
+  "etiqueta": "Total costos y gastos de transporte de productos; Costos y gastos de producción, administración y ventas",
+  "pregunta": "Total costos y gastos de transporte de productos; Costos y gastos de producción, administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R15C1": {
+  "etiqueta": "Costos y gastos por honorarios y servicios técnicos; Costos y gastos de producción",
+  "pregunta": "Costos y gastos por honorarios y servicios técnicos; Costos y gastos de producción",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R15C2": {
+  "etiqueta": "Costos y gastos por honorarios y servicios técnicos; Gastos de administración y ventas",
+  "pregunta": "Costos y gastos por honorarios y servicios técnicos; Gastos de administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R15C3": {
+  "etiqueta": "Total costos y gastos por honorarios y servicios técnicos; Costos y gastos de producción, administración y ventas",
+  "pregunta": "Total costos y gastos por honorarios y servicios técnicos; Costos y gastos de producción, administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R16C1": {
+  "etiqueta": "Costos y gastos por arrendamiento de bienes inmuebles; Costos y gastos de producción",
+  "pregunta": "Costos y gastos por arrendamiento de bienes inmuebles; Costos y gastos de producción",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R16C2": {
+  "etiqueta": "Costos y gastos por arrendamiento de bienes inmuebles; Gastos de administración y ventas",
+  "pregunta": "Costos y gastos por arrendamiento de bienes inmuebles; Gastos de administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R16C3": {
+  "etiqueta": "Total costos y gastos por arrendamiento de bienes inmuebles; Costos y gastos de producción, administración y ventas",
+  "pregunta": "Total costos y gastos por arrendamiento de bienes inmuebles; Costos y gastos de producción, administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R17C1": {
+  "etiqueta": "Costos y gastos por arrendamiento sin opción de compra de maquinaria y equipo (bienes muebles); Costos y gastos de producción",
+  "pregunta": "Costos y gastos por arrendamiento sin opción de compra de maquinaria y equipo (bienes muebles); Costos y gastos de producción",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R17C2": {
+  "etiqueta": "Costos y gastos por arrendamiento sin opción de compra de maquinaria y equipo (bienes muebles); Gastos de administración y ventas",
+  "pregunta": "Costos y gastos por arrendamiento sin opción de compra de maquinaria y equipo (bienes muebles); Gastos de administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R17C3": {
+  "etiqueta": "Total costos y gastos por arrendamiento sin opción de compra de maquinaria y equipo (bienes muebles); Costos y gastos de producción, administración y ventas",
+  "pregunta": "Total costos y gastos por arrendamiento sin opción de compra de maquinaria y equipo (bienes muebles); Costos y gastos de producción, administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R18C1": {
+  "etiqueta": "Costos y gastos por seguros; Costos y gastos de producción",
+  "pregunta": "Costos y gastos por seguros; Costos y gastos de producción",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R18C2": {
+  "etiqueta": "Costos y gastos por seguros; Gastos de administración y ventas",
+  "pregunta": "Costos y gastos por seguros; Gastos de administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R18C3": {
+  "etiqueta": "Total costos y gastos por seguros; Costos y gastos de producción, administración y ventas",
+  "pregunta": "Total costos y gastos por seguros; Costos y gastos de producción, administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R21C1": {
+  "etiqueta": "Costos y gastos por servicio de agua (agua, alcantarillado y aseo); Costos y gastos de producción",
+  "pregunta": "Costos y gastos por servicio de agua (agua, alcantarillado y aseo); Costos y gastos de producción",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R21C2": {
+  "etiqueta": "Costos y gastos por servicio de agua (agua, alcantarillado y aseo); Gastos de administración y ventas",
+  "pregunta": "Costos y gastos por servicio de agua (agua, alcantarillado y aseo); Gastos de administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R21C3": {
+  "etiqueta": "Total costos y gastos por servicio de agua (agua, alcantarillado y aseo); Costos y gastos de producción, administración y ventas",
+  "pregunta": "Total costos y gastos por servicio de agua (agua, alcantarillado y aseo); Costos y gastos de producción, administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R36C1": {
+  "etiqueta": "Costos y gastos por servicios de comunicaciones (teléfono, correo, fax, beeper, radio teléfono, celular e internet); Costos y gastos de producción",
+  "pregunta": "Costos y gastos por servicios de comunicaciones (teléfono, correo, fax, beeper, radio teléfono, celular e internet); Costos y gastos de producción",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R36C2": {
+  "etiqueta": "Costos y gastos por servicios de comunicaciones (teléfono, correo, fax, beeper, radio teléfono, celular e internet); Gastos de administración y ventas",
+  "pregunta": "Costos y gastos por servicios de comunicaciones (teléfono, correo, fax, beeper, radio teléfono, celular e internet); Gastos de administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R36C3": {
+  "etiqueta": "Total costos y gastos por servicios de comunicaciones (teléfono, correo, fax, beeper, radio teléfono, celular e internet); Costos y gastos de producción, administración y ventas",
+  "pregunta": "Total costos y gastos por servicios de comunicaciones (teléfono, correo, fax, beeper, radio teléfono, celular e internet); Costos y gastos de producción, administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R22C1": {
+  "etiqueta": "Costos y gastos por propaganda y publicidad; Costos y gastos de producción",
+  "pregunta": "Costos y gastos por propaganda y publicidad; Costos y gastos de producción",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R22C2": {
+  "etiqueta": "Costos y gastos por propaganda y publicidad; Gastos de administración y ventas",
+  "pregunta": "Costos y gastos por propaganda y publicidad; Gastos de administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R22C3": {
+  "etiqueta": "Total costos y gastos por propaganda y publicidad; Costos y gastos de producción, administración y ventas",
+  "pregunta": "Total costos y gastos por propaganda y publicidad; Costos y gastos de producción, administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R25C2": {
+  "etiqueta": "Costos y gastos por impuesto del 4 x 1 000; Gastos de administración y ventas",
+  "pregunta": "Costos y gastos por impuesto del 4 x 1 000; Gastos de administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R25C3": {
+  "etiqueta": "Total costos y gastos por impuesto del 4 x 1 000; Costos y gastos de producción, administración y ventas",
+  "pregunta": "Total costos y gastos por impuesto del 4 x 1 000; Costos y gastos de producción, administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R20C1": {
+  "etiqueta": "Costos y gastos por Impuesto de Renta para la Equidad; Costos y gastos de producción",
+  "pregunta": "Costos y gastos por Impuesto de Renta para la Equidad; Costos y gastos de producción",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R20C2": {
+  "etiqueta": "Costos y gastos por Impuesto de Renta para la Equidad; Gastos de administración y ventas",
+  "pregunta": "Costos y gastos por Impuesto de Renta para la Equidad; Gastos de administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R20C3": {
+  "etiqueta": "Total costos y gastos por Impuesto de Renta para la Equidad; Costos y gastos de producción, administración y ventas",
+  "pregunta": "Total costos y gastos por Impuesto de Renta para la Equidad; Costos y gastos de producción, administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R23C1": {
+  "etiqueta": "Costos y gastos por mantenimiento, reparaciones, accesorios y repuestos consumidos; Costos y gastos de producción",
+  "pregunta": "Costos y gastos por mantenimiento, reparaciones, accesorios y repuestos consumidos; Costos y gastos de producción",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R23C2": {
+  "etiqueta": "Costos y gastos por mantenimiento, reparaciones, accesorios y repuestos consumidos; Gastos de administración y ventas",
+  "pregunta": "Costos y gastos por mantenimiento, reparaciones, accesorios y repuestos consumidos; Gastos de administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R23C3": {
+  "etiqueta": "Total costos y gastos por mantenimiento, reparaciones, accesorios y repuestos consumidos; Costos y gastos de producción, administración y ventas",
+  "pregunta": "Total costos y gastos por mantenimiento, reparaciones, accesorios y repuestos consumidos; Costos y gastos de producción, administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R42C1": {
+  "etiqueta": "Costos y gastos por transporte de materias primas; Costos y gastos de producción",
+  "pregunta": "Costos y gastos por transporte de materias primas; Costos y gastos de producción",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R42C2": {
+  "etiqueta": "Costos y gastos por transporte de materias primas; Gastos de administración y ventas",
+  "pregunta": "Costos y gastos por transporte de materias primas; Gastos de administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R42C3": {
+  "etiqueta": "Total costos y gastos por transporte de materias primas; Costos y gastos de producción, administración y ventas",
+  "pregunta": "Total costos y gastos por transporte de materias primas; Costos y gastos de producción, administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R24C1": {
+  "etiqueta": "Costos y gastos por utilización de: derechos de autor, franquicias, marcas, patentes, etc; Costos y gastos de producción",
+  "pregunta": "Costos y gastos por utilización de: derechos de autor, franquicias, marcas, patentes, etc; Costos y gastos de producción",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R24C2": {
+  "etiqueta": "Costos y gastos por utilización de: derechos de autor, franquicias, marcas, patentes, etc; Gastos de administración y ventas",
+  "pregunta": "Costos y gastos por utilización de: derechos de autor, franquicias, marcas, patentes, etc; Gastos de administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R24C3": {
+  "etiqueta": "Total costos y gastos por utilización de: derechos de autor, franquicias, marcas, patentes, etc; Costos y gastos de producción, administración y ventas",
+  "pregunta": "Total costos y gastos por utilización de: derechos de autor, franquicias, marcas, patentes, etc; Costos y gastos de producción, administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R37C1": {
+  "etiqueta": "Costos y gastos por impuestos de industria y comercio; Costos y gastos de producción",
+  "pregunta": "Costos y gastos por impuestos de industria y comercio; Costos y gastos de producción",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R37C2": {
+  "etiqueta": "Costos y gastos por impuestos de industria y comercio; Gastos de administración y ventas",
+  "pregunta": "Costos y gastos por impuestos de industria y comercio; Gastos de administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R37C3": {
+  "etiqueta": "Total costos y gastos por impuestos de industria y comercio; Costos y gastos de producción, administración y ventas",
+  "pregunta": "Total costos y gastos por impuestos de industria y comercio; Costos y gastos de producción, administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R38C2": {
+  "etiqueta": "Costos y gastos por impuesto predial y sobre vehículos; Gastos de administración y ventas",
+  "pregunta": "Costos y gastos por impuesto predial y sobre vehículos; Gastos de administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R38C3": {
+  "etiqueta": "Total costos y gastos por impuesto predial y sobre vehículos; Costos y gastos de producción, administración y ventas",
+  "pregunta": "Total costos y gastos por impuesto predial y sobre vehículos; Costos y gastos de producción, administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R26C2": {
+  "etiqueta": "Costos y gastos para provisión de cartera, inventarios y otros; Gastos de administración y ventas",
+  "pregunta": "Costos y gastos para provisión de cartera, inventarios y otros; Gastos de administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R26C3": {
+  "etiqueta": "Total costos y gastos para provisión de cartera, inventarios y otros; Costos y gastos de producción, administración y ventas",
+  "pregunta": "Total costos y gastos para provisión de cartera, inventarios y otros; Costos y gastos de producción, administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R31C2": {
+  "etiqueta": "Costos y gastos por intereses causados sobre préstamos; Gastos de administración y ventas",
+  "pregunta": "Costos y gastos por intereses causados sobre préstamos; Gastos de administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R31C3": {
+  "etiqueta": "Total costos y gastos por intereses causados sobre préstamos; Costos y gastos de producción, administración y ventas",
+  "pregunta": "Total costos y gastos por intereses causados sobre préstamos; Costos y gastos de producción, administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R27C1": {
+  "etiqueta": "Otros costos y gastos no incluidos antes; Costos y gastos de producción",
+  "pregunta": "Otros costos y gastos no incluidos antes; Costos y gastos de producción",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R27C2": {
+  "etiqueta": "Otros costos y gastos no incluidos antes; Gastos de administración y ventas",
+  "pregunta": "Otros costos y gastos no incluidos antes; Gastos de administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R27C3": {
+  "etiqueta": "Total otros costos y gastos no incluidos antes; Costos y gastos de producción, administración y ventas",
+  "pregunta": "Total otros costos y gastos no incluidos antes; Costos y gastos de producción, administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R46C2": {
+  "etiqueta": "Gastos financieros(chequeras, comisiones, estudios de créditos y similares); Gastos de administración y ventas",
+  "pregunta": "Gastos financieros(chequeras, comisiones, estudios de créditos y similares); Gastos de administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R46C3": {
+  "etiqueta": "Gastos financieros(chequeras, comisiones, estudios de créditos y similares); Costos y gastos de producción, administración y ventas",
+  "pregunta": "Gastos financieros(chequeras, comisiones, estudios de créditos y similares); Costos y gastos de producción, administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R35C1": {
+  "etiqueta": "Total costos y gastos de producción",
+  "pregunta": "Total costos y gastos de producción",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R35C2": {
+  "etiqueta": "Total gastos de administración y ventas",
+  "pregunta": "Total gastos de administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R35C3": {
+  "etiqueta": "Total costos y gastos de producción, administración y ventas",
+  "pregunta": "Total costos y gastos de producción, administración y ventas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C5R1C1": {
+  "etiqueta": "Cantidad de energía eléctrica comprada en Kwh",
+  "pregunta": "Cantidad de energía eléctrica comprada en Kwh",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C3R19C3": {
+  "etiqueta": "Valor de energía eléctrica comprada en miles de pesos",
+  "pregunta": "Valor de energía eléctrica comprada en miles de pesos",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C5R1C2": {
+  "etiqueta": "Cantidad de energía eléctrica autogenerada en Kwh",
+  "pregunta": "Cantidad de energía eléctrica autogenerada en Kwh",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C5R1C3": {
+  "etiqueta": "Cantidad de energía eléctrica vendida en Kwh",
+  "pregunta": "Cantidad de energía eléctrica vendida en Kwh",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C5R1C5": {
+  "etiqueta": "Valor de energía eléctrica vendida en miles de pesos",
+  "pregunta": "Valor de energía eléctrica vendida en miles de pesos",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C5R1C4": {
+  "etiqueta": "Total en cantidades de energía eléctrica consumida (Kwh)",
+  "pregunta": "Total en cantidades de energía eléctrica consumida (Kwh)",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C5R1C7": {
+  "etiqueta": "Cantidad de energía eléctrica cogenerada en Kwh",
+  "pregunta": "Cantidad de energía eléctrica cogenerada en Kwh",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C6R1C1": {
+  "etiqueta": "Valor de los inventarios del establecimiento de materias primas, materiales y empaques (a precio de costo sin incluir impuestos indirectos) a 31 de diciembre",
+  "pregunta": "Valor de los inventarios del establecimiento de materias primas, materiales y empaques (a precio de costo sin incluir impuestos indirectos) a 31 de diciembre",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C6R1C3": {
+  "etiqueta": "Valor de los inventarios del establecimiento de materias primas, materiales y empaques (a precio de costo sin incluir impuestos indirectos) a 31 de diciembre",
+  "pregunta": "Valor de los inventarios del establecimiento de materias primas, materiales y empaques (a precio de costo sin incluir impuestos indirectos) a 31 de diciembre",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C6R2C1": {
+  "etiqueta": "Valor de los inventarios del establecimiento de productos en proceso (a precio de costo sin incluir impuestos indirectos) a 31 de diciembre",
+  "pregunta": "Valor de los inventarios del establecimiento de productos en proceso (a precio de costo sin incluir impuestos indirectos) a 31 de diciembre",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C6R2C3": {
+  "etiqueta": "Valor de los inventarios del establecimiento de productos en proceso (a precio de costo sin incluir impuestos indirectos) a 31 de diciembre",
+  "pregunta": "Valor de los inventarios del establecimiento de productos en proceso (a precio de costo sin incluir impuestos indirectos) a 31 de diciembre",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C6R3C1": {
+  "etiqueta": "Valor de los inventarios del establecimiento de productos terminados (a precio de costo sin incluir impuestos indirectos) a 31 de diciembre",
+  "pregunta": "Valor de los inventarios del establecimiento de productos terminados (a precio de costo sin incluir impuestos indirectos) a 31 de diciembre",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C6R3C3": {
+  "etiqueta": "Valor de los inventarios del establecimiento de productos terminados (a precio de costo sin incluir impuestos indirectos) a 31 de diciembre",
+  "pregunta": "Valor de los inventarios del establecimiento de productos terminados (a precio de costo sin incluir impuestos indirectos) a 31 de diciembre",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C6R4C1": {
+  "etiqueta": "Valor de los inventarios del establecimiento de productos no fabricados por el establecimiento (a precio de costo sin incluir impuestos indirectos)a 31 de diciembre",
+  "pregunta": "Valor de los inventarios del establecimiento de productos no fabricados por el establecimiento (a precio de costo sin incluir impuestos indirectos)a 31 de diciembre",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C6R4C3": {
+  "etiqueta": "Valor de los inventarios del establecimiento de productos no fabricados por el establecimiento (a precio de costo sin incluir impuestos indirectos)a 31 de diciembre",
+  "pregunta": "Valor de los inventarios del establecimiento de productos no fabricados por el establecimiento (a precio de costo sin incluir impuestos indirectos)a 31 de diciembre",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C6R5C1": {
+  "etiqueta": "Valor total de los inventarios del establecimiento de materia prima, productos en proceso, terminado y productos no fabricados por el establecimiento (a precio de costo sin incluir impuestos indirectos)a 31 de diciembre",
+  "pregunta": "Valor total de los inventarios del establecimiento de materia prima, productos en proceso, terminado y productos no fabricados por el establecimiento (a precio de costo sin incluir impuestos indirectos)a 31 de diciembre",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C6R5C3": {
+  "etiqueta": "Valor total de los inventarios del establecimiento de materia prima, productos en proceso, terminado y productos no fabricados por el establecimiento (a precio de costo sin incluir impuestos indirectos)a 31 de diciembre",
+  "pregunta": "Valor total de los inventarios del establecimiento de materia prima, productos en proceso, terminado y productos no fabricados por el establecimiento (a precio de costo sin incluir impuestos indirectos)a 31 de diciembre",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7R1C1": {
+  "etiqueta": "Valor en libros (a 31 de diciembre) de terrenos",
+  "pregunta": "Valor en libros (a 31 de diciembre) de terrenos",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7R5C1": {
+  "etiqueta": "Valor en libros (a 31 de diciembre ) de edificios y estructuras",
+  "pregunta": "Valor en libros (a 31 de diciembre ) de edificios y estructuras",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7R6C1": {
+  "etiqueta": "Valor en libros (a 31 de diciembre ) de maquinaria y equipo Industrial",
+  "pregunta": "Valor en libros (a 31 de diciembre ) de maquinaria y equipo Industrial",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C4R1": {
+  "etiqueta": "Valor en libros (a 31 de diciembre ) de equipo de informática y comunicación",
+  "pregunta": "Valor en libros (a 31 de diciembre ) de equipo de informática y comunicación",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C5R1": {
+  "etiqueta": "Valor en libros (a 31 de diciembre ) de equipos de oficina",
+  "pregunta": "Valor en libros (a 31 de diciembre ) de equipos de oficina",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7R8C1": {
+  "etiqueta": "Valor en libros (a 31 de diciembre) de equipo de transporte",
+  "pregunta": "Valor en libros (a 31 de diciembre) de equipo de transporte",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7R10C1": {
+  "etiqueta": "Total de valor en libros (a 31 de diciembre)",
+  "pregunta": "Total de valor en libros (a 31 de diciembre)",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C2R2": {
+  "etiqueta": "Valor de compra de activos nuevos en el año; edificios y estructuras",
+  "pregunta": "Valor de compra de activos nuevos en el año; edificios y estructuras",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C3R2": {
+  "etiqueta": "Valor de compra de activos nuevos en el año; maquinaria y equipo Industrial",
+  "pregunta": "Valor de compra de activos nuevos en el año; maquinaria y equipo Industrial",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C4R2": {
+  "etiqueta": "Valor de compra de activos nuevos en el año; equipo de informática y comunicación",
+  "pregunta": "Valor de compra de activos nuevos en el año; equipo de informática y comunicación",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C5R2": {
+  "etiqueta": "Valor de compra de activos nuevos en el año; equipos de oficina",
+  "pregunta": "Valor de compra de activos nuevos en el año; equipos de oficina",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C6R2": {
+  "etiqueta": "Valor de compra de activos nuevos en el año; equipo de transporte",
+  "pregunta": "Valor de compra de activos nuevos en el año; equipo de transporte",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C7R2": {
+  "etiqueta": "Total de valor de compra de activos nuevos en el año",
+  "pregunta": "Total de valor de compra de activos nuevos en el año",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C1R3": {
+  "etiqueta": "Valor de compra de activos usados en el año; terrenos",
+  "pregunta": "Valor de compra de activos usados en el año; terrenos",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C2R3": {
+  "etiqueta": "Valor de compra de activos usados en el año; edificios y estructuras",
+  "pregunta": "Valor de compra de activos usados en el año; edificios y estructuras",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C3R3": {
+  "etiqueta": "Valor de compra de activos usados en el año; maquinaria y equipo Industrial",
+  "pregunta": "Valor de compra de activos usados en el año; maquinaria y equipo Industrial",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C4R3": {
+  "etiqueta": "Valor de compra de activos usados en el año; equipo de informática y comunicación",
+  "pregunta": "Valor de compra de activos usados en el año; equipo de informática y comunicación",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C5R3": {
+  "etiqueta": "Valor de compra de activos usados en el año; equipos de oficina",
+  "pregunta": "Valor de compra de activos usados en el año; equipos de oficina",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C6R3": {
+  "etiqueta": "Valor de compra de activos usados en el año; equipo de transporte",
+  "pregunta": "Valor de compra de activos usados en el año; equipo de transporte",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C7R3": {
+  "etiqueta": "Total de valor de compra de activos usados en el año",
+  "pregunta": "Total de valor de compra de activos usados en el año",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C2R4": {
+  "etiqueta": "Valor de activos producidos o construidos para uso propio; edificios y estructuras",
+  "pregunta": "Valor de activos producidos o construidos para uso propio; edificios y estructuras",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C3R4": {
+  "etiqueta": "Valor de activos producidos o construidos para uso propio; maquinaria y equipo Industrial",
+  "pregunta": "Valor de activos producidos o construidos para uso propio; maquinaria y equipo Industrial",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C4R4": {
+  "etiqueta": "Valor de activos producidos o construidos para uso propio; equipo de informática y comunicación",
+  "pregunta": "Valor de activos producidos o construidos para uso propio; equipo de informática y comunicación",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C5R4": {
+  "etiqueta": "Valor de activos producidos o construidos para uso propio; equipos de oficina",
+  "pregunta": "Valor de activos producidos o construidos para uso propio; equipos de oficina",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C6R4": {
+  "etiqueta": "Valor de activos producidos o construidos para uso propio; equipo de transporte",
+  "pregunta": "Valor de activos producidos o construidos para uso propio; equipo de transporte",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C7R4": {
+  "etiqueta": "Total valor de activos producidos o construidos para uso propio",
+  "pregunta": "Total valor de activos producidos o construidos para uso propio",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C2R5": {
+  "etiqueta": "Valor causado en el año por las construcciones en curso; edificios y estructuras",
+  "pregunta": "Valor causado en el año por las construcciones en curso; edificios y estructuras",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C7R5": {
+  "etiqueta": "Total valor causado en el año por las construcciones en curso",
+  "pregunta": "Total valor causado en el año por las construcciones en curso",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C1R19": {
+  "etiqueta": "Leasing Financiero; terrenos",
+  "pregunta": "Leasing Financiero; terrenos",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C2R19": {
+  "etiqueta": "Leasing Financiero; edificios y estructuras",
+  "pregunta": "Leasing Financiero; edificios y estructuras",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C3R19": {
+  "etiqueta": "Leasing Financiero; maquinaria y equipo Industrial",
+  "pregunta": "Leasing Financiero; maquinaria y equipo Industrial",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C4R19": {
+  "etiqueta": "Leasing Financiero; equipo de informática y comunicación",
+  "pregunta": "Leasing Financiero; equipo de informática y comunicación",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C5R19": {
+  "etiqueta": "Leasing Financiero; equipos de oficina",
+  "pregunta": "Leasing Financiero; equipos de oficina",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C6R19": {
+  "etiqueta": "Leasing Financiero; equipo de transporte",
+  "pregunta": "Leasing Financiero; equipo de transporte",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C7R19": {
+  "etiqueta": "Leasing Financiero",
+  "pregunta": "Leasing Financiero",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C3R6": {
+  "etiqueta": "Valor causado en el año por la maquinaria en montaje; maquinaria y equipo Industrial",
+  "pregunta": "Valor causado en el año por la maquinaria en montaje; maquinaria y equipo Industrial",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C4R6": {
+  "etiqueta": "Valor causado en el año por la maquinaria en montaje; equipo de informática y comunicación",
+  "pregunta": "Valor causado en el año por la maquinaria en montaje; equipo de informática y comunicación",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C5R6": {
+  "etiqueta": "Valor causado en el año por la maquinaria en montaje; equipos de oficina",
+  "pregunta": "Valor causado en el año por la maquinaria en montaje; equipos de oficina",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C7R6": {
+  "etiqueta": "Total valor causado en el año por la maquinaria en montaje",
+  "pregunta": "Total valor causado en el año por la maquinaria en montaje",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C2R7": {
+  "etiqueta": "Valor causado por mejoras y reformas a los activos ; edificios y estructuras",
+  "pregunta": "Valor causado por mejoras y reformas a los activos ; edificios y estructuras",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C3R7": {
+  "etiqueta": "Valor causado por mejoras y reformas a los activos ; maquinaria y equipo Industrial",
+  "pregunta": "Valor causado por mejoras y reformas a los activos ; maquinaria y equipo Industrial",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C4R7": {
+  "etiqueta": "Valor causado por mejoras y reformas a los activos; equipo de informática y comunicación",
+  "pregunta": "Valor causado por mejoras y reformas a los activos; equipo de informática y comunicación",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C5R7": {
+  "etiqueta": "Valor causado por mejoras y reformas a los activos; equipos de oficina",
+  "pregunta": "Valor causado por mejoras y reformas a los activos; equipos de oficina",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C6R7": {
+  "etiqueta": "Valor causado por mejoras y reformas a los activos; equipo de transporte",
+  "pregunta": "Valor causado por mejoras y reformas a los activos ; equipo de transporte",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C7R7": {
+  "etiqueta": "Total valor causado por mejoras y reformas a los activos",
+  "pregunta": "Total valor causado por mejoras y reformas a los activos",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7R1C2": {
+  "etiqueta": "Total inversiones en activos fijos; terrenos",
+  "pregunta": "Total inversiones en activos fijos; terrenos",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7R5C2": {
+  "etiqueta": "Total inversiones en activos fijos; edificios y estructuras",
+  "pregunta": "Total inversiones en activos fijos; edificios y estructuras",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7R6C2": {
+  "etiqueta": "Total inversiones en activos fijos; maquinaria y equipo Industrial",
+  "pregunta": "Total inversiones en activos fijos; maquinaria y equipo Industrial",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C4R8": {
+  "etiqueta": "Total inversiones en activos fijos; equipo de informática y comunicación",
+  "pregunta": "Total inversiones en activos fijos; equipo de informática y comunicación",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C5R8": {
+  "etiqueta": "Total inversiones en activos fijos; equipos de oficina",
+  "pregunta": "Total inversiones en activos fijos; equipos de oficina",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7R8C2": {
+  "etiqueta": "Total inversiones en activos fijos; equipo de transporte",
+  "pregunta": "Total inversiones en activos fijos; equipo de transporte",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7R10C2": {
+  "etiqueta": "Total inversiones en activos fijos",
+  "pregunta": "Total inversiones en activos fijos",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7R1C4": {
+  "etiqueta": "Valorización causadas en el año; terrenos",
+  "pregunta": "Valorización causadas en el año; terrenos",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7R5C4": {
+  "etiqueta": "Valorización causadas en el año; edificios y estructuras",
+  "pregunta": "Valorización causadas en el año; edificios y estructuras",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7R6C4": {
+  "etiqueta": "Valorización causadas en el año; maquinaria y equipo Industrial",
+  "pregunta": "Valorización causadas en el año; maquinaria y equipo Industrial",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C4R10": {
+  "etiqueta": "Valorización causadas en el año; equipo de informática y comunicación",
+  "pregunta": "Valorización causadas en el año; equipo de informática y comunicación",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C5R10": {
+  "etiqueta": "Valorización causadas en el año; equipos de oficina",
+  "pregunta": "Valorización causadas en el año; equipos de oficina",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7R8C4": {
+  "etiqueta": "Valorización causadas en el año; equipo de transporte",
+  "pregunta": "Valorización causadas en el año; equipo de transporte",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7R10C4": {
+  "etiqueta": "Total valorización causadas en el año",
+  "pregunta": "Total valorización causadas en el año",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C2R11": {
+  "etiqueta": "Retiros causados; edificios y estructuras",
+  "pregunta": "Retiros causados; edificios y estructuras",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C3R11": {
+  "etiqueta": "Retiros causados; maquinaria y equipo Industrial",
+  "pregunta": "Retiros causados; maquinaria y equipo Industrial",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C4R11": {
+  "etiqueta": "Retiros causados; equipo de informática y comunicación",
+  "pregunta": "Retiros causados; equipo de informática y comunicación",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C5R11": {
+  "etiqueta": "Retiros causados; equipos de oficina",
+  "pregunta": "Retiros causados; equipos de oficina",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C6R11": {
+  "etiqueta": "Retiros causados; equipo de transporte",
+  "pregunta": "Retiros causados; equipo de transporte",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C7R11": {
+  "etiqueta": "Total retiros causados",
+  "pregunta": "Total retiros causados",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C1R12": {
+  "etiqueta": "Valor en libros de los activos vendidos; terrenos",
+  "pregunta": "Valor en libros de los activos vendidos; terrenos",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C2R12": {
+  "etiqueta": "Valor en libros de los activos vendidos; edificios y estructuras",
+  "pregunta": "Valor en libros de los activos vendidos; edificios y estructuras",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C3R12": {
+  "etiqueta": "Valor en libros de los activos vendidos; maquinaria y equipo Industrial",
+  "pregunta": "Valor en libros de los activos vendidos; maquinaria y equipo Industrial",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C4R12": {
+  "etiqueta": "Valor en libros de los activos vendidos; equipo de informática y comunicación",
+  "pregunta": "Valor en libros de los activos vendidos; equipo de informática y comunicación",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C5R12": {
+  "etiqueta": "Valor en libros de los activos vendidos; equipos de oficina",
+  "pregunta": "Valor en libros de los activos vendidos; equipos de oficina",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C6R12": {
+  "etiqueta": "Valor en libros de los activos vendidos; equipo de transporte",
+  "pregunta": "Valor en libros de los activos vendidos; equipo de transporte",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C7R12": {
+  "etiqueta": "Total valor en libros de los activos vendidos",
+  "pregunta": "Total valor en libros de los activos vendidos",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C2R13": {
+  "etiqueta": "Depreciación acumulada de los activos vendidos; edificios y estructuras",
+  "pregunta": "Depreciación acumulada de los activos vendidos; edificios y estructuras",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C3R13": {
+  "etiqueta": "Depreciación acumulada de los activos vendidos; maquinaria y equipo Industrial",
+  "pregunta": "Depreciación acumulada de los activos vendidos; maquinaria y equipo Industrial",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C4R13": {
+  "etiqueta": "Depreciación acumulada de los activos vendidos; equipo de informática y comunicación",
+  "pregunta": "Depreciación acumulada de los activos vendidos; equipo de informática y comunicación",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C5R13": {
+  "etiqueta": "Depreciación acumulada de los activos vendidos; equipos de oficina",
+  "pregunta": "Depreciación acumulada de los activos vendidos; equipos de oficina",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C6R13": {
+  "etiqueta": "Depreciación acumulada de los activos vendidos; equipo de transporte",
+  "pregunta": "Depreciación acumulada de los activos vendidos; equipo de transporte",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C7R13": {
+  "etiqueta": "Total depreciación acumulada de los activos vendidos",
+  "pregunta": "Total depreciación acumulada de los activos vendidos",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7R1C6": {
+  "etiqueta": "Valor en libros (a 31 de diciembre) de terrenos",
+  "pregunta": "Valor en libros (a 31 de diciembre) de terrenos",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7R5C6": {
+  "etiqueta": "Valor en libros (a 31 de diciembre) de edificios y estructuras",
+  "pregunta": "Valor en libros (a 31 de diciembre) de edificios y estructuras",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7R6C6": {
+  "etiqueta": "Valor en libros (a 31 de diciembre) de maquinaria y equipo Industrial",
+  "pregunta": "Valor en libros (a 31 de diciembre) de maquinaria y equipo Industrial",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C4R14": {
+  "etiqueta": "Valor en libros (a 31 de diciembre) de equipo de informática y comunicación",
+  "pregunta": "Valor en libros (a 31 de diciembre) de equipo de informática y comunicación",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C5R14": {
+  "etiqueta": "Valor en libros (a 31 de diciembre ) de equipos de oficina",
+  "pregunta": "Valor en libros (a 31 de diciembre ) de equipos de oficina",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7R8C6": {
+  "etiqueta": "Valor en libros (a 31 de diciembre ) de equipo de transporte",
+  "pregunta": "Valor en libros (a 31 de diciembre ) de equipo de transporte",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7R10C6": {
+  "etiqueta": "Total de valor en libros (a 31 de diciembre)",
+  "pregunta": "Total de valor en libros (a 31 de diciembre)",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7R5C7": {
+  "etiqueta": "Depreciación causada en el año; edificios y estructuras",
+  "pregunta": "Depreciación causada en el año; edificios y estructuras",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7R6C7": {
+  "etiqueta": "Depreciación causada en el año; maquinaria y equipo Industrial",
+  "pregunta": "Depreciación causada en el año; maquinaria y equipo Industrial",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C4R15": {
+  "etiqueta": "Depreciación causada en el año; equipo de informática y comunicación",
+  "pregunta": "Depreciación causada en el año; equipo de informática y comunicación",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7C5R15": {
+  "etiqueta": "Depreciación causada en el año; equipos de oficina",
+  "pregunta": "Depreciación causada en el año; equipos de oficina",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7R8C7": {
+  "etiqueta": "Depreciación causada en el año; equipo de transporte",
+  "pregunta": "Depreciación causada en el año; equipo de transporte",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7R10C7": {
+  "etiqueta": "Total depreciación causada en el año",
+  "pregunta": "Total depreciación causada en el año",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7R16C1": {
+  "etiqueta": "Desvalorizaciones causadas en el año; terrenos",
+  "pregunta": "Desvalorizaciones causadas en el año; terrenos",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7R16C2": {
+  "etiqueta": "Desvalorizaciones causadas en el año; edificios y estructuras",
+  "pregunta": "Desvalorizaciones causadas en el año; edificios y estructuras",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7R16C3": {
+  "etiqueta": "Desvalorizaciones causadas en el año; maquinaria y equipo Industrial",
+  "pregunta": "Desvalorizaciones causadas en el año; maquinaria y equipo Industrial",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7R16C4": {
+  "etiqueta": "Desvalorizaciones causadas en el año; equipo de informática y comunicación",
+  "pregunta": "Desvalorizaciones causadas en el año; equipo de informática y comunicación",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7R16C5": {
+  "etiqueta": "Desvalorizaciones causadas en el año; equipos de oficina",
+  "pregunta": "Desvalorizaciones causadas en el año; equipos de oficina",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7R16C6": {
+  "etiqueta": "Desvalorizaciones causadas en el año; equipo de transporte",
+  "pregunta": "Desvalorizaciones causadas en el año; equipo de transporte",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7R16C7": {
+  "etiqueta": "Total desvalorizaciones causadas en el año",
+  "pregunta": "Total desvalorizaciones causadas en el año",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7R17C2": {
+  "etiqueta": "Valor de los activos trasladados en el año a otros establecimientos de la empresa; edificios y estructuras",
+  "pregunta": "Valor de los activos trasladados en el año a otros establecimientos de la empresa; edificios y estructuras",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7R17C3": {
+  "etiqueta": "Valor de los activos trasladados en el año a otros establecimientos de la empresa; maquinaria y equipo Industrial",
+  "pregunta": "Valor de los activos trasladados en el año a otros establecimientos de la empresa; maquinaria y equipo Industrial",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7R17C4": {
+  "etiqueta": "Valor de los activos trasladados en el año a otros establecimientos de la empresa; equipo de informática y comunicación",
+  "pregunta": "Valor de los activos trasladados en el año a otros establecimientos de la empresa; equipo de informática y comunicación",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7R17C5": {
+  "etiqueta": "Valor de los activos trasladados en el año a otros establecimientos de la empresa; equipos de oficina",
+  "pregunta": "Valor de los activos trasladados en el año a otros establecimientos de la empresa; equipos de oficina",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7R17C6": {
+  "etiqueta": "Valor de los activos trasladados en el año a otros establecimientos de la empresa; equipo de transporte",
+  "pregunta": "Valor de los activos trasladados en el año a otros establecimientos de la empresa; equipo de transporte",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7R17C7": {
+  "etiqueta": "Total valor de los activos trasladados en el año a otros establecimientos de la empresa",
+  "pregunta": "Total valor de los activos trasladados en el año a otros establecimientos de la empresa",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7R18C2": {
+  "etiqueta": "Valor de los activos recibidos en el año por traslado de otros establecimientos de la empresa; edificios y estructuras",
+  "pregunta": "Valor de los activos recibidos en el año por traslado de otros establecimientos de la empresa; edificios y estructuras",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7R18C3": {
+  "etiqueta": "Valor de los activos recibidos en el año por traslado de otros establecimientos de la empresa; maquinaria y equipo Industrial",
+  "pregunta": "Valor de los activos recibidos en el año por traslado de otros establecimientos de la empresa; maquinaria y equipo Industrial",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7R18C4": {
+  "etiqueta": "Valor de los activos recibidos en el año por traslado de otros establecimientos de la empresa; equipo de informática y comunicación",
+  "pregunta": "Valor de los activos recibidos en el año por traslado de otros establecimientos de la empresa; equipo de informática y comunicación",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7R18C5": {
+  "etiqueta": "Valor de los activos recibidos en el año por traslado de otros establecimientos de la empresa; equipos de oficina",
+  "pregunta": "Valor de los activos recibidos en el año por traslado de otros establecimientos de la empresa; equipos de oficina",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7R18C6": {
+  "etiqueta": "Valor de los activos recibidos en el año por traslado de otros establecimientos de la empresa; equipo de transporte",
+  "pregunta": "Valor de los activos recibidos en el año por traslado de otros establecimientos de la empresa; equipo de transporte",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C7R18C7": {
+  "etiqueta": "Total valor de los activos recibidos en el año por traslado de otros establecimientos de la empresa",
+  "pregunta": "Valor de los activos recibidos en el año por traslado de otros establecimientos de la empresa; equipo de transporte",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "C2R5CERT": {
+  "etiqueta": "Ingresos por cert causados en el año",
+  "pregunta": "Ingresos por cert causados en el año",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "PETROC": {
+  "etiqueta": "Cantidad de petróleo crudo consumido como energético",
+  "pregunta": "Cantidad de petróleo crudo consumido como energético",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "PETROV": {
+  "etiqueta": "Valor de petróleo crudo consumido como energético",
+  "pregunta": "Valor de petróleo crudo consumido como energético",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "PETROAUTO": {
+  "etiqueta": "Porcentaje de petróleo crudo consumido como energético para autogeneración",
+  "pregunta": "Porcentaje de petróleo crudo consumido como energético para autogeneración",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "PETROCO": {
+  "etiqueta": "Porcentaje de petróleo crudo consumido como energético para cogeneración",
+  "pregunta": "Porcentaje de petróleo crudo consumido como energético para cogeneración",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "DIESC": {
+  "etiqueta": "Cantidad de Diesel Oil - ACPM consumido como energético",
+  "pregunta": "Cantidad de Diesel Oil - ACPM consumido como energético",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "DIESV": {
+  "etiqueta": "Valor de Diesel Oil - ACPM consumido como energético",
+  "pregunta": "Valor de Diesel Oil - ACPM consumido como energético",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "DIESAUTO": {
+  "etiqueta": "Porcentaje de Diesel Oil - ACPM consumido como energético para autogeneración",
+  "pregunta": "Porcentaje de Diesel Oil - ACPM consumido como energético para autogeneración",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "DIESCO": {
+  "etiqueta": "Porcentaje de Diesel Oil - ACPM consumido como energético para cogeneración",
+  "pregunta": "Porcentaje de Diesel Oil - ACPM consumido como energético para cogeneración",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "FUELC": {
+  "etiqueta": "Cantidad de Fuel Oil consumido como energético",
+  "pregunta": "Cantidad de Fuel Oil consumido como energético",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "FUELV": {
+  "etiqueta": "Valor de Fuel Oil consumido como energético",
+  "pregunta": "Valor de Fuel Oil consumido como energético",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "FUELAUTO": {
+  "etiqueta": "Porcentaje de Fuel Oil consumido como energético para autogeneración",
+  "pregunta": "Porcentaje de Fuel Oil consumido como energético para autogeneración",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "FUELCO": {
+  "etiqueta": "Porcentaje de Fuel Oil consumido como energético para cogeneración",
+  "pregunta": "Porcentaje de Fuel Oil consumido como energético para cogeneración",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "GASOLC": {
+  "etiqueta": "Cantidad de Gasolina consumido como energético",
+  "pregunta": "Cantidad de Gasolina consumido como energético",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "GASOLV": {
+  "etiqueta": "Valor de Gasolina consumido como energético",
+  "pregunta": "Valor de Gasolina consumido como energético",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "GASOLAUTO": {
+  "etiqueta": "Porcentaje de Gasolina consumido como energético para autogeneración",
+  "pregunta": "Porcentaje de Gasolina consumido como energético para autogeneración",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "GASOLCO": {
+  "etiqueta": "Porcentaje de Gasolina consumido como energético para cogeneración",
+  "pregunta": "Porcentaje de Gasolina consumido como energético para cogeneración",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "KEROSC": {
+  "etiqueta": "Cantidad de Querosén consumido como energético",
+  "pregunta": "Cantidad de Querosén consumido como energético",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "KEROSV": {
+  "etiqueta": "Valor de Querosén consumido como energético",
+  "pregunta": "Valor de Querosén consumido como energético",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "KEROSAUTO": {
+  "etiqueta": "Porcentaje de Querosén consumido como energético para autogeneración",
+  "pregunta": "Porcentaje de Querosén consumido como energético para autogeneración",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "KEROSCO": {
+  "etiqueta": "Porcentaje de Querosén consumido como energético para cogeneración",
+  "pregunta": "Porcentaje de Querosén consumido como energético para cogeneración",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "GASNC": {
+  "etiqueta": "Cantidad de Gas natural consumido como energético",
+  "pregunta": "Cantidad de Gas natural consumido como energético",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "GASNV": {
+  "etiqueta": "Valor de Gas natural consumido como energético",
+  "pregunta": "Valor de Gas natural consumido como energético",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "GASNAUTO": {
+  "etiqueta": "Porcentaje de Gas natural consumido como energético para autogeneración",
+  "pregunta": "Porcentaje de Gas natural consumido como energético para autogeneración",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "GASNCO": {
+  "etiqueta": "Porcentaje de Gas natural consumido como energético para cogeneración",
+  "pregunta": "Porcentaje de Gas natural consumido como energético para cogeneración",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "GASPC": {
+  "etiqueta": "Cantidad de Gas propano - GLP consumido como energético",
+  "pregunta": "Cantidad de Gas propano - GLP consumido como energético",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "GASPV": {
+  "etiqueta": "Valor de Gas propano - GLP consumido como energético",
+  "pregunta": "Valor de Gas propano - GLP consumido como energético",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "GASPAUTO": {
+  "etiqueta": "Porcentaje de Gas propano - GLP consumido como energético para autogeneración",
+  "pregunta": "Porcentaje de Gas propano - GLP consumido como energético para autogeneración",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "GASPCO": {
+  "etiqueta": "Porcentaje de Gas propano - GLP consumido como energético para cogeneración",
+  "pregunta": "Porcentaje de Gas propano - GLP consumido como energético para cogeneración",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "CARBONMC": {
+  "etiqueta": "Cantidad de Carbón mineral consumido como energético",
+  "pregunta": "Cantidad de Carbón mineral consumido como energético",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "CARBONMV": {
+  "etiqueta": "Valor de Carbón mineral consumido como energético",
+  "pregunta": "Valor de Carbón mineral consumido como energético",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "CARBONMAUTO": {
+  "etiqueta": "Porcentaje de Carbón mineral consumido como energético para autogeneración",
+  "pregunta": "Porcentaje de Carbón mineral consumido como energético para autogeneración",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "CARBONMCO": {
+  "etiqueta": "Porcentaje de Carbón mineral consumido como energético para cogeneración",
+  "pregunta": "Porcentaje de Carbón mineral consumido como energético para cogeneración",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "CARBONCC": {
+  "etiqueta": "Cantidad de Carbón coque consumido como energético",
+  "pregunta": "Cantidad de Carbón coque consumido como energético",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "CARBONCV": {
+  "etiqueta": "Valor de Carbón coque consumido como energético",
+  "pregunta": "Valor de Carbón coque consumido como energético",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "CARBONCAUTO": {
+  "etiqueta": "Porcentaje de Carbón coque consumido como energético para autogeneración",
+  "pregunta": "Porcentaje de Carbón coque consumido como energético para autogeneración",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "CARBONCCO": {
+  "etiqueta": "Porcentaje de Carbón coque consumido como energético para cogeneración",
+  "pregunta": "Porcentaje de Carbón coque consumido como energético para cogeneración",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "CARBONVC": {
+  "etiqueta": "Cantidad de Carbón vegetal consumido como energético",
+  "pregunta": "Cantidad de Carbón vegetal consumido como energético",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "CARBONVV": {
+  "etiqueta": "Valor de Carbón vegetal consumido como energético",
+  "pregunta": "Valor de Carbón vegetal consumido como energético",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "CARBONVAUTO": {
+  "etiqueta": "Porcentaje de Carbón vegetal consumido como energético para autogeneración",
+  "pregunta": "Porcentaje de Carbón vegetal consumido como energético para autogeneración",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "CARBONVCO": {
+  "etiqueta": "Porcentaje de Carbón vegetal consumido como energético para cogeneración",
+  "pregunta": "Porcentaje de Carbón vegetal consumido como energético para cogeneración",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "LENAC": {
+  "etiqueta": "Cantidad de Leña consumido como energético",
+  "pregunta": "Cantidad de Leña consumido como energético",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "LENAV": {
+  "etiqueta": "Valor de Leña consumido como energético",
+  "pregunta": "Valor de Leña consumido como energético",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "LENAAUTO": {
+  "etiqueta": "Porcentaje de Leña consumido como energético para autogeneración",
+  "pregunta": "Porcentaje de Leña consumido como energético para autogeneración",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "LENACO": {
+  "etiqueta": "Porcentaje de Leña consumido como energético para cogeneración",
+  "pregunta": "Porcentaje de Leña consumido como energético para cogeneración",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "BAGAC": {
+  "etiqueta": "Cantidad de Bagazo de caña consumido como energético",
+  "pregunta": "Cantidad de Bagazo de caña consumido como energético",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "BAGAV": {
+  "etiqueta": "Valor de Bagazo de caña consumido como energético",
+  "pregunta": "Valor de Bagazo de caña consumido como energético",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "BAGAAUTO": {
+  "etiqueta": "Porcentaje de Bagazo de caña consumido como energético para autogeneración",
+  "pregunta": "Porcentaje de Bagazo de caña consumido como energético para autogeneración",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "BAGACO": {
+  "etiqueta": "Porcentaje de Bagazo de caña consumido como energético para cogeneración",
+  "pregunta": "Porcentaje de Bagazo de caña consumido como energético para cogeneración",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "CASCAC": {
+  "etiqueta": "Cantidad de Cascarilla de arroz consumido como energético",
+  "pregunta": "Cantidad de Cascarilla de arroz consumido como energético",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "CASCAV": {
+  "etiqueta": "Valor de Cascarilla de arroz consumido como energético",
+  "pregunta": "Valor de Cascarilla de arroz consumido como energético",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "CASCAAUTO": {
+  "etiqueta": "Porcentaje de Cascarilla de arroz consumido como energético para autogeneración",
+  "pregunta": "Porcentaje de Cascarilla de arroz consumido como energético para autogeneración",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "CASCACO": {
+  "etiqueta": "Porcentaje de Cascarilla de arroz consumido como energético para cogeneración",
+  "pregunta": "Porcentaje de Cascarilla de arroz consumido como energético para cogeneración",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "CASCAFC": {
+  "etiqueta": "Cantidad de Cascarilla de café consumido como energético",
+  "pregunta": "Cantidad de Cascarilla de café consumido como energético",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "CASCAFV": {
+  "etiqueta": "Valor de Cascarilla de café consumido como energético",
+  "pregunta": "Valor de Cascarilla de café consumido como energético",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "CASCAFAUTO": {
+  "etiqueta": "Porcentaje de Cascarilla de café consumido como energético para autogeneración",
+  "pregunta": "Porcentaje de Cascarilla de café consumido como energético para autogeneración",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "CASCAFCO": {
+  "etiqueta": "Porcentaje de Cascarilla de café consumido como energético para cogeneración",
+  "pregunta": "Porcentaje de Cascarilla de café consumido como energético para cogeneración",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "RESPALC": {
+  "etiqueta": "Cantidad de Residuos de palma consumido como energético",
+  "pregunta": "Cantidad de Residuos de palma consumido como energético",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "RESPALV": {
+  "etiqueta": "Valor de Residuos de palma consumido como energético",
+  "pregunta": "Valor de Residuos de palma consumido como energético",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "RESPALAUTO": {
+  "etiqueta": "Porcentaje de Residuos de palma consumido como energético para autogeneración",
+  "pregunta": "Porcentaje de Residuos de palma consumido como energético para autogeneración",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "RESPALCO": {
+  "etiqueta": "Porcentaje de Residuos de palma consumido como energético para cogeneración",
+  "pregunta": "Porcentaje de Residuos de palma consumido como energético para cogeneración",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "TOTALV": {
+  "etiqueta": "Total valor de otros energéticos consumidos",
+  "pregunta": "Total valor de otros energéticos consumidos",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "PRODBR2": {
+  "etiqueta": "Valor de la producción bruta",
+  "pregunta": "Valor de la producción bruta",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "PRODBIND": {
+  "etiqueta": "Valor de la producción industrial",
+  "pregunta": "Valor de la producción industrial",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "CONSMATE": {
+  "etiqueta": "Valor consumo de materias primas, materiales y empaques",
+  "pregunta": "Valor consumo de materias primas, materiales y empaques",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "CONSIN": {
+  "etiqueta": "Valor consumo intermedio sin incluir materias primas",
+  "pregunta": "Valor consumo intermedio sin incluir materias primas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "CONSIN2": {
+  "etiqueta": "Total valor consumo intermedio",
+  "pregunta": "Total valor consumo intermedio",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "PRESSPER": {
+  "etiqueta": "Valor de prestaciones de empleados permanentes",
+  "pregunta": "Valor de prestaciones de empleados permanentes",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "SALARPER": {
+  "etiqueta": "Valor salarios de empleados permanentes",
+  "pregunta": "Valor salarios de empleados permanentes",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "PRESPYTE": {
+  "etiqueta": "Valor prestaciones de empleados permanente y temporal directo",
+  "pregunta": "Valor prestaciones de empleados permanente y temporal directo",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "SALPEYTE": {
+  "etiqueta": "Valor salario empleados permanente y temporal",
+  "pregunta": "Valor salario empleados permanente y temporal",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "EELEC": {
+  "etiqueta": "Cantidad de energía eléctrica consumida en kwh",
+  "pregunta": "Cantidad de energía eléctrica consumida en kwh",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "REMUTEMP": {
+  "etiqueta": "Remuneración de empleados permanentes",
+  "pregunta": "Remuneración de empleados permanentes",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "INVEBRTA": {
+  "etiqueta": "Valor de la Inversión bruta total en el año",
+  "pregunta": "Valor de la Inversión bruta total en el año",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "ACTIVFI": {
+  "etiqueta": "Valor de activos fijos en el año",
+  "pregunta": "Valor de activos fijos en el año",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "DEPRECIA": {
+  "etiqueta": "Valor depreciación",
+  "pregunta": "Valor depreciación",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "PERTOTAL": {
+  "etiqueta": "Número de empleados permanente + propietarios + personal temporal directo + temporal empresas",
+  "pregunta": "Número de empleados permanente + propietarios + personal temporal directo + temporal empresas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "PERTEM3": {
+  "etiqueta": "Número de empleados temporal directo",
+  "pregunta": "Número de empleados temporal directo",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "PERSOCU": {
+  "etiqueta": "Número de empleados permanentes",
+  "pregunta": "Número de empleados permanentes",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "PERSOESC": {
+  "etiqueta": "Número de empleados permanente + propietarios",
+  "pregunta": "Número de empleados permanente + propietarios",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "PPERYTEM": {
+  "etiqueta": "Número de empleados permanente y temporal directo",
+  "pregunta": "Número de empleados permanente y temporal directo",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "PERAPREN": {
+  "etiqueta": "Prestaciones del personal aprendiz",
+  "pregunta": "Prestaciones del personal aprendiz",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "SALAPREN": {
+  "etiqueta": "Salarios del personal aprendiz",
+  "pregunta": "Salarios del personal aprendiz",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "VALAGRI": {
+  "etiqueta": "Valor agregado",
+  "pregunta": "Valor agregado",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "VALORCOM": {
+  "etiqueta": "Valor de materias primas, materiales y empaques compradas",
+  "pregunta": "Valor de materias primas, materiales y empaques compradas",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "VALORCX": {
+  "etiqueta": "Valor de compras de materias primas de origen extranjero",
+  "pregunta": "Valor de compras de materias primas de origen extranjero",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "PORCVT": {
+  "etiqueta": "Valor de ventas al exterior",
+  "pregunta": "Valor de ventas al exterior",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ },
+ "VALORVEN": {
+  "etiqueta": "Valor ventas totales (a precio de venta en fábrica, sin impuestos indirectos)",
+  "pregunta": "Valor ventas totales (a precio de venta en fábrica, sin impuestos indirectos)",
+  "categorias": {},
+  "modulos": [
+   "Base Datos - EAM - 2024.NSDstat"
+  ]
+ }
+}

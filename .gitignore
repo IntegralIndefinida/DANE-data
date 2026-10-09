@@ -1,0 +1,14 @@
+__pycache__/
+.venv/
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+# microdatos: no se versionan
+/data/
+*.csv
+*.CSV
+*.txt
+!LEEME.txt
+*.dta
+*.zip
+*.parquet

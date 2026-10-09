@@ -1,0 +1,10 @@
+# Finales de línea correctos para cada sistema (también dentro del zip de releases)
+*.bat      text eol=crlf
+*.sh       text eol=lf
+*.command  text eol=lf
+
+# Lo que NO va en el zip para estudiantes (git archive)
+tests/           export-ignore
+.github/         export-ignore
+.gitignore       export-ignore
+.gitattributes   export-ignore
