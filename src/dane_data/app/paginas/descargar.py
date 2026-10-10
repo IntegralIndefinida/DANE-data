@@ -51,14 +51,15 @@ else:
     tiene = set(ya.anio.unique()) if len(ya) else set()
     todos = dd.eam.ANIOS_DISPONIBLES
     faltan = [a for a in todos if a not in tiene]
-    anios = st.multiselect("Años", todos, default=faltan[-5:] if faltan else [],
+    # Valor inicial por session_state (no `default`) para que el botón de abajo pueda
+    # cambiar la selección: un `if st.button(...)` la perdía al pulsar "Descargar".
+    if "descargar_eam_anios" not in st.session_state:
+        st.session_state["descargar_eam_anios"] = faltan[-5:]
+    anios = st.multiselect("Años", todos, key="descargar_eam_anios",
                            format_func=lambda a: f"{a} ✓" if a in tiene else str(a))
     c1, c2 = st.columns(2)
-    if c1.button("Seleccionar toda la serie 1992–2024"):
-        st.session_state["_eam_todos"] = True
-    if st.session_state.pop("_eam_todos", False):
-        anios = todos
-        st.write("Se descargarán los 33 años.")
+    c1.button("Seleccionar toda la serie 1992–2024",
+              on_click=lambda: st.session_state.update(descargar_eam_anios=list(todos)))
     tic = st.toggle("Incluir módulo de TIC (2008–2018)")
     borrar = st.toggle("Borrar los ZIP después de extraer", value=True)
     st.info(f"📦 Tamaño aproximado: **{10 * len(anios)} MB** · destino: `{dd.get_path('eam')}`")
