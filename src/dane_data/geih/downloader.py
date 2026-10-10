@@ -64,13 +64,26 @@ def faltantes_mes(month_dir: Path, modules) -> list[str]:
     return sorted(falta & pedidos)
 
 
+def _marcador_cubre(dest: Path, modules) -> bool:
+    """
+    El marcador existe y la extracción que lo escribió incluyó todos los ``modules``.
+    Los marcadores anteriores no registran módulos: no se confía en ellos.
+    """
+    try:
+        data = json.loads((dest / MARCADOR).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return False
+    return set(modules) <= set(data.get("modulos", []))
+
+
 def mes_completo(month_dir: Path, modules) -> bool:
-    return (month_dir / MARCADOR).exists() or not faltantes_mes(month_dir, modules)
+    return _marcador_cubre(month_dir, modules) or not faltantes_mes(month_dir, modules)
 
 
-def _escribir_marcador(dest: Path, zip_name: str, n: int) -> None:
+def _escribir_marcador(dest: Path, zip_name: str, n: int, modules) -> None:
     dest.mkdir(parents=True, exist_ok=True)
-    (dest / MARCADOR).write_text(json.dumps({"zip": zip_name, "csv_extraidos": n}), encoding="utf-8")
+    data = {"zip": zip_name, "csv_extraidos": n, "modulos": sorted(modules)}
+    (dest / MARCADOR).write_text(json.dumps(data), encoding="utf-8")
 
 __version__ = "1.0.0"
 
@@ -545,7 +558,7 @@ class GEIHDownloader(ProgressMixin):
                 # En la serie de empalme, el archivo anual empaqueta los 12 meses adentro
                 meses = [d for d in year_csv_dir.iterdir() if d.is_dir() and month_from_folder(d.name)] \
                     if year_csv_dir.is_dir() else []
-                if (year_csv_dir / MARCADOR).exists() or (
+                if _marcador_cubre(year_csv_dir, self.modules) or (
                         len(meses) >= 12 and all(mes_completo(d, self.modules) for d in meses)):
                     log.info(f"Año {year} de Empalme ya está completo. Saltando.")
                     continue
@@ -554,13 +567,13 @@ class GEIHDownloader(ProgressMixin):
                 if success and self.extract_csv:
                     n = self.extract_requested_modules(zip_dest, year_csv_dir)
                     if n:
-                        _escribir_marcador(year_csv_dir, item["name"], n)
+                        _escribir_marcador(year_csv_dir, item["name"], n, self.modules)
                     if not self.keep_zips and zip_dest.exists():
                         zip_dest.unlink()
             else:
                 month_csv_dir = year_csv_dir / month_stem
-                # Se salta solo si una extracción anterior terminó (marcador) o, en carpetas
-                # sin marcador, si ya están todos los módulos pedidos. Contar archivos no
+                # Se salta solo si una extracción anterior de estos mismos módulos terminó
+                # (marcador) o, si no, si ya están todos los módulos pedidos. Contar archivos no
                 # basta: así se colaron meses sin "No ocupados" (p. ej. marzo 2024).
                 if mes_completo(month_csv_dir, self.modules):
                     log.info(f"Mes {month_stem} ({year}) ya está completo. Saltando.")
@@ -575,7 +588,7 @@ class GEIHDownloader(ProgressMixin):
                 if success and self.extract_csv:
                     n = self.extract_requested_modules(zip_dest, month_csv_dir)
                     if n:
-                        _escribir_marcador(month_csv_dir, item["name"], n)
+                        _escribir_marcador(month_csv_dir, item["name"], n, self.modules)
                     falta = faltantes_mes(month_csv_dir, self.modules)
                     if falta:
                         log.warning(f"El ZIP del DANE para {month_stem} ({year}) no trae: {', '.join(falta)}.")

@@ -1,6 +1,7 @@
 """Descargador GEIH sin red: se simula el ANDA con ZIPs construidos en memoria."""
 
 import io
+import json
 import zipfile
 
 import pytest
@@ -80,6 +81,29 @@ def test_skip_uses_marker_then_reextracts_incomplete_legacy(tmp_path):
     dl.process_year("2024", "819")
     assert len(dl.descargas) == 2
     assert (mes / "No ocupados.CSV").exists() and mes_completo(mes, TODOS)
+
+
+def test_marcador_registra_modulos(tmp_path):
+    """Una descarga previa de solo Características no impide completar el mes después."""
+    FakeDownloader({"Marzo 2024.zip": _mes_2024()}, base_dir=tmp_path,
+                   modules=("caracteristicas",)).process_year("2024", "819")
+    mes = tmp_path / "datos_csv" / "2024" / "Marzo 2024"
+    assert "ocupados" in faltantes_mes(mes, TODOS)
+
+    dl = FakeDownloader({"Marzo 2024.zip": _mes_2024()}, base_dir=tmp_path)
+    dl.process_year("2024", "819")
+    assert dl.descargas == ["Marzo 2024.zip"]
+    assert faltantes_mes(mes, TODOS) == []
+    dl.process_year("2024", "819")                      # ahora sí se salta
+    assert dl.descargas == ["Marzo 2024.zip"]
+
+
+def test_marcador_antiguo_sin_modulos_no_cuenta(tmp_path):
+    """Los marcadores anteriores no dicen qué módulos se extrajeron: se revisan los archivos."""
+    mes = tmp_path / "Marzo 2024"
+    mes.mkdir()
+    (mes / MARCADOR).write_text(json.dumps({"zip": "Marzo 2024.zip", "csv_extraidos": 1}), encoding="utf-8")
+    assert not mes_completo(mes, TODOS)
 
 
 def test_flags_in_caracteristicas_count_as_complete(tmp_path):
