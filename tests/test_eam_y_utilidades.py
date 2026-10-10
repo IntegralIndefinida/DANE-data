@@ -30,6 +30,15 @@ def test_eam_resumen(eam_root):
     assert r.loc[1992, "participacion_laboral"] == pytest.approx(100 * 18 / 60)
 
 
+def test_eam_resumen_sin_por(eam_root):
+    eam = dd.eam.load(root=eam_root)
+    r = dd.eam.resumen(eam, por=None)
+    assert len(r) == 1
+    assert r["valor_agregado"].item() == 300
+    assert r["establecimientos"].item() == 3
+    assert r["productividad_laboral"].item() == pytest.approx(300 / 48)
+
+
 def test_eam_panel_and_survival(eam_root):
     eam = dd.eam.load(root=eam_root)
     bal = dd.eam.panel(eam, balanceado=True)

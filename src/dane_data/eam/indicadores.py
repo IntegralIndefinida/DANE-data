@@ -47,8 +47,10 @@ def resumen(df: pd.DataFrame, por: str | Iterable[str] | None = ("anio",)) -> pd
         if v in d.columns:
             d[v] = pd.to_numeric(d[v], errors="coerce")
 
-    res = (d.groupby(por, observed=True, dropna=False).agg(**agg) if por
-           else d.agg(**agg).T.reset_index(drop=True))
+    if por:
+        res = d.groupby(por, observed=True, dropna=False).agg(**agg)
+    else:  # un solo grupo con todos los establecimientos
+        res = d.groupby(np.zeros(len(d), dtype=int)).agg(**agg).reset_index(drop=True)
     with np.errstate(divide="ignore", invalid="ignore"):
         if {"valor_agregado", "personal_total"} <= set(res.columns):
             res["productividad_laboral"] = res["valor_agregado"] / res["personal_total"]
