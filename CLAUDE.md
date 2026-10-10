@@ -13,7 +13,7 @@ Everything user-facing is in **Spanish**: identifiers, docstrings, comments, log
 The project uses `uv` (`uv.lock`, Python 3.12 in `.python-version`; `requires-python >= 3.10`).
 
 ```bash
-uv run --extra dev pytest -q                                   # full suite (same as CI)
+uv run --extra dev --extra app pytest -q                       # full suite (same as CI)
 uv run --extra dev pytest tests/test_geih.py::test_classify_file -q   # a single test
 uv run --extra dev pytest -k cache -q                          # by keyword
 
@@ -72,7 +72,8 @@ Downloads are incremental. A `.dane_data_ok` marker (`MARCADOR`) is written afte
 ## Tests
 
 - `tests/conftest.py` builds **synthetic** GEIH and EAM trees that reproduce each era's quirks: Area/Cabecera/Resto, `;` with decimal comma, Latin-1, nested `CSV 13/` folder, an incomplete month, `.txt` tab-separated EAM. When supporting a new DANE file quirk, add it to these fixtures.
-- `tests/test_downloader.py` subclasses `GEIHDownloader` (`FakeDownloader`) and feeds it in-memory ZIPs. Tests never hit the network.
+- `tests/test_downloader.py` subclasses `GEIHDownloader` and `EAMDownloader` (`FakeDownloader`, `FakeEAMDownloader`) and feeds them in-memory ZIPs. Tests never hit the network.
+- `tests/test_app.py` drives app pages with `streamlit.testing.v1.AppTest`, pointing the data paths to `tmp_path` and replacing `dd.*.download`. It is skipped when the `app` extra is not installed.
 - `test_real_td_matches_dane` checks the computed unemployment rate against DANE's published figures. It runs only if real GEIH data exists at `$DANE_DATA_TEST_GEIH` or the configured `geih` path, and is skipped otherwise.
 
 ## Release

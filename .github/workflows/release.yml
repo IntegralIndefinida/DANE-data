@@ -20,7 +20,7 @@ jobs:
       - uses: astral-sh/setup-uv@v6
 
       - name: Pruebas
-        run: uv run --extra dev pytest -q
+        run: uv run --extra dev --extra app pytest -q
 
       - name: Armar zip
         run: |
