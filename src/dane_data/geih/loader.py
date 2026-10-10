@@ -60,7 +60,7 @@ _RE_NO_OCU = re.compile(r"\bno ocupados?(?![a-z])")
 _RE_DESOCU = re.compile(r"\bd(?:e|es)ocupados?(?![a-z])")
 _RE_INACT = re.compile(r"\binactivos?(?![a-z])")
 _RE_OCU = re.compile(r"\bocupados?(?![a-z])")
-_HARMONIZE_VERSION = "5"
+_HARMONIZE_VERSION = "6"
 
 
 # --------------------------------------------------------------------------- #

@@ -45,6 +45,19 @@ def test_eam_deflactar(eam_root):
     assert d.loc[d.anio.eq(2024), "valagri_real"].item() == pytest.approx(60)
 
 
+def test_coma_decimal_minoritaria_no_se_pierde(tmp_path):
+    """EAM 1998: casi todo entero, pero las plantas anonimizadas por promedio traen coma decimal."""
+    filas = [f"{i};{i};5;3111;1998;100;60;40;10;8;10;2" for i in range(1, 301)]
+    filas += ["301;301;5;3111;1998;83779570,6666667;42797617,3333333;40981953,3333333;10;8;10;2",
+              "302;302;5;3111;1998;100;60;-2746,5;10;8;10;2"]
+    encabezado = "nordemp;nordest;dpto;ciiu2;periodo;prodbr2;consin2;valagri;pertotal;pperytem;salpeyte;prespyte\n"
+    (tmp_path / "datos" / "1998").mkdir(parents=True)
+    (tmp_path / "datos" / "1998" / "EAM_1998.csv").write_text(encabezado + "\n".join(filas) + "\n", encoding="utf-8")
+    eam = dd.eam.load(1998, root=tmp_path)
+    assert eam["valagri"].notna().all()
+    assert eam["valagri"].sum() == pytest.approx(300 * 40 + 40981953.3333333 - 2746.5)
+
+
 def test_weighted_quantile():
     assert dd.weighted_quantile([1, 2, 3], [1, 1, 1], 0.5) == pytest.approx(2)
     assert dd.weighted_quantile([1, 10], [9, 1], 0.5) == pytest.approx(1)

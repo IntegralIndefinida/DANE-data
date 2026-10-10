@@ -2,19 +2,17 @@
 
 Los archivos cambian de separador (``;``, ``,``, tabulador), de codificación
 (UTF-8 con BOM, Latin-1) y de separador decimal (coma en la GEIH anterior a
-2020) entre años. ``read_table`` detecta todo eso automáticamente.
+2020 y en algunas celdas de la EAM) entre años. ``read_table`` detecta todo eso
+automáticamente.
 """
 
 from __future__ import annotations
 
-import re
 from pathlib import Path
 from typing import Callable, Iterable
 
 import numpy as np
 import pandas as pd
-
-_DECIMAL_COMMA = re.compile(r"^-?\d+,\d+$")
 
 
 def sniff(path: Path) -> tuple[str, str]:
@@ -50,8 +48,11 @@ def _coerce_numeric(df: pd.DataFrame) -> pd.DataFrame:
         if nonnull == 0:
             df[col] = np.nan
             continue
-        sample = s.dropna().head(200)
-        if sample.str.match(_DECIMAL_COMMA).mean() > 0.5:
+        # Basta con que aparezca una coma, no la mayoría: en la EAM (1998, 1999, 2002,
+        # 2006) casi todo es entero y solo las plantas anonimizadas por promedio traen
+        # coma decimal ("83779570,6666667"); decidir con una muestra las volvía NaN.
+        # Si la columna es texto genuino, la conversión de abajo falla y no se toca.
+        if s.str.contains(",", regex=False).any():
             s = s.str.replace(",", ".", regex=False)
         converted = pd.to_numeric(s, errors="coerce").astype("float64")
         # Solo si no se pierden datos (texto genuino se deja como está)
