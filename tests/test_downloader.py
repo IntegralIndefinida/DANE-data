@@ -1,4 +1,4 @@
-"""Descargador GEIH sin red: se simula el ANDA con ZIPs construidos en memoria."""
+"""Descargadores GEIH y EAM sin red: se simula el ANDA con ZIPs construidos en memoria."""
 
 import io
 import json
@@ -6,6 +6,7 @@ import zipfile
 
 import pytest
 
+from dane_data.eam.downloader import EAM_TIC_CATALOGS, EAMDownloader
 from dane_data.geih.downloader import MARCADOR, GEIHDownloader, faltantes_mes, mes_completo
 
 CAR = "DIRECTORIO;SECUENCIA_P;ORDEN;P6040;FEX_C18\n1;1;1;30;10\n"
@@ -133,3 +134,35 @@ def test_empalme_month_zips_keep_their_folder(tmp_path):
     assert (anio / "12. Diciembre" / "Desocupados.CSV").exists()
     dl.process_year("2016", "757")
     assert dl.descargas == ["GEIH_Empalme_2016.zip"]
+
+
+class FakeEAMDownloader(EAMDownloader):
+    def __init__(self, paquetes: dict, **kw):
+        super().__init__(**kw)
+        self.paquetes = paquetes
+        self.descargas = []
+
+    def fetch_metadata(self, catalog_id):
+        pass
+
+    def download_file(self, url, dest_path, max_retries=3):
+        self.descargas.append(url)
+        dest_path.write_bytes(self.paquetes[url])
+        return True
+
+
+def test_eam_tic_en_anio_ya_descargado(tmp_path):
+    """Pedir el módulo TIC de un año que ya tiene los datos principales sí lo descarga."""
+    _, _, tic_url = EAM_TIC_CATALOGS["2015"]
+    paquetes = {"principal": _zip({"EAM_2015.csv": "nordest;valagri\n1;10\n"}),
+                tic_url: _zip({"EAM_TIC_2015.csv": "nordest;usa_internet\n1;1\n"})}
+    dl = FakeEAMDownloader(paquetes, base_dir=tmp_path)
+    dl.process_year("2015", "491", "EAM_2015.zip", "principal")
+    assert dl.descargas == ["principal"]
+
+    dl.include_tic = True
+    dl.process_year("2015", "491", "EAM_2015.zip", "principal")
+    assert dl.descargas == ["principal", tic_url]
+    assert (tmp_path / "datos" / "2015" / "TIC" / "EAM_TIC_2015.csv").exists()
+    dl.process_year("2015", "491", "EAM_2015.zip", "principal")   # ya está todo: no descarga
+    assert dl.descargas == ["principal", tic_url]

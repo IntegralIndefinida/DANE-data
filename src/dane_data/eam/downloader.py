@@ -119,6 +119,13 @@ def sanitize_member_name(raw_name: str) -> str:
     return clean
 
 
+def _archivos_datos(carpeta: Path) -> list[Path]:
+    """Archivos .csv/.txt ya extraídos en ``carpeta`` (sin entrar en subcarpetas como TIC/)."""
+    if not carpeta.is_dir():
+        return []
+    return sorted(f for f in carpeta.iterdir() if f.is_file() and f.suffix.lower() in (".csv", ".txt"))
+
+
 class EAMDownloader(ProgressMixin):
     def __init__(self, base_dir="data", keep_zips=True, extract_data=True, include_tic=False,
                  progress=None, should_stop=None):
@@ -336,27 +343,28 @@ class EAMDownloader(ProgressMixin):
         if self.extract_data:
             year_data_dir.mkdir(parents=True, exist_ok=True)
 
-            # Comprobar si ya existe el archivo de datos (.csv o .txt)
-            existing_data = list(year_data_dir.glob("*.csv")) + list(year_data_dir.glob("*.txt")) + list(year_data_dir.glob("*.CSV")) + list(year_data_dir.glob("*.TXT"))
-            if existing_data:
-                log.info(f"Año {year} ya cuenta con datos extraídos ({[f.name for f in existing_data]}). Saltando descarga.")
-                return
+        # Comprobar si ya existe el archivo de datos (.csv o .txt)
+        existing_data = _archivos_datos(year_data_dir) if self.extract_data else []
+        if existing_data:
+            log.info(f"Año {year} ya cuenta con datos extraídos ({[f.name for f in existing_data]}). Saltando descarga.")
+        else:
+            # 2. Descargar paquete ZIP
+            safe_name = "".join(c for c in zip_filename if c.isalnum() or c in (" ", ".", "_", "-")).strip()
+            zip_dest = year_raw_dir / safe_name
 
-        # 2. Descargar paquete ZIP
-        safe_name = "".join(c for c in zip_filename if c.isalnum() or c in (" ", ".", "_", "-")).strip()
-        zip_dest = year_raw_dir / safe_name
+            success = self.download_file(download_url, zip_dest)
 
-        success = self.download_file(download_url, zip_dest)
+            # 3. Extraer formato preferido (.csv -> .txt -> .dta convertido)
+            if success and self.extract_data:
+                self.extract_preferred_format(zip_dest, year_data_dir)
 
-        # 3. Extraer formato preferido (.csv -> .txt -> .dta convertido)
-        if success and self.extract_data:
-            self.extract_preferred_format(zip_dest, year_data_dir)
+                if not self.keep_zips and zip_dest.exists():
+                    zip_dest.unlink()
 
-            if not self.keep_zips and zip_dest.exists():
-                zip_dest.unlink()
-
-        # 4. Descargar satélite TIC si fue solicitado
-        if self.include_tic and year in EAM_TIC_CATALOGS:
+        # 4. Descargar satélite TIC si fue solicitado (también en años ya descargados)
+        tic_pendiente = (self.include_tic and year in EAM_TIC_CATALOGS
+                         and not _archivos_datos(year_data_dir / "TIC"))
+        if tic_pendiente:
             tic_cid, tic_name, tic_url = EAM_TIC_CATALOGS[year]
             tic_zip = year_raw_dir / tic_name
             log.info(f"Descargando módulo TIC para {year}...")
@@ -367,7 +375,8 @@ class EAMDownloader(ProgressMixin):
                 if not self.keep_zips and tic_zip.exists():
                     tic_zip.unlink()
 
-        time.sleep(1)
+        if not existing_data or tic_pendiente:  # pausa entre descargas, no entre años saltados
+            time.sleep(1)
 
     def run_pipeline(self, target_years=None):
         """Ejecuta el pipeline de descarga de la EAM para todos o los años seleccionados."""
