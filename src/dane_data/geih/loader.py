@@ -364,7 +364,13 @@ def harmonize(df: pd.DataFrame) -> pd.DataFrame:
     pos_map = {1: "Empleado particular", 2: "Empleado del gobierno", 3: "Empleado doméstico",
                4: "Cuenta propia", 5: "Patrón o empleador", 6: "Familiar sin remuneración",
                7: "Sin remuneración (otros hogares)", 8: "Jornalero o peón", 9: "Otro"}
-    df["posicion_ocupacional"] = pos.map(pos_map).where(ocupado)
+    # Cuestionario de 2022 en adelante: 7 = jornalero y 8 = otro (desaparece el 9). El DDI
+    # del DANE para 2022–2025 repite las categorías antiguas, pero en los datos el 7 es
+    # 100 % agropecuario y con ingreso. Fila a fila: se pueden juntar años de ambas épocas.
+    pos_map_2022 = {**pos_map, 7: "Jornalero o peón", 8: "Otro"}
+    del pos_map_2022[9]
+    etiqueta = pos.map(pos_map).where(anio < 2022, pos.map(pos_map_2022))
+    df["posicion_ocupacional"] = etiqueta.where(ocupado)
 
     # Fila a fila: al juntar años distintos conviven ambas versiones.
     r4, r3 = _num(df, "RAMA2D_R4"), _num(df, "RAMA2D")

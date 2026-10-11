@@ -68,6 +68,13 @@ def test_new_era_and_nested_folder(geih_root):
     assert "P5000" in df.columns  # módulo hogar fusionado por DIRECTORIO + SECUENCIA_P
 
 
+def test_posicion_ocupacional_cambia_en_2022():
+    """Desde 2022 el código 7 de P6430 es jornalero y el 8 'otro' (antes eran el 8 y el 9)."""
+    df = pd.DataFrame({"anio": [2021, 2021, 2021, 2022, 2022], "mes": 1, "OCI": 1, "P6430": [7, 8, 9, 7, 8]})
+    assert dd.geih.harmonize(df)["posicion_ocupacional"].tolist() == [
+        "Sin remuneración (otros hogares)", "Jornalero o peón", "Otro", "Jornalero o peón", "Otro"]
+
+
 def test_include_incomplete(geih_root):
     df = dd.geih.load(2025, root=geih_root, cache=False, incluir_incompletos=True)
     assert set(df["mes"]) == {1, 2}
