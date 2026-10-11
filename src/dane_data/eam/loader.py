@@ -141,7 +141,10 @@ def _ciiu_rev(colname: str, anio: int) -> int:
     m = re.search(r"ciiu_?(\d)", colname)
     if m:  # ciiu2, ciiu3, ciiu4, ciiu_4, ciiu2n4 -> el dígito tras 'ciiu'
         return int(m.group(1))
-    return 2 if anio <= 1999 else 3 if anio <= 2011 else 4
+    # Cortes según los códigos de los archivos, no según el ANDA: su documentación dice
+    # Rev. 3 desde 2000 y Rev. 4 desde las cifras de 2013, pero el archivo de 2000 trae
+    # códigos Rev. 2 y el de 2012 ya trae Rev. 4 (ver README).
+    return 2 if anio <= 2000 else 3 if anio <= 2011 else 4
 
 
 def harmonize(df: pd.DataFrame, anio: int) -> pd.DataFrame:

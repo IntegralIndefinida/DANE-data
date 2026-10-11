@@ -11,10 +11,12 @@ Reglas de extracción de formatos:
   3. Prioridad 3: Conversión de .dta a .txt tabulado (si no existe .csv ni .txt, como en 2024).
 
 NOTAS METODOLÓGICAS IMPORTANTES:
-  - Clasificación CIIU (Rupturas metodológicas):
-      * 1992 - 1999: CIIU Rev. 2 A.C. (códigos de 4 dígitos, ej. 3111).
-      * 2000 - 2013: CIIU Rev. 3 A.C. (códigos de 4 dígitos, ej. 1511).
-      * 2014 - 2024: CIIU Rev. 4 A.C. (códigos de 4 dígitos, ej. 1011).
+  - Clasificación CIIU (Rupturas metodológicas), según los códigos de los archivos:
+      * 1992 - 2000: CIIU Rev. 2 A.C. (códigos de 4 dígitos, ej. 3111).
+      * 2001 - 2011: CIIU Rev. 3 A.C. (códigos de 4 dígitos, ej. 1511).
+      * 2012 - 2024: CIIU Rev. 4 A.C. (códigos de 4 dígitos, ej. 1011).
+    La documentación del ANDA ubica la Rev. 3 desde 2000 y la Rev. 4 desde las
+    cifras de 2013; los archivos de 2000 y 2012 la contradicen (ver README).
     Para construir series continuas entre décadas, se requiere aplicar tablas
     de correlación/concordancia CIIU.
   - Identificación de Panel (Seguimiento longitudinal):
