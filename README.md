@@ -175,8 +175,9 @@ los datos reales, verifican también estas cifras.
 - **PET**: desde 2022 son las personas de 15 años o más; antes, 12+ (urbano) y 10+ (rural).
 - **Ingresos**: `INGLABO` en pesos corrientes; la GEIH 2007 no lo trae.
 - **EAM**: los montos vienen en **miles de pesos corrientes**. Según los propios archivos, la CIIU es
-  Rev. 2 hasta 2000, Rev. 3 en 2001–2011 y Rev. 4 desde 2012; los sectores no se comparan entre
-  revisiones sin una correlativa.
+  Rev. 2 hasta 2000, Rev. 3 en 2001–2011 y Rev. 4 desde 2012 (la documentación del ANDA dice otra
+  cosa; vea la tabla de diferencias más abajo); los sectores no se comparan entre revisiones sin una
+  correlativa.
 - **Muestras pequeñas**: con menos de ~100 observaciones (`n_muestra`) las cifras no son confiables.
 - El salario mínimo histórico (`dd.SMLV`) está tomado de los decretos; verifíquelo antes de publicar.
 
@@ -190,6 +191,9 @@ el DANE**, así que en estos casos no coincide con las variables armonizadas.
 | Variable | Qué dice el ANDA | Qué muestran los datos y qué hace `dane-data` |
 |---|---|---|
 | `P6430` → `posicion_ocupacional` (GEIH, desde 2022) | El DDI de 2022 (catálogo 771) y el de 2025 (catálogo 853) repiten las 9 categorías del cuestionario anterior: 7 = trabajador sin remuneración en negocios de otros hogares, 8 = jornalero o peón, 9 = otro. | Desde enero de 2022 el código 7 es **jornalero o peón** (100 % agropecuario y casi todos con ingreso), el 8 es **otro** y el 9 ya no aparece. Hasta 2021, y en el empalme, se usan las etiquetas anteriores, que sí coinciden con los datos. El código 6 se sigue llamando "familiar sin remuneración"; desde 2022 podría incluir también el trabajo sin remuneración en negocios de otros hogares (sin confirmar). |
+| `ciiu` → `ciiu_rev`, `sector` (EAM 2000 y 2012) | La descripción del estudio (catálogos 491 a 888) dice que "en el año 2000 se incorpora en la EAM la CIIU Rev.3" y que la Rev. 4 se oficializó "con la difusión de las cifras referentes al año 2013". En otro pasaje del mismo texto los cambios de la Rev. 4 se ubican "a partir del año 2012". | El archivo de 2000 trae la variable `ciiu2` con códigos Rev. 2 (solo divisiones 31–39, igual que 1992–1999); la Rev. 3 aparece en 2001. El archivo de 2012 ya trae `ciiu4` con códigos Rev. 4 (divisiones 10–14, que no existen en la Rev. 3). `dane-data` asigna la revisión según la variable de cada año: Rev. 2 hasta 2000, Rev. 3 en 2001–2011 y Rev. 4 desde 2012. |
+| Cobertura por división (EAM, archivos de 1995 en adelante) | La descripción de cada archivo dice que comprende "desde la división 11 a la 33 de la CIIU REV.4", también en los de 1995–2011. | Los archivos de 1995–2000 están en Rev. 2 (divisiones 31–39) y los de 2001–2011 en Rev. 3 (15–37). Los años en Rev. 4 incluyen la división 10, alimentos, que es el 18 % de los establecimientos en 2012–2024; el de 2012 incluye además las divisiones 58, 59 y 73. `dane-data` conserva todas las divisiones de cada archivo. |
+| Títulos de los catálogos 871 y 888 (EAM) | El título de ambos catálogos en el DDI es "EAM_2022". | Sus archivos son de 2023 (871) y 2024 (888), como dice la versión de cada archivo. `dane-data` descarga 2023 del 871 y 2024 del 888. |
 
 ## Estructura
 
