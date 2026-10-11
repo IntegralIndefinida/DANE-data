@@ -12,3 +12,4 @@ __pycache__/
 *.dta
 *.zip
 *.parquet
+CLAUDE.md
