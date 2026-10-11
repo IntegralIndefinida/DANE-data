@@ -180,6 +180,17 @@ los datos reales, verifican también estas cifras.
 - **Muestras pequeñas**: con menos de ~100 observaciones (`n_muestra`) las cifras no son confiables.
 - El salario mínimo histórico (`dd.SMLV`) está tomado de los decretos; verifíquelo antes de publicar.
 
+## 📋 Diferencias con la documentación del DANE (ANDA)
+
+Cuando los datos contradicen la documentación oficial del ANDA (diccionarios DDI, etiquetas de
+categorías), `dane-data` sigue los datos y lo anota aquí. El buscador de variables
+(`dd.buscar_variable`, `dd.describir` y la página 📚 Diccionario) muestra el DDI **tal como lo publica
+el DANE**, así que en estos casos no coincide con las variables armonizadas.
+
+| Variable | Qué dice el ANDA | Qué muestran los datos y qué hace `dane-data` |
+|---|---|---|
+| `P6430` → `posicion_ocupacional` (GEIH, desde 2022) | El DDI de 2022 (catálogo 771) y el de 2025 (catálogo 853) repiten las 9 categorías del cuestionario anterior: 7 = trabajador sin remuneración en negocios de otros hogares, 8 = jornalero o peón, 9 = otro. | Desde enero de 2022 el código 7 es **jornalero o peón** (100 % agropecuario y casi todos con ingreso), el 8 es **otro** y el 9 ya no aparece. Hasta 2021, y en el empalme, se usan las etiquetas anteriores, que sí coinciden con los datos. El código 6 se sigue llamando "familiar sin remuneración"; desde 2022 podría incluir también el trabajo sin remuneración en negocios de otros hogares (sin confirmar). |
+
 ## Estructura
 
 ```
