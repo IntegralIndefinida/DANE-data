@@ -75,6 +75,14 @@ def test_posicion_ocupacional_cambia_en_2022():
         "Sin remuneración (otros hogares)", "Jornalero o peón", "Otro", "Jornalero o peón", "Otro"]
 
 
+def test_load_variables(geih_root):
+    completo = dd.geih.load([2016, 2025], root=geih_root, cache=False)
+    df = dd.geih.load([2016, 2025], root=geih_root, cache=False, variables=["fex", "departamento", "P6040"])
+    assert list(df.columns) == ["anio", "mes", "fex", "departamento", "P6040"]
+    pd.testing.assert_frame_equal(df, completo[df.columns])
+    assert isinstance(df["departamento"].dtype, pd.CategoricalDtype)  # se conserva al concatenar meses
+
+
 def test_include_incomplete(geih_root):
     df = dd.geih.load(2025, root=geih_root, cache=False, incluir_incompletos=True)
     assert set(df["mes"]) == {1, 2}

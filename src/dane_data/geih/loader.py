@@ -310,6 +310,16 @@ _EDUC_P6210 = {1: "Ninguno", 2: "Ninguno", 3: "Primaria", 4: "Secundaria", 5: "M
 NIVELES_EDUC = ["Ninguno", "Primaria", "Secundaria", "Media", "Superior"]
 CONDICIONES = ["Ocupado", "Desocupado", "Inactivo", "Fuera de la PET"]
 GRUPOS_EDAD = ["0–14", "15–24", "25–34", "35–44", "45–54", "55–64", "65+"]
+# Categorías fijas: los meses se armonizan por separado y, al concatenarlos, solo
+# conservan el tipo categórico si todos tienen exactamente las mismas categorías.
+CATEGORIAS = {
+    "sexo": pd.CategoricalDtype(["Hombre", "Mujer"]),
+    "zona": pd.CategoricalDtype(["Urbano (cabecera)", "Rural (centros poblados y disperso)"]),
+    "grupo_edad": pd.CategoricalDtype(GRUPOS_EDAD, ordered=True),
+    "nivel_educativo": pd.CategoricalDtype(NIVELES_EDUC, ordered=True),
+    "departamento": pd.CategoricalDtype(sorted(set(DEPARTAMENTOS.values()))),
+    "condicion": pd.CategoricalDtype(CONDICIONES),
+}
 
 
 def harmonize(df: pd.DataFrame) -> pd.DataFrame:
@@ -319,17 +329,17 @@ def harmonize(df: pd.DataFrame) -> pd.DataFrame:
 
     df["fex"] = _first(df, ["FEX_C18", "FEX_C", "FEX_C_2011"])
     sexo = _num(df, "P3271").fillna(_num(df, "P6020"))
-    df["sexo"] = pd.Categorical(sexo.map({1: "Hombre", 2: "Mujer"}), categories=["Hombre", "Mujer"])
+    df["sexo"] = pd.Categorical(sexo.map({1: "Hombre", 2: "Mujer"}), dtype=CATEGORIAS["sexo"])
     df["edad"] = _num(df, "P6040")
     df["grupo_edad"] = pd.cut(df["edad"], bins=[-1, 14, 24, 34, 44, 54, 64, 200], labels=GRUPOS_EDAD)
     df["jefe_hogar"] = (_num(df, "P6050") == 1).astype("Int8")
 
     dpto = _num(df, "DPTO")
     df["dpto"] = dpto.astype("Int64")
-    df["departamento"] = dpto.map(DEPARTAMENTOS)
+    df["departamento"] = pd.Categorical(dpto.map(DEPARTAMENTOS), dtype=CATEGORIAS["departamento"])
     clase = _num(df, "CLASE")
     df["zona"] = pd.Categorical(clase.map({1: "Urbano (cabecera)", 2: "Rural (centros poblados y disperso)"}),
-                                categories=["Urbano (cabecera)", "Rural (centros poblados y disperso)"])
+                                dtype=CATEGORIAS["zona"])
 
     # Condición de actividad
     ocupado = (_num(df, "OCI") == 1) | (_num(df, "_EN_OCU") == 1)
@@ -339,7 +349,7 @@ def harmonize(df: pd.DataFrame) -> pd.DataFrame:
            | ocupado | desocupado)
     inactivo = pet & ~ocupado & ~desocupado
     cond = np.select([ocupado, desocupado, inactivo], CONDICIONES[:3], default=CONDICIONES[3])
-    df["condicion"] = pd.Categorical(cond, categories=CONDICIONES)
+    df["condicion"] = pd.Categorical(cond, dtype=CATEGORIAS["condicion"])
     df["pet"] = pet.astype("Int8")
     df["fuerza_trabajo"] = (ocupado | desocupado).astype("Int8")
     df["ocupado"] = ocupado.astype("Int8")
@@ -378,7 +388,7 @@ def harmonize(df: pd.DataFrame) -> pd.DataFrame:
     df["rama_rev"] = pd.Series(np.where(r4.notna(), 4, np.where(r3.notna(), 3, np.nan)), index=df.index).astype("Int8")
 
     educ = _num(df, "P3042").map(_EDUC_P3042).fillna(_num(df, "P6210").map(_EDUC_P6210))
-    df["nivel_educativo"] = pd.Categorical(educ, categories=NIVELES_EDUC, ordered=True)
+    df["nivel_educativo"] = pd.Categorical(educ, dtype=CATEGORIAS["nivel_educativo"])
 
     return df.drop(columns=["_EN_FT", "_EN_OCU", "_EN_DSI", "_EN_INI"], errors="ignore")
 
@@ -386,14 +396,19 @@ def harmonize(df: pd.DataFrame) -> pd.DataFrame:
 # --------------------------------------------------------------------------- #
 # API pública
 # --------------------------------------------------------------------------- #
-def _cache_path(mes: MesGEIH, columns, modules) -> Path:
+def _firma_archivos(mes: MesGEIH) -> list[str]:
+    """Ruta, tamaño y fecha de modificación de cada archivo del mes (para las llaves de caché)."""
     stamp = []
     for files in mes.archivos.values():
         for f in files:
             st = f.stat()
             stamp.append(f"{f}:{st.st_size}:{int(st.st_mtime)}")
+    return sorted(stamp)
+
+
+def _cache_path(mes: MesGEIH, columns, modules) -> Path:
     cols = "all" if columns == "all" else ",".join(sorted({c.upper() for c in (columns if columns not in (None, "core") else [])}))
-    key = "|".join([_HARMONIZE_VERSION, *sorted(stamp), cols, ",".join(sorted(modules or MODULOS))])
+    key = "|".join([_HARMONIZE_VERSION, *_firma_archivos(mes), cols, ",".join(sorted(modules or MODULOS))])
     digest = hashlib.sha1(key.encode()).hexdigest()[:16]
     return config.CACHE_DIR / "geih" / f"{mes.anio}_{mes.mes:02d}_{digest}.parquet"
 
@@ -409,6 +424,7 @@ def load(
     cache: bool = True,
     progress=None,
     incluir_incompletos: bool = False,
+    variables: Iterable[str] | None = None,
 ) -> pd.DataFrame:
     """
     Carga la GEIH (una fila por persona) para los años y meses pedidos.
@@ -429,14 +445,22 @@ def load(
         les falta un módulo clave (p. ej. desocupados): con ellos la tasa de
         desocupación saldría 0 %. Los meses omitidos quedan en
         ``df.attrs["meses_omitidos"]``.
+    variables : conservar solo estas variables (armonizadas o del DANE; ``anio`` y
+        ``mes`` siempre). Cada mes se recorta al leerlo, así que la memoria depende
+        solo de lo que se conserva: útil para juntar muchos años. Las variables DANE
+        que no están en ``CORE_RAW`` deben pedirse también en ``columns``.
 
     Ejemplo
     -------
     >>> df = dd.geih.load(2025, months=[1, 2, 3])
     >>> dd.geih.indicadores(df, por="sexo")
+    >>> df = dd.geih.load(range(2007, 2026), variables=["fex", "sexo", "ocupado", "ingreso_laboral"])
     """
     if isinstance(months, int):
         months = [months]
+    conservar = None
+    if variables is not None:
+        conservar = list(dict.fromkeys(["anio", "mes", *([variables] if isinstance(variables, str) else variables)]))
     meses = find_months(years, empalme=empalme, root=root)
     if months is not None:
         months = {int(m) for m in months}
@@ -475,6 +499,12 @@ def load(
                     df.to_parquet(cpath, index=False)
                 except Exception as e:  # columnas de tipo mixto, disco lleno, etc.
                     log.debug(f"No se pudo guardar caché {cpath}: {e}")
+        # Mes a mes (harmonize es fila a fila): evita armonizar y copiar el frame
+        # concatenado de muchos años, que no cabe en memoria.
+        if harmonize_vars:
+            df = harmonize(df)
+        if conservar is not None:
+            df = df[[c for c in conservar if c in df.columns]]
         frames.append(df)
     if progress:
         progress(1.0, "Listo")
@@ -482,15 +512,18 @@ def load(
         raise FileNotFoundError("Ningún mes pudo leerse (faltan módulos de características).")
 
     out = pd.concat(frames, ignore_index=True, sort=False)
-    out = harmonize(out) if harmonize_vars else out
+    if conservar is not None:
+        if faltan := [c for c in conservar if c not in out.columns]:
+            log.warning(f"Variables que no existen en los datos cargados: {', '.join(faltan)}.")
+        out = out[[c for c in conservar if c in out.columns]]
     out.attrs["meses_omitidos"] = [] if incluir_incompletos else [(m.anio, m.mes, m.faltantes) for m in omitidos]
     return out
 
 
 def clear_cache() -> int:
-    """Borra la caché de meses procesados. Devuelve el número de archivos borrados."""
+    """Borra la caché de meses procesados y de indicadores precalculados. Devuelve el número de archivos borrados."""
     n = 0
-    for f in (config.CACHE_DIR / "geih").glob("*.parquet"):
+    for f in (config.CACHE_DIR / "geih").rglob("*.parquet"):
         f.unlink()
         n += 1
     return n
