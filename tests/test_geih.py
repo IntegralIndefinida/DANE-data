@@ -1,4 +1,5 @@
 import os
+import sys
 from pathlib import Path
 
 import pandas as pd
@@ -111,6 +112,38 @@ def test_cache_roundtrip(geih_root, tmp_path, monkeypatch):
     b = dd.geih.load(2016, root=geih_root)
     assert list((tmp_path / "cache" / "geih").glob("*.parquet"))
     pd.testing.assert_frame_equal(a, b, check_dtype=False, check_categorical=False)
+
+
+@pytest.mark.parametrize("anual", [True, False])
+@pytest.mark.parametrize("por", dd.geih.POR_PRECALCULADOS)
+def test_serie_indicadores_igual_a_indicadores(geih_root, tmp_path, monkeypatch, por, anual):
+    monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
+    esperado = dd.geih.indicadores(dd.geih.load([2016, 2025], root=geih_root, cache=False), por=por, anual=anual)
+    serie = dd.geih.serie_indicadores([2016, 2025], por=por, anual=anual, root=geih_root)
+    pd.testing.assert_frame_equal(serie, esperado)
+
+
+def test_serie_indicadores_usa_cache_y_se_invalida(geih_root, tmp_path, monkeypatch):
+    monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
+    a = dd.geih.serie_indicadores(2016, root=geih_root)
+    assert len(list((tmp_path / "cache" / "geih" / "indicadores").glob("principal_2016_*.parquet"))) == 1
+
+    mod = sys.modules["dane_data.geih.indicadores"]  # dd.geih.indicadores es la función
+    llamadas = []
+    original = mod.load
+    monkeypatch.setattr(mod, "load", lambda *a, **k: llamadas.append(1) or original(*a, **k))
+    pd.testing.assert_frame_equal(dd.geih.serie_indicadores(2016, root=geih_root), a)
+    assert not llamadas
+
+    csv = next((geih_root / "datos_csv" / "2016").rglob("Cabecera - Ocupados.csv"))
+    os.utime(csv, (csv.stat().st_atime, csv.stat().st_mtime + 10))
+    dd.geih.serie_indicadores(2016, root=geih_root)
+    assert llamadas
+
+
+def test_serie_indicadores_por_no_precalculado(geih_root):
+    with pytest.raises(ValueError, match="no está precalculado"):
+        dd.geih.serie_indicadores(2016, por="rama2d", root=geih_root)
 
 
 def test_missing_data_message(tmp_path):
