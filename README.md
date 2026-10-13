@@ -97,11 +97,13 @@ df = dd.geih.load(2025)                                  # todos los meses
 df = dd.geih.load([2024, 2025], months=[1, 2, 3])        # primer trimestre
 df = dd.geih.load(2025, columns=["P6500", "P7070"])      # + variables DANE extra
 df = dd.geih.load(2016, empalme=True)                    # serie de empalme (marco 2018)
+df = dd.geih.load(range(2015, 2026), variables=["fex", "sexo", "ocupado"])  # solo esas columnas
 
 # 4. Indicadores laborales ponderados
 dd.geih.indicadores(df)                                  # TGP, TO, TD, informalidad, ingresos…
 dd.geih.indicadores(df, por=["sexo", "zona"])
 dd.geih.indicadores(df, por="grupo_edad", anual=False)   # mensual
+dd.geih.serie_indicadores(range(2007, 2027), por="sexo")  # precalculado por año, sin cargar microdatos
 
 # 5. Tablas ponderadas de cualquier cosa
 dd.tabla(df, por=["anio", "nivel_educativo"], estadistico="porcentaje")
@@ -158,7 +160,10 @@ Las variables en **minúscula** las crea `dane-data` y significan lo mismo en to
 | EAM: `CIIU2N4`, `ciiu2`, `CIIU`, `ciiu3`, `ciiu4`, `ciiu_4`, códigos a 2–3 dígitos | `ciiu`, `ciiu_rev`, `division`, `sector` |
 
 Las cargas de la GEIH se guardan en caché (`~/.cache/dane_data`, parquet): un año completo tarda ~6 s la
-primera vez y ~1 s después. `dd.geih.clear_cache()` la borra.
+primera vez y ~1 s después. Los indicadores de `dd.geih.serie_indicadores`, que usa también la página de
+indicadores laborales de la app, se guardan por año: toda la serie 2007–2026 tarda ~1 min la primera vez y
+es instantánea después. Se recalculan solos si cambia algún archivo del año o el código de dane-data.
+`dd.geih.clear_cache()` borra ambas cachés.
 
 ### Validación
 
