@@ -3,11 +3,39 @@ import streamlit as st
 
 import dane_data as dd
 from dane_data.app._ui import (fmt_num, MAX_SERIES, barras, botones_descarga, codigo, fmt_grande, fmt_pct, fmt_pesos,
-                             grafico, linea, selector_geih)
+                             grafico, indicadores_geih, linea, rutas_actuales, seleccion_geih, selector_geih,
+                             serie_geih)
 
 st.title("👥 Indicadores del mercado laboral")
-df, descripcion, params = selector_geih(clave="geih")
-st.caption(f"**Datos:** {descripcion} · {fmt_num(len(df))} personas en la muestra")
+sel = seleccion_geih(clave="geih", ayuda_anios="Sin filtros ni selección de meses, los indicadores salen de una "
+                                              "tabla precalculada y puede elegir todos los años: la primera vez "
+                                              "se calculan (unos segundos por año) y quedan guardados.")
+# Sin filtros: tabla precalculada por año (instantánea, sin cargar microdatos). Con filtros o
+# meses: microdatos con solo las variables necesarias (todos los años completos no caben en memoria).
+precalculada = not sel["filtrada"]
+if precalculada:
+    def calcular(por, anual):
+        return serie_geih(tuple(sel["anios"]), por, anual, sel["empalme"], sel["meses_disponibles"],
+                          rutas_actuales())
+
+    total = calcular(None, True)
+    n_personas = total["n_muestra"].sum()
+    mensual = calcular(None, False)
+    meses_ult = int((mensual["anio"] == total["anio"].iloc[-1]).sum())
+    descripcion = sel["descripcion"]
+else:
+    df, descripcion, params = selector_geih(variables=dd.geih.VARIABLES_INDICADORES, sel=sel)
+
+    def calcular(por, anual):
+        return indicadores_geih(df, params["carga"] + repr(rutas_actuales()), por, anual)
+
+    total = calcular(None, True)
+    n_personas = len(df)
+    meses_ult = df.loc[df["anio"] == total["anio"].iloc[-1], "mes"].nunique()
+st.caption(f"**Datos:** {descripcion} · {fmt_num(n_personas)} personas en la muestra")
+if not precalculada:
+    st.caption("ℹ️ Con filtros o meses elegidos, los indicadores se calculan desde los microdatos (más lento). "
+               "Sin ellos salen de una tabla precalculada.")
 
 INDICADORES = {
     "Tasa de desocupación (TD)": ("td", True),
@@ -30,7 +58,6 @@ DESAGREGAR = {
 }
 
 # ---------------------------------------------------------------- KPIs
-total = dd.geih.indicadores(df)
 ult = total.iloc[-1]
 prev = total.iloc[-2] if len(total) > 1 else None
 
@@ -52,7 +79,6 @@ k[3].metric("Informalidad", fmt_pct(ult.tasa_informalidad), delta("tasa_informal
             help=dd.geih.GLOSARIO["Informalidad"])
 k[4].metric("Ingreso laboral mediano", fmt_pesos(ult.ingreso_mediano), delta("ingreso_mediano", pct=False),
             help=dd.geih.GLOSARIO["Ingreso laboral"] + " Pesos corrientes (sin ajustar por inflación).")
-meses_ult = df.loc[df["anio"] == ult["anio"], "mes"].nunique()
 if meses_ult < 12:
     st.info(f"ℹ️ {int(ult['anio'])} tiene solo {meses_ult} mes(es) en la selección. La comparación con el año "
             "anterior mezcla temporadas distintas (el desempleo es estacional); para comparar bien elija los "
@@ -71,7 +97,7 @@ col, es_pct = INDICADORES[nombre_ind]
 por = DESAGREGAR[nombre_por]
 anual = frecuencia == "Anual"
 
-res = dd.geih.indicadores(df, por=por, anual=anual)
+res = calcular(por, anual)
 if por:
     res = res[res[por].notna()]
 if por:  # grupos sin dato (p. ej. 0–14 años no está en la PET)
@@ -117,7 +143,7 @@ with st.expander("📋 Tabla completa", expanded=False):
                          "ingreso_mediano", "n_muestra")},
         },
     )
-    botones_descarga(tabla, f"indicadores_geih_{'_'.join(map(str, params['anios']))}", "ind")
+    botones_descarga(tabla, f"indicadores_geih_{'_'.join(map(str, sel['anios']))}", "ind")
 
 with st.expander("📖 ¿Qué significa cada indicador?"):
     for k_, v in dd.geih.GLOSARIO.items():
@@ -129,10 +155,21 @@ with st.expander("📖 ¿Qué significa cada indicador?"):
         "factor de expansión para representar a todo el país."
     )
 
-codigo(f'''
+argumentos = f'{f", por={por!r}" if por else ""}{", anual=False" if not anual else ""}'
+if precalculada:
+    codigo(f'''
+import dane_data as dd
+
+# Igual a dd.geih.indicadores(dd.geih.load(...){argumentos}), pero año por año y guardado
+# en caché: la segunda vez es instantáneo.
+ind = dd.geih.serie_indicadores({sel["anios"]!r}{argumentos}{", empalme=True" if sel["empalme"] else ""})
+ind
+''')
+else:
+    codigo(f'''
 import dane_data as dd
 
 {params["carga"]}
-ind = dd.geih.indicadores(df{f', por="{por}"' if por else ''}{', anual=False' if not anual else ''})
+ind = dd.geih.indicadores(df{argumentos})
 ind
 ''')

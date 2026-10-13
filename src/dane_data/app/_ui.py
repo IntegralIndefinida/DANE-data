@@ -101,12 +101,31 @@ def grafico(fig: go.Figure) -> None:
 # Datos (caché en memoria de la sesión del servidor)
 # --------------------------------------------------------------------------- #
 @st.cache_resource(max_entries=3, show_spinner=False)
-def cargar_geih(anios: tuple, meses: tuple | None, extra: tuple, empalme: bool, rutas: tuple) -> pd.DataFrame:
+def cargar_geih(anios: tuple, meses: tuple | None, extra: tuple, empalme: bool, variables: tuple | None,
+                rutas: tuple) -> pd.DataFrame:
     barra = st.progress(0.0, text="Preparando datos…")
     df = dd.geih.load(list(anios), months=list(meses) if meses else None, columns=list(extra) or "core",
-                      empalme=empalme, progress=lambda f, m: barra.progress(min(f, 1.0), text=m))
+                      empalme=empalme, variables=list(variables) if variables else None,
+                      progress=lambda f, m: barra.progress(min(f, 1.0), text=m))
     barra.empty()
     return df
+
+
+@st.cache_data(max_entries=50, show_spinner=False)
+def serie_geih(anios: tuple, por: str | None, anual: bool, empalme: bool, meses_disp: tuple,
+               rutas: tuple) -> pd.DataFrame:
+    """Indicadores precalculados; ``meses_disp`` en la llave hace que un mes recién descargado se vea."""
+    barra = st.progress(0.0, text="Preparando indicadores…")
+    res = dd.geih.serie_indicadores(list(anios), por=por, anual=anual, empalme=empalme,
+                                    progress=lambda f, m: barra.progress(min(f, 1.0), text=m))
+    barra.empty()
+    return res
+
+
+@st.cache_data(max_entries=50, show_spinner="Calculando indicadores…")
+def indicadores_geih(_df: pd.DataFrame, clave: str, por: str | None, anual: bool) -> pd.DataFrame:
+    """``indicadores`` sobre microdatos; ``clave`` (la carga y los filtros) reemplaza el hash de ``_df``."""
+    return dd.geih.indicadores(_df, por=por, anual=anual)
 
 
 @st.cache_resource(max_entries=2, show_spinner=False)
@@ -190,8 +209,11 @@ def sin_datos(encuesta: str) -> None:
 # --------------------------------------------------------------------------- #
 # Selector GEIH (barra lateral compartida)
 # --------------------------------------------------------------------------- #
-def selector_geih(extra: tuple = (), clave: str = "geih", varios_anios: bool = True):
-    """Dibuja la barra lateral de la GEIH y devuelve (df_filtrado, descripcion, params)."""
+AYUDA_ANIOS = "Cada año completo ocupa ~300 MB de memoria; empiece con pocos años."
+
+
+def seleccion_geih(clave: str = "geih", varios_anios: bool = True, ayuda_anios: str = AYUDA_ANIOS) -> dict:
+    """Dibuja la barra lateral de la GEIH y devuelve la selección, sin cargar datos."""
     with st.sidebar:
         st.header("Datos GEIH")
         serie = st.radio("Serie", ["Principal", "Empalme (2010–2020)"], horizontal=True, key=f"{clave}_serie",
@@ -204,8 +226,7 @@ def selector_geih(extra: tuple = (), clave: str = "geih", varios_anios: bool = T
         av = av[av.completo]
         anios_disp = sorted(av.anio.unique())
         defecto = anios_disp[-2:] if varios_anios else anios_disp[-1:]
-        anios = st.multiselect("Años", anios_disp, default=defecto, key=f"{clave}_anios",
-                               help="Cada año completo ocupa ~300 MB de memoria; empiece con pocos años.")
+        anios = st.multiselect("Años", anios_disp, default=defecto, key=f"{clave}_anios", help=ayuda_anios)
         if not anios:
             st.info("Elija al menos un año.")
             st.stop()
@@ -226,8 +247,36 @@ def selector_geih(extra: tuple = (), clave: str = "geih", varios_anios: bool = T
         dptos = st.multiselect("Departamento", sorted(dd.DEPARTAMENTOS.values()), key=f"{clave}_dpto",
                                placeholder="Todos")
 
-    df = cargar_geih(tuple(sorted(anios)), tuple(sorted(meses)) if meses else None, tuple(sorted(extra)),
-                     empalme, rutas_actuales())
+    partes = [f"{'empalme ' if empalme else ''}{', '.join(map(str, sorted(anios)))}"]
+    if meses:
+        partes.append(", ".join(dd.MESES[m] for m in sorted(meses)))
+    for nombre, val in (("sexo", sexo), ("zona", zona), ("dpto", dptos)):
+        if val:
+            partes.append(f"{nombre}: {', '.join(val)}")
+    if edad != (0, 100):
+        partes.append(f"edad {edad[0]}–{edad[1]}")
+
+    elegidos = av[av.anio.isin(anios)]
+    return {
+        "anios": sorted(map(int, anios)), "meses": sorted(map(int, meses)) if meses else None, "empalme": empalme,
+        "sexo": sexo, "zona": zona, "edad": edad, "dptos": dptos, "descripcion": " · ".join(partes),
+        "meses_disponibles": tuple(zip(elegidos.anio.tolist(), elegidos.mes.tolist())),
+        "filtrada": bool(meses or sexo or zona or dptos or edad != (0, 100)),
+    }
+
+
+def selector_geih(extra: tuple = (), clave: str = "geih", varios_anios: bool = True,
+                  variables: list | None = None, sel: dict | None = None):
+    """
+    Dibuja la barra lateral de la GEIH (o usa ``sel``, de ``seleccion_geih``) y
+    devuelve (df_filtrado, descripcion, params).
+    """
+    sel = sel or seleccion_geih(clave, varios_anios)
+    anios, meses, empalme = sel["anios"], sel["meses"], sel["empalme"]
+    sexo, zona, edad, dptos = sel["sexo"], sel["zona"], sel["edad"], sel["dptos"]
+
+    df = cargar_geih(tuple(anios), tuple(meses) if meses else None, tuple(sorted(extra)), empalme,
+                     tuple(variables) if variables else None, rutas_actuales())
     mask = pd.Series(True, index=df.index)
     if sexo:
         mask &= df["sexo"].isin(sexo)
@@ -239,15 +288,6 @@ def selector_geih(extra: tuple = (), clave: str = "geih", varios_anios: bool = T
         mask &= df["departamento"].isin(dptos)
     filtrado = df[mask] if not mask.all() else df
 
-    partes = [f"{'empalme ' if empalme else ''}{', '.join(map(str, sorted(anios)))}"]
-    if meses:
-        partes.append(", ".join(dd.MESES[m] for m in sorted(meses)))
-    for nombre, val in (("sexo", sexo), ("zona", zona), ("dpto", dptos)):
-        if val:
-            partes.append(f"{nombre}: {', '.join(val)}")
-    if edad != (0, 100):
-        partes.append(f"edad {edad[0]}–{edad[1]}")
-
     filtros_py = []
     if sexo:
         filtros_py.append(f'df["sexo"].isin({sexo!r})')
@@ -257,17 +297,20 @@ def selector_geih(extra: tuple = (), clave: str = "geih", varios_anios: bool = T
         filtros_py.append(f'df["edad"].between({edad[0]}, {edad[1]})')
     if dptos:
         filtros_py.append(f'df["departamento"].isin({dptos!r})')
-    carga = f"df = dd.geih.load({sorted(anios)!r}"
+    carga = f"df = dd.geih.load({anios!r}"
     if meses:
-        carga += f", months={sorted(meses)!r}"
+        carga += f", months={meses!r}"
     if extra:
         carga += f", columns={sorted(extra)!r}"
     if empalme:
         carga += ", empalme=True"
+    if variables:
+        carga += (", variables=dd.geih.VARIABLES_INDICADORES" if list(variables) == dd.geih.VARIABLES_INDICADORES
+                  else f", variables={list(variables)!r}")
     carga += ")"
     if filtros_py:
         carga += "\ndf = df[" + " & ".join(f"({f})" for f in filtros_py) + "]"
-    return filtrado, " · ".join(partes), {"carga": carga, "anios": sorted(anios), "meses": meses}
+    return filtrado, sel["descripcion"], {"carga": carga, "anios": anios, "meses": meses}
 
 
 # --------------------------------------------------------------------------- #
