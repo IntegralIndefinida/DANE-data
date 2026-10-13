@@ -504,7 +504,7 @@ def load(
         if harmonize_vars:
             df = harmonize(df)
         if conservar is not None:
-            df = df[[c for c in conservar if c in df.columns]]
+            df = df[[c for c in conservar if c in df.columns]].copy()  # sin copia, la vista retiene el mes entero
         frames.append(df)
     if progress:
         progress(1.0, "Listo")

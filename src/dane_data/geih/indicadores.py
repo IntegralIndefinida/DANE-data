@@ -51,34 +51,38 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, anual:
     time_keys = ["anio"] if anual else ["anio", "mes"]
     keys = time_keys + por
 
-    d = df[[c for c in set(keys) | {"anio", "mes", "fex", "pet", "fuerza_trabajo", "ocupado",
-                                    "desocupado", "inactivo", "formal", "ingreso_laboral"} if c in df.columns]].copy()
-    d["_w"] = peso_mensual_promedio(d) if anual else d["fex"]
-    for c in ("pet", "fuerza_trabajo", "ocupado", "desocupado", "inactivo"):
-        d[f"_{c}"] = d["_w"] * d[c].fillna(0).astype(float)
-    d["_informal"] = d["_w"] * ((d["ocupado"] == 1) & (d["formal"] == 0)).astype(float)
+    # Solo las sumas ponderadas que hacen falta: copiar el frame entero duplica la memoria
+    # con muchos años.
+    w = (peso_mensual_promedio(df) if anual else df["fex"]).to_numpy("float64")
 
-    g = d.groupby(keys, observed=True, dropna=False)
-    res = g.agg(
-        pet=("_pet", "sum"),
-        fuerza_trabajo=("_fuerza_trabajo", "sum"),
-        ocupados=("_ocupado", "sum"),
-        desocupados=("_desocupado", "sum"),
-        inactivos=("_inactivo", "sum"),
-        informales=("_informal", "sum"),
-        n_muestra=("_w", "size"),
-    )
+    def es(col: str) -> np.ndarray:
+        return df[col].to_numpy("float64", na_value=0) == 1
+
+    ocupado = es("ocupado")
+    sumas = pd.DataFrame({
+        "pet": np.where(es("pet"), w, 0.0),
+        "fuerza_trabajo": np.where(es("fuerza_trabajo"), w, 0.0),
+        "ocupados": np.where(ocupado, w, 0.0),
+        "desocupados": np.where(es("desocupado"), w, 0.0),
+        "inactivos": np.where(es("inactivo"), w, 0.0),
+        "informales": np.where(ocupado & (df["formal"].to_numpy("float64", na_value=np.nan) == 0), w, 0.0),
+    }, index=df.index)
+    g = sumas.groupby([df[k] for k in keys], observed=True, dropna=False)
+    res = g.sum()
+    res["n_muestra"] = g.size()
     with np.errstate(divide="ignore", invalid="ignore"):
         res["tgp"] = 100 * res["fuerza_trabajo"] / res["pet"]
         res["to"] = 100 * res["ocupados"] / res["pet"]
         res["td"] = 100 * res["desocupados"] / res["fuerza_trabajo"]
         res["tasa_informalidad"] = 100 * res["informales"] / res["ocupados"]
 
-    ocup = d[(d["ocupado"] == 1) & (d["ingreso_laboral"] > 0)]
-    if len(ocup):
+    ingreso = df["ingreso_laboral"].to_numpy("float64", na_value=np.nan)
+    con_ingreso = ocupado & (ingreso > 0)
+    if con_ingreso.any():
+        ocup = df.loc[con_ingreso, keys].assign(_y=ingreso[con_ingreso], _w=w[con_ingreso])
         gi = ocup.groupby(keys, observed=True, dropna=False)
-        res["ingreso_medio"] = gi.apply(lambda x: weighted_mean(x["ingreso_laboral"], x["_w"]))
-        res["ingreso_mediano"] = gi.apply(lambda x: weighted_quantile(x["ingreso_laboral"], x["_w"], 0.5))
+        res["ingreso_medio"] = gi.apply(lambda x: weighted_mean(x["_y"], x["_w"]))
+        res["ingreso_mediano"] = gi.apply(lambda x: weighted_quantile(x["_y"], x["_w"], 0.5))
     else:
         res["ingreso_medio"] = np.nan
         res["ingreso_mediano"] = np.nan
