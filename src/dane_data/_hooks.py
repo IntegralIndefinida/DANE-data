@@ -8,7 +8,23 @@ ProgressFn = Callable[[Optional[float], str], None]
 
 
 class DownloadCancelled(Exception):
-    """El usuario pidió detener la descarga."""
+    """
+    La descarga se detuvo porque ``should_stop()`` devolvió True.
+
+    La lanzan ``dd.geih.download`` y ``dd.eam.download`` cuando se les pasa ``should_stop`` (la aplicación
+    lo usa para su botón de cancelar). Los meses o años que ya terminaron quedan en disco y la próxima
+    descarga los salta.
+
+    Ejemplos
+    --------
+    >>> import time
+    >>> import dane_data as dd
+    >>> limite = time.time() + 60
+    >>> try:  # doctest: +SKIP
+    ...     dd.geih.download(2025, should_stop=lambda: time.time() > limite)
+    ... except dd.DownloadCancelled:
+    ...     print("Se detuvo al minuto; lo descargado se conserva.")
+    """
 
 
 class ProgressMixin:

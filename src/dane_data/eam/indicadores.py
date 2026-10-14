@@ -23,11 +23,69 @@ GLOSARIO = {
 
 def resumen(df: pd.DataFrame, por: str | Iterable[str] | None = ("anio",)) -> pd.DataFrame:
     """
-    Agregados industriales por grupo (sumas sobre establecimientos).
-    Montos en miles de pesos corrientes; ``productividad_laboral`` y
-    ``remuneracion_media`` en miles de pesos por persona.
+    Agregados industriales por grupo.
 
-    >>> dd.eam.resumen(eam, por=["anio", "sector"])
+    Suma las variables de los establecimientos de cada grupo y calcula los indicadores derivados.
+
+    Parámetros
+    ----------
+    df
+        Microdatos de ``load``.
+    por
+        Variable o lista de variables de agrupación, por ejemplo ``["anio", "sector"]``. ``None`` para
+        un solo total.
+
+    Devuelve
+    --------
+    DataFrame
+        Una fila por grupo con las sumas que existan en los datos (``produccion_bruta``,
+        ``consumo_intermedio``, ``valor_agregado``, ``ventas``, ``personal_total``,
+        ``empleados_perm_temp``, ``remuneraciones``, ``activos_fijos``, ``inversion_bruta``,
+        ``energia_kwh``), ``establecimientos`` y ``empresas`` (distintos), y:
+
+        * ``productividad_laboral``: valor agregado por persona ocupada.
+        * ``remuneracion_media``: remuneraciones por empleado permanente o temporal.
+        * ``participacion_laboral``: remuneraciones / valor agregado, en %.
+        * ``tasa_valor_agregado``: valor agregado / producción bruta, en %.
+
+    Véase también
+    -------------
+    participacion : Participación de cada grupo en el total.
+    crecimiento : Tasas de crecimiento anual.
+    deflactar : Pasar a precios constantes.
+    GLOSARIO : Definiciones de cada agregado.
+
+    Notas
+    -----
+    Los montos están en miles de pesos corrientes; ``productividad_laboral`` y ``remuneracion_media``, en
+    miles de pesos por persona. Las remuneraciones son salarios más prestaciones de los empleados
+    permanentes y temporales (``salpeyte + prespyte``).
+
+    Ejemplos
+    --------
+    >>> import pandas as pd
+    >>> import dane_data as dd
+    >>> eam = pd.DataFrame({
+    ...     "anio": [2023, 2023, 2024], "sector": ["Alimentos", "Químicos", "Alimentos"],
+    ...     "nordest": [1, 2, 1], "nordemp": [10, 20, 10],
+    ...     "prodbr2": [500.0, 800.0, 550.0], "consin2": [300.0, 500.0, 320.0], "valagri": [200.0, 300.0, 230.0],
+    ...     "pertotal": [10, 20, 11], "pperytem": [9, 18, 10], "salpeyte": [50.0, 90.0, 55.0],
+    ...     "prespyte": [20.0, 30.0, 22.0],
+    ... })
+    >>> res = dd.eam.resumen(eam, por="anio")
+    >>> res[["anio", "valor_agregado", "productividad_laboral", "participacion_laboral"]].round(1)
+       anio  valor_agregado  productividad_laboral  participacion_laboral
+    0  2023           500.0                   16.7                   38.0
+    1  2024           230.0                   20.9                   33.5
+
+    Con la EAM:
+
+    >>> eam = dd.eam.load(range(2022, 2025))  # doctest: +SKIP
+    >>> dd.eam.resumen(eam, por="anio")[["anio", "establecimientos", "participacion_laboral"]].round(1)  # doctest: +SKIP
+       anio  establecimientos  participacion_laboral
+    0  2022              6775                   16.7
+    1  2023              6714                   19.2
+    2  2024              6583                   21.7
     """
     por = _as_list(por)
     d = df.copy()
@@ -65,14 +123,92 @@ def resumen(df: pd.DataFrame, por: str | Iterable[str] | None = ("anio",)) -> pd
 
 
 def participacion(df: pd.DataFrame, variable: str = "valagri", por: str = "sector", tiempo: str = "anio") -> pd.DataFrame:
-    """Participación % de cada grupo en el total de ``variable`` por año."""
+    """
+    Participación de cada grupo en el total de una variable, año por año.
+
+    Parámetros
+    ----------
+    df
+        Microdatos de ``load`` (o cualquier tabla con ``tiempo``, ``por`` y ``variable``).
+    variable
+        Variable a repartir, por ejemplo ``"valagri"`` (valor agregado) o ``"pertotal"`` (empleo).
+    por
+        Variable de agrupación.
+    tiempo
+        Variable de tiempo.
+
+    Devuelve
+    --------
+    DataFrame
+        Una fila por año y grupo con la suma de ``variable`` y ``participacion`` en %.
+
+    Véase también
+    -------------
+    resumen : Agregados por grupo.
+
+    Ejemplos
+    --------
+    >>> import pandas as pd
+    >>> import dane_data as dd
+    >>> eam = pd.DataFrame({
+    ...     "anio": [2023, 2023, 2024], "sector": ["Alimentos", "Químicos", "Alimentos"],
+    ...     "nordest": [1, 2, 1], "nordemp": [10, 20, 10],
+    ...     "prodbr2": [500.0, 800.0, 550.0], "consin2": [300.0, 500.0, 320.0], "valagri": [200.0, 300.0, 230.0],
+    ...     "pertotal": [10, 20, 11], "pperytem": [9, 18, 10], "salpeyte": [50.0, 90.0, 55.0],
+    ...     "prespyte": [20.0, 30.0, 22.0],
+    ... })
+    >>> dd.eam.participacion(eam, variable="valagri", por="sector")
+       anio     sector  valagri  participacion
+    0  2023  Alimentos    200.0           40.0
+    1  2023   Químicos    300.0           60.0
+    2  2024  Alimentos    230.0          100.0
+    """
     d = df.groupby([tiempo, por], observed=True)[variable].sum().reset_index()
     d["participacion"] = 100 * d[variable] / d.groupby(tiempo)[variable].transform("sum")
     return d
 
 
 def crecimiento(df: pd.DataFrame, valor: str, por: str | Iterable[str] | None = None, tiempo: str = "anio") -> pd.DataFrame:
-    """Agrega la tasa de crecimiento anual (%) de ``valor`` dentro de cada grupo."""
+    """
+    Tasa de crecimiento de una variable de un año al siguiente, dentro de cada grupo.
+
+    Parámetros
+    ----------
+    df
+        Tabla con una fila por año y grupo, por ejemplo la salida de ``resumen``.
+    valor
+        Columna cuya variación se calcula.
+    por
+        Variable o lista de variables de grupo. ``None`` para una sola serie.
+    tiempo
+        Variable de tiempo.
+
+    Devuelve
+    --------
+    DataFrame
+        ``df`` ordenado, con la columna ``crec_<valor>`` en % (vacía en el primer año de cada grupo).
+
+    Véase también
+    -------------
+    deflactar : Para que el crecimiento sea real y no nominal.
+
+    Ejemplos
+    --------
+    >>> import pandas as pd
+    >>> import dane_data as dd
+    >>> eam = pd.DataFrame({
+    ...     "anio": [2023, 2023, 2024], "sector": ["Alimentos", "Químicos", "Alimentos"],
+    ...     "nordest": [1, 2, 1], "nordemp": [10, 20, 10],
+    ...     "prodbr2": [500.0, 800.0, 550.0], "consin2": [300.0, 500.0, 320.0], "valagri": [200.0, 300.0, 230.0],
+    ...     "pertotal": [10, 20, 11], "pperytem": [9, 18, 10], "salpeyte": [50.0, 90.0, 55.0],
+    ...     "prespyte": [20.0, 30.0, 22.0],
+    ... })
+    >>> res = dd.eam.resumen(eam, por="anio")
+    >>> dd.eam.crecimiento(res, "valor_agregado")[["anio", "valor_agregado", "crec_valor_agregado"]]
+       anio  valor_agregado  crec_valor_agregado
+    0  2023           500.0                  NaN
+    1  2024           230.0                -54.0
+    """
     por = _as_list(por)
     d = df.sort_values(por + [tiempo]).copy()
     prev = d.groupby(por)[valor].shift() if por else d[valor].shift()
@@ -83,10 +219,58 @@ def crecimiento(df: pd.DataFrame, valor: str, por: str | Iterable[str] | None = 
 def deflactar(df: pd.DataFrame, columnas: Iterable[str], deflactor: pd.DataFrame | pd.Series,
               on: str | list[str] = "anio", base: float = 100.0, sufijo: str = "_real") -> pd.DataFrame:
     """
-    Convierte valores corrientes a constantes: ``valor_real = valor / deflactor × base``.
+    Convierte valores corrientes a precios constantes.
 
-    ``deflactor`` puede ser una Serie indexada por año o un DataFrame con las
-    columnas de ``on`` (p. ej. ``["anio", "division"]``) y una columna ``deflactor``.
+    Calcula ``valor_real = valor / deflactor × base`` para cada columna.
+
+    Parámetros
+    ----------
+    df
+        Microdatos o tabla con valores corrientes.
+    columnas
+        Columnas a deflactar.
+    deflactor
+        Una Serie indexada por año, o un DataFrame con las columnas de ``on`` (por ejemplo
+        ``["anio", "division"]``, para un deflactor por sector) y una columna ``deflactor``.
+    on
+        Columna o columnas con que se une el deflactor.
+    base
+        Valor del índice en el año base (100 si el deflactor es un índice base 100).
+    sufijo
+        Sufijo de las columnas nuevas.
+
+    Devuelve
+    --------
+    DataFrame
+        ``df`` con la columna ``deflactor`` y una columna ``<columna><sufijo>`` por cada columna.
+
+    Avisos
+    ------
+    UserWarning
+        Si algunas filas no encontraron deflactor (quedan vacías).
+
+    Notas
+    -----
+    ``dane-data`` no trae deflactores. Para la industria se suele usar el índice de precios del
+    productor (IPP) del DANE, por año o por división CIIU.
+
+    Ejemplos
+    --------
+    >>> import pandas as pd
+    >>> import dane_data as dd
+    >>> eam = pd.DataFrame({
+    ...     "anio": [2023, 2023, 2024], "sector": ["Alimentos", "Químicos", "Alimentos"],
+    ...     "nordest": [1, 2, 1], "nordemp": [10, 20, 10],
+    ...     "prodbr2": [500.0, 800.0, 550.0], "consin2": [300.0, 500.0, 320.0], "valagri": [200.0, 300.0, 230.0],
+    ...     "pertotal": [10, 20, 11], "pperytem": [9, 18, 10], "salpeyte": [50.0, 90.0, 55.0],
+    ...     "prespyte": [20.0, 30.0, 22.0],
+    ... })
+    >>> ipp = pd.Series({2023: 100.0, 2024: 110.0})
+    >>> dd.eam.deflactar(eam, ["valagri"], ipp)[["anio", "valagri", "valagri_real"]].round(1)
+       anio  valagri  valagri_real
+    0  2023    200.0         200.0
+    1  2023    300.0         300.0
+    2  2024    230.0         209.1
     """
     on = _as_list(on)
     d = df.copy()
@@ -104,13 +288,46 @@ def deflactar(df: pd.DataFrame, columnas: Iterable[str], deflactor: pd.DataFrame
 
 def panel(df: pd.DataFrame, balanceado: bool = False, anios: Iterable[int] | None = None) -> pd.DataFrame:
     """
-    Panel establecimiento-año indexado por (``nordest``, ``anio``).
+    Panel de establecimientos: una fila por establecimiento y año.
 
-    ``balanceado=True`` conserva solo establecimientos observados en todos los
-    años de ``anios`` (por defecto, todos los años presentes en ``df``).
+    Parámetros
+    ----------
+    df
+        Microdatos de ``load``.
+    balanceado
+        Conservar solo los establecimientos observados en todos los años de ``anios``.
+    anios
+        Años del panel. Por defecto, todos los de ``df``.
 
-    Ojo: la anonimización de ANDA puede cambiar los identificadores entre
-    catálogos; revise la persistencia con ``dd.eam.supervivencia``.
+    Devuelve
+    --------
+    DataFrame
+        Indexado por (``nordest``, ``anio``) y ordenado, listo para modelos de panel (por ejemplo
+        ``linearmodels.PanelOLS``). Si un establecimiento aparece dos veces en un año, se conserva la
+        primera.
+
+    Véase también
+    -------------
+    supervivencia : Cuántos establecimientos siguen de un año al siguiente.
+
+    Notas
+    -----
+    La anonimización del ANDA puede cambiar los identificadores entre catálogos; revise la persistencia
+    con ``supervivencia`` antes de usar un panel largo.
+
+    Ejemplos
+    --------
+    >>> import pandas as pd
+    >>> import dane_data as dd
+    >>> eam = pd.DataFrame({
+    ...     "anio": [2023, 2023, 2024], "sector": ["Alimentos", "Químicos", "Alimentos"],
+    ...     "nordest": [1, 2, 1], "nordemp": [10, 20, 10],
+    ...     "prodbr2": [500.0, 800.0, 550.0], "consin2": [300.0, 500.0, 320.0], "valagri": [200.0, 300.0, 230.0],
+    ...     "pertotal": [10, 20, 11], "pperytem": [9, 18, 10], "salpeyte": [50.0, 90.0, 55.0],
+    ...     "prespyte": [20.0, 30.0, 22.0],
+    ... })
+    >>> dd.eam.panel(eam, balanceado=True).index.tolist()
+    [(1, 2023), (1, 2024)]
     """
     d = df.dropna(subset=["nordest"]).copy()
     anios = sorted(set(anios) if anios is not None else d["anio"].unique())
@@ -125,7 +342,48 @@ def panel(df: pd.DataFrame, balanceado: bool = False, anios: Iterable[int] | Non
 def supervivencia(df: pd.DataFrame) -> pd.DataFrame:
     """
     Cuántos establecimientos de cada año reaparecen al año siguiente.
-    Caídas bruscas indican cambios de identificador (no cierres reales).
+
+    Parámetros
+    ----------
+    df
+        Microdatos de ``load``.
+
+    Devuelve
+    --------
+    DataFrame
+        Una fila por par de años consecutivos con ``establecimientos``, ``siguen_al_anio_siguiente`` y
+        ``pct_siguen``.
+
+    Véase también
+    -------------
+    panel : Panel de establecimientos.
+
+    Notas
+    -----
+    Una caída brusca de ``pct_siguen`` suele indicar que cambiaron los identificadores (``nordest``)
+    entre catálogos del ANDA, no que hayan cerrado plantas.
+
+    Ejemplos
+    --------
+    >>> import pandas as pd
+    >>> import dane_data as dd
+    >>> eam = pd.DataFrame({
+    ...     "anio": [2023, 2023, 2024], "sector": ["Alimentos", "Químicos", "Alimentos"],
+    ...     "nordest": [1, 2, 1], "nordemp": [10, 20, 10],
+    ...     "prodbr2": [500.0, 800.0, 550.0], "consin2": [300.0, 500.0, 320.0], "valagri": [200.0, 300.0, 230.0],
+    ...     "pertotal": [10, 20, 11], "pperytem": [9, 18, 10], "salpeyte": [50.0, 90.0, 55.0],
+    ...     "prespyte": [20.0, 30.0, 22.0],
+    ... })
+    >>> dd.eam.supervivencia(eam)
+       anio  siguiente  establecimientos  siguen_al_anio_siguiente  pct_siguen
+    0  2023       2024                 2                         1        50.0
+
+    Con la EAM:
+
+    >>> dd.eam.supervivencia(dd.eam.load(range(2022, 2025))).round(1)  # doctest: +SKIP
+       anio  siguiente  establecimientos  siguen_al_anio_siguiente  pct_siguen
+    0  2022       2023              6775                      6605        97.5
+    1  2023       2024              6714                      6420        95.6
     """
     ids = df.dropna(subset=["nordest"]).groupby("anio")["nordest"].apply(set).sort_index()
     rows = []

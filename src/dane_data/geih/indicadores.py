@@ -25,24 +25,89 @@ _COLUMNAS = ["pet", "fuerza_trabajo", "ocupados", "desocupados", "inactivos", "t
 
 
 def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, anual: bool = True) -> pd.DataFrame:
-    """
-    Indicadores de mercado laboral ponderados.
+    r"""
+    Indicadores del mercado laboral, ponderados como los calcula el DANE.
 
     Parámetros
     ----------
     df
-        DataFrame de ``dane_data.geih.load`` (con variables armonizadas).
+        Microdatos armonizados de ``load``. Necesita ``anio``, ``mes``, ``fex``, ``pet``,
+        ``fuerza_trabajo``, ``ocupado``, ``desocupado``, ``inactivo``, ``formal`` e ``ingreso_laboral``
+        (las de ``VARIABLES_INDICADORES``), más las variables de ``por``.
     por
-        Variable(s) para desagregar, p. ej. ``"sexo"`` o ``["zona", "nivel_educativo"]``.
+        Variable o lista de variables para desagregar, por ejemplo ``"sexo"`` o
+        ``["zona", "nivel_educativo"]``.
     anual
-        Si True, promedia los meses de cada año; si False, un resultado por mes.
+        Si True, un resultado por año: los niveles son el promedio de los meses del año. Si False, uno por
+        mes.
 
     Devuelve
     --------
     DataFrame
-        Niveles (personas, promedio mensual) y tasas en %:
-        ``pet, fuerza_trabajo, ocupados, desocupados, inactivos, tgp, to, td,
-        tasa_informalidad, ingreso_medio, ingreso_mediano, n_muestra``.
+        Una fila por año (o mes) y grupo, con:
+
+        * ``pet``, ``fuerza_trabajo``, ``ocupados``, ``desocupados``, ``inactivos``: personas (promedio
+          mensual si ``anual=True``).
+        * ``tgp``, ``to``, ``td``: tasas global de participación, de ocupación y de desocupación, en %.
+        * ``tasa_informalidad``: % de los ocupados sin afiliación a salud y cotización a pensión.
+        * ``ingreso_medio``, ``ingreso_mediano``: ingreso laboral mensual de los ocupados con ingreso
+          positivo, en pesos corrientes.
+        * ``n_muestra``: personas encuestadas (sin expandir) en el grupo.
+
+    Véase también
+    -------------
+    serie_indicadores : Lo mismo para muchos años, calculado año por año y guardado.
+    load : Cargar los microdatos.
+    GLOSARIO : Definiciones de cada indicador.
+
+    Notas
+    -----
+    Cada nivel es la suma del factor de expansión :math:`w_i` de las personas del grupo. Si
+    ``anual=True``, :math:`w_i` se divide por el número de meses del año en ``df``, así que el nivel es el
+    promedio de los niveles mensuales:
+
+    .. math::
+
+       \mathrm{TGP} = 100\,\frac{FT}{PET}, \qquad
+       \mathrm{TO} = 100\,\frac{O}{PET}, \qquad
+       \mathrm{TD} = 100\,\frac{D}{FT}
+
+    donde :math:`FT = O + D` es la fuerza de trabajo, :math:`O` los ocupados y :math:`D` los
+    desocupados. Las tasas anuales son entonces cocientes de promedios mensuales, como las publica el
+    DANE, y no promedios de las tasas mensuales.
+
+    La informalidad es una definición por seguridad social (ver ``formal`` en la guía de variables); la
+    oficial del DANE usa además el tamaño de la empresa. La mediana es la de
+    ``dane_data.weighted_quantile``.
+
+    Ejemplos
+    --------
+    Cinco personas con el mismo peso: dos ocupadas (una formal), una desocupada, una inactiva y una
+    menor de la edad de trabajar.
+
+    >>> import pandas as pd
+    >>> import dane_data as dd
+    >>> df = pd.DataFrame({
+    ...     "anio": 2024, "mes": 1, "fex": 100.0,
+    ...     "pet":            [1, 1, 1, 1, 0],
+    ...     "fuerza_trabajo": [1, 1, 1, 0, 0],
+    ...     "ocupado":        [1, 1, 0, 0, 0],
+    ...     "desocupado":     [0, 0, 1, 0, 0],
+    ...     "inactivo":       [0, 0, 0, 1, 0],
+    ...     "formal":         [1, 0, None, None, None],
+    ...     "ingreso_laboral": [2.0e6, 1.2e6, None, None, None],
+    ... })
+    >>> dd.geih.indicadores(df)[["anio", "pet", "ocupados", "tgp", "to", "td", "tasa_informalidad"]].round(1)
+       anio    pet  ocupados   tgp    to    td  tasa_informalidad
+    0  2024  400.0     200.0  75.0  50.0  33.3               50.0
+
+    Con la GEIH de 2024:
+
+    >>> df = dd.geih.load(2024, variables=dd.geih.VARIABLES_INDICADORES)  # doctest: +SKIP
+    >>> dd.geih.indicadores(df, por="sexo")[["anio", "sexo", "tgp", "td"]].round(1)  # doctest: +SKIP
+       anio    sexo   tgp    td
+    0  2024  Hombre  76.4   8.2
+    1  2024   Mujer  52.4  12.7
     """
     por = _as_list(por)
     time_keys = ["anio"] if anual else ["anio", "mes"]

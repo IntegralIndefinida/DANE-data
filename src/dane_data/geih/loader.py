@@ -206,7 +206,43 @@ def _pick_files(files: list[Path]) -> dict[str, list[Path]]:
 
 
 def find_months(years: Iterable[int] | int | None = None, empalme: bool = False, root=None) -> list[MesGEIH]:
-    """Lista las carpetas mensuales disponibles localmente."""
+    """
+    Meses de la GEIH que hay en disco.
+
+    Recorre ``<carpeta>/datos_csv/<año>/<mes>/`` y reconoce el mes aunque la carpeta tenga el nombre
+    que trae el ZIP del DANE (``Enero 2024``, ``ENE_2021``, ``CSV 13``...). Busca los archivos en
+    subcarpetas y, de cada módulo, elige el total nacional (Cabecera + Resto).
+
+    Parámetros
+    ----------
+    years
+        Año o lista de años. ``None`` para todos.
+    empalme
+        Buscar en la carpeta de la serie de empalme.
+    root
+        Carpeta raíz. Por defecto, la configurada (``dd.get_path``).
+
+    Devuelve
+    --------
+    list of MesGEIH
+        Uno por mes, ordenados. Cada uno tiene ``anio``, ``mes``, ``carpeta``, ``archivos``
+        (``{módulo: [rutas]}``), ``modulos``, ``faltantes`` (lo que falta para los indicadores
+        laborales) y ``completo``.
+
+    Véase también
+    -------------
+    available : Lo mismo como tabla.
+    load_month : Leer un mes.
+
+    Ejemplos
+    --------
+    >>> import dane_data as dd
+    >>> meses = dd.geih.find_months(2024)  # doctest: +SKIP
+    >>> meses[0].anio, meses[0].mes, meses[0].completo  # doctest: +SKIP
+    (2024, 1, True)
+    >>> meses[0].modulos  # doctest: +SKIP
+    ['caracteristicas', 'fuerza', 'no_ocupados', 'ocupados', 'otras', 'vivienda']
+    """
     base = _csv_dir(_root(empalme, root))
     if not base.is_dir():
         return []
@@ -237,7 +273,38 @@ def find_months(years: Iterable[int] | int | None = None, empalme: bool = False,
 
 
 def available(empalme: bool = False, root=None) -> pd.DataFrame:
-    """Tabla de años/meses descargados y sus módulos."""
+    """
+    Tabla de los meses de la GEIH descargados.
+
+    Parámetros
+    ----------
+    empalme
+        Revisar la serie de empalme en vez de la principal.
+    root
+        Carpeta raíz. Por defecto, la configurada (``dd.get_path``).
+
+    Devuelve
+    --------
+    DataFrame
+        Una fila por mes con ``anio``, ``mes``, ``nombre_mes``, ``carpeta``, ``modulos``, ``completo`` y
+        ``faltantes``. ``load`` omite los meses con ``completo=False``.
+
+    Véase también
+    -------------
+    download : Descargar lo que falta.
+    find_months : Los mismos meses como objetos.
+
+    Ejemplos
+    --------
+    >>> import dane_data as dd
+    >>> av = dd.geih.available()  # doctest: +SKIP
+    >>> av.groupby("anio")["completo"].sum().tail(3)  # doctest: +SKIP
+    anio
+    2024    12
+    2025    12
+    2026     8
+    Name: completo, dtype: int64
+    """
     rows = [
         {"anio": m.anio, "mes": m.mes, "nombre_mes": MESES[m.mes], "carpeta": m.carpeta.name,
          "modulos": ", ".join(m.modulos), "completo": m.completo, "faltantes": ", ".join(m.faltantes)}
@@ -297,10 +364,45 @@ def _read_module(files: list[Path], columns) -> pd.DataFrame:
 
 def load_month(mes: MesGEIH, columns="core", modules: Iterable[str] | None = None) -> pd.DataFrame:
     """
-    Fusiona los módulos de un mes a nivel persona (llave DIRECTORIO, SECUENCIA_P, ORDEN).
+    Une los módulos de un mes en una tabla de personas, sin armonizar.
 
-    ``columns``: ``"core"`` (variables para armonizar), ``"all"`` (todas) o una
-    lista de variables DANE adicionales a las ``core``.
+    Parte del módulo de características generales (una fila por persona) y le agrega las columnas
+    nuevas de los demás módulos con la llave de persona (``DIRECTORIO``, ``SECUENCIA_P``, ``ORDEN``), o
+    la de hogar (``DIRECTORIO``, ``SECUENCIA_P``) para vivienda. Es el primer paso de ``load``, que
+    además guarda el resultado en caché y lo armoniza.
+
+    Parámetros
+    ----------
+    mes
+        Un mes de ``find_months``.
+    columns
+        ``"core"`` (las de ``CORE_RAW``), ``"all"`` (todas) o una lista de variables DANE que se suman a
+        las de ``CORE_RAW``.
+    modules
+        Módulos a unir (de ``MODULOS``). Por defecto, todos los que haya.
+
+    Devuelve
+    --------
+    DataFrame
+        Una fila por persona, con ``anio``, ``mes`` y las variables originales del DANE en mayúscula.
+
+    Lanza
+    -----
+    FileNotFoundError
+        Si el mes no tiene el módulo de características generales.
+
+    Véase también
+    -------------
+    load : Varios meses, con caché y armonizados.
+    harmonize : Agregar las variables armonizadas.
+
+    Ejemplos
+    --------
+    >>> import dane_data as dd
+    >>> mes = dd.geih.find_months(2024)[0]  # doctest: +SKIP
+    >>> crudo = dd.geih.load_month(mes)  # doctest: +SKIP
+    >>> crudo.shape  # doctest: +SKIP
+    (70648, 29)
     """
     if columns == "all":
         selector = None
@@ -373,20 +475,86 @@ MARCOS = {
 
 def marco_muestral(anio: int, empalme: bool = False) -> str:
     """
-    Marco de los factores de expansión de un año en el ANDA (clave de ``MARCOS``). Los niveles y las
-    tasas no son comparables entre marcos. En la serie principal, 2020 ya viene con el CNPV 2018 pero
-    2021 todavía con el censo 2005; desde 2022, con el CNPV 2018. La serie de empalme lleva 2010–2020
-    al CNPV 2018.
+    Marco muestral de los factores de expansión de un año.
+
+    Los niveles y las tasas no son comparables entre marcos: cambian las proyecciones de población y la
+    edad mínima de la PET. En la serie principal, 2020 ya viene con el CNPV 2018 pero 2021 todavía con
+    el censo 2005; desde 2022, con el CNPV 2018. La serie de empalme lleva 2010–2020 al CNPV 2018.
+
+    Parámetros
+    ----------
+    anio
+        Año de la encuesta.
+    empalme
+        Si el año es de la serie de empalme.
+
+    Devuelve
+    --------
+    str
+        ``"censo 2005"`` o ``"CNPV 2018"``, las claves de ``MARCOS``.
+
+    Véase también
+    -------------
+    MARCOS : Qué significa cada marco.
+
+    Ejemplos
+    --------
+    >>> import dane_data as dd
+    >>> dd.geih.marco_muestral(2021)
+    'censo 2005'
+    >>> dd.geih.marco_muestral(2022)
+    'CNPV 2018'
+    >>> dd.geih.marco_muestral(2015, empalme=True)
+    'CNPV 2018'
+    >>> dd.geih.MARCOS["CNPV 2018"]
+    'proyecciones de población del CNPV 2018 y PET de 15 años o más'
     """
     return "CNPV 2018" if empalme or anio == 2020 or anio >= 2022 else "censo 2005"
 
 
 def harmonize(df: pd.DataFrame, edad_minima_pet: int | None = None) -> pd.DataFrame:
     """
-    Agrega variables armonizadas (minúscula) comparables entre años.
+    Agrega las variables armonizadas, iguales en todos los años.
 
-    ``edad_minima_pet``: si se indica, quien tenga menos años queda fuera de la PET
-    (y de la fuerza de trabajo) aunque el archivo del DANE lo marque dentro.
+    Cada variable se construye fila a fila desde la variable del DANE que exista en esa época (por
+    ejemplo, ``sexo`` desde ``P3271`` o ``P6020``), así que se pueden juntar años distintos. Las
+    variables armonizadas van en minúscula; las originales, en mayúscula, no se tocan. ``load`` la
+    aplica a cada mes.
+
+    Parámetros
+    ----------
+    df
+        Un mes (o varios) de ``load_month``: variables del DANE con ``anio`` y ``mes``.
+    edad_minima_pet
+        Si se indica, quien tenga menos años queda fuera de la PET (y de la fuerza de trabajo) aunque el
+        archivo del DANE lo marque dentro. ``load`` usa 15 para la serie de empalme.
+
+    Devuelve
+    --------
+    DataFrame
+        Una copia de ``df`` con ``fex``, ``sexo``, ``edad``, ``grupo_edad``, ``jefe_hogar``, ``dpto``,
+        ``departamento``, ``zona``, ``condicion``, ``pet``, ``fuerza_trabajo``, ``ocupado``,
+        ``desocupado``, ``inactivo``, ``formal``, ``cotiza_pension``, ``ingreso_laboral``, ``smlv``,
+        ``ratio_smlv``, ``horas_semana``, ``posicion_ocupacional``, ``rama2d``, ``rama_rev`` y
+        ``nivel_educativo``.
+
+    Véase también
+    -------------
+    load : Carga y armoniza.
+    CATEGORIAS : Categorías de las variables categóricas.
+
+    Notas
+    -----
+    La guía «Variables armonizadas» explica de qué variable del DANE sale cada una y cómo se define. Las
+    variables de ocupados (``formal``, ``ingreso_laboral``, ``horas_semana``,
+    ``posicion_ocupacional``) quedan vacías para quien no está ocupado.
+
+    Ejemplos
+    --------
+    >>> import dane_data as dd
+    >>> crudo = dd.geih.load_month(dd.geih.find_months(2024)[0])  # doctest: +SKIP
+    >>> df = dd.geih.harmonize(crudo)  # doctest: +SKIP
+    >>> df["condicion"].value_counts()  # doctest: +SKIP
     """
     df = df.copy()
     anio = df["anio"]
@@ -492,7 +660,11 @@ def load(
     variables: Iterable[str] | None = None,
 ) -> pd.DataFrame:
     """
-    Carga la GEIH (una fila por persona) para los años y meses pedidos.
+    Carga la GEIH: una fila por persona, con los módulos unidos y las variables armonizadas.
+
+    Es la puerta de entrada a los microdatos. Para cada mes, une los módulos (``load_month``), guarda el
+    resultado en caché, agrega las variables armonizadas (``harmonize``) y se queda con las columnas
+    pedidas; al final junta todos los meses.
 
     Parámetros
     ----------
@@ -525,11 +697,45 @@ def load(
         solo de lo que se conserva: útil para juntar muchos años. Las variables DANE
         que no están en ``CORE_RAW`` deben pedirse también en ``columns``.
 
-    Ejemplo
-    -------
-    >>> df = dd.geih.load(2025, months=[1, 2, 3])
-    >>> dd.geih.indicadores(df, por="sexo")
-    >>> df = dd.geih.load(range(2007, 2026), variables=["fex", "sexo", "ocupado", "ingreso_laboral"])
+    Devuelve
+    --------
+    DataFrame
+        Una fila por persona y mes: ``anio``, ``mes``, las variables armonizadas en minúscula y las del
+        DANE en mayúscula. ``df.attrs["meses_omitidos"]`` lista los meses incompletos que se saltaron.
+
+    Lanza
+    -----
+    FileNotFoundError
+        Si no hay ningún mes completo para lo pedido.
+
+    Véase también
+    -------------
+    indicadores : Indicadores del mercado laboral.
+    serie_indicadores : Indicadores de muchos años sin cargarlos en memoria.
+    dane_data.tabla : Tablas ponderadas.
+    available : Qué meses hay en disco.
+
+    Notas
+    -----
+    Un año completo tiene del orden de 800 000 registros. Con ``variables`` la memoria depende solo de las columnas
+    que se conservan, porque cada mes se recorta antes de juntarlos.
+
+    La primera lectura de un mes tarda unos segundos; las siguientes salen de la caché
+    (``~/.cache/dane_data/geih``). La caché se invalida sola si cambian los archivos del mes.
+
+    Ejemplos
+    --------
+    >>> import dane_data as dd
+    >>> df = dd.geih.load(2025, months=[1, 2, 3])  # doctest: +SKIP
+    >>> dd.geih.indicadores(df, por="sexo")  # doctest: +SKIP
+
+    Variables del DANE que no están en ``CORE_RAW``:
+
+    >>> df = dd.geih.load(2024, columns=["P6500", "P7070"])  # doctest: +SKIP
+
+    Muchos años, solo con lo necesario:
+
+    >>> df = dd.geih.load(range(2007, 2026), variables=["fex", "sexo", "ocupado", "ingreso_laboral"])  # doctest: +SKIP
     """
     if isinstance(months, int):
         months = [months]
@@ -602,7 +808,24 @@ def load(
 
 
 def clear_cache() -> int:
-    """Borra la caché de meses procesados y de indicadores precalculados. Devuelve el número de archivos borrados."""
+    """
+    Borra la caché de la GEIH.
+
+    Incluye los meses ya leídos por ``load`` y los resultados por año de ``serie_indicadores``,
+    ``serie_tabla`` y ``serie_frecuencias``. Nunca hace falta para tener resultados correctos (la caché
+    se invalida sola cuando cambian los datos o el código); sirve para liberar espacio.
+
+    Devuelve
+    --------
+    int
+        Número de archivos borrados.
+
+    Ejemplos
+    --------
+    >>> import dane_data as dd
+    >>> dd.geih.clear_cache()  # doctest: +SKIP
+    412
+    """
     n = 0
     for f in (config.CACHE_DIR / "geih").rglob("*.parquet"):
         f.unlink()

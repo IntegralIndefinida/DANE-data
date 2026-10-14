@@ -44,11 +44,40 @@ def strip_accents(text: str) -> str:
 @lru_cache(maxsize=None)
 def diccionario(encuesta: str) -> dict:
     """
-    Diccionario oficial de variables (DDI de ANDA): GEIH 2025 o EAM 2024.
+    Diccionario oficial de variables de una encuesta.
 
-    Devuelve ``{VARIABLE: {"etiqueta", "pregunta", "categorias", "modulos"}}``.
-    Los nombres cambian entre épocas; úselo como guía, no como verdad absoluta
-    para años antiguos.
+    Es el diccionario DDI del ANDA, tal como lo publica el DANE: el de la GEIH 2025 o el de la EAM 2024.
+    Viene con la librería, así que no necesita descargar nada.
+
+    Parámetros
+    ----------
+    encuesta
+        ``"geih"`` o ``"eam"``.
+
+    Devuelve
+    --------
+    dict
+        ``{VARIABLE: {"etiqueta": ..., "pregunta": ..., "categorias": {código: etiqueta}, "modulos": [...]}}``.
+
+    Véase también
+    -------------
+    buscar_variable : Buscar variables por texto.
+    describir : Etiqueta de una variable.
+
+    Notas
+    -----
+    Los nombres y las categorías de algunas variables cambian entre épocas de la encuesta: úselo como guía
+    para los años antiguos. Donde los datos contradicen el DDI, ``dane-data`` sigue los datos; vea la
+    página «Diferencias con la documentación del DANE».
+
+    Ejemplos
+    --------
+    >>> import dane_data as dd
+    >>> geih = dd.diccionario("geih")
+    >>> len(geih)
+    675
+    >>> geih["P6920"]["categorias"]
+    {'1': 'Sí', '2': 'No', '3': 'Ya es pensionado'}
     """
     name = {"geih": "geih_diccionario.json", "eam": "eam_diccionario.json"}[encuesta.lower()]
     with resources.files("dane_data.data").joinpath(name).open(encoding="utf-8") as f:
@@ -56,16 +85,67 @@ def diccionario(encuesta: str) -> dict:
 
 
 def describir(variable: str, encuesta: str = "geih") -> str:
-    """Etiqueta legible de una variable, o el mismo nombre si no se conoce."""
+    """
+    Etiqueta legible de una variable.
+
+    Parámetros
+    ----------
+    variable
+        Nombre de la variable del DANE, en mayúscula o minúscula.
+    encuesta
+        ``"geih"`` o ``"eam"``.
+
+    Devuelve
+    --------
+    str
+        La etiqueta del diccionario oficial, o el mismo nombre si la variable no está en él (por ejemplo,
+        las armonizadas de ``dane-data`` o variables de años antiguos).
+
+    Véase también
+    -------------
+    diccionario : El diccionario completo.
+    buscar_variable : Buscar variables por texto.
+
+    Ejemplos
+    --------
+    >>> import dane_data as dd
+    >>> dd.describir("P6920")
+    '¿está ... Cotizando actualmente a un fondo de pensiones?'
+    >>> dd.describir("valagri", encuesta="eam")
+    'Valor agregado'
+    """
     info = diccionario(encuesta).get(variable.upper())
     return info["etiqueta"] if info and info["etiqueta"] else variable
 
 
 def buscar_variable(texto: str, encuesta: str = "geih"):
     """
-    Busca variables cuyo nombre, etiqueta o pregunta contengan ``texto``.
+    Busca variables por su nombre, etiqueta o pregunta.
 
-    >>> dd.buscar_variable("pensión")
+    La búsqueda no distingue mayúsculas ni tildes.
+
+    Parámetros
+    ----------
+    texto
+        Texto a buscar, por ejemplo ``"arriendo"`` o ``"P64"``.
+    encuesta
+        ``"geih"`` o ``"eam"``.
+
+    Devuelve
+    --------
+    DataFrame
+        Una fila por variable con ``variable``, ``etiqueta``, ``pregunta`` y ``modulo``.
+
+    Véase también
+    -------------
+    diccionario : El diccionario completo.
+    dane_data.geih.load : Cargar variables del DANE extra con ``columns=[...]``.
+
+    Ejemplos
+    --------
+    >>> import dane_data as dd
+    >>> dd.buscar_variable("arriendo")["variable"].tolist()
+    ['P3064S1', 'P5090', 'P5130', 'P5140', 'P7495', 'P7500S1', 'P7500S1A1']
     """
     import pandas as pd
 

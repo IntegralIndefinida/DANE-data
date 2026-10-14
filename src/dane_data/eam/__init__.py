@@ -22,12 +22,45 @@ def download(
     should_stop=None,
 ) -> None:
     """
-    Descarga microdatos EAM (1992–2024) del ANDA (DANE).
+    Descarga los microdatos de la EAM del ANDA del DANE.
 
-    >>> dd.eam.download([2022, 2023, 2024])
-    >>> dd.eam.download()                       # serie completa (~330 MB)
+    Un archivo por año en ``<carpeta>/datos/<año>/``. Es incremental: los años ya extraídos se saltan.
 
-    Es incremental: los años ya extraídos se saltan.
+    Parámetros
+    ----------
+    years
+        Año o lista de años entre 1992 y 2024. ``None`` descarga toda la serie (unos 330 MB).
+    root
+        Carpeta de destino. Por defecto, la de ``dd.get_path("eam")``.
+    include_tic
+        Bajar también el módulo de tecnologías de la información (TIC), 2008–2018.
+    delete_zips
+        Borrar cada ZIP después de extraerlo.
+    progress
+        Función ``progress(fraccion, mensaje)`` que recibe el avance.
+    should_stop
+        Función sin argumentos; si devuelve True, la descarga se detiene con ``DownloadCancelled``.
+
+    Lanza
+    -----
+    DownloadCancelled
+        Si ``should_stop()`` devolvió True.
+
+    Véase también
+    -------------
+    available : Qué años hay en disco.
+    load : Cargar lo descargado.
+
+    Notas
+    -----
+    Cuando el ANDA no publica un CSV para un año, se usa el TXT (2023) o se convierte el archivo de Stata a
+    texto (2024).
+
+    Ejemplos
+    --------
+    >>> import dane_data as dd
+    >>> dd.eam.download([2022, 2023, 2024])  # doctest: +SKIP
+    >>> dd.eam.download()  # toda la serie, 1992–2024  # doctest: +SKIP
     """
     if isinstance(years, (int, str)):
         years = [years]

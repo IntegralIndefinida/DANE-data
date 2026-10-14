@@ -39,12 +39,40 @@ POBLACIONES = ("pet", "fuerza_trabajo", "ocupado", "desocupado", "inactivo")
 
 def filtrar(df: pd.DataFrame, filtros: dict | None = None, poblacion: str | None = None) -> pd.DataFrame:
     """
-    Filas que cumplen ``filtros`` y pertenecen a ``poblacion``.
+    Filas que cumplen los filtros y pertenecen a una población.
 
-    ``filtros``: ``{columna: [valores]}``, o ``{columna: (mínimo, máximo)}`` para un rango
-    (con los extremos), p. ej. ``{"sexo": ["Mujer"], "edad": (15, 28)}``. Si la columna no
-    existe (una variable que ese año no trae), nadie cumple el filtro.
-    ``poblacion``: una de ``POBLACIONES`` (``"ocupado"``, ``"pet"``...).
+    Es el formato de filtros que aceptan ``serie_indicadores``, ``serie_tabla``, ``serie_frecuencias`` y
+    ``exportar``.
+
+    Parámetros
+    ----------
+    df
+        Microdatos armonizados.
+    filtros
+        ``{columna: [valores]}`` para conservar esos valores, o ``{columna: (mínimo, máximo)}`` para un
+        rango con los extremos incluidos. Por ejemplo, ``{"sexo": ["Mujer"], "edad": (15, 28)}``. Si la
+        columna no existe (una variable que ese año no trae), ninguna fila cumple el filtro.
+    poblacion
+        Una de ``POBLACIONES``: ``"pet"``, ``"fuerza_trabajo"``, ``"ocupado"``, ``"desocupado"`` o
+        ``"inactivo"``.
+
+    Devuelve
+    --------
+    DataFrame
+        Las filas que cumplen todo, o ``df`` mismo si todas cumplen.
+
+    Ejemplos
+    --------
+    >>> import pandas as pd
+    >>> import dane_data as dd
+    >>> df = pd.DataFrame({"sexo": ["Mujer", "Hombre", "Mujer"], "edad": [17, 30, 45], "ocupado": [1, 1, 0]})
+    >>> dd.geih.filtrar(df, {"sexo": ["Mujer"], "edad": (15, 28)})
+        sexo  edad  ocupado
+    0  Mujer    17        1
+    >>> dd.geih.filtrar(df, poblacion="ocupado")
+         sexo  edad  ocupado
+    0   Mujer    17        1
+    1  Hombre    30        1
     """
     mask = pd.Series(True, index=df.index)
     for col, cond in (filtros or {}).items():
@@ -147,18 +175,78 @@ def serie_indicadores(
     meses: Iterable[int] | int | None = None,
 ) -> pd.DataFrame:
     """
-    Lo mismo que ``indicadores(filtrar(load(anios, months=meses), filtros), por=por, anual=anual)``,
-    pero sin juntar los microdatos de todos los años en memoria.
+    Indicadores del mercado laboral de muchos años, sin cargar los microdatos en memoria.
 
-    Cada año se calcula por separado (con todas las desagregaciones de
-    ``POR_PRECALCULADOS``, anual y mensual) y se guarda. La primera vez tarda unos
-    segundos por año; después es instantáneo, también al cambiar ``por`` o ``anual``.
+    Da exactamente lo mismo que
+    ``indicadores(filtrar(load(anios, months=meses), filtros), por=por, anual=anual)``, pero carga un
+    año a la vez y guarda el resultado de cada año en disco.
+
+    Parámetros
+    ----------
+    anios
+        Año o lista de años, por ejemplo ``range(2007, 2027)``.
+    por
+        Desagregación: una de ``POR_PRECALCULADOS`` (``None``, ``"sexo"``, ``"zona"``,
+        ``"grupo_edad"``, ``"nivel_educativo"``, ``"departamento"``).
+    anual
+        Si True, un resultado por año (promedio de los meses); si False, uno por mes.
+    empalme
+        Usar la serie de empalme (2010–2020).
+    root
+        Carpeta raíz. Por defecto, la configurada.
+    progress
+        Función ``progress(fraccion, mensaje)`` que recibe el avance.
+    filtros
+        Filtros con el formato de ``filtrar``, por ejemplo ``{"edad": (15, 28)}``.
+    meses
+        Mes o lista de meses de cada año. Por defecto, todos los que haya.
+
+    Devuelve
+    --------
+    DataFrame
+        Las mismas columnas de ``indicadores``: ``anio`` (y ``mes`` si ``anual=False``), la variable de
+        ``por``, niveles, tasas, ingresos y ``n_muestra``.
+
+    Lanza
+    -----
+    ValueError
+        Si ``por`` no es una de ``POR_PRECALCULADOS``.
+    FileNotFoundError
+        Si no hay datos para esos años.
+
+    Véase también
+    -------------
+    indicadores : El cálculo, sobre microdatos ya cargados.
+    serie_tabla : Tablas ponderadas de muchos años.
+
+    Notas
+    -----
+    Cada año se calcula una vez, con todas las desagregaciones de ``POR_PRECALCULADOS``, anual y
+    mensual, y se guarda en ``~/.cache/dane_data/geih/indicadores/``. La primera vez tarda unos segundos
+    por año; después es instantáneo, también al cambiar ``por`` o ``anual``. Se recalcula solo si cambian
+    los archivos del año, los filtros o meses, o el código de ``dane-data``.
+
     Para desagregar por otras variables use ``indicadores`` sobre
-    ``load(..., variables=VARIABLES_INDICADORES)``.
+    ``load(..., variables=[*VARIABLES_INDICADORES, "mi_variable"])``.
 
-    >>> dd.geih.serie_indicadores(range(2007, 2026))                 # TD, TGP... por año
-    >>> dd.geih.serie_indicadores(range(2021, 2026), por="sexo", anual=False)
-    >>> dd.geih.serie_indicadores(range(2015, 2026), filtros={"edad": (15, 28)})   # jóvenes
+    Ejemplos
+    --------
+    >>> import dane_data as dd
+    >>> dd.geih.serie_indicadores(2024)[["anio", "tgp", "to", "td", "tasa_informalidad"]].round(1)  # doctest: +SKIP
+       anio   tgp    to    td  tasa_informalidad
+    0  2024  63.9  57.4  10.2               57.1
+
+    Desempleo juvenil (15 a 28 años):
+
+    >>> dd.geih.serie_indicadores([2023, 2024, 2025], filtros={"edad": (15, 28)})[["anio", "td"]].round(1)  # doctest: +SKIP
+       anio    td
+    0  2023  17.2
+    1  2024  17.4
+    2  2025  15.3
+
+    Mes a mes y por sexo:
+
+    >>> dd.geih.serie_indicadores(range(2021, 2026), por="sexo", anual=False)  # doctest: +SKIP
     """
     if por not in POR_PRECALCULADOS:
         raise ValueError(f"por={por!r} no está precalculado (opciones: {list(POR_PRECALCULADOS)}). Use "
@@ -205,15 +293,55 @@ def serie_frecuencias(
     progress=None,
 ) -> pd.DataFrame:
     """
-    Distribución ponderada: una fila por año, combinación de ``por`` y valor de ``variable``,
-    con ``peso`` (personas, promedio mensual de cada año) y ``n_muestra``.
+    Distribución ponderada de una variable en muchos años, calculada año por año.
 
-    Es la base de ``serie_tabla``: de ella salen totales, porcentajes, medias y medianas
-    exactas aunque se junten varios años. ``columns`` son las variables DANE extra que
-    hay que leer (como en ``load``).
+    Cuenta, para cada año y cada combinación de ``por``, cuántas personas (expandidas) tienen cada valor
+    de ``variable``. Es la base de ``serie_tabla``: de estas frecuencias salen totales, porcentajes,
+    medias y medianas exactas, también al juntar varios años.
 
-    >>> f = dd.geih.serie_frecuencias(range(2015, 2026), "ingreso_laboral", poblacion="ocupado")
-    >>> dd.weighted_quantile(f["ingreso_laboral"], f["peso"], 0.5)   # mediana de todos esos años
+    Parámetros
+    ----------
+    anios
+        Año o lista de años.
+    variable
+        Variable cuya distribución se cuenta. Las filas donde está vacía se descartan. ``None`` cuenta
+        solo los grupos de ``por``.
+    por
+        Variable o lista de variables de agrupación (``anio`` siempre se incluye).
+    poblacion
+        Restringir a una de ``POBLACIONES`` (por ejemplo ``"ocupado"``).
+    filtros
+        Filtros con el formato de ``filtrar``.
+    meses
+        Mes o lista de meses de cada año.
+    columns
+        Variables del DANE que no están en ``CORE_RAW`` y hay que leer, como en ``load``.
+    empalme
+        Usar la serie de empalme.
+    root
+        Carpeta raíz. Por defecto, la configurada.
+    progress
+        Función ``progress(fraccion, mensaje)`` que recibe el avance.
+
+    Devuelve
+    --------
+    DataFrame
+        Una fila por año, grupo y valor, con ``peso`` (personas, promedio mensual del año) y
+        ``n_muestra``.
+
+    Véase también
+    -------------
+    tabla_de_frecuencias : Convertir las frecuencias en una tabla.
+    serie_tabla : Las dos cosas en un paso.
+
+    Ejemplos
+    --------
+    Mediana del ingreso laboral de los ocupados de 2024 y 2025 juntos:
+
+    >>> import dane_data as dd
+    >>> f = dd.geih.serie_frecuencias([2024, 2025], "ingreso_laboral", poblacion="ocupado")  # doctest: +SKIP
+    >>> dd.weighted_quantile(f["ingreso_laboral"], f["peso"], 0.5)  # doctest: +SKIP
+    1300000.0
     """
     por = [p for p in _as_list(por) if p != "anio"]
     claves = ["anio", *por] + ([variable] if variable else [])
@@ -253,16 +381,75 @@ def serie_tabla(
     progress=None,
 ) -> pd.DataFrame:
     """
-    Lo mismo que ``dd.tabla(filtrar(load(anios, months=meses), filtros, poblacion), por, variable,
-    estadistico)``, calculado año por año y guardado en disco.
+    Tabla ponderada de muchos años, sin cargar los microdatos en memoria.
 
-    ``dropna=True`` deja fuera a las personas con valor vacío en alguna variable de ``por``
-    (p. ej. la rama de actividad de quien no trabaja).
+    Da exactamente lo mismo que
+    ``dd.tabla(filtrar(load(anios, months=meses), filtros, poblacion), por, variable, estadistico)``,
+    pero calcula las frecuencias de un año a la vez y las guarda en disco.
+
+    Parámetros
+    ----------
+    anios
+        Año o lista de años.
+    por
+        Variable o lista de variables que definen los grupos. Incluya ``"anio"`` para una fila por año;
+        sin él, los años se juntan.
+    variable
+        Variable numérica para ``"media"`` y ``"mediana"``.
+    estadistico
+        ``"total"``, ``"porcentaje"``, ``"media"`` o ``"mediana"``, como en ``dd.tabla``.
+    poblacion
+        Restringir a una de ``POBLACIONES`` (por ejemplo ``"ocupado"``).
+    filtros
+        Filtros con el formato de ``filtrar``.
+    meses
+        Mes o lista de meses de cada año.
+    dropna
+        Dejar fuera a las personas con valor vacío en alguna variable de ``por`` (por ejemplo, la rama de
+        actividad de quien no trabaja).
+    columns
+        Variables del DANE que no están en ``CORE_RAW`` y hay que leer, como en ``load``.
+    empalme
+        Usar la serie de empalme.
+    root
+        Carpeta raíz. Por defecto, la configurada.
+    progress
+        Función ``progress(fraccion, mensaje)`` que recibe el avance.
+
+    Devuelve
+    --------
+    DataFrame
+        Igual que ``dd.tabla``: los grupos, el estadístico y ``n_muestra``.
+
+    Lanza
+    -----
+    ValueError
+        Si ``estadistico`` no es uno de los cuatro, o falta ``variable`` para la media o la mediana.
+
+    Véase también
+    -------------
+    dane_data.tabla : La misma tabla sobre microdatos cargados.
+    serie_frecuencias : Las frecuencias de las que sale la tabla.
+
+    Notas
+    -----
+    Los totales de cada año son promedios mensuales; si ``por`` no incluye ``anio``, el total junta los
+    años (es la suma de los promedios de cada año). Las medias y medianas que juntan años son exactas,
+    porque salen de la distribución completa y no de promedios de cada año.
+
+    Ejemplos
+    --------
+    >>> import dane_data as dd
+    >>> dd.geih.serie_tabla([2024, 2025], por="sexo", variable="ingreso_laboral",
+    ...                     estadistico="mediana", poblacion="ocupado")  # doctest: +SKIP
+         sexo    mediana  n_muestra
+    0  Hombre  1300000.0     385000
+    1   Mujer  1300000.0     303382
+
+    Distribución de los ocupados por nivel educativo, año por año:
 
     >>> dd.geih.serie_tabla(range(2015, 2026), por=["anio", "nivel_educativo"], estadistico="porcentaje",
-    ...                     poblacion="ocupado")
-    >>> dd.geih.serie_tabla([2024, 2025], por="sexo", variable="ingreso_laboral", estadistico="mediana",
-    ...                     filtros={"zona": ["Urbano (cabecera)"]})
+    ...                     poblacion="ocupado", dropna=True)  # doctest: +SKIP
     """
     por = _as_list(por)
     if estadistico not in ("total", "porcentaje", "media", "mediana"):
@@ -277,7 +464,54 @@ def serie_tabla(
 
 def tabla_de_frecuencias(f: pd.DataFrame, por: str | Iterable[str] | None = None, variable: str | None = None,
                          estadistico: str = "total") -> pd.DataFrame:
-    """Tabla de ``dd.tabla`` a partir de las frecuencias ponderadas de ``serie_frecuencias``."""
+    """
+    Tabla ponderada a partir de frecuencias.
+
+    Es el segundo paso de ``serie_tabla``: convierte la salida de ``serie_frecuencias`` (o cualquier
+    tabla con ``peso`` y ``n_muestra``) en la tabla que daría ``dd.tabla``.
+
+    Parámetros
+    ----------
+    f
+        Frecuencias con las columnas de ``por``, ``variable``, ``peso`` y ``n_muestra``.
+    por
+        Variable o lista de variables que definen los grupos.
+    variable
+        Variable numérica para ``"media"`` y ``"mediana"``.
+    estadistico
+        ``"total"``, ``"porcentaje"``, ``"media"`` o ``"mediana"``.
+
+    Devuelve
+    --------
+    DataFrame
+        Los grupos, el estadístico y ``n_muestra``.
+
+    Véase también
+    -------------
+    serie_frecuencias : De dónde salen las frecuencias.
+    serie_tabla : Los dos pasos juntos.
+
+    Ejemplos
+    --------
+    >>> import pandas as pd
+    >>> import dane_data as dd
+    >>> f = pd.DataFrame({"anio": [2023, 2023, 2024, 2024], "sexo": ["Hombre", "Mujer", "Hombre", "Mujer"],
+    ...                   "peso": [60.0, 40.0, 70.0, 30.0], "n_muestra": [6, 4, 7, 3]})
+    >>> dd.geih.tabla_de_frecuencias(f, por=["anio", "sexo"], estadistico="porcentaje")
+       anio    sexo  total  n_muestra  porcentaje
+    0  2023  Hombre   60.0          6        60.0
+    1  2023   Mujer   40.0          4        40.0
+    2  2024  Hombre   70.0          7        70.0
+    3  2024   Mujer   30.0          3        30.0
+
+    Una mediana que junta años sale de la distribución completa:
+
+    >>> f = pd.DataFrame({"anio": [2023, 2023, 2024], "ingreso": [1.0, 2.0, 3.0],
+    ...                   "peso": [10.0, 30.0, 20.0], "n_muestra": [1, 3, 2]})
+    >>> dd.geih.tabla_de_frecuencias(f, variable="ingreso", estadistico="mediana")
+       mediana  n_muestra
+    0      2.0          6
+    """
     por = _as_list(por)
     if estadistico in ("total", "porcentaje"):
         if not por:
@@ -321,13 +555,52 @@ def exportar(
     progress=None,
 ) -> int:
     """
-    Escribe en ``ruta`` (CSV) los microdatos armonizados, una persona por fila, un mes a la vez:
-    sirve para muchos años aunque no quepan en memoria. Devuelve el número de filas.
+    Exporta los microdatos armonizados a un CSV, un mes a la vez.
 
-    ``variables``: columnas a escribir (por defecto, las armonizadas). Las variables DANE
-    que no están en ``CORE_RAW`` deben pedirse también en ``columns``.
+    Escribe una persona por fila y mes. Como lee y escribe un mes a la vez, sirve para muchos años
+    aunque no quepan en memoria. El archivo se escribe primero con otro nombre y se renombra al
+    terminar, así que nunca queda un CSV a medias.
 
-    >>> dd.geih.exportar(range(2015, 2026), "ocupados.csv", poblacion="ocupado")
+    Parámetros
+    ----------
+    anios
+        Año o lista de años.
+    ruta
+        Archivo CSV de destino (UTF-8 con BOM, para que Excel lea bien las tildes).
+    variables
+        Columnas a escribir (``anio`` y ``mes`` siempre). Por defecto, todas las armonizadas.
+    poblacion
+        Restringir a una de ``POBLACIONES`` (por ejemplo ``"ocupado"``).
+    filtros
+        Filtros con el formato de ``filtrar``.
+    meses
+        Mes o lista de meses de cada año.
+    columns
+        Variables del DANE que no están en ``CORE_RAW``: hay que pedirlas aquí además de en
+        ``variables``.
+    empalme
+        Usar la serie de empalme.
+    root
+        Carpeta raíz. Por defecto, la configurada.
+    progress
+        Función ``progress(fraccion, mensaje)`` que recibe el avance.
+
+    Devuelve
+    --------
+    int
+        Número de filas escritas.
+
+    Véase también
+    -------------
+    load : Cargar los mismos datos en memoria.
+    filtrar : El formato de ``filtros``.
+
+    Ejemplos
+    --------
+    >>> import dane_data as dd
+    >>> dd.geih.exportar(range(2015, 2026), "ocupados.csv", poblacion="ocupado")  # doctest: +SKIP
+    >>> dd.geih.exportar(2024, "salarios.csv", variables=["fex", "sexo", "ingreso_laboral", "P6500"],
+    ...                  columns=["P6500"], poblacion="ocupado")  # doctest: +SKIP
     """
     ruta = Path(ruta)
     por_anio = _meses_por_anio(anios, meses, empalme, root)

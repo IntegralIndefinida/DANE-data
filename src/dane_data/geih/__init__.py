@@ -28,15 +28,58 @@ def download(
     should_stop=None,
 ) -> None:
     """
-    Descarga microdatos GEIH del ANDA (DANE) a la carpeta configurada.
+    Descarga los microdatos de la GEIH del ANDA del DANE.
 
-    >>> dd.geih.download([2024, 2025])                    # serie principal
-    >>> dd.geih.download(2016, empalme=True)              # serie de empalme
-    >>> dd.geih.download(2025, limit_files=1)             # solo enero (prueba)
+    Baja los ZIP mensuales de cada año y extrae los módulos en
+    ``<carpeta>/datos_csv/<año>/<mes>/``. Es incremental: los meses que ya están completos se saltan, así
+    que se puede interrumpir y volver a correr.
 
-    ``modules`` acepta: vivienda, caracteristicas, fuerza_trabajo, ocupados,
-    desocupados, inactivos, otras_formas_trabajo (por defecto todos).
-    Es incremental: los meses ya extraídos se saltan.
+    Parámetros
+    ----------
+    years
+        Año o lista de años. ``None`` descarga todos los de la serie (``ANIOS_DISPONIBLES``, o
+        ``ANIOS_EMPALME`` con ``empalme=True``).
+    modules
+        Módulos a extraer, con los nombres de ``DEFAULT_MODULES``: ``vivienda``, ``caracteristicas``,
+        ``fuerza_trabajo``, ``ocupados``, ``desocupados``, ``inactivos``, ``otras_formas_trabajo``. Por
+        defecto, todos.
+    empalme
+        Descargar la serie de empalme (2010–2020, con proyecciones del CNPV 2018) en vez de la principal.
+    root
+        Carpeta de destino. Por defecto, la de ``dd.get_path("geih")`` o ``dd.get_path("geih_empalme")``.
+    delete_zips
+        Borrar cada ZIP después de extraerlo. Por defecto se conservan.
+    limit_files
+        Máximo de meses por año; útil para probar con uno solo.
+    progress
+        Función ``progress(fraccion, mensaje)`` que recibe el avance (``fraccion`` entre 0 y 1, o None).
+    should_stop
+        Función sin argumentos; si devuelve True, la descarga se detiene con ``DownloadCancelled``.
+
+    Lanza
+    -----
+    DownloadCancelled
+        Si ``should_stop()`` devolvió True.
+
+    Véase también
+    -------------
+    available : Qué meses hay en disco y si están completos.
+    load : Cargar lo descargado.
+    dane_data.eam.download : Descargar la EAM.
+
+    Notas
+    -----
+    En algunos meses los CSV que publica el ANDA están dañados (2008 y 2011: el factor de expansión sin
+    punto decimal; septiembre de 2021: separado por espacios). Para esos meses se baja otro formato del
+    mismo catálogo (TXT o Stata). Un año extraído ocupa unos 500 MB en disco, más los ZIP si se
+    conservan.
+
+    Ejemplos
+    --------
+    >>> import dane_data as dd
+    >>> dd.geih.download([2024, 2025])  # doctest: +SKIP
+    >>> dd.geih.download(2016, empalme=True)  # doctest: +SKIP
+    >>> dd.geih.download(2025, limit_files=1)  # solo enero, para probar  # doctest: +SKIP
     """
     if isinstance(years, (int, str)):
         years = [years]

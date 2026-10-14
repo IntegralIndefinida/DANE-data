@@ -114,7 +114,27 @@ def _data_dir(root: Path) -> Path:
 
 
 def find_files(years: Iterable[int] | int | None = None, root=None) -> dict[int, Path]:
-    """``{año: archivo}`` de los datos EAM descargados (ignora el módulo TIC)."""
+    """
+    Archivo de datos de cada año de la EAM descargado.
+
+    Parámetros
+    ----------
+    years
+        Año o lista de años. ``None`` para todos.
+    root
+        Carpeta raíz. Por defecto, la configurada (``dd.get_path("eam")``).
+
+    Devuelve
+    --------
+    dict
+        ``{año: ruta}``. Si un año tiene varios archivos se usa el más grande; el módulo TIC se ignora.
+
+    Ejemplos
+    --------
+    >>> import dane_data as dd
+    >>> dd.eam.find_files(2024)  # doctest: +SKIP
+    {2024: PosixPath('/home/ana/datos/EAM/datos/2024/EAM_ANONIMIZADA_2024.txt')}
+    """
     base = _data_dir(_root(root))
     if not base.is_dir():
         return {}
@@ -132,7 +152,32 @@ def find_files(years: Iterable[int] | int | None = None, root=None) -> dict[int,
 
 
 def available(root=None) -> pd.DataFrame:
-    """Tabla de los años EAM descargados: ``anio``, ``archivo`` y ``tamano_mb``."""
+    """
+    Tabla de los años de la EAM descargados.
+
+    Parámetros
+    ----------
+    root
+        Carpeta raíz. Por defecto, la configurada.
+
+    Devuelve
+    --------
+    DataFrame
+        Una fila por año con ``anio``, ``archivo`` y ``tamano_mb``.
+
+    Véase también
+    -------------
+    download : Descargar lo que falta.
+
+    Ejemplos
+    --------
+    >>> import dane_data as dd
+    >>> dd.eam.available().tail(3)  # doctest: +SKIP
+        anio                   archivo  tamano_mb
+    30  2022  EAM_ANONIMIZADA_2022.csv        9.1
+    31  2023  EAM_ANONIMIZADA_2023.txt        9.0
+    32  2024  EAM_ANONIMIZADA_2024.txt       14.0
+    """
     rows =[{"anio": y, "archivo": f.name, "tamano_mb": round(f.stat().st_size / 1e6, 1)}
             for y, f in find_files(root=root).items()]
     return pd.DataFrame(rows, columns=["anio", "archivo", "tamano_mb"])
@@ -149,7 +194,33 @@ def _ciiu_rev(colname: str, anio: int) -> int:
 
 
 def harmonize(df: pd.DataFrame, anio: int) -> pd.DataFrame:
-    """Agrega ``anio``, ``ciiu``, ``ciiu_rev``, ``division``, ``sector`` y ``departamento`` a los datos de un año."""
+    """
+    Agrega las variables armonizadas a los datos de un año.
+
+    Parámetros
+    ----------
+    df
+        Datos de un año de la EAM, con los nombres en minúscula.
+    anio
+        Año de los datos.
+
+    Devuelve
+    --------
+    DataFrame
+        Una copia de ``df`` con ``anio``, ``ciiu`` (texto), ``ciiu_rev`` (2, 3 o 4), ``division`` (los dos
+        primeros dígitos), ``sector`` (nombre de la división, de ``SECTORES``) y ``departamento``. Las
+        columnas CIIU originales (``ciiu2``, ``ciiu3``, ``ciiu4``...) se reemplazan por ``ciiu``.
+
+    Véase también
+    -------------
+    load : Carga y armoniza.
+
+    Notas
+    -----
+    La revisión se deduce de la variable de origen (``ciiu2`` → Rev. 2, ``ciiu3`` → Rev. 3, ``ciiu4`` →
+    Rev. 4). Algunos años publican el código a 2 o 3 dígitos por anonimización; los dos primeros son
+    siempre la división.
+    """
     df = df.copy()
     ciiu_cols = [c for c in df.columns if _CIIU_COL.match(c)]
     if ciiu_cols:
@@ -182,21 +253,53 @@ def load(
     progress=None,
 ) -> pd.DataFrame:
     """
-    Carga la EAM (un establecimiento-año por fila).
+    Carga la EAM: un establecimiento-año por fila, con las variables armonizadas.
 
     Parámetros
     ----------
     years
-        Año, lista/rango de años o None (todos los disponibles).
+        Año, lista o rango de años. ``None`` para todos los descargados.
     columns
-        ``"core"`` (variables comparables entre años, por defecto),
-        ``"all"`` o lista de variables extra (minúscula o mayúscula),
-        p. ej. ``["c3r10c1", "c4r5c1"]``.
+        ``"core"`` (las de ``CORE``, comparables entre años; por defecto), ``"all"`` o una lista de
+        variables extra en minúscula o mayúscula, por ejemplo ``["c3r10c1", "c4r5c1"]``.
+    harmonize_vars
+        Agregar ``ciiu``, ``ciiu_rev``, ``division``, ``sector`` y ``departamento``. Si False, solo
+        ``anio``.
+    root
+        Carpeta raíz. Por defecto, la configurada.
+    progress
+        Función ``progress(fraccion, mensaje)`` que recibe el avance.
 
-    Ejemplo
-    -------
-    >>> eam = dd.eam.load(range(2014, 2025))
-    >>> dd.eam.resumen(eam, por=["anio", "sector"])
+    Devuelve
+    --------
+    DataFrame
+        Todas las variables en minúscula. Los montos están en miles de pesos corrientes.
+
+    Lanza
+    -----
+    FileNotFoundError
+        Si no hay datos para esos años.
+
+    Véase también
+    -------------
+    resumen : Agregados por año, sector o departamento.
+    panel : Panel de establecimientos.
+    ETIQUETAS : Qué es cada variable de ``CORE``.
+
+    Notas
+    -----
+    La CIIU cambia de revisión: Rev. 2 hasta 2000, Rev. 3 en 2001–2011 y Rev. 4 desde 2012. Los
+    ``sector`` de revisiones distintas no son comparables sin una correlativa.
+
+    Ejemplos
+    --------
+    >>> import dane_data as dd
+    >>> eam = dd.eam.load(range(2022, 2025))  # doctest: +SKIP
+    >>> eam[["anio", "ciiu", "ciiu_rev", "division", "sector", "departamento"]].head(3)  # doctest: +SKIP
+       anio  ciiu  ciiu_rev division                  sector  departamento
+    0  2022  1812         4       18               Impresión   Bogotá D.C.
+    1  2022  2392         4       23  Minerales no metálicos  Cundinamarca
+    2  2022  2429         4       24       Metalurgia básica     Antioquia
     """
     files = find_files(years, root=root)
     if not files:
