@@ -179,7 +179,7 @@ def test_serie_indicadores_usa_cache_y_se_invalida(geih_root, tmp_path, monkeypa
     a = dd.geih.serie_indicadores(2016, root=geih_root)
     assert len(list((tmp_path / "cache" / "geih" / "indicadores").glob("principal_2016_*.parquet"))) == 1
 
-    mod = sys.modules["dane_data.geih.indicadores"]  # dd.geih.indicadores es la función
+    mod = sys.modules["dane_data.geih.agregados"]
     llamadas = []
     original = mod.load
     monkeypatch.setattr(mod, "load", lambda *a, **k: llamadas.append(1) or original(*a, **k))
@@ -195,6 +195,60 @@ def test_serie_indicadores_usa_cache_y_se_invalida(geih_root, tmp_path, monkeypa
 def test_serie_indicadores_por_no_precalculado(geih_root):
     with pytest.raises(ValueError, match="no está precalculado"):
         dd.geih.serie_indicadores(2016, por="rama2d", root=geih_root)
+
+
+def test_serie_indicadores_con_filtros_y_meses(geih_root, tmp_path, monkeypatch):
+    monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
+    filtros = {"sexo": ["Mujer"], "edad": (20, 60)}
+    df = dd.geih.filtrar(dd.geih.load([2016, 2025], months=[1], root=geih_root, cache=False), filtros)
+    for por, anual in (("zona", True), (None, False)):
+        esperado = dd.geih.indicadores(df, por=por, anual=anual)
+        serie = dd.geih.serie_indicadores([2016, 2025], por=por, anual=anual, root=geih_root, filtros=filtros,
+                                          meses=[1])
+        pd.testing.assert_frame_equal(serie, esperado)
+
+
+@pytest.mark.parametrize("pedido", [
+    dict(por=["anio", "sexo"]),
+    dict(por=["sexo", "nivel_educativo"], estadistico="porcentaje"),
+    dict(por="zona", estadistico="porcentaje", poblacion="ocupado"),
+    dict(por="sexo", variable="ingreso_laboral", estadistico="media"),
+    dict(por="zona", variable="edad", estadistico="mediana", filtros={"edad": (10, 60)}),
+    dict(por=None, variable="edad", estadistico="mediana", poblacion="pet"),
+    dict(por=["anio", "posicion_ocupacional"], estadistico="porcentaje", dropna=True),
+    dict(por="departamento", filtros={"sexo": ["Mujer"]}, meses=[1]),
+])
+def test_serie_tabla_igual_a_tabla(geih_root, tmp_path, monkeypatch, pedido):
+    monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
+    df = dd.geih.load([2016, 2025], months=pedido.get("meses"), root=geih_root, cache=False)
+    df = dd.geih.filtrar(df, pedido.get("filtros"), pedido.get("poblacion"))
+    if pedido.get("dropna"):
+        df = df.dropna(subset=pedido["por"])
+    esperado = dd.tabla(df, por=pedido.get("por"), variable=pedido.get("variable"),
+                        estadistico=pedido.get("estadistico", "total"))
+    serie = dd.geih.serie_tabla([2016, 2025], root=geih_root, **pedido)
+    pd.testing.assert_frame_equal(serie, esperado, check_dtype=False, rtol=1e-9)
+
+
+def test_serie_frecuencias_variable_que_no_existe_algunos_anios(geih_root, tmp_path, monkeypatch):
+    """P5000 solo está en 2025: en 2016 queda vacía en vez de fallar."""
+    monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
+    f = dd.geih.serie_frecuencias([2016, 2025], por="P5000", columns=["P5000"], root=geih_root)
+    assert f.loc[f["anio"] == 2016, "P5000"].isna().all()
+    assert set(f.loc[f["anio"] == 2025, "P5000"]) == {2, 4}
+
+
+def test_exportar_mes_a_mes(geih_root, tmp_path):
+    ruta = tmp_path / "salida" / "ocupados.csv"
+    filas = dd.geih.exportar([2016, 2025], ruta, variables=["fex", "sexo", "ingreso_laboral"], poblacion="ocupado",
+                             root=geih_root)
+    esperado = dd.geih.filtrar(dd.geih.load([2016, 2025], root=geih_root, cache=False), poblacion="ocupado")
+    leido = pd.read_csv(ruta, encoding="utf-8-sig")
+    assert filas == len(esperado) == len(leido)
+    assert list(leido.columns) == ["anio", "mes", "fex", "sexo", "ingreso_laboral"]
+    assert leido["fex"].tolist() == pytest.approx(esperado["fex"].tolist())
+    assert leido["sexo"].tolist() == esperado["sexo"].astype(str).tolist()
+    assert not list(ruta.parent.glob("*.tmp"))
 
 
 def test_missing_data_message(tmp_path):

@@ -7,7 +7,9 @@ from typing import Iterable
 from .. import config
 from .downloader import (DEFAULT_MODULES, EMPALME_CATALOGS, KNOWN_CATALOGS, MODULE_PATTERNS,
                          GEIHDownloader)
-from .indicadores import GLOSARIO, POR_PRECALCULADOS, VARIABLES_INDICADORES, indicadores, serie_indicadores
+from .agregados import (POBLACIONES, POR_PRECALCULADOS, VARIABLES_INDICADORES, exportar, filtrar, serie_frecuencias,
+                        serie_indicadores, serie_tabla, tabla_de_frecuencias)
+from .indicadores import GLOSARIO, indicadores
 from .loader import (CATEGORIAS, CONDICIONES, CORE_RAW, GRUPOS_EDAD, MARCOS, MODULOS, NIVELES_EDUC, available,
                      clear_cache, find_months, harmonize, load, load_month, marco_muestral)
 
@@ -53,7 +55,8 @@ def download(
 
 __all__ = [
     "download", "load", "load_month", "available", "find_months", "harmonize", "indicadores",
-    "serie_indicadores", "marco_muestral", "MARCOS", "clear_cache", "GLOSARIO", "MODULOS", "CORE_RAW", "CONDICIONES", "NIVELES_EDUC",
+    "serie_indicadores", "serie_tabla", "serie_frecuencias", "tabla_de_frecuencias", "exportar", "filtrar",
+    "POBLACIONES", "marco_muestral", "MARCOS", "clear_cache", "GLOSARIO", "MODULOS", "CORE_RAW", "CONDICIONES", "NIVELES_EDUC",
     "GRUPOS_EDAD", "CATEGORIAS", "VARIABLES_INDICADORES", "POR_PRECALCULADOS",
     "ANIOS_DISPONIBLES", "ANIOS_EMPALME", "MODULE_PATTERNS", "DEFAULT_MODULES",
 ]
