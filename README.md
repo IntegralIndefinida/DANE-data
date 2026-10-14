@@ -167,10 +167,12 @@ es instantánea después. Se recalculan solos si cambia algún archivo del año 
 
 ### Validación
 
-Las tasas de desocupación calculadas reproducen las publicadas por el DANE: enero 2016 11,9 %,
-enero 2019 12,8 %, enero 2021 17,3 %, enero 2022 14,6 %, enero 2025 11,6 %; promedio 2019 10,5 %,
-2023 10,2 %. Las pruebas (`pytest`) usan datos sintéticos con las rarezas de cada época y, si encuentra
-los datos reales, verifican también estas cifras.
+Con los datos reales, TD, TGP, TO y ocupados de cada mes de 2007–2026 y del empalme 2010–2020 coinciden
+con los anexos del DANE, con diferencias menores a 0,01 puntos. También coinciden las cabeceras y cada sexo
+donde el DANE los publica por mes, y las tasas anuales, que son el promedio de los niveles mensuales. Por
+ejemplo, la desocupación promedio fue 10,5 % en 2019 y 10,2 % en 2023. Las pruebas (`pytest`) usan datos
+sintéticos con las rarezas de cada época. Si encuentran los datos reales, también los comparan mes a mes con
+las cifras publicadas (`tests/datos/dane_publicado.csv`) y buscan huecos o saltos bruscos en la serie.
 
 ## ⚠️ Advertencias metodológicas
 
@@ -202,6 +204,7 @@ el DANE**, así que en estos casos no coincide con las variables armonizadas.
 | `FEX_C_2011` → `fex` (GEIH 2008 y 2011, archivos CSV) | Los CSV de los catálogos 206 (2008) y 182 (2011) deberían traer el mismo factor de expansión que las versiones TXT y SPSS de esos catálogos. | Los CSV perdieron el punto decimal y traen puntos de miles: `849.491.032.387.525` es 84,9491032387525 en el TXT. Como la parte entera tiene de 1 a 5 dígitos, el valor no se puede recuperar del CSV. Algunos archivos traen además filas con un campo de más. Se confirmó persona por persona en marzo de 2011 contra el TXT. Para esos años `dane-data` descarga la versión TXT (tabulada) del mismo catálogo. Si en la carpeta solo están los CSV dañados, esos meses se omiten con un aviso para volver a descargarlos. |
 | Septiembre de 2021 (GEIH, catálogo 701, `Septiembre.csv (2) (1).zip`) | Se publica como CSV. | Los archivos vienen separados por espacios, y el texto libre también tiene espacios, así que las columnas no se pueden separar. `dane-data` descarga ese mes en Stata (`Septiembre.zip`, del mismo catálogo). Si solo está el CSV, el mes se omite con un aviso para volver a descargarlo. |
 | `PETI` → `pet` (empalme, octubre de 2012, catálogo 760) | Las cifras publicadas de la serie con proyecciones del CNPV 2018 usan la PET de 15 años o más en todos los meses. | El archivo de octubre de 2012 marca la PET con la definición anterior (12+ urbano, 10+ rural): la PET sube 9 % frente a septiembre y aparecen ~400 mil ocupados menores de 15 años. Con la PET del archivo, la TGP de ese mes saldría 64,5 % frente al 69,1 % publicado. `dane-data` aplica a todo el empalme la PET de 15 años o más (`harmonize(..., edad_minima_pet=15)`), lo que solo cambia octubre de 2012: así los 132 meses del empalme coinciden con el anexo del DANE. |
+| `P6020` → `sexo` (empalme, abril y mayo de 2017, catálogo 763) | Las cifras mensuales por sexo del anexo (hoja "Total_nacional_IML_Sexo") suman el total nacional. | En esos archivos unos 100 hogares por mes (320 y 359 personas) traen el sexo en blanco, y no están en la serie principal para recuperarlo. `dane-data` deja `sexo` vacío para ellos: los totales coinciden con lo publicado, pero los ocupados de cada sexo quedan cerca de 0,1 % por debajo (unos 16 mil en total). |
 
 ## Estructura
 

@@ -209,6 +209,7 @@ def test_real_td_matches_dane(anio, mes, td):
 
 
 REAL_EMPALME = Path(os.environ.get("DANE_DATA_TEST_GEIH_EMPALME", dd.get_path("geih_empalme")))
+PUBLICADO = pd.read_csv(Path(__file__).parent / "datos" / "dane_publicado.csv", comment="#")
 
 
 def _disponibles_reales(empalme: bool) -> tuple[Path, pd.DataFrame]:
@@ -217,6 +218,76 @@ def _disponibles_reales(empalme: bool) -> tuple[Path, pd.DataFrame]:
     if av.empty:
         pytest.skip(f"sin datos GEIH reales en {root}")
     return root, av
+
+
+# grupo del CSV -> desagregación de serie_indicadores
+GRUPOS_PUBLICADOS = {"total": (None, None), "urbano": ("zona", "Urbano (cabecera)"),
+                     "hombres": ("sexo", "Hombre"), "mujeres": ("sexo", "Mujer")}
+# Diferencias que vienen de los microdatos del ANDA y no tienen arreglo (ver README): no se comparan.
+SIN_COMPARAR = {
+    # ~100 hogares por mes con el sexo (P6020) en blanco; los totales sí coinciden
+    ("empalme", "hombres", 2017, 4), ("empalme", "mujeres", 2017, 4),
+    ("empalme", "hombres", 2017, 5), ("empalme", "mujeres", 2017, 5),
+}
+
+
+def _serie_grupo(anios, grupo, anual, empalme, root) -> pd.DataFrame:
+    por, valor = GRUPOS_PUBLICADOS[grupo]
+    s = dd.geih.serie_indicadores(anios, por=por, anual=anual, empalme=empalme, root=root)
+    return s if por is None else s[s[por] == valor].drop(columns=por)
+
+
+@pytest.mark.parametrize("empalme", [False, True], ids=["principal", "empalme"])
+def test_real_coincide_con_lo_publicado(empalme):
+    """
+    TD, TGP, TO y ocupados de cada mes, y las tasas de cada año completo, coinciden con los
+    anexos del DANE (tests/datos/dane_publicado.csv): total nacional y, con el marco 2018,
+    también cabeceras y cada sexo. El año es el promedio de los niveles mensuales, como lo
+    calcula el DANE.
+    """
+    root, av = _disponibles_reales(empalme)
+    publicado = PUBLICADO[PUBLICADO["serie"] == ("empalme" if empalme else "principal")]
+    anios = sorted(set(av["anio"]) & set(publicado["anio"]))
+    if not anios:
+        pytest.skip("ningún año descargado tiene cifras publicadas")
+
+    problemas = []
+    for grupo, pub in publicado.groupby("grupo"):
+        anios_grupo = sorted(set(anios) & set(pub["anio"]))
+        if not anios_grupo:
+            continue
+        nombre = "" if grupo == "total" else f" ({grupo})"
+        mensual = _serie_grupo(anios_grupo, grupo, False, empalme, root)
+        if grupo == "total":
+            calculados = set(zip(mensual["anio"], mensual["mes"]))
+            for a, ms, falta in zip(av["anio"], av["mes"], av["faltantes"]):
+                if a in anios_grupo and (a, ms) not in calculados and ((pub["anio"] == a) & (pub["mes"] == ms)).any():
+                    problemas.append(f"{a}-{ms:02d}: no se pudo calcular (falta {falta or 'todo: el mes se leyó vacío'})")
+        for _, r in mensual.merge(pub, on=["anio", "mes"], suffixes=("", "_dane")).iterrows():
+            if (r["serie"], grupo, r["anio"], r["mes"]) in SIN_COMPARAR:
+                continue
+            fecha = f"{int(r['anio'])}-{int(r['mes']):02d}{nombre}"
+            for tasa in ("td", "tgp", "to"):
+                if not abs(r[tasa] - r[f"{tasa}_dane"]) <= 0.01:
+                    problemas.append(f"{fecha}: {tasa.upper()} {r[tasa]:.2f}, el DANE publica {r[f'{tasa}_dane']:.2f}")
+            if not abs(r["ocupados"] / (1000 * r["ocupados_dane"]) - 1) <= 1e-4:
+                problemas.append(f"{fecha}: {r['ocupados'] / 1e3:,.0f} mil ocupados, el DANE publica "
+                                 f"{r['ocupados_dane']:,.0f} mil")
+
+        completos = [a for a in anios_grupo if (mensual["anio"] == a).sum() == 12 and (pub["anio"] == a).sum() == 12]
+        if completos:
+            niveles = pub[pub["anio"].isin(completos)].groupby("anio")[["pet", "ocupados", "desocupados"]].mean()
+            fuerza = niveles["ocupados"] + niveles["desocupados"]
+            dane = pd.DataFrame({"td": 100 * niveles["desocupados"] / fuerza, "tgp": 100 * fuerza / niveles["pet"],
+                                 "to": 100 * niveles["ocupados"] / niveles["pet"]})
+            anual = _serie_grupo(completos, grupo, True, empalme, root).set_index("anio")
+            for a in completos:
+                for tasa in ("td", "tgp", "to"):
+                    if not abs(anual.at[a, tasa] - dane.at[a, tasa]) <= 0.01:
+                        problemas.append(f"{a} anual{nombre}: {tasa.upper()} {anual.at[a, tasa]:.2f}, con las cifras "
+                                         f"mensuales del DANE da {dane.at[a, tasa]:.2f}")
+    assert not problemas, f"{len(problemas)} diferencia(s) con lo publicado por el DANE:\n" + \
+        "\n".join(sorted(problemas))
 
 
 # Cambios de metodología: la PET cambia de golpe y es correcto.
