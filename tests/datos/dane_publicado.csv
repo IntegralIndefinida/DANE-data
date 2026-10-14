@@ -1,8 +1,8 @@
 # Mercado laboral publicado por el DANE: serie mensual del total nacional, cabeceras y por sexo. Tasas en %,
-# niveles en miles.
+# niveles en miles. Se regenera con tests/datos/actualizar_publicado.py.
 # principal 2007-2019 y 2021 (proyecciones del censo 2005): anexo de diciembre de 2021, hoja "Tnal mensual"
 #   https://www.dane.gov.co/files/investigaciones/boletines/ech/ech/anexo_empleo_dic_21.xlsx
-# principal 2020 y 2022-2026, y empalme 2010-2020 (proyecciones del CNPV 2018): anexo de agosto de 2026,
+# principal 2020 y 2022-2026, y empalme 2010-2020 (proyecciones del CNPV 2018): anexo vigente,
 #   https://www.dane.gov.co/files/operaciones/GEIH/anex-GEIH-ago2026.xlsx. grupo total y urbano (cabeceras):
 #   hoja "Total nacional"; hombres y mujeres: hoja "Total_nacional_IML_Sexo" (desde 2010).
 # Los microdatos de 2020 en el ANDA ya vienen con el marco 2018, y los de 2021 todavía con el de 2005.
