@@ -1,7 +1,9 @@
 # Al publicar una etiqueta de versión (p. ej. `git tag v0.1.0 && git push origin v0.1.0`):
-#   1. corre las pruebas,
-#   2. arma dane-data-<versión>.zip con la app y los lanzadores (sin tests/ ni .github/),
-#   3. crea el Release en GitHub con ese zip adjunto.
+#   1. verifica que la etiqueta coincida con la versión de pyproject.toml y __init__.py,
+#   2. corre las pruebas,
+#   3. arma dane-data-<versión>.zip con la app y los lanzadores (sin tests/ ni .github/),
+#   4. crea el Release en GitHub con ese zip adjunto,
+#   5. publica el paquete en PyPI (Trusted Publishing, entorno `pypi`; sin token guardado).
 name: Release
 
 on:
@@ -16,6 +18,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Verificar versión
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          PYPROJECT=$(grep -m1 '^version = ' pyproject.toml | cut -d'"' -f2)
+          INIT=$(grep -m1 '^__version__ = ' src/dane_data/__init__.py | cut -d'"' -f2)
+          echo "etiqueta=${VERSION} pyproject=${PYPROJECT} __init__=${INIT}"
+          test "${VERSION}" = "${PYPROJECT}" && test "${VERSION}" = "${INIT}"
 
       - uses: astral-sh/setup-uv@v6
 
@@ -37,3 +47,21 @@ jobs:
           gh release create "${GITHUB_REF_NAME}" "${ZIP}" \
             --title "dane-data ${GITHUB_REF_NAME}" \
             --notes-file .github/NOTAS_RELEASE.md
+
+  pypi:
+    needs: release
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+
+      - name: Construir
+        run: uv build
+
+      - name: Publicar en PyPI
+        run: uv publish
