@@ -38,3 +38,16 @@ def test_mercado_laboral_precalculado_y_con_filtros(geih_root, tmp_path, monkeyp
     at.multiselect(key="geih_sexo").set_value(["Mujer"]).run()  # con filtro: microdatos
     assert not at.exception
     assert "variables=dd.geih.VARIABLES_INDICADORES" in at.code[0].value
+
+
+def test_aviso_cuando_los_anios_mezclan_marcos(geih_root, tmp_path, monkeypatch):
+    monkeypatch.setitem(dd.config._session, "geih", geih_root)
+    monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
+
+    at = AppTest.from_file(str(PAGINAS / "geih_mercado.py"), default_timeout=60).run()
+    assert at.multiselect(key="geih_anios").value == [2021, 2025]       # censo 2005 y CNPV 2018
+    aviso = [w.value for w in at.warning if "no son comparables" in w.value]
+    assert aviso and "2021 usa" in aviso[0] and "2025 usa" in aviso[0]
+
+    at.multiselect(key="geih_anios").set_value([2025]).run()
+    assert not [w for w in at.warning if "no son comparables" in w.value]

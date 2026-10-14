@@ -128,6 +128,13 @@ def test_empalme_pet_15_anios(tmp_path):
     assert principal["condicion"].tolist() == ["Ocupado", "Ocupado", "Inactivo"]
 
 
+def test_marco_muestral():
+    principal = {a: dd.geih.marco_muestral(a) for a in (2007, 2019, 2020, 2021, 2022, 2025)}
+    assert principal == {2007: "censo 2005", 2019: "censo 2005", 2020: "CNPV 2018", 2021: "censo 2005",
+                         2022: "CNPV 2018", 2025: "CNPV 2018"}
+    assert dd.geih.marco_muestral(2015, empalme=True) == "CNPV 2018"
+
+
 def test_include_incomplete(geih_root):
     df = dd.geih.load(2025, root=geih_root, cache=False, incluir_incompletos=True)
     assert set(df["mes"]) == {1, 2}

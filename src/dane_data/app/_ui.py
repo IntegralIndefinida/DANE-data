@@ -212,6 +212,34 @@ def sin_datos(encuesta: str) -> None:
 AYUDA_ANIOS = "Cada año completo ocupa ~300 MB de memoria; empiece con pocos años."
 
 
+def _rangos(anios) -> str:
+    """[2007, 2008, 2009, 2021] -> "2007–2009 y 2021"."""
+    tramos = []
+    for a in sorted(anios):
+        if tramos and a == tramos[-1][1] + 1:
+            tramos[-1][1] = a
+        else:
+            tramos.append([a, a])
+    textos = [f"{i}–{f}" if f > i else str(i) for i, f in tramos]
+    return textos[0] if len(textos) == 1 else ", ".join(textos[:-1]) + " y " + textos[-1]
+
+
+def aviso_marcos(anios, empalme: bool) -> None:
+    """Advierte cuando los años elegidos mezclan marcos de la GEIH: la serie salta por método, no por el mercado."""
+    grupos: dict[str, list[int]] = {}
+    for a in anios:
+        grupos.setdefault(dd.geih.marco_muestral(a, empalme), []).append(a)
+    if len(grupos) < 2:
+        return
+    partes = [f"{_rangos(v)} {'usan' if len(v) > 1 else 'usa'} {dd.geih.MARCOS[k]}" for k, v in grupos.items()]
+    texto = ("⚠️ **Los años elegidos mezclan dos versiones de la GEIH que no son comparables.** "
+             + "; ".join(partes) + ". Entre esos años la serie salta por el cambio de método, no por el mercado "
+             "laboral (la población en edad de trabajar cambia ~5 %).")
+    if any(2010 <= a <= 2020 for a in anios):
+        texto += " Para comparar 2010–2020 sin saltos use la serie de empalme."
+    st.warning(texto)
+
+
 def seleccion_geih(clave: str = "geih", varios_anios: bool = True, ayuda_anios: str = AYUDA_ANIOS) -> dict:
     """Dibuja la barra lateral de la GEIH y devuelve la selección, sin cargar datos."""
     with st.sidebar:
@@ -257,12 +285,14 @@ def seleccion_geih(clave: str = "geih", varios_anios: bool = True, ayuda_anios: 
         partes.append(f"edad {edad[0]}–{edad[1]}")
 
     elegidos = av[av.anio.isin(anios)]
-    return {
+    seleccion = {
         "anios": sorted(map(int, anios)), "meses": sorted(map(int, meses)) if meses else None, "empalme": empalme,
         "sexo": sexo, "zona": zona, "edad": edad, "dptos": dptos, "descripcion": " · ".join(partes),
         "meses_disponibles": tuple(zip(elegidos.anio.tolist(), elegidos.mes.tolist())),
         "filtrada": bool(meses or sexo or zona or dptos or edad != (0, 100)),
     }
+    aviso_marcos(seleccion["anios"], empalme)
+    return seleccion
 
 
 def selector_geih(extra: tuple = (), clave: str = "geih", varios_anios: bool = True,

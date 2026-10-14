@@ -361,6 +361,20 @@ CATEGORIAS = {
     "departamento": pd.CategoricalDtype(sorted(set(DEPARTAMENTOS.values()))),
     "condicion": pd.CategoricalDtype(CONDICIONES),
 }
+MARCOS = {
+    "censo 2005": "proyecciones de población del censo 2005 y PET de 12 años o más (10 en la zona rural)",
+    "CNPV 2018": "proyecciones de población del CNPV 2018 y PET de 15 años o más",
+}
+
+
+def marco_muestral(anio: int, empalme: bool = False) -> str:
+    """
+    Marco de los factores de expansión de un año en el ANDA (clave de ``MARCOS``). Los niveles y las
+    tasas no son comparables entre marcos. En la serie principal, 2020 ya viene con el CNPV 2018 pero
+    2021 todavía con el censo 2005; desde 2022, con el CNPV 2018. La serie de empalme lleva 2010–2020
+    al CNPV 2018.
+    """
+    return "CNPV 2018" if empalme or anio == 2020 or anio >= 2022 else "censo 2005"
 
 
 def harmonize(df: pd.DataFrame, edad_minima_pet: int | None = None) -> pd.DataFrame:
