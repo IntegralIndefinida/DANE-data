@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -7,15 +7,30 @@ name = "dane-data"
 version = "0.2.0"
 description = "Descarga, carga y análisis de microdatos del DANE (GEIH y EAM) para estudiantes de economía."
 readme = "README.md"
-license = { text = "MIT" }
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.10"
 authors = [{ name = "Luis Ramírez" }]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Natural Language :: Spanish",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Education",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+]
 dependencies = [
     "requests>=2.28",
     "beautifulsoup4>=4.11",
     "pandas>=2.0",
     "pyarrow>=12",
 ]
+
+[project.urls]
+Homepage = "https://github.com/IntegralIndefinida/DANE-data"
+Repository = "https://github.com/IntegralIndefinida/DANE-data"
+Issues = "https://github.com/IntegralIndefinida/DANE-data/issues"
+Changelog = "https://github.com/IntegralIndefinida/DANE-data/releases"
 
 [project.optional-dependencies]
 app = ["streamlit>=1.40", "plotly>=5.18", "openpyxl>=3.1"]
