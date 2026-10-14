@@ -18,7 +18,7 @@ indicadores ponderados como lo hace el DANE.
 
 ## Instalación de la app
 
-1. En la página de **[Releases](../../releases)** descargue `dane-data-<versión>.zip` (en *Assets*).
+1. En la página de **[Releases](https://github.com/IntegralIndefinida/DANE-data/releases)** descargue `dane-data-<versión>.zip` (en *Assets*).
 2. Descomprímalo donde quiera.
 3. Doble clic en el lanzador de su sistema:
 
@@ -36,7 +36,15 @@ app basta cerrar la ventana de la terminal.
 > Primera vez en **Windows**: si aparece "Windows protegió su PC" → *Más información* → *Ejecutar de todas
 > formas*. En **Mac**: si dice "desarrollador no identificado" → clic derecho → *Abrir* → *Abrir*.
 
-## Instalación manual
+## Instalación con pip
+
+```bash
+pip install "dane-data[app]"   # librería + aplicación
+pip install dane-data          # solo la librería
+dane-data app
+```
+
+## Instalación para desarrollo
 
 ```bash
 git clone https://github.com/IntegralIndefinida/DANE-data
