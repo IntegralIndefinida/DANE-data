@@ -28,6 +28,7 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://github.com/IntegralIndefinida/DANE-data"
+Documentation = "https://integralindefinida.github.io/DANE-data/"
 Repository = "https://github.com/IntegralIndefinida/DANE-data"
 Issues = "https://github.com/IntegralIndefinida/DANE-data/issues"
 Changelog = "https://github.com/IntegralIndefinida/DANE-data/releases"
@@ -35,6 +36,7 @@ Changelog = "https://github.com/IntegralIndefinida/DANE-data/releases"
 [project.optional-dependencies]
 app = ["streamlit>=1.40", "plotly>=5.18", "openpyxl>=3.1"]
 dev = ["pytest>=7"]
+docs = ["sphinx>=8", "furo>=2024.8", "myst-parser>=4"]
 
 [project.scripts]
 dane-data = "dane_data.cli:main"
