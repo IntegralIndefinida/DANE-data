@@ -104,10 +104,15 @@ dd.geih.indicadores(df)                                  # TGP, TO, TD, informal
 dd.geih.indicadores(df, por=["sexo", "zona"])
 dd.geih.indicadores(df, por="grupo_edad", anual=False)   # mensual
 dd.geih.serie_indicadores(range(2007, 2027), por="sexo")  # precalculado por año, sin cargar microdatos
+dd.geih.serie_indicadores(range(2015, 2027), filtros={"edad": (15, 28)})   # jóvenes
 
 # 5. Tablas ponderadas de cualquier cosa
 dd.tabla(df, por=["anio", "nivel_educativo"], estadistico="porcentaje")
 dd.tabla(df[df.ocupado == 1], por="departamento", variable="ingreso_laboral", estadistico="mediana")
+# lo mismo, año por año y guardado en caché (sirve para muchos años sin cargarlos en memoria)
+dd.geih.serie_tabla(range(2007, 2027), por="departamento", variable="ingreso_laboral", estadistico="mediana",
+                    poblacion="ocupado", filtros={"sexo": ["Mujer"]})
+dd.geih.exportar(range(2015, 2026), "ocupados.csv", poblacion="ocupado")  # CSV armonizado, mes a mes
 
 # 6. EAM
 eam = dd.eam.load(range(2012, 2025))                     # un establecimiento-año por fila
@@ -160,10 +165,12 @@ Las variables en **minúscula** las crea `dane-data` y significan lo mismo en to
 | EAM: `CIIU2N4`, `ciiu2`, `CIIU`, `ciiu3`, `ciiu4`, `ciiu_4`, códigos a 2–3 dígitos | `ciiu`, `ciiu_rev`, `division`, `sector` |
 
 Las cargas de la GEIH se guardan en caché (`~/.cache/dane_data`, parquet): un año completo tarda ~6 s la
-primera vez y ~1 s después. Los indicadores de `dd.geih.serie_indicadores`, que usa también la página de
-indicadores laborales de la app, se guardan por año: toda la serie 2007–2026 tarda ~1 min la primera vez y
-es instantánea después. Se recalculan solos si cambia algún archivo del año o el código de dane-data.
-`dd.geih.clear_cache()` borra ambas cachés.
+primera vez y ~1 s después. Los resultados de `dd.geih.serie_indicadores`, `serie_tabla` y
+`serie_frecuencias` se calculan un año a la vez y se guardan por año: toda la serie 2007–2026 tarda alrededor
+de un minuto la primera vez y es instantánea después. Se recalculan solos si cambia algún archivo del año,
+la consulta (filtros, meses, variables) o el código de dane-data. Todas las tablas y gráficas de la app salen
+de ahí, así que la app nunca tiene más de un año de microdatos en memoria. `dd.geih.clear_cache()` borra
+estas cachés.
 
 ### Validación
 

@@ -2,40 +2,26 @@ import pandas as pd
 import streamlit as st
 
 import dane_data as dd
-from dane_data.app._ui import (fmt_num, MAX_SERIES, barras, botones_descarga, codigo, fmt_grande, fmt_pct, fmt_pesos,
-                             grafico, indicadores_geih, linea, rutas_actuales, seleccion_geih, selector_geih,
-                             serie_geih)
+from dane_data.app._ui import (fmt_num, MAX_SERIES, args_py, barras, botones_descarga, codigo, fmt_grande, fmt_pct,
+                             fmt_pesos, grafico, linea, rutas_actuales, seleccion_geih, serie_geih)
 
 st.title("👥 Indicadores del mercado laboral")
-sel = seleccion_geih(clave="geih", ayuda_anios="Sin filtros ni selección de meses, los indicadores salen de una "
-                                              "tabla precalculada y puede elegir todos los años: la primera vez "
-                                              "se calculan (unos segundos por año) y quedan guardados.")
-# Sin filtros: tabla precalculada por año (instantánea, sin cargar microdatos). Con filtros o
-# meses: microdatos con solo las variables necesarias (todos los años completos no caben en memoria).
-precalculada = not sel["filtrada"]
-if precalculada:
-    def calcular(por, anual):
-        return serie_geih(tuple(sel["anios"]), por, anual, sel["empalme"], sel["meses_disponibles"],
-                          rutas_actuales())
+sel = seleccion_geih(clave="geih")
 
-    total = calcular(None, True)
-    n_personas = total["n_muestra"].sum()
-    mensual = calcular(None, False)
-    meses_ult = int((mensual["anio"] == total["anio"].iloc[-1]).sum())
-    descripcion = sel["descripcion"]
-else:
-    df, descripcion, params = selector_geih(variables=dd.geih.VARIABLES_INDICADORES, sel=sel)
 
-    def calcular(por, anual):
-        return indicadores_geih(df, params["carga"] + repr(rutas_actuales()), por, anual)
+def calcular(por, anual):
+    """Indicadores año por año, guardados en disco (con los filtros y meses de la barra lateral)."""
+    return serie_geih(tuple(sel["anios"]), por, anual, sel["empalme"], sel["filtros"],
+                      tuple(sel["meses"]) if sel["meses"] else None, sel["meses_disponibles"], rutas_actuales())
 
-    total = calcular(None, True)
-    n_personas = len(df)
-    meses_ult = df.loc[df["anio"] == total["anio"].iloc[-1], "mes"].nunique()
-st.caption(f"**Datos:** {descripcion} · {fmt_num(n_personas)} personas en la muestra")
-if not precalculada:
-    st.caption("ℹ️ Con filtros o meses elegidos, los indicadores se calculan desde los microdatos (más lento). "
-               "Sin ellos salen de una tabla precalculada.")
+
+total = calcular(None, True)
+if total.empty or not total["n_muestra"].sum():
+    st.warning("Ninguna persona cumple los filtros elegidos.")
+    st.stop()
+mensual = calcular(None, False)
+meses_ult = int((mensual["anio"] == total["anio"].iloc[-1]).sum())
+st.caption(f"**Datos:** {sel['descripcion']} · {fmt_num(total['n_muestra'].sum())} personas en la muestra")
 
 INDICADORES = {
     "Tasa de desocupación (TD)": ("td", True),
@@ -156,20 +142,11 @@ with st.expander("📖 ¿Qué significa cada indicador?"):
     )
 
 argumentos = f'{f", por={por!r}" if por else ""}{", anual=False" if not anual else ""}'
-if precalculada:
-    codigo(f'''
+codigo(f'''
 import dane_data as dd
 
-# Igual a dd.geih.indicadores(dd.geih.load(...){argumentos}), pero año por año y guardado
-# en caché: la segunda vez es instantáneo.
-ind = dd.geih.serie_indicadores({sel["anios"]!r}{argumentos}{", empalme=True" if sel["empalme"] else ""})
-ind
-''')
-else:
-    codigo(f'''
-import dane_data as dd
-
-{params["carga"]}
-ind = dd.geih.indicadores(df{argumentos})
+# Igual a dd.geih.indicadores(...) sobre los microdatos filtrados, pero año por año y
+# guardado en caché: la segunda vez es instantáneo.
+ind = dd.geih.serie_indicadores({sel["anios"]!r}{argumentos}{args_py(empalme=sel["empalme"], filtros=sel["filtros"], meses=sel["meses"])})
 ind
 ''')

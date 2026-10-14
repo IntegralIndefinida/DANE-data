@@ -100,32 +100,58 @@ def grafico(fig: go.Figure) -> None:
 # --------------------------------------------------------------------------- #
 # Datos (caché en memoria de la sesión del servidor)
 # --------------------------------------------------------------------------- #
-@st.cache_resource(max_entries=3, show_spinner=False)
-def cargar_geih(anios: tuple, meses: tuple | None, extra: tuple, empalme: bool, variables: tuple | None,
-                rutas: tuple) -> pd.DataFrame:
-    barra = st.progress(0.0, text="Preparando datos…")
-    df = dd.geih.load(list(anios), months=list(meses) if meses else None, columns=list(extra) or "core",
-                      empalme=empalme, variables=list(variables) if variables else None,
-                      progress=lambda f, m: barra.progress(min(f, 1.0), text=m))
-    barra.empty()
-    return df
+def _barra(texto: str):
+    barra = st.progress(0.0, text=texto)
+    return barra, lambda f, m: barra.progress(min(f, 1.0), text=m)
 
 
+# Los resultados de la GEIH salen de dd.geih.serie_*: se calculan año por año y quedan en disco, así
+# que nunca hay más de un año de microdatos en memoria. `meses_disp` va en la llave para que un mes
+# recién descargado se vea.
 @st.cache_data(max_entries=50, show_spinner=False)
-def serie_geih(anios: tuple, por: str | None, anual: bool, empalme: bool, meses_disp: tuple,
-               rutas: tuple) -> pd.DataFrame:
-    """Indicadores precalculados; ``meses_disp`` en la llave hace que un mes recién descargado se vea."""
-    barra = st.progress(0.0, text="Preparando indicadores…")
-    res = dd.geih.serie_indicadores(list(anios), por=por, anual=anual, empalme=empalme,
-                                    progress=lambda f, m: barra.progress(min(f, 1.0), text=m))
+def serie_geih(anios: tuple, por: str | None, anual: bool, empalme: bool, filtros: dict, meses: tuple | None,
+               meses_disp: tuple, rutas: tuple) -> pd.DataFrame:
+    barra, progreso = _barra("Preparando indicadores…")
+    res = dd.geih.serie_indicadores(list(anios), por=por, anual=anual, empalme=empalme, progress=progreso,
+                                    filtros=filtros or None, meses=list(meses) if meses else None)
     barra.empty()
     return res
 
 
-@st.cache_data(max_entries=50, show_spinner="Calculando indicadores…")
-def indicadores_geih(_df: pd.DataFrame, clave: str, por: str | None, anual: bool) -> pd.DataFrame:
-    """``indicadores`` sobre microdatos; ``clave`` (la carga y los filtros) reemplaza el hash de ``_df``."""
-    return dd.geih.indicadores(_df, por=por, anual=anual)
+@st.cache_data(max_entries=100, show_spinner=False)
+def tabla_geih(anios: tuple, por: tuple, variable: str | None, estadistico: str, poblacion: str | None,
+               filtros: dict, meses: tuple | None, dropna: bool, columnas: tuple, empalme: bool,
+               meses_disp: tuple, rutas: tuple) -> pd.DataFrame:
+    barra, progreso = _barra("Preparando la tabla…")
+    res = dd.geih.serie_tabla(list(anios), list(por), variable, estadistico, poblacion, filtros or None,
+                              list(meses) if meses else None, dropna, list(columnas) or "core", empalme,
+                              progress=progreso)
+    barra.empty()
+    return res
+
+
+@st.cache_data(max_entries=50, show_spinner=False)
+def frecuencias_geih(anios: tuple, variable: str | None, por: tuple, poblacion: str | None, filtros: dict,
+                     meses: tuple | None, columnas: tuple, empalme: bool, meses_disp: tuple,
+                     rutas: tuple) -> pd.DataFrame:
+    barra, progreso = _barra("Preparando la distribución…")
+    res = dd.geih.serie_frecuencias(list(anios), variable, list(por), poblacion, filtros or None,
+                                    list(meses) if meses else None, list(columnas) or "core", empalme,
+                                    progress=progreso)
+    barra.empty()
+    return res
+
+
+@st.cache_data(max_entries=5, show_spinner="Leyendo un mes de microdatos…")
+def muestra_geih(anio: int, mes: int, variables: tuple, columnas: tuple, empalme: bool, rutas: tuple) -> pd.DataFrame:
+    """Un solo mes de microdatos (vista previa, tipos de las variables adicionales)."""
+    return dd.geih.load(anio, months=mes, columns=list(columnas) or "core", empalme=empalme,
+                        variables=list(variables))
+
+
+def args_py(**kw) -> str:
+    """Argumentos para el código equivalente: solo los que no tienen su valor por defecto."""
+    return "".join(f", {k}={v!r}" for k, v in kw.items() if v not in (None, False, {}, (), [], "core"))
 
 
 @st.cache_resource(max_entries=2, show_spinner=False)
@@ -209,7 +235,8 @@ def sin_datos(encuesta: str) -> None:
 # --------------------------------------------------------------------------- #
 # Selector GEIH (barra lateral compartida)
 # --------------------------------------------------------------------------- #
-AYUDA_ANIOS = "Cada año ocupa unos 70 MB de memoria, más cada variable DANE adicional."
+AYUDA_ANIOS = ("Los resultados se calculan año por año y quedan guardados: la primera vez tardan unos "
+               "segundos por año y después son instantáneos.")
 
 
 def _rangos(anios) -> str:
@@ -290,60 +317,13 @@ def seleccion_geih(clave: str = "geih", varios_anios: bool = True, ayuda_anios: 
         "sexo": sexo, "zona": zona, "edad": edad, "dptos": dptos, "descripcion": " · ".join(partes),
         "meses_disponibles": tuple(zip(elegidos.anio.tolist(), elegidos.mes.tolist())),
         "filtrada": bool(meses or sexo or zona or dptos or edad != (0, 100)),
+        # en el formato de dd.geih.filtrar
+        "filtros": {k: v for k, v in (("sexo", list(sexo)), ("zona", list(zona)),
+                                      ("edad", tuple(edad) if edad != (0, 100) else None),
+                                      ("departamento", list(dptos))) if v},
     }
     aviso_marcos(seleccion["anios"], empalme)
     return seleccion
-
-
-def selector_geih(extra: tuple = (), clave: str = "geih", varios_anios: bool = True,
-                  variables: list | None = None, sel: dict | None = None):
-    """
-    Dibuja la barra lateral de la GEIH (o usa ``sel``, de ``seleccion_geih``) y
-    devuelve (df_filtrado, descripcion, params).
-    """
-    sel = sel or seleccion_geih(clave, varios_anios)
-    anios, meses, empalme = sel["anios"], sel["meses"], sel["empalme"]
-    sexo, zona, edad, dptos = sel["sexo"], sel["zona"], sel["edad"], sel["dptos"]
-
-    # Las variables de CORE_RAW se leen siempre: pedirlas en `columns` solo crearía otra caché.
-    columnas = sorted(e for e in extra if e not in dd.geih.CORE_RAW)
-    df = cargar_geih(tuple(anios), tuple(meses) if meses else None, tuple(columnas), empalme,
-                     tuple(variables) if variables else None, rutas_actuales())
-    mask = pd.Series(True, index=df.index)
-    if sexo:
-        mask &= df["sexo"].isin(sexo)
-    if zona:
-        mask &= df["zona"].isin(zona)
-    if edad != (0, 100):
-        mask &= df["edad"].between(*edad)
-    if dptos:
-        mask &= df["departamento"].isin(dptos)
-    filtrado = df[mask] if not mask.all() else df
-
-    filtros_py = []
-    if sexo:
-        filtros_py.append(f'df["sexo"].isin({sexo!r})')
-    if zona:
-        filtros_py.append(f'df["zona"].isin({zona!r})')
-    if edad != (0, 100):
-        filtros_py.append(f'df["edad"].between({edad[0]}, {edad[1]})')
-    if dptos:
-        filtros_py.append(f'df["departamento"].isin({dptos!r})')
-    carga = f"df = dd.geih.load({anios!r}"
-    if meses:
-        carga += f", months={meses!r}"
-    if columnas:
-        carga += f", columns={columnas!r}"
-    if empalme:
-        carga += ", empalme=True"
-    if variables and list(variables) == dd.geih.VARIABLES_INDICADORES:
-        carga += ", variables=dd.geih.VARIABLES_INDICADORES"
-    elif variables:
-        carga = f"variables = {list(variables)!r}\n" + carga + ", variables=variables"
-    carga += ")"
-    if filtros_py:
-        carga += "\ndf = df[" + " & ".join(f"({f})" for f in filtros_py) + "]"
-    return filtrado, sel["descripcion"], {"carga": carga, "anios": anios, "meses": meses}
 
 
 # --------------------------------------------------------------------------- #
