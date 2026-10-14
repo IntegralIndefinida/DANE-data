@@ -225,7 +225,7 @@ GRUPOS_PUBLICADOS = {"total": (None, None), "urbano": ("zona", "Urbano (cabecera
                      "hombres": ("sexo", "Hombre"), "mujeres": ("sexo", "Mujer")}
 # Diferencias que vienen de los microdatos del ANDA y no tienen arreglo (ver README): no se comparan.
 SIN_COMPARAR = {
-    # ~100 hogares por mes con el sexo (P6020) en blanco; los totales sí coinciden
+    # Putumayo sin características (Mocoa no se encuestó en abril ni mayo); los totales sí coinciden
     ("empalme", "hombres", 2017, 4), ("empalme", "mujeres", 2017, 4),
     ("empalme", "hombres", 2017, 5), ("empalme", "mujeres", 2017, 5),
 }
