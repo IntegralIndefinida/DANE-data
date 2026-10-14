@@ -84,6 +84,20 @@ def test_load_variables(geih_root):
     assert isinstance(df["departamento"].dtype, pd.CategoricalDtype)  # se conserva al concatenar meses
 
 
+def test_empalme_pet_15_anios(tmp_path):
+    """El empalme se publica con PET de 15+; octubre de 2012 la trae con la definición anterior."""
+    m = tmp_path / "datos_csv" / "2012" / "10. Octubre"
+    m.mkdir(parents=True)
+    (m / "Características generales (personas).CSV").write_text(
+        "DIRECTORIO;SECUENCIA_P;ORDEN;P6040;CLASE;OCI;DSI;PETI;INGLABO;FEX_C\n"
+        "1;1;1;40;1;1;;1;900000;100\n1;1;2;12;1;1;;1;200000;100\n1;1;3;13;2;;;1;;100\n", encoding="utf-8")
+    empalme = dd.geih.load(2012, empalme=True, root=tmp_path, cache=False)
+    assert empalme["condicion"].tolist() == ["Ocupado", "Fuera de la PET", "Fuera de la PET"]
+    assert empalme["ingreso_laboral"].notna().tolist() == [True, False, False]
+    principal = dd.geih.load(2012, root=tmp_path, cache=False)
+    assert principal["condicion"].tolist() == ["Ocupado", "Ocupado", "Inactivo"]
+
+
 def test_include_incomplete(geih_root):
     df = dd.geih.load(2025, root=geih_root, cache=False, incluir_incompletos=True)
     assert set(df["mes"]) == {1, 2}

@@ -322,8 +322,13 @@ CATEGORIAS = {
 }
 
 
-def harmonize(df: pd.DataFrame) -> pd.DataFrame:
-    """Agrega variables armonizadas (minúscula) comparables entre años."""
+def harmonize(df: pd.DataFrame, edad_minima_pet: int | None = None) -> pd.DataFrame:
+    """
+    Agrega variables armonizadas (minúscula) comparables entre años.
+
+    ``edad_minima_pet``: si se indica, quien tenga menos años queda fuera de la PET
+    (y de la fuerza de trabajo) aunque el archivo del DANE lo marque dentro.
+    """
     df = df.copy()
     anio = df["anio"]
 
@@ -347,6 +352,9 @@ def harmonize(df: pd.DataFrame) -> pd.DataFrame:
     pet = ((_num(df, "PET") == 1) | (_num(df, "PETI") == 1) | (_num(df, "INI") == 1)
            | (_num(df, "_EN_FT") == 1) | (_num(df, "_EN_INI") == 1)
            | ocupado | desocupado)
+    if edad_minima_pet is not None:
+        en_edad = df["edad"] >= edad_minima_pet
+        ocupado, desocupado, pet = ocupado & en_edad, desocupado & en_edad, pet & en_edad
     inactivo = pet & ~ocupado & ~desocupado
     cond = np.select([ocupado, desocupado, inactivo], CONDICIONES[:3], default=CONDICIONES[3])
     df["condicion"] = pd.Categorical(cond, dtype=CATEGORIAS["condicion"])
@@ -502,7 +510,10 @@ def load(
         # Mes a mes (harmonize es fila a fila): evita armonizar y copiar el frame
         # concatenado de muchos años, que no cabe en memoria.
         if harmonize_vars:
-            df = harmonize(df)
+            # El DANE publica el empalme con la PET de 15 años o más, pero el archivo de
+            # octubre de 2012 (catálogo 760) la marca con la definición anterior (12+ urbano,
+            # 10+ rural). Ver README, "Diferencias con la documentación del DANE".
+            df = harmonize(df, edad_minima_pet=15 if empalme else None)
         if conservar is not None:
             df = df[[c for c in conservar if c in df.columns]].copy()  # sin copia, la vista retiene el mes entero
         frames.append(df)
