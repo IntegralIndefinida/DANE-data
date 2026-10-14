@@ -49,6 +49,7 @@ def test_csv_danado_usa_formato_alterno(geih_root):
     df = dd.geih.load(2011, root=geih_root, cache=False)
     assert df["fex"].tolist() == pytest.approx([84.9491032387525, 84.9491032387525, 1078.45157267357])
     assert df["condicion"].tolist() == ["Ocupado", "Desocupado", "Ocupado"]
+    assert "FEX_C" not in df.columns  # el factor de "Otras actividades" no reemplaza al de características
 
 
 def test_csv_ilegible_usa_stata(geih_root):

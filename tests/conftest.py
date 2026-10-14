@@ -66,6 +66,9 @@ def geih_root(tmp_path):
                + fila(20, 1, 2, 1, fex[0]))
         _write(m / f"Cabecera - Fuerza de trabajo.{ext}", fila("DIRECTORIO", "SECUENCIA_P", "ORDEN", "fex_c_2011")
                + fila(20, 1, 1, fex[0]) + fila(20, 1, 2, fex[0]) + fila(21, 1, 1, fex[1]))
+        # Febrero de 2011: "Otras actividades" trae otro factor (FEX_C) que no debe reemplazar al de características
+        _write(m / f"Cabecera - Otras actividades y ayudas en la semana.{ext}",
+               fila("DIRECTORIO", "SECUENCIA_P", "ORDEN", "FEX_C") + fila(20, 1, 1, 999) + fila(20, 1, 2, 999))
 
     # --- Septiembre 2021: el CSV viene separado por espacios (ilegible); el Stata está bien
     m = base / "2021" / "Septiembre.csv 2 1"

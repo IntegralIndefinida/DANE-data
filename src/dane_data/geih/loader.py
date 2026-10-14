@@ -60,7 +60,7 @@ _RE_NO_OCU = re.compile(r"\bno ocupados?(?![a-z])")
 _RE_DESOCU = re.compile(r"\bd(?:e|es)ocupados?(?![a-z])")
 _RE_INACT = re.compile(r"\binactivos?(?![a-z])")
 _RE_OCU = re.compile(r"\bocupados?(?![a-z])")
-_HARMONIZE_VERSION = "6"
+_HARMONIZE_VERSION = "7"
 # Formatos de los microdatos. Se baja el CSV salvo donde el del ANDA está dañado (ver
 # CSV_DANADOS en el descargador); dentro de una carpeta se prefiere el formato alterno.
 EXTENSIONES = {".dta": 0, ".txt": 1, ".csv": 2}
@@ -252,6 +252,11 @@ def available(empalme: bool = False, root=None) -> pd.DataFrame:
 def _merge_new_columns(base: pd.DataFrame, other: pd.DataFrame, keys: list[str]) -> pd.DataFrame:
     keys = [k for k in keys if k in base.columns and k in other.columns]
     extra = [c for c in other.columns if c not in base.columns]
+    # El factor de expansión es el de características. Otros módulos pueden traer uno
+    # distinto con otro nombre (febrero de 2011: FEX_C en "Otras actividades" junto a
+    # FEX_C_2011), que harmonize preferiría.
+    if any(c.startswith("FEX") for c in base.columns):
+        extra = [c for c in extra if not c.startswith("FEX")]
     if not keys or not extra:
         return base
     other = other[keys + extra].drop_duplicates(subset=keys)
