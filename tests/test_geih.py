@@ -162,3 +162,49 @@ REAL = Path(os.environ.get("DANE_DATA_TEST_GEIH", dd.get_path("geih")))
 def test_real_td_matches_dane(anio, mes, td):
     df = dd.geih.load(anio, months=mes, root=REAL)
     assert dd.geih.indicadores(df)["td"].item() == pytest.approx(td, abs=0.15)
+
+
+REAL_EMPALME = Path(os.environ.get("DANE_DATA_TEST_GEIH_EMPALME", dd.get_path("geih_empalme")))
+# Cambios de metodología: la PET cambia de golpe y es correcto.
+QUIEBRES_PET = {
+    False: {(2020, 1): "2020 viene con proyecciones CNPV 2018 y PET de 15 años o más",
+            (2021, 1): "2021 vuelve al marco 2005 (PET 12+ urbano, 10+ rural)",
+            (2022, 1): "rediseño 2022: marco 2018 y PET de 15 años o más"},
+    True: {},
+}
+CHOQUES = {(2020, 4): "inicio de la pandemia"}  # saltos reales en las tasas
+
+
+@pytest.mark.parametrize("empalme", [False, True], ids=["principal", "empalme"])
+def test_real_serie_mensual_sin_saltos(empalme):
+    """
+    La serie mensual no debe tener huecos ni saltos bruscos. La PET crece ~0,1 % al mes: un
+    cambio de más de 1 % delata un factor de expansión dañado o una PET con otra definición.
+    """
+    root = REAL_EMPALME if empalme else REAL
+    av = dd.geih.available(empalme=empalme, root=root) if (root / "datos_csv").is_dir() else pd.DataFrame()
+    if av.empty:
+        pytest.skip(f"sin datos GEIH reales en {root}")
+    m = dd.geih.serie_indicadores(sorted(av.anio.unique()), anual=False, empalme=empalme, root=root)
+
+    problemas = []
+    faltan = set(zip(av.loc[av.completo, "anio"], av.loc[av.completo, "mes"])) - set(zip(m.anio, m.mes))
+    problemas += [f"{a}-{ms:02d}: mes completo en disco sin filas en la serie" for a, ms in sorted(faltan)]
+    validos = (m["pet"] > 0) & m[["td", "tgp", "to"]].notna().all(axis=1)
+    problemas += [f"{a}-{ms:02d}: sin población expandida o tasas vacías (¿fex dañado?)"
+                  for a, ms in zip(m.loc[~validos, "anio"], m.loc[~validos, "mes"])]
+
+    m = m[validos].sort_values(["anio", "mes"]).reset_index(drop=True)
+    indice = m["anio"] * 12 + m["mes"]
+    seguidos = indice.diff() == 1  # solo meses consecutivos: tras un hueco no se compara
+    for i in m.index[seguidos]:
+        a, ms, antes, ahora = int(m.at[i, "anio"]), int(m.at[i, "mes"]), m.loc[i - 1], m.loc[i]
+        cambio_pet = 100 * (ahora["pet"] / antes["pet"] - 1)
+        if abs(cambio_pet) > 1 and (a, ms) not in QUIEBRES_PET[empalme]:
+            problemas.append(f"{a}-{ms:02d}: la PET cambia {cambio_pet:+.1f} %")
+        for tasa in ("td", "tgp", "to"):
+            salto = ahora[tasa] - antes[tasa]
+            if abs(salto) > 5 and (a, ms) not in CHOQUES:
+                problemas.append(f"{a}-{ms:02d}: {tasa.upper()} salta {salto:+.1f} p.p.")
+    assert not problemas, f"{len(problemas)} problema(s) en la serie {'empalme' if empalme else 'principal'}:\n" + \
+        "\n".join(sorted(problemas))
