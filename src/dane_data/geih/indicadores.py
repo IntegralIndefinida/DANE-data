@@ -30,13 +30,19 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, anual:
 
     Parámetros
     ----------
-    df : DataFrame de ``dane_data.geih.load`` (con variables armonizadas).
-    por : variable(s) para desagregar, p. ej. ``"sexo"`` o ``["zona", "nivel_educativo"]``.
-    anual : si True, promedia los meses de cada año; si False, un resultado por mes.
+    df
+        DataFrame de ``dane_data.geih.load`` (con variables armonizadas).
+    por
+        Variable(s) para desagregar, p. ej. ``"sexo"`` o ``["zona", "nivel_educativo"]``.
+    anual
+        Si True, promedia los meses de cada año; si False, un resultado por mes.
 
-    Devuelve niveles (personas, promedio mensual) y tasas en %:
-    ``pet, fuerza_trabajo, ocupados, desocupados, inactivos, tgp, to, td,
-    tasa_informalidad, ingreso_medio, ingreso_mediano, n_muestra``.
+    Devuelve
+    --------
+    DataFrame
+        Niveles (personas, promedio mensual) y tasas en %:
+        ``pet, fuerza_trabajo, ocupados, desocupados, inactivos, tgp, to, td,
+        tasa_informalidad, ingreso_medio, ingreso_mediano, n_muestra``.
     """
     por = _as_list(por)
     time_keys = ["anio"] if anual else ["anio", "mes"]

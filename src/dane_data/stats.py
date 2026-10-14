@@ -31,6 +31,8 @@ def peso_mensual_promedio(df: pd.DataFrame, peso: str = "fex") -> pd.Series:
 
 
 def weighted_quantile(values, weights, q: float) -> float:
+    """Cuantil ``q`` (0–1) ponderado: el menor valor cuya masa acumulada alcanza ``q`` (como ``_pctile`` de
+    Stata). Ignora los NaN y los pesos no positivos."""
     v = np.asarray(values, dtype=float)
     w = np.asarray(weights, dtype=float)
     mask = ~(np.isnan(v) | np.isnan(w)) & (w > 0)
@@ -45,6 +47,7 @@ def weighted_quantile(values, weights, q: float) -> float:
 
 
 def weighted_mean(values, weights) -> float:
+    """Media ponderada. Ignora los NaN de ``values`` y de ``weights``."""
     v = np.asarray(values, dtype=float)
     w = np.asarray(weights, dtype=float)
     mask = ~(np.isnan(v) | np.isnan(w))

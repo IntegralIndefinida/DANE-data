@@ -496,21 +496,31 @@ def load(
 
     Parámetros
     ----------
-    years : int o lista de int
-    months : int, lista de int (1–12) o None para todos los disponibles.
-    columns : ``"core"`` (por defecto), ``"all"`` o lista de variables DANE extra,
+    years
+        Año o lista de años.
+    months
+        Mes o lista de meses (1–12); None para todos los disponibles.
+    columns
+        ``"core"`` (por defecto), ``"all"`` o lista de variables DANE extra,
         por ejemplo ``["P6500", "P7070"]``.
-    empalme : usar la serie de empalme (2010–2020, marco 2018).
-    harmonize_vars : agregar variables armonizadas (``sexo``, ``condicion``...).
-    modules : subconjunto de ``dane_data.geih.MODULOS`` a fusionar.
-    cache : guarda cada mes procesado en ``~/.cache/dane_data`` (parquet) para
+    empalme
+        Usar la serie de empalme (2010–2020, marco 2018).
+    harmonize_vars
+        Agregar variables armonizadas (``sexo``, ``condicion``...).
+    modules
+        Subconjunto de ``dane_data.geih.MODULOS`` a fusionar.
+    cache
+        Guarda cada mes procesado en ``~/.cache/dane_data`` (parquet) para
         que la siguiente carga sea casi instantánea.
-    progress : función opcional ``(fraccion, mensaje)``.
-    incluir_incompletos : por defecto se omiten (con aviso) los meses a los que
+    progress
+        Función opcional ``(fraccion, mensaje)``.
+    incluir_incompletos
+        Por defecto se omiten (con aviso) los meses a los que
         les falta un módulo clave (p. ej. desocupados): con ellos la tasa de
         desocupación saldría 0 %. Los meses omitidos quedan en
         ``df.attrs["meses_omitidos"]``.
-    variables : conservar solo estas variables (armonizadas o del DANE; ``anio`` y
+    variables
+        Conservar solo estas variables (armonizadas o del DANE; ``anio`` y
         ``mes`` siempre). Cada mes se recorta al leerlo, así que la memoria depende
         solo de lo que se conserva: útil para juntar muchos años. Las variables DANE
         que no están en ``CORE_RAW`` deben pedirse también en ``columns``.

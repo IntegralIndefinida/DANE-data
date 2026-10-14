@@ -132,7 +132,8 @@ def find_files(years: Iterable[int] | int | None = None, root=None) -> dict[int,
 
 
 def available(root=None) -> pd.DataFrame:
-    rows = [{"anio": y, "archivo": f.name, "tamano_mb": round(f.stat().st_size / 1e6, 1)}
+    """Tabla de los años EAM descargados: ``anio``, ``archivo`` y ``tamano_mb``."""
+    rows =[{"anio": y, "archivo": f.name, "tamano_mb": round(f.stat().st_size / 1e6, 1)}
             for y, f in find_files(root=root).items()]
     return pd.DataFrame(rows, columns=["anio", "archivo", "tamano_mb"])
 
@@ -148,6 +149,7 @@ def _ciiu_rev(colname: str, anio: int) -> int:
 
 
 def harmonize(df: pd.DataFrame, anio: int) -> pd.DataFrame:
+    """Agrega ``anio``, ``ciiu``, ``ciiu_rev``, ``division``, ``sector`` y ``departamento`` a los datos de un año."""
     df = df.copy()
     ciiu_cols = [c for c in df.columns if _CIIU_COL.match(c)]
     if ciiu_cols:
@@ -184,11 +186,15 @@ def load(
 
     Parámetros
     ----------
-    years : año, lista/rango de años o None (todos los disponibles).
-    columns : ``"core"`` (variables comparables entre años, por defecto),
+    years
+        Año, lista/rango de años o None (todos los disponibles).
+    columns
+        ``"core"`` (variables comparables entre años, por defecto),
         ``"all"`` o lista de variables extra (minúscula o mayúscula),
         p. ej. ``["c3r10c1", "c4r5c1"]``.
 
+    Ejemplo
+    -------
     >>> eam = dd.eam.load(range(2014, 2025))
     >>> dd.eam.resumen(eam, por=["anio", "sector"])
     """
