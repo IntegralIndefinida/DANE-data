@@ -36,7 +36,14 @@ Changelog = "https://github.com/IntegralIndefinida/DANE-data/releases"
 [project.optional-dependencies]
 app = ["streamlit>=1.40", "plotly>=5.18", "openpyxl>=3.1"]
 dev = ["pytest>=7"]
-docs = ["sphinx>=8", "furo>=2024.8", "myst-parser>=4"]
+docs = [
+    "sphinx>=8",
+    "pydata-sphinx-theme>=0.16",
+    "sphinx-design>=0.6",
+    "sphinx-copybutton>=0.5",
+    "myst-nb>=1.1",
+    "matplotlib>=3.8",
+]
 
 [project.scripts]
 dane-data = "dane_data.cli:main"

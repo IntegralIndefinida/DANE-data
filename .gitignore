@@ -4,6 +4,8 @@ __pycache__/
 dist/
 build/
 docs/_build/
+docs/_generado/
+docs/api/generated/
 .pytest_cache/
 .ipynb_checkpoints/
 # microdatos: no se versionan

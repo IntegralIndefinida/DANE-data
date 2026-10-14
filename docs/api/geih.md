@@ -1,56 +1,96 @@
-# dd.geih: Gran Encuesta Integrada de Hogares
+# `dd.geih`: Gran Encuesta Integrada de Hogares
 
-Microdatos de personas: mercado laboral, ingresos, educación. Serie principal 2007–2026 y serie de empalme
-2010–2020 (`empalme=True`).
+Microdatos de personas: mercado laboral, ingresos y características de los hogares. Serie principal
+2007–2026 y serie de empalme 2010–2020 (`empalme=True`). Vea {doc}`../guia/encuestas`.
+
+```{eval-rst}
+.. currentmodule:: dane_data.geih
+```
 
 ## Descarga
 
+Vea {doc}`../guia/datos`.
+
 ```{eval-rst}
-.. autofunction:: dane_data.geih.download
-.. autofunction:: dane_data.geih.available
-.. autofunction:: dane_data.geih.find_months
+.. autosummary::
+   :toctree: generated
+   :nosignatures:
+
+   download
+   available
+   find_months
 ```
 
-## Carga
+## Carga y armonización
+
+Vea {doc}`../guia/carga` y {doc}`../guia/variables`.
 
 ```{eval-rst}
-.. autofunction:: dane_data.geih.load
-.. autofunction:: dane_data.geih.load_month
-.. autofunction:: dane_data.geih.harmonize
-.. autofunction:: dane_data.geih.marco_muestral
-.. autofunction:: dane_data.geih.clear_cache
+.. autosummary::
+   :toctree: generated
+   :nosignatures:
+
+   load
+   load_month
+   harmonize
+   marco_muestral
+   clear_cache
 ```
 
-## Indicadores y tablas
+## Indicadores del mercado laboral
+
+Vea {doc}`../guia/indicadores`.
 
 ```{eval-rst}
-.. autofunction:: dane_data.geih.indicadores
-.. autofunction:: dane_data.geih.serie_indicadores
-.. autofunction:: dane_data.geih.serie_tabla
-.. autofunction:: dane_data.geih.serie_frecuencias
-.. autofunction:: dane_data.geih.tabla_de_frecuencias
+.. autosummary::
+   :toctree: generated
+   :nosignatures:
+
+   indicadores
+   serie_indicadores
+```
+
+## Tablas y distribuciones de muchos años
+
+Vea {doc}`../guia/tablas` y {doc}`../guia/series_largas`.
+
+```{eval-rst}
+.. autosummary::
+   :toctree: generated
+   :nosignatures:
+
+   serie_tabla
+   serie_frecuencias
+   tabla_de_frecuencias
 ```
 
 ## Filtros y exportación
 
 ```{eval-rst}
-.. autofunction:: dane_data.geih.filtrar
-.. autofunction:: dane_data.geih.exportar
+.. autosummary::
+   :toctree: generated
+   :nosignatures:
+
+   filtrar
+   exportar
 ```
 
 ## Constantes
 
 | Nombre | Contenido |
 |---|---|
-| `ANIOS_DISPONIBLES`, `ANIOS_EMPALME` | Años de la serie principal y de la serie de empalme |
-| `MODULOS` | Módulos que se unen en cada mes (`caracteristicas`, `fuerza`, `ocupados`…) |
-| `DEFAULT_MODULES` | Módulos que `download` baja por defecto |
-| `MODULE_PATTERNS` | Fragmentos de nombre de archivo con que `download` reconoce cada módulo |
-| `CORE_RAW` | Variables DANE que `load` lee siempre |
-| `VARIABLES_INDICADORES` | Variables que necesita `indicadores` |
-| `POR_PRECALCULADOS` | Desagregaciones disponibles en `serie_indicadores` |
-| `POBLACIONES` | Poblaciones para `filtrar`, `serie_tabla` y `exportar` (`pet`, `ocupado`…) |
-| `CONDICIONES`, `NIVELES_EDUC`, `GRUPOS_EDAD` | Categorías de `condicion`, `nivel_educativo` y `grupo_edad` |
-| `CATEGORIAS` | Tipos categóricos fijos de las variables armonizadas |
-| `MARCOS` | Marcos muestrales de los factores de expansión (ver `marco_muestral`) |
-| `GLOSARIO` | Definiciones de los indicadores (PET, TGP, TD…) |
+| `ANIOS_DISPONIBLES` | Años de la serie principal con catálogo conocido en el ANDA |
+| `ANIOS_EMPALME` | Años de la serie de empalme (2010–2020) |
+| `MODULOS` | Módulos que `load` une en cada mes: `caracteristicas`, `fuerza`, `ocupados`, `no_ocupados`, `otras`, `vivienda` |
+| `DEFAULT_MODULES` | Módulos que `download` baja por defecto (nombres del descargador) |
+| `MODULE_PATTERNS` | Fragmentos del nombre de archivo con que `download` reconoce cada módulo |
+| `CORE_RAW` | Variables DANE que `load` lee siempre, las que necesita `harmonize` |
+| `VARIABLES_INDICADORES` | Variables que leen `indicadores` y `serie_indicadores` |
+| `POR_PRECALCULADOS` | Desagregaciones de `serie_indicadores`: `None`, `sexo`, `zona`, `grupo_edad`, `nivel_educativo`, `departamento` |
+| `POBLACIONES` | Poblaciones para `filtrar`, `serie_tabla` y `exportar`: `pet`, `fuerza_trabajo`, `ocupado`, `desocupado`, `inactivo` |
+| `CONDICIONES` | Categorías de `condicion`: Ocupado, Desocupado, Inactivo, Fuera de la PET |
+| `NIVELES_EDUC` | Categorías (ordenadas) de `nivel_educativo` |
+| `GRUPOS_EDAD` | Categorías (ordenadas) de `grupo_edad` |
+| `CATEGORIAS` | Tipos categóricos fijos de las variables armonizadas (`sexo`, `zona`, `condicion`...) |
+| `MARCOS` | Marcos muestrales de los factores de expansión y su definición de PET (vea `marco_muestral`) |
+| `GLOSARIO` | Definiciones de los indicadores; es la fuente del {doc}`../glosario` |

@@ -1,45 +1,66 @@
-# dd.eam: Encuesta Anual Manufacturera
+# `dd.eam`: Encuesta Anual Manufacturera
 
-Microdatos de establecimientos industriales, 1992–2024: un establecimiento-año por fila. Los montos vienen
-en miles de pesos corrientes.
+Microdatos de establecimientos industriales, 1992–2024: un establecimiento-año por fila, con los montos en
+miles de pesos corrientes. Vea {doc}`../guia/eam`.
+
+```{eval-rst}
+.. currentmodule:: dane_data.eam
+```
 
 ## Descarga
 
 ```{eval-rst}
-.. autofunction:: dane_data.eam.download
-.. autofunction:: dane_data.eam.available
-.. autofunction:: dane_data.eam.find_files
+.. autosummary::
+   :toctree: generated
+   :nosignatures:
+
+   download
+   available
+   find_files
 ```
 
-## Carga
+## Carga y armonización
 
 ```{eval-rst}
-.. autofunction:: dane_data.eam.load
-.. autofunction:: dane_data.eam.harmonize
+.. autosummary::
+   :toctree: generated
+   :nosignatures:
+
+   load
+   harmonize
 ```
 
-## Indicadores
+## Agregados industriales
 
 ```{eval-rst}
-.. autofunction:: dane_data.eam.resumen
-.. autofunction:: dane_data.eam.participacion
-.. autofunction:: dane_data.eam.crecimiento
-.. autofunction:: dane_data.eam.deflactar
+.. autosummary::
+   :toctree: generated
+   :nosignatures:
+
+   resumen
+   participacion
+   crecimiento
+   deflactar
 ```
 
-## Panel
+## Panel de establecimientos
 
 ```{eval-rst}
-.. autofunction:: dane_data.eam.panel
-.. autofunction:: dane_data.eam.supervivencia
+.. autosummary::
+   :toctree: generated
+   :nosignatures:
+
+   panel
+   supervivencia
 ```
 
 ## Constantes
 
 | Nombre | Contenido |
 |---|---|
-| `ANIOS_DISPONIBLES` | Años disponibles en el ANDA |
-| `CORE`, `VARIABLES_COMUNES` | Variables comparables entre años que `load` lee por defecto |
-| `ETIQUETAS` | Nombre legible de cada variable |
-| `SECTORES` | Nombre de cada división CIIU, por revisión (`{revisión: {división: nombre}}`) |
-| `GLOSARIO` | Definiciones de los agregados (producción bruta, valor agregado…) |
+| `ANIOS_DISPONIBLES` | Años con catálogo conocido en el ANDA (1992–2024) |
+| `VARIABLES_COMUNES` | Variables presentes en todos los años 1992–2024 |
+| `CORE` | `VARIABLES_COMUNES` más las que existen desde 2000; es lo que `load` lee por defecto |
+| `ETIQUETAS` | Nombre legible de cada variable de `CORE` |
+| `SECTORES` | Nombre de cada división CIIU, por revisión: `{revisión: {división: nombre}}` |
+| `GLOSARIO` | Definiciones de los agregados; es la fuente del {doc}`../glosario` |
