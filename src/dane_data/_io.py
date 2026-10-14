@@ -17,7 +17,9 @@ import pandas as pd
 
 def sniff(path: Path) -> tuple[str, str]:
     """Detecta (separador, codificación) leyendo el encabezado."""
-    raw = Path(path).open("rb").read(64_000)
+    # Siempre cerrado: en Windows un archivo abierto no se puede reemplazar al volver a descargar.
+    with open(path, "rb") as fh:
+        raw = fh.read(64_000)
     try:
         text = raw.decode("utf-8-sig")
         encoding = "utf-8-sig"
