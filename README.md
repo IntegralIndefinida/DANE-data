@@ -1,5 +1,7 @@
 # DANE-data 📊🇨🇴
 
+📖 [Documentación](https://integralindefinida.github.io/DANE-data/) · 📦 [PyPI](https://pypi.org/project/dane-data/)
+
 **Microdatos del DANE listos para analizar** — Gran Encuesta Integrada de Hogares (**GEIH**, 2007–2026) y
 Encuesta Anual Manufacturera (**EAM**, 1992–2024).
 
@@ -134,7 +136,8 @@ dane-data descargar eam --anios 2022 2023 2024
 dane-data config --geih RUTA --empalme RUTA --eam RUTA
 ```
 
-Vea `examples/01_primeros_pasos.ipynb` para un recorrido completo.
+Vea [`examples/01_primeros_pasos.ipynb`](https://github.com/IntegralIndefinida/DANE-data/blob/main/examples/01_primeros_pasos.ipynb)
+para un recorrido completo.
 
 ### Variables armonizadas
 
@@ -188,7 +191,7 @@ las cifras publicadas (`tests/datos/dane_publicado.csv`) y buscan huecos o salto
 - **Ingresos**: `INGLABO` en pesos corrientes; la GEIH 2007 no lo trae.
 - **EAM**: los montos vienen en **miles de pesos corrientes**. Según los propios archivos, la CIIU es
   Rev. 2 hasta 2000, Rev. 3 en 2001–2011 y Rev. 4 desde 2012 (la documentación del ANDA dice otra
-  cosa; vea la tabla de diferencias más abajo); los sectores no se comparan entre revisiones sin una
+  cosa; vea las diferencias con la documentación del DANE); los sectores no se comparan entre revisiones sin una
   correlativa.
 - **Muestras pequeñas**: con menos de ~100 observaciones (`n_muestra`) las cifras no son confiables.
 - El salario mínimo histórico (`dd.SMLV`) está tomado de los decretos; verifíquelo antes de publicar.
