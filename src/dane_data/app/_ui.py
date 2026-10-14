@@ -209,7 +209,7 @@ def sin_datos(encuesta: str) -> None:
 # --------------------------------------------------------------------------- #
 # Selector GEIH (barra lateral compartida)
 # --------------------------------------------------------------------------- #
-AYUDA_ANIOS = "Cada año completo ocupa ~300 MB de memoria; empiece con pocos años."
+AYUDA_ANIOS = "Cada año ocupa unos 70 MB de memoria, más cada variable DANE adicional."
 
 
 def _rangos(anios) -> str:
@@ -305,7 +305,9 @@ def selector_geih(extra: tuple = (), clave: str = "geih", varios_anios: bool = T
     anios, meses, empalme = sel["anios"], sel["meses"], sel["empalme"]
     sexo, zona, edad, dptos = sel["sexo"], sel["zona"], sel["edad"], sel["dptos"]
 
-    df = cargar_geih(tuple(anios), tuple(meses) if meses else None, tuple(sorted(extra)), empalme,
+    # Las variables de CORE_RAW se leen siempre: pedirlas en `columns` solo crearía otra caché.
+    columnas = sorted(e for e in extra if e not in dd.geih.CORE_RAW)
+    df = cargar_geih(tuple(anios), tuple(meses) if meses else None, tuple(columnas), empalme,
                      tuple(variables) if variables else None, rutas_actuales())
     mask = pd.Series(True, index=df.index)
     if sexo:
@@ -330,13 +332,14 @@ def selector_geih(extra: tuple = (), clave: str = "geih", varios_anios: bool = T
     carga = f"df = dd.geih.load({anios!r}"
     if meses:
         carga += f", months={meses!r}"
-    if extra:
-        carga += f", columns={sorted(extra)!r}"
+    if columnas:
+        carga += f", columns={columnas!r}"
     if empalme:
         carga += ", empalme=True"
-    if variables:
-        carga += (", variables=dd.geih.VARIABLES_INDICADORES" if list(variables) == dd.geih.VARIABLES_INDICADORES
-                  else f", variables={list(variables)!r}")
+    if variables and list(variables) == dd.geih.VARIABLES_INDICADORES:
+        carga += ", variables=dd.geih.VARIABLES_INDICADORES"
+    elif variables:
+        carga = f"variables = {list(variables)!r}\n" + carga + ", variables=variables"
     carga += ")"
     if filtros_py:
         carga += "\ndf = df[" + " & ".join(f"({f})" for f in filtros_py) + "]"

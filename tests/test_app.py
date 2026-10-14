@@ -51,3 +51,20 @@ def test_aviso_cuando_los_anios_mezclan_marcos(geih_root, tmp_path, monkeypatch)
 
     at.multiselect(key="geih_anios").set_value([2025]).run()
     assert not [w for w in at.warning if "no son comparables" in w.value]
+
+
+def test_microdatos_carga_solo_lo_que_usa(geih_root, tmp_path, monkeypatch):
+    monkeypatch.setitem(dd.config._session, "geih", geih_root)
+    monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
+
+    at = AppTest.from_file(str(PAGINAS / "geih_explorar.py"), default_timeout=60).run()
+    assert not at.exception
+    assert "variables = [" in at.code[0].value and "P6040" not in at.code[0].value
+
+    extra = at.multiselect(key="exp_extra")
+    assert any(o.startswith("P6040 ") for o in extra.options)  # las de CORE_RAW también se ofrecen
+    extra.set_value(["P5000", "P6040"]).run()
+    assert not at.exception
+    codigo = at.code[0].value
+    assert "columns=['P5000']" in codigo                  # P6040 ya se lee siempre
+    assert "'P5000', 'P6040']" in codigo                  # y ambas se conservan

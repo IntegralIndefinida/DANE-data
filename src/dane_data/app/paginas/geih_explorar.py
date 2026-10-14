@@ -9,18 +9,6 @@ from dane_data.app._ui import (fmt_num, MAX_SERIES, PALETA, _estilo, barras, bot
 
 st.title("🔎 Tablas y microdatos GEIH")
 
-# Variables DANE adicionales (se cargan además de las armonizadas)
-dic = dd.diccionario("geih")
-opciones_extra = sorted(v for v in dic if v not in dd.geih.CORE_RAW)
-with st.sidebar:
-    extra = st.multiselect(
-        "Variables DANE adicionales", opciones_extra, key="exp_extra",
-        format_func=lambda v: f"{v} — {dic[v]['etiqueta'][:60]}",
-        help="Busque por código o por texto de la pregunta (p. ej. 'arriendo', 'P6500'). "
-             "Nombres según el diccionario 2025; en años antiguos algunas no existen.",
-    )
-df, descripcion, params = selector_geih(extra=tuple(extra), clave="exp")
-
 POBLACIONES = {
     "Toda la población": None,
     "En edad de trabajar (PET)": "pet",
@@ -29,11 +17,6 @@ POBLACIONES = {
     "Desocupados": "desocupado",
     "Inactivos": "inactivo",
 }
-pob = st.radio("Población", list(POBLACIONES), horizontal=True, index=3)
-if POBLACIONES[pob]:
-    df = df[df[POBLACIONES[pob]] == 1]
-st.caption(f"**Datos:** {descripcion} · {pob.lower()} · {fmt_num(len(df))} personas en la muestra")
-
 CATEGORICAS = {
     "Año": "anio", "Mes": "mes", "Sexo": "sexo", "Zona": "zona", "Grupo de edad": "grupo_edad",
     "Nivel educativo": "nivel_educativo", "Departamento": "departamento",
@@ -45,12 +28,38 @@ NUMERICAS = {
     "Ingreso laboral": "ingreso_laboral", "Ingreso / salario mínimo": "ratio_smlv",
     "Horas trabajadas por semana": "horas_semana", "Edad": "edad",
 }
+
+# Variables DANE adicionales: las del diccionario 2025 y las que dane-data lee siempre (CORE_RAW)
+dic = dd.diccionario("geih")
+
+
+def etiqueta(v: str, largo: int) -> str:
+    return f"{v} — {dic.get(v, {}).get('etiqueta', '')[:largo]}"
+
+
+with st.sidebar:
+    extra = st.multiselect(
+        "Variables DANE adicionales", sorted(set(dic) | set(dd.geih.CORE_RAW)), key="exp_extra",
+        format_func=lambda v: etiqueta(v, 60),
+        help="Busque por código o por texto de la pregunta (p. ej. 'arriendo', 'P6500'). "
+             "Nombres según el diccionario 2025; en años antiguos algunas no existen.",
+    )
+# Solo se cargan las variables que usa la página: los microdatos completos de muchos años no caben en memoria.
+variables = list(dict.fromkeys(["fex", *filter(None, POBLACIONES.values()), *CATEGORICAS.values(),
+                                *NUMERICAS.values(), *extra]))
+df, descripcion, params = selector_geih(extra=tuple(extra), clave="exp", variables=variables)
+
+pob = st.radio("Población", list(POBLACIONES), horizontal=True, index=3)
+if POBLACIONES[pob]:
+    df = df[df[POBLACIONES[pob]] == 1]
+st.caption(f"**Datos:** {descripcion} · {pob.lower()} · {fmt_num(len(df))} personas en la muestra")
+
 for v in extra:
     if v in df.columns:
         if pd.api.types.is_numeric_dtype(df[v]) and df[v].nunique() > 15:
-            NUMERICAS[f"{v} — {dic[v]['etiqueta'][:40]}"] = v
+            NUMERICAS[etiqueta(v, 40)] = v
         else:
-            CATEGORICAS[f"{v} — {dic[v]['etiqueta'][:40]}"] = v
+            CATEGORICAS[etiqueta(v, 40)] = v
 
 tab1, tab2, tab3 = st.tabs(["📊 Tabla ponderada", "💰 Ingresos y salario mínimo", "🗂️ Microdatos"])
 
@@ -150,7 +159,7 @@ w = dd.stats.peso_mensual_promedio(oc)
 # ---------------------------------------------------------------- Microdatos
 with tab3:
     st.markdown("Vista de las primeras filas. Las variables en **minúscula** son armonizadas por `dane-data`; "
-                "las de **MAYÚSCULA** son las originales del DANE.")
+                "las de **MAYÚSCULA** son las originales del DANE que elija en «Variables DANE adicionales».")
     armonizadas = ["anio", "mes", "fex", "sexo", "edad", "grupo_edad", "departamento", "zona", "condicion",
                    "formal", "ingreso_laboral", "ratio_smlv", "horas_semana", "posicion_ocupacional",
                    "nivel_educativo", "rama2d"]

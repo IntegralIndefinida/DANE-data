@@ -351,6 +351,9 @@ _EDUC_P6210 = {1: "Ninguno", 2: "Ninguno", 3: "Primaria", 4: "Secundaria", 5: "M
 NIVELES_EDUC = ["Ninguno", "Primaria", "Secundaria", "Media", "Superior"]
 CONDICIONES = ["Ocupado", "Desocupado", "Inactivo", "Fuera de la PET"]
 GRUPOS_EDAD = ["0–14", "15–24", "25–34", "35–44", "45–54", "55–64", "65+"]
+POSICIONES = ["Empleado particular", "Empleado del gobierno", "Empleado doméstico", "Cuenta propia",
+              "Patrón o empleador", "Familiar sin remuneración", "Sin remuneración (otros hogares)",
+              "Jornalero o peón", "Otro"]
 # Categorías fijas: los meses se armonizan por separado y, al concatenarlos, solo
 # conservan el tipo categórico si todos tienen exactamente las mismas categorías.
 CATEGORIAS = {
@@ -360,6 +363,7 @@ CATEGORIAS = {
     "nivel_educativo": pd.CategoricalDtype(NIVELES_EDUC, ordered=True),
     "departamento": pd.CategoricalDtype(sorted(set(DEPARTAMENTOS.values()))),
     "condicion": pd.CategoricalDtype(CONDICIONES),
+    "posicion_ocupacional": pd.CategoricalDtype(POSICIONES),
 }
 MARCOS = {
     "censo 2005": "proyecciones de población del censo 2005 y PET de 12 años o más (10 en la zona rural)",
@@ -434,16 +438,14 @@ def harmonize(df: pd.DataFrame, edad_minima_pet: int | None = None) -> pd.DataFr
     df["horas_semana"] = _num(df, "P6800").where(ocupado)
 
     pos = _num(df, "P6430")
-    pos_map = {1: "Empleado particular", 2: "Empleado del gobierno", 3: "Empleado doméstico",
-               4: "Cuenta propia", 5: "Patrón o empleador", 6: "Familiar sin remuneración",
-               7: "Sin remuneración (otros hogares)", 8: "Jornalero o peón", 9: "Otro"}
+    pos_map = dict(enumerate(POSICIONES, start=1))
     # Cuestionario de 2022 en adelante: 7 = jornalero y 8 = otro (desaparece el 9). El DDI
     # del DANE para 2022–2025 repite las categorías antiguas, pero en los datos el 7 es
     # 100 % agropecuario y con ingreso. Fila a fila: se pueden juntar años de ambas épocas.
     pos_map_2022 = {**pos_map, 7: "Jornalero o peón", 8: "Otro"}
     del pos_map_2022[9]
     etiqueta = pos.map(pos_map).where(anio < 2022, pos.map(pos_map_2022))
-    df["posicion_ocupacional"] = etiqueta.where(ocupado)
+    df["posicion_ocupacional"] = pd.Categorical(etiqueta.where(ocupado), dtype=CATEGORIAS["posicion_ocupacional"])
 
     # Fila a fila: al juntar años distintos conviven ambas versiones.
     r4, r3 = _num(df, "RAMA2D_R4"), _num(df, "RAMA2D")
