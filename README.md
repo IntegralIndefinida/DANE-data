@@ -1,4 +1,4 @@
-# dane-data 📊🇨🇴
+# DANE-data 📊🇨🇴
 
 **Microdatos del DANE listos para analizar** — Gran Encuesta Integrada de Hogares (**GEIH**, 2007–2026) y
 Encuesta Anual Manufacturera (**EAM**, 1992–2024).
@@ -8,7 +8,7 @@ Dos formas de usarlo:
 | | Para quién | Cómo |
 |---|---|---|
 | 🖱️ **Aplicación** | Estudiantes que empiezan, clases, consultas rápidas | `dane-data app` → se abre en el navegador |
-| 🐍 **Librería Python** | Automatización, tesis, estudiantes avanzados | `import dane_data as dd` |
+| 🐍 **Librería Python** | Automatización, investigación, estudiantes avanzados | `import dane_data as dd` |
 
 Ambas usan el mismo motor: descargan del ANDA del DANE, unen los módulos, **armonizan las variables
 entre épocas** (nombres, separadores, coma decimal, factores de expansión, revisiones CIIU) y calculan
@@ -16,7 +16,7 @@ indicadores ponderados como lo hace el DANE.
 
 ---
 
-## Instalación fácil (estudiantes) — sin Python, sin terminal
+## Instalación de la app
 
 1. En la página de **[Releases](../../releases)** descargue `dane-data-<versión>.zip` (en *Assets*).
 2. Descomprímalo donde quiera.
@@ -36,27 +36,17 @@ app basta cerrar la ventana de la terminal.
 > Primera vez en **Windows**: si aparece "Windows protegió su PC" → *Más información* → *Ejecutar de todas
 > formas*. En **Mac**: si dice "desarrollador no identificado" → clic derecho → *Abrir* → *Abrir*.
 
-## Instalación para desarrollo / estudiantes avanzados
+## Instalación manual
 
 ```bash
-cd col_data_wrapper
+git clone https://github.com/IntegralIndefinida/DANE-data
+cd DANE-data
 pip install -e ".[app]"        # librería + aplicación
 # pip install -e .             # solo la librería
 # o con uv:  uv run --extra app dane-data app
 ```
 
 Requiere Python ≥ 3.10.
-
-## Publicar una versión (mantenedor)
-
-```bash
-git tag v0.1.0
-git push origin v0.1.0
-```
-
-El flujo `.github/workflows/release.yml` corre las pruebas, arma `dane-data-0.1.0.zip` (app + lanzadores +
-`LEEME.txt`, sin `tests/`) y crea el Release con ese zip adjunto. El texto del release está en
-`.github/NOTAS_RELEASE.md`. Antes de etiquetar, actualice `version` en `pyproject.toml`.
 
 ## 🖱️ La aplicación
 
@@ -67,7 +57,7 @@ dane-data app          # o doble clic en el lanzador; el navegador se abre solo
 | Página | Qué hace |
 |---|---|
 | 🏠 Inicio | Explica las encuestas, muestra qué datos hay y configura las carpetas |
-| ⬇️ Descargar datos | Elige encuesta y años y descarga con barra de progreso |
+| ⬇️ Descargar datos | Elige encuesta y años y descarga |
 | 👥 Indicadores laborales | TD, TGP, TO, informalidad e ingresos, por sexo, edad, zona, educación o departamento; anual o mensual |
 | 🔎 Tablas y microdatos | Tablas ponderadas a la medida, distribución de ingresos frente al salario mínimo, exportación |
 | 🏭 Indicadores industriales | Producción, valor agregado, empleo, productividad y participación laboral por sector o departamento |

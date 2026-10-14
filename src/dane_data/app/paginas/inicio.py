@@ -3,10 +3,10 @@ import streamlit as st
 import dane_data as dd
 from dane_data.app._ui import disponibles_eam, disponibles_geih, rutas_actuales
 
-st.title("📊 dane-data")
+st.title("📊 DANE-data")
 st.markdown(
-    "#### Microdatos del DANE listos para analizar, sin escribir código\n"
-    "Esta aplicación descarga, organiza y resume dos encuestas oficiales de Colombia:"
+    "#### Microdatos del DANE listos para analizar\n"
+    "Esta aplicación descarga, organiza y resume dos encuestas oficiales de Colombia publicadas por el DANE:"
 )
 
 c1, c2 = st.columns(2)
