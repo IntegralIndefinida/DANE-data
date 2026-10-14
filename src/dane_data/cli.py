@@ -108,7 +108,8 @@ def _cmd_descargar(args) -> int:
     return 0
 
 
-def main(argv=None) -> int:
+def _parser() -> argparse.ArgumentParser:
+    """Argumentos del comando (también los documenta ``docs/guia/cli.md`` con sphinx-argparse)."""
     p = argparse.ArgumentParser(prog="dane-data", description="Microdatos DANE (GEIH y EAM) para economistas.")
     sub = p.add_subparsers(dest="cmd", required=True)
 
@@ -136,8 +137,11 @@ def main(argv=None) -> int:
     d.add_argument("--tic", action="store_true", help="EAM: incluir módulo TIC 2008–2018")
     d.add_argument("--borrar-zips", action="store_true", help="Borrar los ZIP tras extraer")
     d.set_defaults(fn=_cmd_descargar)
+    return p
 
-    args = p.parse_args(argv)
+
+def main(argv=None) -> int:
+    args = _parser().parse_args(argv)
     try:
         return args.fn(args)
     except KeyboardInterrupt:
