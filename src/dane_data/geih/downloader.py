@@ -34,7 +34,7 @@ import requests
 from bs4 import BeautifulSoup
 
 from .._hooks import ProgressMixin
-from .loader import _pick_files, MesGEIH, month_from_folder
+from .loader import EXTENSIONES, _pick_files, MesGEIH, month_from_folder
 
 MARCADOR = ".dane_data_ok"  # se escribe tras una extracción exitosa
 
@@ -54,7 +54,7 @@ def faltantes_mes(month_dir: Path, modules) -> list[str]:
     marcas OCI/DSI vienen dentro de Características, así que la ausencia del
     archivo de Desocupados no cuenta como faltante.
     """
-    files = [f for f in month_dir.rglob("*") if f.is_file() and f.suffix.lower() == ".csv"] if month_dir.is_dir() else []
+    files = [f for f in month_dir.rglob("*") if f.is_file() and f.suffix.lower() in EXTENSIONES] if month_dir.is_dir() else []
     if not files:
         return ["todos"]
     mes = MesGEIH(0, 0, month_dir, _pick_files(files))
@@ -140,6 +140,15 @@ MODULE_PATTERNS = {
     "otras_formas_trabajo": ("otras formas de trabajo", "otras actividades"),
 }
 DEFAULT_MODULES = tuple(MODULE_PATTERNS)
+
+# CSV del ANDA (serie principal) que no se pueden leer bien: para esos meses se baja otro
+# formato del mismo catálogo. Ver README, "Diferencias con la documentación del DANE".
+# Año -> {mes: formato}; el mes None vale para todo el año.
+CSV_DANADOS = {
+    "2008": {None: "txt"},  # FEX_C_2011 sin punto decimal ("849.491.032.387.525")
+    "2011": {None: "txt"},
+    "2021": {9: "dta"},     # separado por espacios, y el texto libre también los tiene
+}
 EXCLUDE_MODULE_PATTERNS = ("otros ingresos", "migracion", "tipo de investigacion")
 
 
@@ -152,7 +161,16 @@ def normalize_text(text: str) -> str:
     ).lower()
 
 
-def is_target_csv(filename: str, modules=DEFAULT_MODULES) -> bool:
+def _formato(nombre: str) -> str | None:
+    """Formato de un ZIP del ANDA según su nombre ("Marzo_txt.zip" -> "txt"); None si no lo dice."""
+    n = normalize_text(nombre)
+    for formato, marcas in (("csv", ("csv",)), ("txt", ("txt",)), ("sav", ("sav", "spss")), ("dta", ("dta",))):
+        if any(m in n for m in marcas):
+            return formato
+    return None
+
+
+def is_target_csv(filename: str, modules=DEFAULT_MODULES, extensiones=(".csv",)) -> bool:
     """
     Determina si un archivo dentro del ZIP es un CSV correspondiente a uno de los
     módulos solicitados:
@@ -162,7 +180,7 @@ def is_target_csv(filename: str, modules=DEFAULT_MODULES) -> bool:
       - Ocupados
       - Otras formas de trabajo / Otras actividades
     """
-    if not filename.lower().endswith(".csv"):
+    if not filename.lower().endswith(tuple(extensiones)):
         return False
 
     norm_name = normalize_text(filename)
@@ -351,26 +369,21 @@ class GEIHDownloader(ProgressMixin):
             log.warning(f"No se pudo descargar metadata JSON para {year}: {e}")
         return {}
 
-    def get_csv_download_links(self, catalog_id: str) -> list:
-        """
-        Extrae los enlaces de descarga para archivos CSV desde /get-microdata.
-        Maneja dos épocas del DANE:
-          1. 2007-2021: ZIPs separados por formato (*.csv.zip)
-          2. 2022-2026: ZIPs mensuales completos que contienen CSV, DTA y SAV en su interior
-        """
+    def _enlaces(self, catalog_id: str) -> dict:
+        """``{url: nombre}`` de todos los archivos de /get-microdata del catálogo."""
         microdata_url = f"{self.base_url}/index.php/catalog/{catalog_id}/get-microdata"
         try:
             res = self.session.get(microdata_url, timeout=20)
             res.raise_for_status()
         except Exception as e:
             log.error(f"Error accediendo a página de microdatos del catálogo {catalog_id}: {e}")
-            return []
+            return {}
 
         # Extraer parámetros de onclick="mostrarModal('filename', 'download_url')"
         matches = re.findall(r"mostrarModal\(\s*'([^']+)'\s*,\s*'([^']+)'\s*\)", res.text)
         if not matches:
             log.warning(f"No se encontraron enlaces de descarga en catálogo {catalog_id}")
-            return []
+            return {}
 
         # Deduplicar por URL de descarga
         unique_files = {}
@@ -379,6 +392,18 @@ class GEIHDownloader(ProgressMixin):
             clean_name = name.strip()
             if clean_url not in unique_files:
                 unique_files[clean_url] = clean_name
+        return unique_files
+
+    def get_csv_download_links(self, catalog_id: str) -> list:
+        """
+        Extrae los enlaces de descarga para archivos CSV desde /get-microdata.
+        Maneja dos épocas del DANE:
+          1. 2007-2021: ZIPs separados por formato (*.csv.zip)
+          2. 2022-2026: ZIPs mensuales completos que contienen CSV, DTA y SAV en su interior
+        """
+        unique_files = self._enlaces(catalog_id)
+        if not unique_files:
+            return []
 
         # 1. Verificar si existen archivos con extensión específica de CSV (ej. Enero.csv.zip)
         csv_specific = [
@@ -403,6 +428,38 @@ class GEIHDownloader(ProgressMixin):
                 monthly_bundles.append({"name": name, "url": url})
 
         return monthly_bundles
+
+    def get_download_links(self, year: str, catalog_id: str) -> list:
+        """
+        Enlaces del año: el CSV de cada mes, salvo los meses de ``CSV_DANADOS``, que se
+        cambian por otro formato del mismo catálogo (``item["formato"]``).
+        """
+        files = self.get_csv_download_links(catalog_id)
+        danados = {} if self.is_empalme else CSV_DANADOS.get(str(year), {})
+        if not danados:
+            return files
+
+        def formato_de(mes):
+            return danados.get(mes, danados.get(None))
+
+        alternos = {}
+        for url, nombre in self._enlaces(catalog_id).items():
+            mes = month_from_folder(nombre)
+            buscado = formato_de(mes) if mes else None
+            # Los ZIP sin formato en el nombre (p. ej. "Septiembre.zip" en 2021) traen el Stata.
+            if buscado and (_formato(nombre) or "dta") == buscado and mes not in alternos:
+                alternos[mes] = {"name": nombre, "url": url, "formato": buscado}
+        out = []
+        for item in files:
+            mes = month_from_folder(item["name"])
+            if mes and formato_de(mes) and mes in alternos:
+                out.append(alternos[mes])
+            else:
+                if mes and formato_de(mes):
+                    log.warning(f"El CSV de {item['name']} ({year}) está dañado y el ANDA no ofrece el formato "
+                                f"{formato_de(mes)}: se baja el CSV.")
+                out.append(item)
+        return out
 
     def download_file(self, url: str, dest_path: Path, max_retries: int = 3) -> bool:
         """
@@ -452,7 +509,7 @@ class GEIHDownloader(ProgressMixin):
 
         return False
 
-    def _extract_from_zip(self, z_obj: zipfile.ZipFile, dest_dir: Path) -> int:
+    def _extract_from_zip(self, z_obj: zipfile.ZipFile, dest_dir: Path, extensiones=(".csv",)) -> int:
         count = 0
         for member in z_obj.infolist():
             if member.is_dir():
@@ -472,12 +529,12 @@ class GEIHDownloader(ProgressMixin):
                         else:
                             target_dest = dest_dir
                         target_dest.mkdir(parents=True, exist_ok=True)
-                        count += self._extract_from_zip(nested_z, target_dest)
+                        count += self._extract_from_zip(nested_z, target_dest, extensiones)
                 except Exception as e:
                     log.warning(f"Error abriendo ZIP anidado {member.filename}: {e}")
                 continue
 
-            if is_target_csv(member.filename, self.modules):
+            if is_target_csv(member.filename, self.modules, extensiones):
                 clean_filename = sanitize_member_name(member.filename)
                 target_file = dest_dir / clean_filename
 
@@ -490,7 +547,7 @@ class GEIHDownloader(ProgressMixin):
                 count += 1
         return count
 
-    def extract_requested_modules(self, zip_path: Path, dest_dir: Path) -> int:
+    def extract_requested_modules(self, zip_path: Path, dest_dir: Path, extensiones=(".csv",)) -> int:
         """
         Inspecciona el archivo ZIP descargado y extrae EXCLUSIVAMENTE los archivos CSV
         de los módulos solicitados:
@@ -511,7 +568,7 @@ class GEIHDownloader(ProgressMixin):
 
         try:
             with zipfile.ZipFile(zip_path, "r") as z:
-                extracted_count = self._extract_from_zip(z, dest_dir)
+                extracted_count = self._extract_from_zip(z, dest_dir, extensiones)
 
             log.info(f"  → Extraídos {extracted_count} CSVs de módulos solicitados desde {zip_path.name}")
         except zipfile.BadZipFile:
@@ -529,8 +586,8 @@ class GEIHDownloader(ProgressMixin):
         # 1. Metadata metodológica
         self.fetch_metadata(year, catalog_id)
 
-        # 2. Obtener lista de archivos a descargar (solo CSV)
-        files = self.get_csv_download_links(catalog_id)
+        # 2. Obtener lista de archivos a descargar (CSV, u otro formato si el CSV está dañado)
+        files = self.get_download_links(year, catalog_id)
         if not files:
             log.warning(f"No se encontraron enlaces válidos de microdatos para {year}")
             return
@@ -586,7 +643,7 @@ class GEIHDownloader(ProgressMixin):
 
                 success = self.download_file(item["url"], zip_dest)
                 if success and self.extract_csv:
-                    n = self.extract_requested_modules(zip_dest, month_csv_dir)
+                    n = self.extract_requested_modules(zip_dest, month_csv_dir, (f".{item.get('formato', 'csv')}",))
                     if n:
                         _escribir_marcador(month_csv_dir, item["name"], n, self.modules)
                     falta = faltantes_mes(month_csv_dir, self.modules)

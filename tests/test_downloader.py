@@ -4,8 +4,10 @@ import io
 import json
 import zipfile
 
+import pandas as pd
 import pytest
 
+import dane_data as dd
 from dane_data.eam.downloader import EAM_TIC_CATALOGS, EAMDownloader
 from dane_data.geih.downloader import MARCADOR, GEIHDownloader, faltantes_mes, mes_completo
 
@@ -134,6 +136,45 @@ def test_empalme_month_zips_keep_their_folder(tmp_path):
     assert (anio / "12. Diciembre" / "Desocupados.CSV").exists()
     dl.process_year("2016", "757")
     assert dl.descargas == ["GEIH_Empalme_2016.zip"]
+
+
+class FakeANDA(FakeDownloader):
+    """Lista todos los formatos del catálogo, como /get-microdata, y filtra los CSV igual que el real."""
+    get_csv_download_links = GEIHDownloader.get_csv_download_links
+
+    def _enlaces(self, catalog_id):
+        return {n: n for n in self.paquetes}
+
+
+def _dta(**cols) -> bytes:
+    buf = io.BytesIO()
+    pd.DataFrame(cols).to_stata(buf, write_index=False)
+    return buf.getvalue()
+
+
+def test_csv_danados_se_bajan_en_otro_formato(tmp_path):
+    """2011 (factor sin punto decimal) se baja en TXT; septiembre de 2021 (CSV con espacios), en Stata."""
+    mes_txt = _zip({"03_txt/Cabecera - Caracteristicas generales (Personas).txt":
+                    "DIRECTORIO\tSECUENCIA_P\tORDEN\tOCI\tDSI\tPETI\tfex_c_2011\n1\t1\t1\t1\t\t1\t84.9491032387525\n",
+                    "03_txt/Cabecera - Otros ingresos.txt": "x\n"})
+    dl = FakeANDA({"Marzo_csv.zip": _zip({"Cabecera - Caracteristicas generales (Personas).csv": "roto"}),
+                   "Marzo_txt.zip": mes_txt, "Marzo.zip": b"spss", "total_2011_c_txt.zip": b"anual"},
+                  base_dir=tmp_path, modules=("caracteristicas",))
+    dl.process_year("2011", "182")
+    assert dl.descargas == ["Marzo_txt.zip"]
+    assert [f.name for f in (tmp_path / "datos_csv" / "2011" / "Marzo_txt").glob("*.txt")] == [
+        "Cabecera - Caracteristicas generales (Personas).txt"]
+    assert dd.geih.load(2011, root=tmp_path, cache=False)["fex"].tolist() == [84.9491032387525]
+
+    car = _dta(DIRECTORIO=[1], SECUENCIA_P=[1], ORDEN=[1], OCI=[1], DSI=[0], PETI=[1], fex_c_2011=[250.5])
+    dl = FakeANDA({"Agosto.csv.zip": _zip({"Características generales (personas).CSV": CAR}),
+                   "Septiembre.csv (2) (1).zip": _zip({"Características generales (personas).csv": "A B\n1 2\n"}),
+                   "Septiembre.spss(2).zip": b"spss",
+                   "Septiembre.zip": _zip({"Septiembre.dta/╡rea - Características generales (Personas).dta": car})},
+                  base_dir=tmp_path, modules=("caracteristicas",))
+    dl.process_year("2021", "701")
+    assert sorted(dl.descargas) == ["Agosto.csv.zip", "Septiembre.zip"]
+    assert (tmp_path / "datos_csv" / "2021" / "Septiembre" / "Area - Características generales (Personas).dta").exists()
 
 
 class FakeEAMDownloader(EAMDownloader):

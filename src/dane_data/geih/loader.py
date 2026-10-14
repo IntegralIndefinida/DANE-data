@@ -31,7 +31,7 @@ import numpy as np
 import pandas as pd
 
 from .. import config
-from .._io import normalize_columns, read_table, sniff
+from .._io import columnas, normalize_columns, read_table, sniff
 from ..referencias import DEPARTAMENTOS, MESES, SMLV, strip_accents
 
 log = logging.getLogger("dane_data.geih")
@@ -61,6 +61,10 @@ _RE_DESOCU = re.compile(r"\bd(?:e|es)ocupados?(?![a-z])")
 _RE_INACT = re.compile(r"\binactivos?(?![a-z])")
 _RE_OCU = re.compile(r"\bocupados?(?![a-z])")
 _HARMONIZE_VERSION = "6"
+# Formatos de los microdatos. Se baja el CSV salvo donde el del ANDA está dañado (ver
+# CSV_DANADOS en el descargador); dentro de una carpeta se prefiere el formato alterno.
+EXTENSIONES = {".dta": 0, ".txt": 1, ".csv": 2}
+_RE_MILES = re.compile(r"^\d{1,3}(\.\d{3}){2,}$")
 
 
 # --------------------------------------------------------------------------- #
@@ -92,9 +96,30 @@ def classify_file(filename: str) -> tuple[str | None, str | None]:
 
 @lru_cache(maxsize=4096)
 def _header(path: Path) -> frozenset[str]:
+    return frozenset(columnas(path))
+
+
+@lru_cache(maxsize=4096)
+def _defecto(path: Path) -> str | None:
+    """
+    Defectos conocidos de los CSV del ANDA que hacen inservible un archivo (ver README,
+    "Diferencias con la documentación del DANE"). En septiembre de 2021 el CSV viene
+    separado por espacios, y el texto libre también los tiene. En 2008 y 2011 el factor
+    de expansión perdió el punto decimal ("849.491.032.387.525" es 84,9491032387525).
+    """
+    if path.suffix.lower() == ".dta":
+        return None
     sep, enc = sniff(path)
     with open(path, encoding=enc, errors="replace") as fh:
-        return frozenset(normalize_columns(fh.readline().rstrip("\r\n").split(sep)))
+        encabezado = fh.readline().rstrip("\r\n").split(sep)
+        filas = [fh.readline().rstrip("\r\n").split(sep) for _ in range(20)]
+    if len(encabezado) == 1:
+        return "un archivo legible (el CSV del DANE viene separado por espacios)"
+    fex = [i for i, c in enumerate(normalize_columns(encabezado)) if c.startswith("FEX")]
+    valores = [f[i].strip() for f in filas for i in fex if len(f) > i and f[i].strip()]
+    if valores and sum(bool(_RE_MILES.match(v)) for v in valores) > len(valores) / 2:
+        return "un factor de expansión legible (el CSV del DANE lo trae sin punto decimal)"
+    return None
 
 
 def month_from_folder(name: str) -> int | None:
@@ -124,6 +149,8 @@ class MesGEIH:
         """
         if "caracteristicas" not in self.archivos:
             return ["caracteristicas"]
+        if danos := sorted({d for f in self.archivos["caracteristicas"] if (d := _defecto(f))}):
+            return danos
         cols = set().union(*(_header(f) for f in self.archivos["caracteristicas"]))
         nombres = [strip_accents(f.name) for f in self.archivos.get("no_ocupados", [])]
         falta = []
@@ -169,7 +196,7 @@ def _pick_files(files: list[Path]) -> dict[str, list[Path]]:
         # módulo lógico; se conservan ambos. Duplicados exactos de nombre no.
         seen, uniq = set(), []
         # Archivos del nivel superior primero; las copias en subcarpetas se ignoran.
-        for f in sorted(chosen, key=lambda p: (len(p.parts), str(p))):
+        for f in sorted(chosen, key=lambda p: (len(p.parts), EXTENSIONES.get(p.suffix.lower(), 9), str(p))):
             key = re.sub(r"\s*\(\d+\)", "", f.stem.lower())
             if key not in seen:
                 seen.add(key)
@@ -193,10 +220,19 @@ def find_months(years: Iterable[int] | int | None = None, empalme: bool = False,
         for mdir in sorted(p for p in ydir.iterdir() if p.is_dir()):
             mes = month_from_folder(mdir.name)
             # rglob: algunos ZIP del DANE traen subcarpetas (p. ej. "CSV 13/No ocupados.CSV")
-            files = [f for f in mdir.rglob("*") if f.is_file() and f.suffix.lower() == ".csv"]
+            files = [f for f in mdir.rglob("*") if f.is_file() and f.suffix.lower() in EXTENSIONES]
             if mes is None or not files:
                 continue
             result.append(MesGEIH(anio, mes, mdir, _pick_files(files)))
+    # Un mes puede quedar en dos carpetas: la del CSV dañado del ANDA y la del formato que
+    # lo reemplaza. Se usa la completa.
+    por_mes: dict[tuple[int, int], list[MesGEIH]] = {}
+    for m in result:
+        por_mes.setdefault((m.anio, m.mes), []).append(m)
+    result = []
+    for ms in por_mes.values():
+        completos = [m for m in ms if m.completo] if len(ms) > 1 else []
+        result += completos or ms
     return sorted(result, key=lambda m: (m.anio, m.mes))
 
 
@@ -476,6 +512,9 @@ def load(
     omitidos = [m for m in meses if not m.completo]
     if omitidos and not incluir_incompletos:
         detalle = "; ".join(f"{MESES[m.mes]} {m.anio} (falta {', '.join(m.faltantes)})" for m in omitidos)
+        if any("CSV del DANE" in f for m in omitidos for f in m.faltantes):
+            detalle += (". Vuelva a descargar esos años con dane_data.geih.download(...): para esos meses "
+                        "se baja otro formato del ANDA")
         log.warning(f"Se omiten meses incompletos: {detalle}. Use incluir_incompletos=True para cargarlos.")
         meses = [m for m in meses if m.completo]
     if not meses:

@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+import pandas as pd
 import pytest
 
 
@@ -48,6 +49,39 @@ def geih_root(tmp_path):
     _write(m / "CSV 13" / "No ocupados.CSV", "DIRECTORIO;SECUENCIA_P;ORDEN;DSI;FFT;FEX_C18\n"
                                              "10;1;2;1;;1000.5\n11;1;1;;1;500\n")
     _write(m / "Datos del hogar y la vivienda.CSV", "DIRECTORIO;SECUENCIA_P;P5000;FEX_C18\n10;1;4;1000.5\n11;1;2;500\n")
+
+    # --- 2011: el CSV del ANDA perdió el punto decimal del factor; el TXT del mismo catálogo está bien
+    for carpeta, sep, fex in (("Marzo_csv", ";", ("849.491.032.387.525", "107.845.157.267.357")),
+                              ("Marzo_txt", "\t", ("84.9491032387525", "1078.45157267357"))):
+        m = base / "2011" / carpeta
+        ext = carpeta[-3:]
+        fila = lambda *v: sep.join(map(str, v)) + "\n"  # noqa: E731
+        _write(m / f"Cabecera - Características generales (Personas).{ext}",
+               fila("DIRECTORIO", "SECUENCIA_P", "ORDEN", "P6020", "P6040", "CLASE", "DPTO", "fex_c_2011")
+               + fila(20, 1, 1, 1, 30, 1, 5, fex[0]) + fila(20, 1, 2, 2, 25, 1, 5, fex[0])
+               + fila(21, 1, 1, 2, 40, 1, 5, fex[1]))
+        _write(m / f"Cabecera - Ocupados.{ext}", fila("DIRECTORIO", "SECUENCIA_P", "ORDEN", "OCI", "INGLABO", "fex_c_2011")
+               + fila(20, 1, 1, 1, 1000000, fex[0]) + fila(21, 1, 1, 1, 2000000, fex[1]))
+        _write(m / f"Cabecera - Desocupados.{ext}", fila("DIRECTORIO", "SECUENCIA_P", "ORDEN", "DSI", "fex_c_2011")
+               + fila(20, 1, 2, 1, fex[0]))
+        _write(m / f"Cabecera - Fuerza de trabajo.{ext}", fila("DIRECTORIO", "SECUENCIA_P", "ORDEN", "fex_c_2011")
+               + fila(20, 1, 1, fex[0]) + fila(20, 1, 2, fex[0]) + fila(21, 1, 1, fex[1]))
+
+    # --- Septiembre 2021: el CSV viene separado por espacios (ilegible); el Stata está bien
+    m = base / "2021" / "Septiembre.csv 2 1"
+    _write(m / "Cabecera - Características generales (persona).csv",
+           "DIRECTORIO SECUENCIA_P ORDEN P6040 FEX_C_2011\n30 1 1 40 250.5\n")
+    _write(m / "Cabecera - Ocupados.csv", "DIRECTORIO SECUENCIA_P ORDEN OCI FEX_C_2011\n30 1 1 1 250.5\n")
+    m = base / "2021" / "Septiembre"
+    m.mkdir(parents=True)
+    llaves = {"DIRECTORIO": [30, 30], "SECUENCIA_P": [1, 1], "ORDEN": [1, 2], "fex_c_2011": [250.5, 250.5]}
+    pd.DataFrame({**llaves, "P6020": [1, 2], "P6040": [40, 38], "CLASE": [1, 1], "DPTO": [11, 11]}).to_stata(
+        m / "Cabecera - Características generales (Personas).dta", write_index=False)
+    pd.DataFrame({k: v[:1] for k, v in llaves.items()} | {"OCI": [1], "INGLABO": [3000000]}).to_stata(
+        m / "Cabecera - Ocupados.dta", write_index=False)
+    pd.DataFrame({k: v[1:] for k, v in llaves.items()} | {"DSI": [1]}).to_stata(
+        m / "Cabecera - Desocupados.dta", write_index=False)
+    pd.DataFrame(llaves).to_stata(m / "Cabecera - Fuerza de trabajo.dta", write_index=False)
 
     # --- Mes incompleto (sin desocupados)
     m = base / "2025" / "Febrero 2025"

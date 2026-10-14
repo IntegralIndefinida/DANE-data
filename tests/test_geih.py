@@ -37,9 +37,38 @@ def test_month_from_folder(folder, mes):
 
 def test_available_marks_incomplete(geih_root):
     av = dd.geih.available(root=geih_root)
-    assert list(zip(av.anio, av.mes)) == [(2016, 1), (2025, 1), (2025, 2)]
-    assert av.set_index("mes").loc[2, "faltantes"] == "desocupados"
-    assert av.completo.tolist() == [True, True, False]
+    assert list(zip(av.anio, av.mes)) == [(2011, 3), (2016, 1), (2021, 9), (2025, 1), (2025, 2)]
+    assert av.set_index(["anio", "mes"]).loc[(2025, 2), "faltantes"] == "desocupados"
+    assert av.completo.tolist() == [True, True, True, True, False]
+
+
+def test_csv_danado_usa_formato_alterno(geih_root):
+    """2011: el CSV del ANDA perdió el punto decimal del factor; se usa la carpeta del TXT."""
+    av = dd.geih.available(root=geih_root)
+    assert av.set_index(["anio", "mes"]).loc[(2011, 3), "carpeta"] == "Marzo_txt"
+    df = dd.geih.load(2011, root=geih_root, cache=False)
+    assert df["fex"].tolist() == pytest.approx([84.9491032387525, 84.9491032387525, 1078.45157267357])
+    assert df["condicion"].tolist() == ["Ocupado", "Desocupado", "Ocupado"]
+
+
+def test_csv_ilegible_usa_stata(geih_root):
+    """Septiembre de 2021: el CSV viene separado por espacios; se usa el Stata del ANDA."""
+    df = dd.geih.load(2021, root=geih_root, cache=False)
+    assert df["fex"].tolist() == [250.5, 250.5]
+    assert df["condicion"].tolist() == ["Ocupado", "Desocupado"]
+    assert df["ingreso_laboral"].tolist()[0] == 3000000
+
+
+@pytest.mark.parametrize("anio,carpeta,defecto", [(2011, "Marzo_txt", "sin punto decimal"),
+                                                    (2021, "Septiembre", "separado por espacios")])
+def test_csv_danado_sin_alterno_se_omite(geih_root, caplog, anio, carpeta, defecto):
+    import shutil
+    shutil.rmtree(geih_root / "datos_csv" / str(anio) / carpeta)
+    av = dd.geih.available(root=geih_root).set_index("anio")
+    assert not av.loc[anio, "completo"] and defecto in av.loc[anio, "faltantes"]
+    with pytest.raises(FileNotFoundError):
+        dd.geih.load(anio, root=geih_root, cache=False)
+    assert "Vuelva a descargar" in caplog.text
 
 
 def test_old_era_cabecera_plus_resto(geih_root):
@@ -179,6 +208,16 @@ def test_real_td_matches_dane(anio, mes, td):
 
 
 REAL_EMPALME = Path(os.environ.get("DANE_DATA_TEST_GEIH_EMPALME", dd.get_path("geih_empalme")))
+
+
+def _disponibles_reales(empalme: bool) -> tuple[Path, pd.DataFrame]:
+    root = REAL_EMPALME if empalme else REAL
+    av = dd.geih.available(empalme=empalme, root=root) if (root / "datos_csv").is_dir() else pd.DataFrame()
+    if av.empty:
+        pytest.skip(f"sin datos GEIH reales en {root}")
+    return root, av
+
+
 # Cambios de metodología: la PET cambia de golpe y es correcto.
 QUIEBRES_PET = {
     False: {(2020, 1): "2020 viene con proyecciones CNPV 2018 y PET de 15 años o más",
@@ -195,10 +234,7 @@ def test_real_serie_mensual_sin_saltos(empalme):
     La serie mensual no debe tener huecos ni saltos bruscos. La PET crece ~0,1 % al mes: un
     cambio de más de 1 % delata un factor de expansión dañado o una PET con otra definición.
     """
-    root = REAL_EMPALME if empalme else REAL
-    av = dd.geih.available(empalme=empalme, root=root) if (root / "datos_csv").is_dir() else pd.DataFrame()
-    if av.empty:
-        pytest.skip(f"sin datos GEIH reales en {root}")
+    root, av = _disponibles_reales(empalme)
     m = dd.geih.serie_indicadores(sorted(av.anio.unique()), anual=False, empalme=empalme, root=root)
 
     problemas = []
