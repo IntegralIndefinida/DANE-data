@@ -6,6 +6,10 @@
   de ejemplos con datos reales y referencia de la API con una página por función.
 * Todas las funciones públicas tienen docstrings completos (parámetros, lo que devuelven, ejemplos). Los
   ejemplos que no necesitan los microdatos se ejecutan en las pruebas.
+* Corregido: con pandas 2 (el de Google Colab), descargar o cargar 2021 fallaba con
+  `ValueError: Version of given Stata file is 110`. El Stata de septiembre de 2021 viene en formato 110
+  (Stata 7), que pandas solo lee desde la versión 3; ahora se lee con cualquier pandas, sin perder las
+  edades de más de 100 años.
 
 ## 0.2.1 (14 de octubre de 2026)
 

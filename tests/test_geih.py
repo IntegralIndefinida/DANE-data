@@ -58,6 +58,23 @@ def test_csv_ilegible_usa_stata(geih_root):
     assert df["fex"].tolist() == [250.5, 250.5]
     assert df["condicion"].tolist() == ["Ocupado", "Desocupado"]
     assert df["ingreso_laboral"].tolist()[0] == 3000000
+    assert df["edad"].tolist() == [101, 38]
+
+
+def test_stata_110(geih_root):
+    """El Stata de septiembre de 2021 es formato 110 (Stata 7), que pandas 2 no lee; se traduce al 111."""
+    from dane_data import _io
+    p = geih_root / "datos_csv" / "2021" / "Septiembre" / "Cabecera - Características generales (Personas).dta"
+    assert p.read_bytes()[0] == 110
+    df = pd.read_stata(_io._stata(p), convert_categoricals=False)
+    assert df["P6040"].tolist() == [101, 38]
+    # Ensanchadas: en un byte, pandas 2 tomaría 101 y 104 por faltantes (lo son desde Stata 8)
+    assert df["P6040"].dtype == "int16" and df["P7260"].dtype == "float64"
+    assert df["P7260"].isna().tolist() == [True, False] and df["P7260"].iloc[1] == 104
+    assert df["CLASE"].dtype == "int8"  # sin valores ambiguos no cambia
+    assert _io.columnas(p)[:3] == ["DIRECTORIO", "SECUENCIA_P", "ORDEN"]
+    if int(pd.__version__.split(".")[0]) >= 3:  # pandas 3 lee el formato 110 directamente
+        pd.testing.assert_frame_equal(pd.read_stata(p, convert_categoricals=False), df, check_dtype=False)
 
 
 @pytest.mark.parametrize("anio,carpeta,defecto", [(2011, "Marzo_txt", "sin punto decimal"),

@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -9,6 +10,31 @@ import pytest
 def _write(path: Path, text: str, encoding="utf-8-sig"):
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(text.encode(encoding))
+
+
+def _stata_110(path: Path, columnas: dict):
+    """Stata en formato 110 (Stata 7), como el de septiembre de 2021: pandas 2 no lo lee. ``None`` es faltante."""
+    tipos, campos, valores = [], [], []
+    for v in columnas.values():
+        if any(isinstance(x, float) for x in v):
+            tipo, campo, faltante = 100, "<f8", 2.0**1023  # d
+        elif all(x is None or -128 <= x <= 126 for x in v):
+            tipo, campo, faltante = 98, "i1", 127  # b
+        else:
+            tipo, campo, faltante = 108, "<i4", 2147483647  # l
+        tipos.append(tipo)
+        campos.append(campo)
+        valores.append([faltante if x is None else x for x in v])
+    nvar, nobs = len(columnas), len(valores[0])
+    filas = np.zeros(nobs, np.dtype([(f"v{i}", c) for i, c in enumerate(campos)]))
+    for i, v in enumerate(valores):
+        filas[f"v{i}"] = v
+    texto = lambda s, n: s.encode().ljust(n, b"\0")  # noqa: E731
+    path.write_bytes(
+        bytes([110, 2, 1, 0]) + nvar.to_bytes(2, "little") + nobs.to_bytes(4, "little")
+        + bytes(81) + texto("01 Oct 2021 00:00", 18) + bytes(tipos)
+        + b"".join(texto(n, 33) for n in columnas) + bytes(2 * (nvar + 1)) + texto("%9.0g", 12) * nvar
+        + bytes(33 * nvar) + bytes(81 * nvar) + bytes(5) + filas.tobytes())
 
 
 @pytest.fixture
@@ -70,7 +96,8 @@ def geih_root(tmp_path):
         _write(m / f"Cabecera - Otras actividades y ayudas en la semana.{ext}",
                fila("DIRECTORIO", "SECUENCIA_P", "ORDEN", "FEX_C") + fila(20, 1, 1, 999) + fila(20, 1, 2, 999))
 
-    # --- Septiembre 2021: el CSV viene separado por espacios (ilegible); el Stata está bien
+    # --- Septiembre 2021: el CSV viene separado por espacios (ilegible); el Stata está bien, pero en
+    # formato 110 (Stata 7), con edades de más de 100 años
     m = base / "2021" / "Septiembre.csv 2 1"
     _write(m / "Cabecera - Características generales (persona).csv",
            "DIRECTORIO SECUENCIA_P ORDEN P6040 FEX_C_2011\n30 1 1 40 250.5\n")
@@ -78,13 +105,11 @@ def geih_root(tmp_path):
     m = base / "2021" / "Septiembre"
     m.mkdir(parents=True)
     llaves = {"DIRECTORIO": [30, 30], "SECUENCIA_P": [1, 1], "ORDEN": [1, 2], "fex_c_2011": [250.5, 250.5]}
-    pd.DataFrame({**llaves, "P6020": [1, 2], "P6040": [40, 38], "CLASE": [1, 1], "DPTO": [11, 11]}).to_stata(
-        m / "Cabecera - Características generales (Personas).dta", write_index=False)
-    pd.DataFrame({k: v[:1] for k, v in llaves.items()} | {"OCI": [1], "INGLABO": [3000000]}).to_stata(
-        m / "Cabecera - Ocupados.dta", write_index=False)
-    pd.DataFrame({k: v[1:] for k, v in llaves.items()} | {"DSI": [1]}).to_stata(
-        m / "Cabecera - Desocupados.dta", write_index=False)
-    pd.DataFrame(llaves).to_stata(m / "Cabecera - Fuerza de trabajo.dta", write_index=False)
+    _stata_110(m / "Cabecera - Características generales (Personas).dta",
+               {**llaves, "P6020": [1, 2], "P6040": [101, 38], "CLASE": [1, 1], "DPTO": [11, 11], "P7260": [None, 104]})
+    _stata_110(m / "Cabecera - Ocupados.dta", {k: v[:1] for k, v in llaves.items()} | {"OCI": [1], "INGLABO": [3000000]})
+    _stata_110(m / "Cabecera - Desocupados.dta", {k: v[1:] for k, v in llaves.items()} | {"DSI": [1]})
+    _stata_110(m / "Cabecera - Fuerza de trabajo.dta", llaves)
 
     # --- Mes incompleto (sin desocupados)
     m = base / "2025" / "Febrero 2025"
