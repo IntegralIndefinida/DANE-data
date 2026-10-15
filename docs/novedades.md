@@ -1,6 +1,6 @@
 # Novedades
 
-## En desarrollo
+## 0.2.2 (15 de octubre de 2026)
 
 * **Documentación nueva** en <https://integralindefinida.github.io/DANE-data/>: guía de usuario, galería
   de ejemplos con datos reales y referencia de la API con una página por función.

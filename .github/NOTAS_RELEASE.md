@@ -1,15 +1,14 @@
-## Novedades de la versión 0.2.1
+## Novedades de la versión 0.2.2
 
-**dane-data ya está en PyPI.** Quien tenga Python 3.10 o más reciente puede instalarlo con pip:
+**Corregido: la GEIH de 2021 en Google Colab.** Con pandas 2 (el que trae Colab), `dd.geih.download([2021])`
+y la carga de 2021 fallaban con `ValueError: Version of given Stata file is 110`. El DANE publica septiembre
+de 2021 en Stata 7 (formato 110), que pandas solo lee desde la versión 3; ahora se lee con cualquier pandas
+desde la 2.0. Las cifras no cambian, y si ya tenía 2021 descargado no hace falta volver a descargarlo.
 
-```bash
-pip install "dane-data[app]"   # librería + aplicación
-pip install dane-data          # solo la librería
-dane-data app
-```
+Para actualizar: `pip install -U "dane-data[app]"` (en Colab, reinicie la sesión después).
 
-Las funciones y las cifras son las mismas de la versión 0.2.0 (ver sus notas). Si viene de la 0.1, siga los
-avisos de la 0.2.0: vuelva a descargar 2008, 2011 y 2021.
+**Documentación nueva** en <https://integralindefinida.github.io/DANE-data/>: guía de usuario, galería de
+ejemplos con datos reales y referencia de la API con una página por función.
 
 ---
 
