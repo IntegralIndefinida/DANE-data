@@ -650,7 +650,9 @@ def harmonize(df: pd.DataFrame, edad_minima_pet: int | None = None) -> pd.DataFr
     df["rama2d"] = r4.fillna(r3).astype("Int64")
     df["rama_rev"] = pd.Series(np.where(r4.notna(), 4, np.where(r3.notna(), 3, np.nan)), index=df.index).astype("Int8")
 
-    educ = _num(df, "P3042").map(_EDUC_P3042).fillna(_num(df, "P6210").map(_EDUC_P6210))
+    # where y no fillna: con dos columnas de texto, fillna avisa en pandas 2 que dejará de convertir el tipo
+    nuevo, viejo = _num(df, "P3042").map(_EDUC_P3042), _num(df, "P6210").map(_EDUC_P6210)
+    educ = nuevo.where(nuevo.notna(), viejo)
     df["nivel_educativo"] = pd.Categorical(educ, dtype=CATEGORIAS["nivel_educativo"])
 
     return df.drop(columns=["_EN_FT", "_EN_OCU", "_EN_DSI", "_EN_INI"], errors="ignore")

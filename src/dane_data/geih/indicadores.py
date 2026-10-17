@@ -142,7 +142,8 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, anual:
     con_ingreso = ocupado & (ingreso > 0)
     if con_ingreso.any():
         ocup = df.loc[con_ingreso, keys].assign(_y=ingreso[con_ingreso], _w=w[con_ingreso])
-        gi = ocup.groupby(keys, observed=True, dropna=False)
+        # Solo _y y _w: con las columnas de grupo dentro, pandas 2 avisa que dejarán de pasarse a apply
+        gi = ocup.groupby(keys, observed=True, dropna=False)[["_y", "_w"]]
         res["ingreso_medio"] = gi.apply(lambda x: weighted_mean(x["_y"], x["_w"]))
         res["ingreso_mediano"] = gi.apply(lambda x: weighted_quantile(x["_y"], x["_w"], 0.5))
     else:
