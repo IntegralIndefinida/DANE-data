@@ -261,15 +261,25 @@ def find_months(years: Iterable[int] | int | None = None, empalme: bool = False,
                 continue
             result.append(MesGEIH(anio, mes, mdir, _pick_files(files)))
     # Un mes puede quedar en dos carpetas: la del CSV dañado del ANDA y la del formato que
-    # lo reemplaza. Se usa la completa.
+    # lo reemplaza. Se usa una sola (sumar las dos duplicaría el mes): la completa, la que
+    # trae más módulos y, si empatan, la más reciente.
     por_mes: dict[tuple[int, int], list[MesGEIH]] = {}
     for m in result:
         por_mes.setdefault((m.anio, m.mes), []).append(m)
     result = []
-    for ms in por_mes.values():
-        completos = [m for m in ms if m.completo] if len(ms) > 1 else []
-        result += completos or ms
+    for (anio, mes), ms in por_mes.items():
+        if len(ms) > 1:
+            ms = sorted(ms, key=lambda m: (m.completo, len(m.archivos), _mtime(m)), reverse=True)
+            if ms[1].completo:  # el caso esperado (una dañada y su reemplazo) no merece aviso
+                log.warning(f"{MESES[mes]} {anio} está completo en varias carpetas; se usa "
+                            f"{ms[0].carpeta.name!r} y se ignora "
+                            f"{', '.join(repr(m.carpeta.name) for m in ms[1:] if m.completo)}.")
+        result.append(ms[0])
     return sorted(result, key=lambda m: (m.anio, m.mes))
+
+
+def _mtime(mes: MesGEIH) -> float:
+    return max(f.stat().st_mtime for fs in mes.archivos.values() for f in fs)
 
 
 def available(empalme: bool = False, root=None) -> pd.DataFrame:

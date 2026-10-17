@@ -13,6 +13,8 @@
   Antes, la próxima descarga daba el mes o el año por completo con los datos cortados.
 * Si un mes del paquete anual del empalme no se puede abrir, el año ya no queda marcado como completo:
   la próxima descarga lo vuelve a intentar.
+* Corregido: si un mes completo estaba en dos carpetas (por ejemplo, descomprimido dos veces), se sumaban
+  las dos y el mes contaba doble. Ahora se usa una sola, con un aviso.
 
 ## 0.2.2 (15 de octubre de 2026)
 

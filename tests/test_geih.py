@@ -52,6 +52,18 @@ def test_csv_danado_usa_formato_alterno(geih_root):
     assert "FEX_C" not in df.columns  # el factor de "Otras actividades" no reemplaza al de características
 
 
+def test_mes_completo_en_dos_carpetas_no_se_duplica(geih_root, caplog):
+    """Una copia del mes (p. ej. descomprimida dos veces) no suma sus filas dos veces."""
+    import shutil
+
+    antes = len(dd.geih.load(2016, root=geih_root, cache=False))
+    shutil.copytree(geih_root / "datos_csv" / "2016" / "Enero", geih_root / "datos_csv" / "2016" / "Enero_copia")
+    with caplog.at_level("WARNING", logger="dane_data.geih"):
+        assert len(dd.geih.find_months(2016, root=geih_root)) == 1
+        assert len(dd.geih.load(2016, root=geih_root, cache=False)) == antes
+    assert "varias carpetas" in caplog.text
+
+
 def test_csv_ilegible_usa_stata(geih_root):
     """Septiembre de 2021: el CSV viene separado por espacios; se usa el Stata del ANDA."""
     df = dd.geih.load(2021, root=geih_root, cache=False)
