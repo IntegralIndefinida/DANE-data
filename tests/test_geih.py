@@ -194,6 +194,21 @@ def test_cache_roundtrip(geih_root, tmp_path, monkeypatch):
     pd.testing.assert_frame_equal(a, b, check_dtype=False, check_categorical=False)
 
 
+def test_un_solo_nombre_sin_lista(geih_root, eam_root):
+    """Un solo valor o nombre en vez de una lista no se parte en letras."""
+    df = dd.geih.load(2016, root=geih_root, cache=False)
+    assert dd.geih.filtrar(df, {"sexo": "Mujer"}).equals(dd.geih.filtrar(df, {"sexo": ["Mujer"]}))
+    assert len(dd.geih.filtrar(df, {"sexo": "Mujer"})) > 0
+    assert len(dd.geih.filtrar(df, {"anio": 2016})) == len(df)
+    uno = dd.geih.load(2016, root=geih_root, cache=False, columns="P6050", modules="caracteristicas",
+                       harmonize_vars=False)
+    lista = dd.geih.load(2016, root=geih_root, cache=False, columns=["P6050"], modules=["caracteristicas"],
+                         harmonize_vars=False)
+    assert "P6050" in uno.columns
+    pd.testing.assert_frame_equal(uno, lista)
+    assert "prodbr2" in dd.eam.load(2016, root=eam_root, columns="prodbr2", harmonize_vars=False).columns
+
+
 def test_cache_interrumpida_no_deja_parquet_a_medias(geih_root, tmp_path, monkeypatch):
     """Si falla la escritura, no queda ni el parquet (a medias) ni el temporal, y load funciona igual."""
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")

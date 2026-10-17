@@ -36,6 +36,10 @@
   al terminar, y los nombres temporales son únicos, así que dos personas usando la misma aplicación a la
   vez (`--address 0.0.0.0`) no escriben el mismo archivo. {dd}`geih.clear_cache()` borra también los
   temporales que dejó una escritura interrumpida.
+* Corregido: un solo valor o nombre en vez de una lista se partía en letras. `filtros={"sexo": "Mujer"}`
+  no dejaba a nadie, y `columns="P6500"` o `modules="ocupados"` no agregaban nada. Ahora valen igual que
+  `["Mujer"]`, `["P6500"]` o `["ocupados"]` en {dd}`geih.load()`, {dd}`geih.load_month()`,
+  {dd}`geih.filtrar()`, las funciones `serie_*` y {dd}`eam.load()`.
 
 ## 0.2.2 (15 de octubre de 2026)
 

@@ -82,7 +82,8 @@ def filtrar(df: pd.DataFrame, filtros: dict | None = None, poblacion: str | None
         elif isinstance(cond, tuple):
             mask &= df[col].between(*cond)
         else:
-            mask &= df[col].isin(list(cond))
+            # Un solo valor ("Mujer", 11) cuenta como lista: list("Mujer") lo partiría en letras
+            mask &= df[col].isin([cond] if isinstance(cond, str) or not hasattr(cond, "__iter__") else list(cond))
     if poblacion:
         mask &= df[poblacion].eq(1).fillna(False).astype(bool)
     return df if mask.all() else df[mask]

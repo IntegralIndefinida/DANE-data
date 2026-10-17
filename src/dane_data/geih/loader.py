@@ -415,6 +415,7 @@ def load_month(mes: MesGEIH, columns="core", modules: Iterable[str] | None = Non
     >>> crudo.shape  # doctest: +SKIP
     (70648, 29)
     """
+    columns, modules = _lista_columnas(columns), _lista(modules)
     if columns == "all":
         selector = None
     else:
@@ -650,6 +651,16 @@ def _firma_archivos(mes: MesGEIH) -> list[str]:
     return sorted(stamp)
 
 
+def _lista(x):
+    """Un solo nombre como lista (``list("P6500")`` lo partiría en letras); ``None`` se deja igual."""
+    return [x] if isinstance(x, str) else x
+
+
+def _lista_columnas(columns):
+    """Como ``_lista``, salvo los valores especiales ``"core"`` y ``"all"``."""
+    return columns if columns in ("core", "all") else _lista(columns)
+
+
 def _cache_path(mes: MesGEIH, columns, modules) -> Path:
     cols = "all" if columns == "all" else ",".join(sorted({c.upper() for c in (columns if columns not in (None, "core") else [])}))
     key = "|".join([_HARMONIZE_VERSION, *_firma_archivos(mes), cols, ",".join(sorted(modules or MODULOS))])
@@ -748,6 +759,7 @@ def load(
 
     >>> df = dd.geih.load(range(2007, 2026), variables=["fex", "sexo", "ocupado", "ingreso_laboral"])  # doctest: +SKIP
     """
+    columns, modules = _lista_columnas(columns), _lista(modules)
     if isinstance(months, int):
         months = [months]
     conservar = None

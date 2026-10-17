@@ -307,6 +307,8 @@ def load(
             f"No hay datos EAM para años={years} en {_root(root)}. "
             "Descárguelos con dane_data.eam.download(...) o revise dane_data.set_paths(...)."
         )
+    if isinstance(columns, str) and columns not in ("core", "all"):
+        columns = [columns]  # un solo nombre: list("valagri") lo partiría en letras
     if columns == "all":
         selector = None
     else:
