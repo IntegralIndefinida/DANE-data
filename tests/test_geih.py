@@ -225,6 +225,18 @@ def test_serie_indicadores_con_filtros_y_meses(geih_root, tmp_path, monkeypatch)
         pd.testing.assert_frame_equal(serie, esperado)
 
 
+def test_serie_cache_distingue_rango_de_lista(geih_root, tmp_path, monkeypatch):
+    """``(15, 28)`` es el rango 15–28 y ``[15, 28]`` solo esas dos edades: no comparten caché."""
+    monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
+    for filtro in ((10, 60), [10, 60]):
+        filtros = {"edad": filtro}
+        esperado = dd.geih.indicadores(dd.geih.filtrar(dd.geih.load(2016, root=geih_root, cache=False), filtros))
+        pd.testing.assert_frame_equal(dd.geih.serie_indicadores(2016, root=geih_root, filtros=filtros), esperado)
+        esperado = dd.tabla(dd.geih.filtrar(dd.geih.load(2016, root=geih_root, cache=False), filtros), por="sexo")
+        pd.testing.assert_frame_equal(dd.geih.serie_tabla(2016, por="sexo", root=geih_root, filtros=filtros),
+                                      esperado, check_dtype=False, rtol=1e-9)
+
+
 @pytest.mark.parametrize("pedido", [
     dict(por=["anio", "sexo"]),
     dict(por=["sexo", "nivel_educativo"], estadistico="porcentaje"),

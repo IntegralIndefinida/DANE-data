@@ -127,11 +127,23 @@ def _meses_por_anio(anios, meses, empalme: bool, root) -> dict[int, list[MesGEIH
     return por_anio
 
 
+def _clave_json(obj):
+    """La solicitud lista para ``json.dumps``, que convierte las tuplas en listas: en ``filtros`` una
+    tupla es un rango (``between``) y una lista son valores (``isin``), así que se marcan distinto."""
+    if isinstance(obj, dict):
+        return {str(k): _clave_json(v) for k, v in obj.items()}
+    if isinstance(obj, tuple):
+        return {"__rango__": [_clave_json(v) for v in obj]}
+    if isinstance(obj, list):
+        return [_clave_json(v) for v in obj]
+    return obj
+
+
 def _por_anio(tipo: str, anios, solicitud: dict, calcular: Callable[[int], pd.DataFrame], *, meses=None,
               empalme: bool = False, root=None, progress=None) -> list[pd.DataFrame]:
     """``calcular(anio)`` para cada año, leído de la caché si ya se hizo con los mismos archivos y solicitud."""
     por_anio = _meses_por_anio(anios, meses, empalme, root)
-    texto = json.dumps(solicitud, sort_keys=True, default=str, ensure_ascii=False)
+    texto = json.dumps(_clave_json(solicitud), sort_keys=True, default=str, ensure_ascii=False)
     serie = "empalme" if empalme else "principal"
     partes = []
     for i, (anio, ms) in enumerate(sorted(por_anio.items())):

@@ -4,6 +4,10 @@
 
 * Corregido: {dd}`geih.exportar()` sin `variables` escribía solo `anio`, `mes` y las columnas de los
   filtros. Ahora escribe todas las variables armonizadas, como dice su documentación.
+* Corregido: en {dd}`geih.serie_indicadores()`, {dd}`geih.serie_tabla()` y
+  {dd}`geih.serie_frecuencias()`, un filtro de rango (`{"edad": (15, 28)}`) y uno de valores
+  (`{"edad": [15, 28]}`) compartían la caché, así que el segundo devolvía el resultado del primero. Las
+  cachés anteriores se recalculan solas.
 
 ## 0.2.2 (15 de octubre de 2026)
 
