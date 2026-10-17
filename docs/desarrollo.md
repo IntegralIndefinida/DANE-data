@@ -36,6 +36,8 @@ variables armonizadas van en minúscula y las originales del DANE en mayúscula.
 * `tests/conftest.py` construye carpetas **sintéticas** de la GEIH y la EAM con las rarezas de cada época.
   Cuando aparezca una rareza nueva en los archivos del DANE, agréguela a estos datos.
 * Las pruebas de los descargadores usan ZIP en memoria: nunca se conectan a internet.
+* GitHub Actions (`.github/workflows/pruebas.yml`) corre todas las pruebas en cada push a `main` y en cada
+  pull request, con Python 3.10 (pandas 2) y 3.12 (las versiones de `uv.lock`).
 * `tests/test_docs.py` revisa que la referencia de la API cubra todo `__all__` y ejecuta los ejemplos de los
   docstrings (los que necesitan microdatos llevan `# doctest: +SKIP`).
 * Si hay datos reales en `$DANE_DATA_TEST_GEIH`, `$DANE_DATA_TEST_GEIH_EMPALME` o en las carpetas

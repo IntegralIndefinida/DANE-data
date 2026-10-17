@@ -1,0 +1,30 @@
+# Pruebas: en cada push a main y en cada pull request, con la versión mínima de Python (3.10, que usa
+# pandas 2, como Google Colab) y la de .python-version (3.12, con las versiones exactas de uv.lock).
+# Las pruebas con datos reales se saltan: en CI no hay microdatos.
+name: Pruebas
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pruebas:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Pruebas
+        run: uv run --locked --extra dev --extra app pytest -q
