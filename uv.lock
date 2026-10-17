@@ -757,7 +757,7 @@ requires-dist = [
     { name = "sphinx", marker = "extra == 'docs'", specifier = ">=8" },
     { name = "sphinx-copybutton", marker = "extra == 'docs'", specifier = ">=0.5" },
     { name = "sphinx-design", marker = "extra == 'docs'", specifier = ">=0.6" },
-    { name = "streamlit", marker = "extra == 'app'", specifier = ">=1.40" },
+    { name = "streamlit", marker = "extra == 'app'", specifier = ">=1.51" },
 ]
 provides-extras = ["app", "dev", "docs"]
 

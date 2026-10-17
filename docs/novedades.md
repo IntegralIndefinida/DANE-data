@@ -29,6 +29,9 @@
   0, como en el promedio de los totales mensuales del DANE. Las tasas no cambian. Con microdatos,
   `dd.tabla` e {dd}`geih.indicadores()` siguen contando los meses que quedan en los datos; para promediar
   sobre los meses cargados, ponga `df.attrs["meses_por_anio"] = {año: número de meses}`.
+* La aplicación requiere Streamlit 1.51 o más reciente (`pip install "dane-data[app]"` lo actualiza). Con
+  versiones anteriores, las tablas no aceptaban `width="stretch"` y cada gráfica mostraba un aviso de
+  función obsoleta. Los lanzadores ya usaban una versión reciente.
 
 ## 0.2.2 (15 de octubre de 2026)
 
