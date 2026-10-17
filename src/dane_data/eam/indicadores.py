@@ -289,7 +289,7 @@ def deflactar(df: pd.DataFrame, columnas: Iterable[str], deflactor: pd.DataFrame
         raise ValueError(f"El deflactor repite {', '.join(on)}: {repetidos.to_dict('records')}. Cada fila de "
                          "df se uniría con varios valores y quedaría duplicada.")
     d = d.merge(deflactor[on + ["deflactor"]], on=on, how="left")
-    for c in columnas:
+    for c in _as_list(columnas):  # una sola columna ("valagri") no se parte en letras
         d[f"{c}{sufijo}"] = pd.to_numeric(d[c], errors="coerce") / d["deflactor"] * base
     faltan = d["deflactor"].isna().mean()
     if faltan > 0:

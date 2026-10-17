@@ -229,6 +229,15 @@ def test_un_solo_nombre_sin_lista(geih_root, eam_root):
     assert "P6050" in uno.columns
     pd.testing.assert_frame_equal(uno, lista)
     assert "prodbr2" in dd.eam.load(2016, root=eam_root, columns="prodbr2", harmonize_vars=False).columns
+    eam = dd.eam.load(2016, root=eam_root)
+    assert "valagri_real" in dd.eam.deflactar(eam, "valagri", pd.Series({2016: 100.0})).columns
+
+
+def test_exportar_una_sola_variable(geih_root, tmp_path, monkeypatch):
+    monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
+    ruta = tmp_path / "fex.csv"
+    dd.geih.exportar(2016, ruta, variables="fex", root=geih_root)
+    assert list(pd.read_csv(ruta, encoding="utf-8-sig").columns) == ["anio", "mes", "fex"]
 
 
 def test_cache_interrumpida_no_deja_parquet_a_medias(geih_root, tmp_path, monkeypatch):

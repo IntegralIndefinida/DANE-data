@@ -636,7 +636,7 @@ def exportar(
     lista = [m for _, ms in sorted(por_anio.items()) for m in ms]
     necesarias = leer = None  # sin variables: se leen y escriben todas las armonizadas
     if variables is not None:
-        necesarias = list(dict.fromkeys(["anio", "mes", *variables]))
+        necesarias = list(dict.fromkeys(["anio", "mes", *_as_list(variables)]))
         leer = list(dict.fromkeys([*necesarias, *(filtros or {}), *([poblacion] if poblacion else [])]))
     ruta.parent.mkdir(parents=True, exist_ok=True)
     tmp = ruta.with_name(f"{ruta.name}.{uuid.uuid4().hex}.tmp")
