@@ -29,7 +29,7 @@ fi
 echo
 echo "Preparando la aplicación... la primera vez tarda 1 a 3 minutos (descarga Python y librerías)."
 echo
-if ! uv run --quiet --extra app dane-data app; then
+if ! uv run --frozen --quiet --extra app dane-data app; then
     echo
     echo "La aplicación se cerró con un error. Si persiste, envíe una captura de esta ventana."
     pausa

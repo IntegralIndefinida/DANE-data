@@ -27,7 +27,7 @@ exit /b 1
 echo.
 echo Preparando la aplicacion... la primera vez tarda 1 a 3 minutos: descarga Python y librerias.
 echo.
-uv run --quiet --extra app dane-data app
+uv run --frozen --quiet --extra app dane-data app
 if errorlevel 1 goto error
 exit /b 0
 
