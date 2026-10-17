@@ -519,22 +519,25 @@ class FakeEAMDownloader(EAMDownloader):
         return True
 
 
-def test_eam_conversion_dta_fallida_no_deja_txt(tmp_path, monkeypatch):
-    """Si falla la conversión del Stata a TXT, no queda un TXT a medias que daría el año por descargado."""
-    def falla(df, ruta, **kw):
-        open(ruta, "w").write("nordest\t")
-        raise OSError("disco lleno")
-
-    monkeypatch.setattr(pd.DataFrame, "to_csv", falla)
+def test_eam_stata_se_usa_tal_cual_con_sus_codigos(tmp_path):
+    """El .dta de 2024 no se convierte: el cargador lo lee con los códigos, no con las etiquetas de valor."""
     dta = io.BytesIO()
-    pd.DataFrame({"nordest": [1], "valagri": [10.0]}).to_stata(dta, write_index=False)
+    pd.DataFrame({"nordest": [10], "dpto": [5], "ciiu4": [1011], "valagri": [80.0]}).to_stata(
+        dta, write_index=False, value_labels={"dpto": {5: "ANTIOQUIA (etiqueta)"}})
     zip_path = tmp_path / "EAM_2024.zip"
     zip_path.write_bytes(_zip({"EAM_2024.dta": dta.getvalue()}))
-    dl = EAMDownloader(base_dir=tmp_path)
     destino = tmp_path / "datos" / "2024"
-    archivos = dl.extract_preferred_format(zip_path, destino)
+    archivos = EAMDownloader(base_dir=tmp_path).extract_preferred_format(zip_path, destino)
     assert [f.name for f in archivos] == ["EAM_2024.dta"]
     assert sorted(f.name for f in destino.iterdir()) == ["EAM_2024.dta"]
+
+    eam = dd.eam.load(2024, root=tmp_path)
+    assert eam["departamento"].tolist() == ["Antioquia"]     # del código 5, no de la etiqueta
+    assert eam["valagri"].tolist() == [80.0]
+
+    # Un TXT convertido por una versión anterior, junto al .dta, se sigue usando
+    (destino / "EAM_2024.txt").write_text("nordest\tdpto\tciiu4\tvalagri\n10\t11\t1011\t80\n", encoding="utf-8")
+    assert dd.eam.find_files(2024, root=tmp_path)[2024].suffix == ".txt"
 
 
 def test_eam_tic_en_anio_ya_descargado(tmp_path):

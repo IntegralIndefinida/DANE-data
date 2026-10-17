@@ -46,6 +46,7 @@ import requests
 from bs4 import BeautifulSoup
 
 from .._hooks import ProgressMixin, extraer_miembro, zip_valido
+from .loader import EXTENSIONES
 
 __version__ = "1.0.0"
 
@@ -122,10 +123,10 @@ def sanitize_member_name(raw_name: str) -> str:
 
 
 def _archivos_datos(carpeta: Path) -> list[Path]:
-    """Archivos .csv/.txt ya extraídos en ``carpeta`` (sin entrar en subcarpetas como TIC/)."""
+    """Archivos de datos ya extraídos en ``carpeta`` (sin entrar en subcarpetas como TIC/)."""
     if not carpeta.is_dir():
         return []
-    return sorted(f for f in carpeta.iterdir() if f.is_file() and f.suffix.lower() in (".csv", ".txt"))
+    return sorted(f for f in carpeta.iterdir() if f.is_file() and f.suffix.lower() in EXTENSIONES)
 
 
 class EAMDownloader(ProgressMixin):
@@ -270,7 +271,8 @@ class EAMDownloader(ProgressMixin):
         Extrae el archivo de datos con la jerarquía de preferencia solicitada:
           1. Archivo .csv (primera opción).
           2. Archivo .txt delimitado (si no existe .csv, como en 2023).
-          3. Conversión de .dta a .txt tabulado (si no existe .csv ni .txt, como en 2024).
+          3. Archivo Stata .dta (si no existe .csv ni .txt, como en 2024); el cargador lo lee con
+             ``_io.read_table``, que conserva los códigos y lee el formato 110 con cualquier pandas.
         """
         if not zip_path.exists():
             return []
@@ -302,32 +304,15 @@ class EAMDownloader(ProgressMixin):
                     log.info(f"  → Extraído formato TXT (alternativa al no haber CSV): {[f.name for f in extracted_files]}")
                     return extracted_files
 
-                # 3. Si no hay .csv ni .txt (caso año 2024), extraer/convertir .dta a .txt
+                # 3. Si no hay .csv ni .txt (caso año 2024), el .dta tal cual. Antes se convertía a TXT
+                # con pd.read_stata, que cambiaba los códigos por las etiquetas de valor.
                 dta_members = [m for m in members if m.filename.lower().endswith(".dta")]
                 if dta_members:
                     for m in dta_members:
-                        clean_name = sanitize_member_name(m.filename)
-                        txt_name = Path(clean_name).stem + ".txt"
-                        target_txt = dest_dir / txt_name
-
-                        tmp_txt = target_txt.with_name(target_txt.name + ".part")
-                        try:
-                            import pandas as pd
-                            dta_bytes = io.BytesIO(z.read(m))
-                            df = pd.read_stata(dta_bytes)
-                            # Con otro nombre y renombrado al final: un TXT a medias daría el año por descargado
-                            df.to_csv(tmp_txt, sep="\t", index=False)
-                            tmp_txt.replace(target_txt)
-                            extracted_files.append(target_txt)
-                            log.info(f"  → Generado formato TXT tabulado a partir del archivo Stata .dta: {target_txt.name}")
-                        except Exception as e:
-                            tmp_txt.unlink(missing_ok=True)
-                            # Respaldo en caso de fallo de pandas: extraer directamente el .dta
-                            target_dta = dest_dir / clean_name
-                            extraer_miembro(z, m, target_dta)
-                            extracted_files.append(target_dta)
-                            log.warning(f"  → Extraído .dta directamente por error al convertir a TXT: {e}")
-
+                        target = dest_dir / sanitize_member_name(m.filename)
+                        extraer_miembro(z, m, target)
+                        extracted_files.append(target)
+                    log.info(f"  → Extraído formato Stata (no hay CSV ni TXT): {[f.name for f in extracted_files]}")
                     return extracted_files
 
         except zipfile.BadZipFile:

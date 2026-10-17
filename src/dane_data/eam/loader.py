@@ -34,6 +34,9 @@ from ..referencias import DEPARTAMENTOS
 
 log = logging.getLogger("dane_data.eam")
 
+# Formatos de los archivos de datos: CSV, TXT delimitado (2023) o Stata (2024), todos leídos con _io.read_table
+EXTENSIONES = (".csv", ".txt", ".dta")
+
 # Variables presentes en TODOS los años 1992–2024 (más algunas desde 2000).
 VARIABLES_COMUNES = [
     "nordemp", "nordest", "dpto", "periodo",
@@ -127,7 +130,8 @@ def find_files(years: Iterable[int] | int | None = None, root=None) -> dict[int,
     Devuelve
     --------
     dict
-        ``{año: ruta}``. Si un año tiene varios archivos se usa el más grande; el módulo TIC se ignora.
+        ``{año: ruta}``. Si un año tiene varios archivos se usa el más grande, con CSV o TXT antes que
+        Stata; el módulo TIC se ignora.
 
     Ejemplos
     --------
@@ -145,9 +149,11 @@ def find_files(years: Iterable[int] | int | None = None, root=None) -> dict[int,
         anio = int(ydir.name)
         if years is not None and anio not in years:
             continue
-        files = sorted(f for f in ydir.iterdir() if f.is_file() and f.suffix.lower() in (".csv", ".txt"))
+        files = sorted(f for f in ydir.iterdir() if f.is_file() and f.suffix.lower() in EXTENSIONES)
         if files:
-            out[anio] = max(files, key=lambda f: f.stat().st_size)
+            # El texto primero (un .txt convertido por una versión anterior, junto al .dta); entre
+            # archivos del mismo tipo, el más grande.
+            out[anio] = max(files, key=lambda f: (f.suffix.lower() != ".dta", f.stat().st_size))
     return out
 
 

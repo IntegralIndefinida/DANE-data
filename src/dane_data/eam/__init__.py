@@ -54,8 +54,7 @@ def download(
 
     Notas
     -----
-    Cuando el ANDA no publica un CSV para un año, se usa el TXT (2023) o se convierte el archivo de Stata a
-    texto (2024).
+    Cuando el ANDA no publica un CSV para un año, se usa el TXT (2023) o el archivo de Stata (2024).
 
     Ejemplos
     --------

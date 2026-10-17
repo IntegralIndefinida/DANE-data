@@ -48,6 +48,10 @@
   ahora `departamento` queda vacío.
 * Con la aplicación abierta, un archivo de la GEIH reemplazado en la misma carpeta (por ejemplo, un CSV
   dañado que se vuelve a descargar) se revisa de nuevo; antes había que reiniciar la aplicación.
+* EAM 2024: el archivo de Stata del ANDA ya no se convierte a TXT al descargarlo; se guarda tal cual y
+  {dd}`eam.load()` lo lee directamente. La conversión cambiaba los códigos por las etiquetas de valor del
+  archivo, y cualquier variable con etiquetas quedaba como texto. Los TXT ya convertidos se siguen usando;
+  para tener los códigos originales, borre la carpeta de 2024 y vuelva a descargar el año.
 
 ## 0.2.2 (15 de octubre de 2026)
 
