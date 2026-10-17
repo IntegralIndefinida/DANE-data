@@ -605,10 +605,10 @@ def exportar(
     ruta = Path(ruta)
     por_anio = _meses_por_anio(anios, meses, empalme, root)
     lista = [m for _, ms in sorted(por_anio.items()) for m in ms]
-    necesarias = None
+    necesarias = leer = None  # sin variables: se leen y escriben todas las armonizadas
     if variables is not None:
         necesarias = list(dict.fromkeys(["anio", "mes", *variables]))
-    leer = list(dict.fromkeys([*(necesarias or []), *(filtros or {}), *([poblacion] if poblacion else [])])) or None
+        leer = list(dict.fromkeys([*necesarias, *(filtros or {}), *([poblacion] if poblacion else [])]))
     ruta.parent.mkdir(parents=True, exist_ok=True)
     tmp = ruta.with_name(f"{ruta.name}.{os.getpid()}.tmp")
     filas = 0

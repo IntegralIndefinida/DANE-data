@@ -1,5 +1,10 @@
 # Novedades
 
+## Sin publicar
+
+* Corregido: {dd}`geih.exportar()` sin `variables` escribía solo `anio`, `mes` y las columnas de los
+  filtros. Ahora escribe todas las variables armonizadas, como dice su documentación.
+
 ## 0.2.2 (15 de octubre de 2026)
 
 * **Documentación nueva** en <https://integralindefinida.github.io/DANE-data/>: guía de usuario, galería

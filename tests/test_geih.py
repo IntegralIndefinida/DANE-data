@@ -268,6 +268,19 @@ def test_exportar_mes_a_mes(geih_root, tmp_path):
     assert not list(ruta.parent.glob("*.tmp"))
 
 
+def test_exportar_sin_variables_escribe_todas_las_armonizadas(geih_root, tmp_path, monkeypatch):
+    """Sin ``variables`` no se recorta a las columnas de los filtros."""
+    monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
+    ruta = tmp_path / "ocupados.csv"
+    filas = dd.geih.exportar([2016, 2025], ruta, poblacion="ocupado", filtros={"sexo": ["Mujer"]}, root=geih_root)
+    esperado = dd.geih.filtrar(dd.geih.load([2016, 2025], root=geih_root, cache=False), {"sexo": ["Mujer"]},
+                               "ocupado")
+    leido = pd.read_csv(ruta, encoding="utf-8-sig")
+    assert filas == len(esperado) == len(leido)
+    assert list(leido.columns) == [c for c in esperado.columns if c == c.lower()]
+    assert {"fex", "edad", "condicion"} <= set(leido.columns)
+
+
 def test_missing_data_message(tmp_path):
     with pytest.raises(FileNotFoundError, match="download"):
         dd.geih.load(2020, root=tmp_path)
