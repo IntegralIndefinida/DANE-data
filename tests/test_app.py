@@ -27,6 +27,15 @@ def test_descargar_toda_la_serie_eam(tmp_path, monkeypatch):
     assert pedidos == [dd.eam.ANIOS_DISPONIBLES]
 
 
+@pytest.mark.parametrize("pagina", ["eam_industria.py", "eam_microdatos.py"])
+def test_eam_anios_no_consecutivos(eam_root, monkeypatch, pagina):
+    """Años descargados 1992, 2016 y 2024: el rango por defecto empieza en 2016, no en 2014."""
+    monkeypatch.setitem(dd.config._session, "eam", eam_root)
+    at = AppTest.from_file(str(PAGINAS / pagina), default_timeout=60).run()
+    assert not at.exception
+    assert at.select_slider[0].value == (2016, 2024)
+
+
 def test_mercado_laboral_precalculado_y_con_filtros(geih_root, tmp_path, monkeypatch):
     monkeypatch.setitem(dd.config._session, "geih", geih_root)
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")

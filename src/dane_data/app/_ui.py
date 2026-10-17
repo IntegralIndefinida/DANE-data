@@ -336,8 +336,10 @@ def selector_eam(extra: tuple = (), clave: str = "eam"):
         if av.empty:
             sin_datos("EAM")
         anios_disp = sorted(av.anio.unique())
-        lo, hi = st.select_slider("Años", options=anios_disp,
-                                  value=(max(anios_disp[0], anios_disp[-1] - 10), anios_disp[-1]), key=f"{clave}_rango")
+        # Los últimos 10 años; el inicio tiene que ser un año descargado (pueden no ser consecutivos)
+        inicio = next(a for a in anios_disp if a >= anios_disp[-1] - 10)
+        lo, hi = st.select_slider("Años", options=anios_disp, value=(inicio, anios_disp[-1]),
+                                  key=f"{clave}_rango")
         anios = [a for a in anios_disp if lo <= a <= hi]
         st.caption("CIIU Rev. 2 hasta 2000, Rev. 3 2001–2011 y Rev. 4 desde 2012 (según los archivos del DANE): "
                    "los sectores no son comparables entre revisiones.")

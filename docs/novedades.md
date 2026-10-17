@@ -18,6 +18,8 @@
 * Un ZIP dañado ya no se queda en disco para siempre: si lo descargado no es un ZIP válido (descarga
   cortada o página de error del DANE) se reintenta, y un ZIP en disco que no se puede abrir o extraer se
   borra y se vuelve a descargar.
+* Corregido: las páginas de la EAM en la aplicación se caían (`ValueError: ... is not in iterable`) cuando
+  los años descargados no eran consecutivos, por ejemplo 2005 y 2020.
 
 ## 0.2.2 (15 de octubre de 2026)
 
