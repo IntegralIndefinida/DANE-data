@@ -221,10 +221,12 @@ el DANE**, así que en estos casos no coincide con las variables armonizadas.
 ```
 src/dane_data/
 ├── config.py          rutas (set_paths, variables de entorno, ~/.config/dane_data/config.json)
-├── _io.py             lectura robusta de CSV/TXT del DANE
+├── _io.py             lectura robusta de CSV/TXT/Stata del DANE
+├── _hooks.py          lo común de los descargadores: progreso, cancelación, descarga y extracción
 ├── stats.py           tablas, medias y cuantiles ponderados
-├── referencias.py     SMLV, departamentos, diccionarios DDI (data/*.json)
-├── geih/              downloader.py · loader.py · indicadores.py
+├── referencias.py     SMLV, departamentos, diccionarios DDI
+├── data/              diccionarios DDI oficiales (geih_diccionario.json, eam_diccionario.json)
+├── geih/              downloader.py · loader.py · indicadores.py · agregados.py (serie_*, exportar)
 ├── eam/               downloader.py · loader.py · indicadores.py
 ├── cli.py             comando `dane-data`
 └── app/               aplicación Streamlit (Inicio.py + paginas/)
