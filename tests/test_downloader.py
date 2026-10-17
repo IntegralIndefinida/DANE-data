@@ -136,8 +136,9 @@ def test_empalme_con_un_mes_ilegible_no_escribe_marcador(tmp_path):
     assert (anio / "1. Enero" / "Ocupados.CSV").exists()
     assert not (anio / MARCADOR).exists()
 
+    # El ZIP con el mes dañado se borró (keep_zips=True por defecto): si no, se reutilizaría para siempre
+    assert not (tmp_path / "raw_zips" / "2016" / "GEIH_Empalme_2016.zip").exists()
     dl.paquetes["GEIH_Empalme_2016.zip"] = _zip({f"{i}. {m}.zip": mes for i, m in enumerate(nombres, start=1)})
-    (tmp_path / "raw_zips" / "2016" / "GEIH_Empalme_2016.zip").unlink()
     dl.process_year("2016", "757")                      # se vuelve a intentar
     assert len(dl.descargas) == 2
     assert (anio / "3. Marzo" / "Ocupados.CSV").exists() and (anio / MARCADOR).exists()

@@ -11,8 +11,8 @@
 * Las descargas ya no dejan archivos a medias: si se interrumpe la extracción (Ctrl+C, disco lleno), el
   archivo no queda con su nombre final, y un archivo de distinto tamaño que el del ZIP se vuelve a extraer.
   Antes, la próxima descarga daba el mes o el año por completo con los datos cortados.
-* Si un mes del paquete anual del empalme no se puede abrir, el año ya no queda marcado como completo:
-  la próxima descarga lo vuelve a intentar.
+* Si un mes del paquete anual del empalme (o un ZIP anidado de un mes) no se puede abrir, el año ya no queda
+  marcado como completo y el ZIP se borra: la próxima descarga lo vuelve a bajar.
 * Corregido: si un mes completo estaba en dos carpetas (por ejemplo, descomprimido dos veces), se sumaban
   las dos y el mes contaba doble. Ahora se usa una sola, con un aviso.
 * Un ZIP dañado ya no se queda en disco para siempre: si lo descargado no es un ZIP válido (descarga

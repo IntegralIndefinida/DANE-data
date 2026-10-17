@@ -591,9 +591,10 @@ class GEIHDownloader(DescargadorANDA):
                     if n and not errores:
                         _escribir_marcador(year_csv_dir, item["name"], n, self.modules)
                     elif errores:
-                        log.warning(f"Empalme {year}: extracción con errores ({'; '.join(errores)}). "
-                                    "Vuelva a descargar el año.")
-                    if not self.keep_zips and zip_dest.exists():
+                        log.warning(f"Empalme {year}: extracción con errores ({'; '.join(errores)}). Se borra el "
+                                    "ZIP: la próxima descarga lo vuelve a bajar.")
+                    # Con errores también se borra: si se conservara, la próxima vez se reutilizaría el mismo ZIP
+                    if (errores or not self.keep_zips) and zip_dest.exists():
                         zip_dest.unlink()
             else:
                 month_csv_dir = year_csv_dir / month_stem
@@ -617,9 +618,12 @@ class GEIHDownloader(DescargadorANDA):
                     if n and not errores:
                         _escribir_marcador(month_csv_dir, item["name"], n, self.modules)
                     falta = faltantes_mes(month_csv_dir, self.modules)
-                    if falta:
+                    if errores:
+                        log.warning(f"Mes {month_stem} ({year}): extracción con errores ({'; '.join(errores)}). Se "
+                                    "borra el ZIP: la próxima descarga lo vuelve a bajar.")
+                    elif falta:
                         log.warning(f"El ZIP del DANE para {month_stem} ({year}) no trae: {', '.join(falta)}.")
-                    if not self.keep_zips and zip_dest.exists():
+                    if (errores or not self.keep_zips) and zip_dest.exists():
                         zip_dest.unlink()
 
             time.sleep(1)
