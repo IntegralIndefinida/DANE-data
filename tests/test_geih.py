@@ -369,11 +369,16 @@ def test_serie_promedia_sobre_los_meses_cargados(geih_root, tmp_path, monkeypatc
     # Filtrar por mes sí cambia los meses del promedio
     t = dd.geih.serie_tabla(2016, filtros={**filtros, "mes": [1]}, root=geih_root)
     assert t["total"].item() == pytest.approx(300.25)
-    # Sobre microdatos se cuentan los meses que quedan, salvo que se indique otra cosa
-    df = dd.geih.filtrar(dd.geih.load(2016, root=geih_root, cache=False), filtros)
-    assert dd.tabla(df)["total"].item() == pytest.approx(300.25)
-    df.attrs["meses_por_anio"] = {2016: 2}
+    # Con microdatos, filtrar anota los meses cargados: lo mismo que serie_* (también dos filtrar seguidos)
+    micro = dd.geih.load(2016, root=geih_root, cache=False)
+    df = dd.geih.filtrar(micro, filtros)
     assert dd.tabla(df)["total"].item() == pytest.approx(300.25 / 2)
+    assert dd.geih.indicadores(df)["pet"].item() == pytest.approx(300.25 / 2)
+    doble = dd.geih.filtrar(dd.geih.filtrar(micro, {"sexo": ["Mujer"]}), filtros)
+    assert dd.tabla(doble)["total"].item() == pytest.approx(300.25 / 2)
+    # Elegir meses con df[...] (un trimestre, por ejemplo) sí cuenta solo los que quedan
+    rural = micro[micro["zona"] == filtros["zona"][0]]
+    assert dd.tabla(rural)["total"].item() == pytest.approx(300.25)
 
 
 def test_serie_cache_distingue_rango_de_lista(geih_root, tmp_path, monkeypatch):

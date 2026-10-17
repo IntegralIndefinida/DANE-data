@@ -44,7 +44,9 @@ $$
 
 donde $M$ es el número de meses del año en los datos. `dane-data` hace exactamente eso: divide `fex` por el
 número de meses distintos de cada año (`dane_data.stats.peso_mensual_promedio`) en {dd}`tabla()`,
-{dd}`geih.indicadores()` y todas las funciones `serie_*`. No hay que hacer nada a mano:
+{dd}`geih.indicadores()` y todas las funciones `serie_*`. Después de {dd}`geih.filtrar()`, $M$ son los meses
+que se cargaron, aunque el filtro deje alguno sin nadie (ese mes cuenta como 0), como en los totales
+mensuales del DANE. No hay que hacer nada a mano:
 
 ```python
 >>> dd.tabla(df)            # personas en el primer trimestre de 2024 (promedio mensual)

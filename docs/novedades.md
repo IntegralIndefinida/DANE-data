@@ -23,12 +23,11 @@
 * Corregido: en la aplicación, la página de indicadores industriales se caía con `IndexError` si ningún
   establecimiento cumplía los filtros (un sector que no hay en el departamento elegido). Ahora muestra un
   aviso, como las páginas de la GEIH.
-* Corregido: en {dd}`geih.serie_indicadores()`, {dd}`geih.serie_tabla()` y
-  {dd}`geih.serie_frecuencias()`, si un filtro dejaba algún mes sin ninguna persona (un grupo pequeño), el
-  promedio mensual de los niveles se dividía por menos meses y salía más alto. Ahora un mes vacío cuenta como
-  0, como en el promedio de los totales mensuales del DANE. Las tasas no cambian. Con microdatos,
-  `dd.tabla` e {dd}`geih.indicadores()` siguen contando los meses que quedan en los datos; para promediar
-  sobre los meses cargados, ponga `df.attrs["meses_por_anio"] = {año: número de meses}`.
+* Corregido: si un filtro dejaba algún mes sin ninguna persona (un grupo pequeño), el promedio mensual de los
+  niveles se dividía por menos meses y salía más alto. Ahora un mes vacío cuenta como 0, como en el promedio
+  de los totales mensuales del DANE, en las funciones `serie_*` y en `dd.tabla` / {dd}`geih.indicadores()`
+  después de {dd}`geih.filtrar()`, que anota los meses cargados en `df.attrs["meses_por_anio"]`. Las tasas
+  no cambian. Elegir meses con `df[df.mes <= 3]` sigue contando solo esos meses.
 * La aplicación requiere Streamlit 1.51 o más reciente (`pip install "dane-data[app]"` lo actualiza). Con
   versiones anteriores, las tablas no aceptaban `width="stretch"` y cada gráfica mostraba un aviso de
   función obsoleta. Los lanzadores ya usaban una versión reciente.

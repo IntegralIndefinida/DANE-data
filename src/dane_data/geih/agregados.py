@@ -62,6 +62,13 @@ def filtrar(df: pd.DataFrame, filtros: dict | None = None, poblacion: str | None
     DataFrame
         Las filas que cumplen todo, o ``df`` mismo si todas cumplen.
 
+    Notas
+    -----
+    El resultado anota en ``attrs["meses_por_anio"]`` cuántos meses tenía cada año antes de filtrar (si se
+    filtra por ``mes``, solo esos). Así, si el filtro deja un mes sin nadie, ``dd.tabla`` e ``indicadores``
+    lo cuentan como 0 en el promedio mensual de los niveles, como el DANE, y dan lo mismo que las
+    funciones ``serie_*``.
+
     Ejemplos
     --------
     >>> import pandas as pd
@@ -75,6 +82,18 @@ def filtrar(df: pd.DataFrame, filtros: dict | None = None, poblacion: str | None
     0   Mujer    17        1
     1  Hombre    30        1
     """
+    mask = _mascara(df, filtros, poblacion)
+    if mask.all():
+        return df
+    res = df[mask]
+    if {"anio", "mes"} <= set(df.columns):
+        # Los meses de antes de filtrar (o los de un filtrar anterior), para peso_mensual_promedio
+        previos = None if filtros and "mes" in filtros else df.attrs.get("meses_por_anio")
+        res.attrs = {**res.attrs, "meses_por_anio": previos or _meses_cargados(df, filtros)}
+    return res
+
+
+def _mascara(df: pd.DataFrame, filtros: dict | None, poblacion: str | None = None) -> pd.Series:
     mask = pd.Series(True, index=df.index)
     for col, cond in (filtros or {}).items():
         if col not in df.columns:
@@ -86,7 +105,7 @@ def filtrar(df: pd.DataFrame, filtros: dict | None = None, poblacion: str | None
             mask &= df[col].isin([cond] if isinstance(cond, str) or not hasattr(cond, "__iter__") else list(cond))
     if poblacion:
         mask &= df[poblacion].eq(1).fillna(False).astype(bool)
-    return df if mask.all() else df[mask]
+    return mask
 
 
 # --------------------------------------------------------------------------- #
@@ -129,16 +148,16 @@ def _meses_por_anio(anios, meses, empalme: bool, root) -> dict[int, list[MesGEIH
     return por_anio
 
 
-def _meses_cargados(df: pd.DataFrame, filtros: dict | None) -> int:
+def _meses_cargados(df: pd.DataFrame, filtros: dict | None) -> dict[int, int]:
     """
-    Meses del año sobre los que se promedian los niveles: los cargados, aunque un filtro deje
+    ``{año: meses}`` sobre los que se promedian los niveles: los cargados, aunque un filtro deje
     alguno sin filas (ese mes cuenta como 0, como en el promedio de los totales mensuales del DANE).
     Si se filtra por ``mes``, solo esos meses.
     """
-    meses = df[["mes"]]
+    d = df[["anio", "mes"]]
     if filtros and "mes" in filtros:
-        meses = filtrar(meses, {"mes": filtros["mes"]})
-    return meses["mes"].nunique()
+        d = d[_mascara(d, {"mes": filtros["mes"]})]
+    return {int(a): int(n) for a, n in d.groupby("anio", observed=True)["mes"].nunique().items()}
 
 
 def _clave_json(obj):
@@ -277,10 +296,7 @@ def serie_indicadores(
     variables = list(dict.fromkeys([*VARIABLES_INDICADORES, *(filtros or {})]))
 
     def calcular(anio):
-        df = load(anio, months=meses, empalme=empalme, root=root, variables=variables)
-        n = _meses_cargados(df, filtros)
-        df = filtrar(df, filtros)
-        df.attrs["meses_por_anio"] = {anio: n}
+        df = filtrar(load(anio, months=meses, empalme=empalme, root=root, variables=variables), filtros)
         partes = []
         for p in POR_PRECALCULADOS:
             for a in (True, False):
@@ -379,7 +395,6 @@ def serie_frecuencias(
             if c not in df.columns:
                 df[c] = np.nan
         d = filtrar(df, filtros, poblacion)
-        d.attrs["meses_por_anio"] = {anio: _meses_cargados(df, filtros)}
         x = d[claves].assign(peso=peso_mensual_promedio(d).to_numpy(), n_muestra=1)
         if variable:
             x = x[x[variable].notna()]

@@ -39,10 +39,10 @@ def peso_mensual_promedio(df: pd.DataFrame, peso: str = "fex") -> pd.Series:
 
     Notas
     -----
-    Los meses se cuentan en ``df``: si un filtro deja un mes sin ninguna fila (un grupo pequeño), el
-    promedio se toma sobre los meses restantes. Para promediar sobre los meses que se cargaron, ponga
-    ``df.attrs["meses_por_anio"] = {anio: número de meses}``; así lo hacen ``geih.serie_indicadores``,
-    ``geih.serie_tabla`` y ``geih.serie_frecuencias``.
+    Si ``df.attrs["meses_por_anio"]`` existe (``{anio: número de meses}``), se divide por esos meses; si no,
+    por los meses que hay en ``df``. ``geih.filtrar`` lo anota con los meses de antes de filtrar: así un
+    mes que el filtro deja sin nadie (un grupo pequeño) cuenta como 0 en el promedio, en vez de sacarse
+    del promedio. Con ``df[df.mes <= 3]`` se cuentan los meses que quedan, como debe ser para un trimestre.
 
     Ejemplos
     --------
