@@ -19,3 +19,4 @@ docs/api/generated/
 *.zip
 *.parquet
 CLAUDE.md
+.claude/
