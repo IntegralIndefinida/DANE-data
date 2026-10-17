@@ -67,7 +67,10 @@ else:
                                                 progress=prog, should_stop=stop)
     codigo_py = f"dd.eam.download({anios!r})"
 
-if st.button("⬇️ Descargar", type="primary", disabled=not anios):
+sin_modulos = encuesta.startswith("GEIH") and not modulos  # sin módulos, la librería no sabe qué bajar
+if sin_modulos:
+    st.warning("Elija al menos un módulo en las opciones avanzadas.")
+if st.button("⬇️ Descargar", type="primary", disabled=not anios or sin_modulos):
     barra = st.progress(0.0, text="Conectando con el DANE…")
     detalle = st.empty()
     logs = st.empty()

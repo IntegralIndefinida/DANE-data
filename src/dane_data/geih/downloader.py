@@ -235,7 +235,14 @@ class GEIHDownloader(ProgressMixin):
         self.csv_dir = self.base_dir / "datos_csv"
         self.keep_zips = keep_zips
         self.extract_csv = extract_csv
-        self.modules = tuple(modules or DEFAULT_MODULES)
+        if isinstance(modules, str):  # un solo módulo: tuple("ocupados") lo partiría en letras
+            modules = [modules]
+        modules = DEFAULT_MODULES if modules is None else tuple(modules)
+        if not modules:
+            raise ValueError("modules está vacío: elija al menos un módulo, o None para todos.")
+        if desconocidos := [m for m in modules if m not in MODULE_PATTERNS]:
+            raise ValueError(f"Módulos desconocidos: {desconocidos}. Opciones: {list(MODULE_PATTERNS)}.")
+        self.modules = modules
 
         self.session = requests.Session()
         self.session.headers.update({
@@ -683,8 +690,11 @@ class GEIHDownloader(ProgressMixin):
         catalogs = self.discover_catalogs()
 
         years_to_process = sorted(catalogs.keys(), key=lambda y: int(y))
-        if target_years:
+        if target_years is not None:  # [] es "ningún año", no "todos"
             target_years = [str(y) for y in target_years]
+            if desconocidos := [y for y in target_years if y not in catalogs]:
+                log.warning(f"Años sin catálogo de la GEIH en el ANDA (se ignoran): {', '.join(desconocidos)}. "
+                            f"Disponibles: {years_to_process[0]}–{years_to_process[-1]}.")
             years_to_process = [y for y in years_to_process if y in target_years]
 
         series_name = "Empalme" if self.is_empalme else "Principal"

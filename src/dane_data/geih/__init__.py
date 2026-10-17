@@ -38,11 +38,12 @@ def download(
     ----------
     years
         Año o lista de años. ``None`` descarga todos los de la serie (``ANIOS_DISPONIBLES``, o
-        ``ANIOS_EMPALME`` con ``empalme=True``).
+        ``ANIOS_EMPALME`` con ``empalme=True``); una lista vacía, ninguno. Los años que no están en el
+        ANDA se ignoran con un aviso.
     modules
-        Módulos a extraer, con los nombres de ``DEFAULT_MODULES``: ``vivienda``, ``caracteristicas``,
-        ``fuerza_trabajo``, ``ocupados``, ``desocupados``, ``inactivos``, ``otras_formas_trabajo``. Por
-        defecto, todos.
+        Módulo o lista de módulos a extraer, con los nombres de ``DEFAULT_MODULES``: ``vivienda``,
+        ``caracteristicas``, ``fuerza_trabajo``, ``ocupados``, ``desocupados``, ``inactivos``,
+        ``otras_formas_trabajo``. Por defecto, todos.
     empalme
         Descargar la serie de empalme (2010–2020, con proyecciones del CNPV 2018) en vez de la principal.
     root
@@ -60,6 +61,8 @@ def download(
     -----
     DownloadCancelled
         Si ``should_stop()`` devolvió True.
+    ValueError
+        Si ``modules`` está vacío o tiene un nombre que no es de ``DEFAULT_MODULES``.
 
     Véase también
     -------------

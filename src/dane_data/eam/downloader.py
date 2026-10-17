@@ -393,8 +393,11 @@ class EAMDownloader(ProgressMixin):
         catalogs = self.discover_catalogs()
 
         years_to_process = sorted(catalogs.keys(), key=lambda y: int(y))
-        if target_years:
+        if target_years is not None:  # [] es "ningún año", no "todos"
             target_years = [str(y) for y in target_years]
+            if desconocidos := [y for y in target_years if y not in catalogs]:
+                log.warning(f"Años sin catálogo de la EAM en el ANDA (se ignoran): {', '.join(desconocidos)}. "
+                            f"Disponibles: {years_to_process[0]}–{years_to_process[-1]}.")
             years_to_process = [y for y in years_to_process if y in target_years]
 
         log.info(f"Iniciando descarga de la EAM para {len(years_to_process)} años: {years_to_process}")

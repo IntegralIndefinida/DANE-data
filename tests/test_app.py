@@ -27,6 +27,19 @@ def test_descargar_toda_la_serie_eam(tmp_path, monkeypatch):
     assert pedidos == [dd.eam.ANIOS_DISPONIBLES]
 
 
+def test_descargar_geih_sin_modulos(tmp_path, monkeypatch):
+    """Sin módulos elegidos el botón queda desactivado (antes se bajaban todos)."""
+    for clave in ("geih", "geih_empalme", "eam"):
+        monkeypatch.setitem(dd.config._session, clave, tmp_path / clave)
+    at = AppTest.from_file(str(PAGINAS / "descargar.py")).run()
+    boton = lambda: next(b for b in at.button if b.label.endswith("Descargar"))  # noqa: E731
+    assert not boton().disabled
+    next(m for m in at.multiselect if m.label == "Módulos").set_value([]).run()
+    assert not at.exception
+    assert boton().disabled
+    assert any("al menos un módulo" in w.value for w in at.warning)
+
+
 @pytest.mark.parametrize("pagina", ["eam_industria.py", "eam_microdatos.py"])
 def test_eam_anios_no_consecutivos(eam_root, monkeypatch, pagina):
     """Años descargados 1992, 2016 y 2024: el rango por defecto empieza en 2016, no en 2014."""

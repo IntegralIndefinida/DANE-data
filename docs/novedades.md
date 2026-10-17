@@ -40,6 +40,10 @@
   no dejaba a nadie, y `columns="P6500"` o `modules="ocupados"` no agregaban nada. Ahora valen igual que
   `["Mujer"]`, `["P6500"]` o `["ocupados"]` en {dd}`geih.load()`, {dd}`geih.load_month()`,
   {dd}`geih.filtrar()`, las funciones `serie_*` y {dd}`eam.load()`.
+* Corregido: `dd.geih.download([])` y `dd.eam.download([])` descargaban la serie entera; ahora no descargan
+  nada (`None` sigue siendo "todos"). Un año que no está en el ANDA, como 2030, ya no se ignora en silencio:
+  se avisa. En {dd}`geih.download()`, `modules=[]` (que bajaba todos los módulos) o un nombre mal escrito
+  lanzan `ValueError`, y en la aplicación el botón de descargar se desactiva si no hay módulos elegidos.
 
 ## 0.2.2 (15 de octubre de 2026)
 

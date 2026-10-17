@@ -234,6 +234,47 @@ def test_csv_danados_se_bajan_en_otro_formato(tmp_path):
     assert (tmp_path / "datos_csv" / "2021" / "Septiembre" / "Area - Características generales (Personas).dta").exists()
 
 
+class _CatalogosFijos:
+    """Sin red: catálogos fijos y process_year solo anota el año."""
+
+    def discover_catalogs(self):
+        return {"2023": "1", "2024": "2"}
+
+    def process_year(self, year, *a, **k):
+        self.procesados.append(year)
+
+
+class _GEIHCatalogos(_CatalogosFijos, GEIHDownloader):
+    procesados: list
+
+
+class _EAMCatalogos(_CatalogosFijos, EAMDownloader):
+    def discover_catalogs(self):
+        return {"2023": ("1", "EAM_2023.zip", "u"), "2024": ("2", "EAM_2024.zip", "u")}
+
+
+@pytest.mark.parametrize("clase", [_GEIHCatalogos, _EAMCatalogos])
+def test_anios_vacios_o_desconocidos(tmp_path, caplog, clase):
+    dl = clase(base_dir=tmp_path)
+    dl.procesados = []
+    dl.run_pipeline(target_years=[])
+    assert dl.procesados == []                          # lista vacía: ningún año, no todos
+    with caplog.at_level("WARNING"):
+        dl.run_pipeline(target_years=[2024, 2030])
+    assert dl.procesados == ["2024"]
+    assert "2030" in caplog.text
+    dl.run_pipeline(target_years=None)
+    assert dl.procesados == ["2024", "2023", "2024"]
+
+
+def test_modulos_vacios_texto_o_desconocidos(tmp_path):
+    with pytest.raises(ValueError, match="vacío"):
+        GEIHDownloader(base_dir=tmp_path, modules=[])
+    with pytest.raises(ValueError, match="desconocidos"):
+        GEIHDownloader(base_dir=tmp_path, modules=["ocupado"])
+    assert GEIHDownloader(base_dir=tmp_path, modules="ocupados").modules == ("ocupados",)
+
+
 class _Respuesta:
     def __init__(self, cuerpo: bytes, con_tamano: bool = False):
         self.cuerpo = cuerpo

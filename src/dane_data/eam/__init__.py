@@ -29,7 +29,8 @@ def download(
     Parámetros
     ----------
     years
-        Año o lista de años entre 1992 y 2024. ``None`` descarga toda la serie (unos 330 MB).
+        Año o lista de años entre 1992 y 2024. ``None`` descarga toda la serie (unos 330 MB); una lista
+        vacía, ninguno. Los años que no están en el ANDA se ignoran con un aviso.
     root
         Carpeta de destino. Por defecto, la de ``dd.get_path("eam")``.
     include_tic
