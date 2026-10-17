@@ -1,3 +1,6 @@
+import hashlib
+import json
+
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
@@ -196,8 +199,11 @@ with tab3:
 
     st.markdown("**Exportar todos los meses elegidos**")
     nombre = f"microdatos_geih_{anios[0]}" + (f"_{anios[-1]}" if len(anios) > 1 else "")
+    # Una huella de la selección en el nombre: dos exportaciones distintas no se pisan
+    seleccion = json.dumps([poblacion, sel["filtros"], sel["meses"], sorted(columnas), elegidas], default=str)
+    huella = hashlib.sha1(seleccion.encode()).hexdigest()[:6]
     destino = (dd.get_path("geih_empalme" if sel["empalme"] else "geih") / "exportaciones"
-               / f"{nombre}{'_empalme' if sel['empalme'] else ''}.csv")
+               / f"{nombre}{'_empalme' if sel['empalme'] else ''}{f'_{poblacion}' if poblacion else ''}_{huella}.csv")
     st.caption(f"Se escribe un CSV de {fmt_num(n_total)} filas en `{destino}`, un mes a la vez: no hace falta "
                "tener todos los meses en memoria.")
     if st.button("Exportar a CSV", key="exportar"):

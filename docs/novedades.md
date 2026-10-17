@@ -67,6 +67,9 @@
 * Línea de comandos: `dane-data descargar eam` con `--modulos`, `--empalme` o `--limite`, o `descargar geih`
   con `--tic`, ya no ignora esas opciones en silencio: avisa que no aplican y no descarga. `dane-data config`
   avisa cuando una variable de entorno tiene prioridad sobre la carpeta que se acaba de guardar.
+* En la aplicación, cada exportación de microdatos tiene su propio archivo (con la población y una huella
+  de los filtros, meses y columnas en el nombre). Antes dos exportaciones de los mismos años con distinta
+  selección se sobrescribían.
 
 ## 0.2.2 (15 de octubre de 2026)
 

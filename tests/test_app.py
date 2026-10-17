@@ -133,6 +133,12 @@ def test_tablas_y_microdatos_sin_cargar_todos_los_anios(geih_root, tmp_path, mon
     exportado = pd.read_csv(next((geih_root / "exportaciones").glob("*.csv")), encoding="utf-8-sig")
     assert len(exportado) == 2 and "P5000" in exportado.columns  # ocupados de enero 2021 y enero 2025
 
+    # Otra selección se exporta a otro archivo: no pisa la anterior
+    next(m for m in at.multiselect if m.label == "Columnas").set_value(["anio", "mes", "fex"]).run()
+    next(b for b in at.button if b.label == "Exportar a CSV").click().run()
+    assert not at.exception
+    assert len(list((geih_root / "exportaciones").glob("*.csv"))) == 2
+
 
 def _solo_un_mes(load):
     """La app nunca debe pedir más de un mes de microdatos a la vez."""
