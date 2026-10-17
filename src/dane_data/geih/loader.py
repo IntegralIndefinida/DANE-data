@@ -95,13 +95,31 @@ def classify_file(filename: str) -> tuple[str | None, str | None]:
     return modulo, dominio
 
 
-@lru_cache(maxsize=4096)
+def _sello(path: Path) -> tuple[int, int]:
+    """Fecha y tamaño del archivo: parte de la clave de las cachés de abajo, para que un archivo
+    reemplazado en la misma ruta (con la app abierta) se vuelva a revisar."""
+    try:
+        st = path.stat()
+    except OSError:
+        return (0, 0)
+    return (st.st_mtime_ns, st.st_size)
+
+
 def _header(path: Path) -> frozenset[str]:
+    return _header_sellado(path, _sello(path))
+
+
+def _defecto(path: Path) -> str | None:
+    return _defecto_sellado(path, _sello(path))
+
+
+@lru_cache(maxsize=4096)
+def _header_sellado(path: Path, sello: tuple[int, int]) -> frozenset[str]:
     return frozenset(columnas(path))
 
 
 @lru_cache(maxsize=4096)
-def _defecto(path: Path) -> str | None:
+def _defecto_sellado(path: Path, sello: tuple[int, int]) -> str | None:
     """
     Defectos conocidos de los CSV del ANDA que hacen inservible un archivo (ver README,
     "Diferencias con la documentación del DANE"). En septiembre de 2021 el CSV viene

@@ -64,6 +64,19 @@ def test_mes_completo_en_dos_carpetas_no_se_duplica(geih_root, caplog):
     assert "varias carpetas" in caplog.text
 
 
+def test_archivo_reemplazado_se_vuelve_a_revisar(geih_root):
+    """Con la app abierta, un CSV dañado que se reemplaza por uno bueno en la misma ruta deja de omitirse."""
+    car = next((geih_root / "datos_csv" / "2016" / "Enero").glob("Cabecera - Car*"))
+    bueno = car.read_bytes()
+    assert dd.geih.find_months(2016, root=geih_root)[0].completo
+    car.write_text(car.read_text(encoding="utf-8").replace(";", " "), encoding="utf-8")  # separado por espacios
+    os.utime(car, ns=(car.stat().st_atime_ns, car.stat().st_mtime_ns + 10**9))
+    assert not dd.geih.find_months(2016, root=geih_root)[0].completo
+    car.write_bytes(bueno)
+    os.utime(car, ns=(car.stat().st_atime_ns, car.stat().st_mtime_ns + 2 * 10**9))
+    assert dd.geih.find_months(2016, root=geih_root)[0].completo
+
+
 def test_csv_ilegible_usa_stata(geih_root):
     """Septiembre de 2021: el CSV viene separado por espacios; se usa el Stata del ANDA."""
     df = dd.geih.load(2021, root=geih_root, cache=False)

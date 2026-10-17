@@ -46,6 +46,8 @@
   lanzan `ValueError`, y en la aplicación el botón de descargar se desactiva si no hay módulos elegidos.
 * Corregido: {dd}`eam.load()` fallaba con `AttributeError` si un archivo no traía la columna de departamento;
   ahora `departamento` queda vacío.
+* Con la aplicación abierta, un archivo de la GEIH reemplazado en la misma carpeta (por ejemplo, un CSV
+  dañado que se vuelve a descargar) se revisa de nuevo; antes había que reiniciar la aplicación.
 
 ## 0.2.2 (15 de octubre de 2026)
 
