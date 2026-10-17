@@ -4,9 +4,9 @@ Configuración de rutas de datos.
 Cada encuesta vive en su propia carpeta raíz, con la misma estructura que
 generan los descargadores originales:
 
-    GEIH  (serie principal) : <raiz>/datos_csv/<año>/<mes>/*.csv
+    GEIH  (serie principal) : <raiz>/datos_csv/<año>/<mes>/*.csv|*.txt|*.dta
     GEIH  (serie empalme)   : <raiz>/datos_csv/<año>/<mes>/*.csv
-    EAM                     : <raiz>/datos/<año>/*.csv|*.txt
+    EAM                     : <raiz>/datos/<año>/*.csv|*.txt|*.dta
 
 Prioridad para resolver cada ruta:
   1. ``set_paths(...)`` en la sesión actual.

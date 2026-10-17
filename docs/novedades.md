@@ -72,6 +72,9 @@
   selección se sobrescribían.
 * `dane-data app --address 0.0.0.0` (para un aula) avisa al abrir que la aplicación queda en la red sin
   contraseña, y la documentación lo advierte. Las descargas solo siguen enlaces https del ANDA.
+* Los lanzadores para estudiantes usan siempre las versiones exactas de `uv.lock` (`uv run --frozen`).
+* Con pandas 2 (Google Colab) ya no aparecen avisos `FutureWarning` al calcular indicadores ni al
+  armonizar; los resultados son los mismos.
 
 ## 0.2.2 (15 de octubre de 2026)
 
