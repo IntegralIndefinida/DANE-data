@@ -18,11 +18,12 @@ License: MIT
 Version: 1.0.0
 """
 
-import io
 import re
 import json
 import time
+import shutil
 import zipfile
+import tempfile
 import logging
 import unicodedata
 from pathlib import Path
@@ -465,18 +466,22 @@ class GEIHDownloader(DescargadorANDA):
             # Soporte para ZIPs anidados (ej. CSV.zip dentro de paquetes mensuales 2022-2024 o 1. Enero.zip en Empalme)
             if member.filename.lower().endswith(".zip") and not any(fmt in member.filename.lower() for fmt in ["dta", "sav", "spss"]):
                 try:
-                    nested_bytes = io.BytesIO(z_obj.read(member))
-                    with zipfile.ZipFile(nested_bytes) as nested_z:
-                        inner_stem = Path(member.filename).stem
-                        # Solo el paquete anual del empalme trae un ZIP por mes (ej. "1. Enero.zip"):
-                        # esos van a su subcarpeta. Cualquier otro ZIP anidado ("CSV.zip",
-                        # "CSV 13.zip", "CSV_4.zip"...) se aplana en la carpeta del mes.
-                        if self.is_empalme and month_from_folder(inner_stem) is not None:
-                            target_dest = dest_dir / inner_stem
-                        else:
-                            target_dest = dest_dir
-                        target_dest.mkdir(parents=True, exist_ok=True)
-                        count += self._extract_from_zip(nested_z, target_dest, extensiones, errores)
+                    # A un archivo temporal, no a memoria: los ZIP mensuales del empalme son grandes
+                    with tempfile.TemporaryFile() as nested_tmp:
+                        with z_obj.open(member) as src:
+                            shutil.copyfileobj(src, nested_tmp, 1 << 20)
+                        nested_tmp.seek(0)
+                        with zipfile.ZipFile(nested_tmp) as nested_z:
+                            inner_stem = Path(member.filename).stem
+                            # Solo el paquete anual del empalme trae un ZIP por mes (ej. "1. Enero.zip"):
+                            # esos van a su subcarpeta. Cualquier otro ZIP anidado ("CSV.zip",
+                            # "CSV 13.zip", "CSV_4.zip"...) se aplana en la carpeta del mes.
+                            if self.is_empalme and month_from_folder(inner_stem) is not None:
+                                target_dest = dest_dir / inner_stem
+                            else:
+                                target_dest = dest_dir
+                            target_dest.mkdir(parents=True, exist_ok=True)
+                            count += self._extract_from_zip(nested_z, target_dest, extensiones, errores)
                 except Exception as e:
                     log.warning(f"Error abriendo ZIP anidado {member.filename}: {e}")
                     if errores is not None:
