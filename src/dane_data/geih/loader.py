@@ -298,7 +298,14 @@ def find_months(years: Iterable[int] | int | None = None, empalme: bool = False,
 
 
 def _mtime(mes: MesGEIH) -> float:
-    return max(f.stat().st_mtime for fs in mes.archivos.values() for f in fs)
+    """Fecha del archivo más reciente del mes (0 si no tiene archivos reconocidos o desaparecieron)."""
+    fechas = []
+    for f in (f for fs in mes.archivos.values() for f in fs):
+        try:
+            fechas.append(f.stat().st_mtime)
+        except OSError:
+            pass
+    return max(fechas, default=0.0)
 
 
 def available(empalme: bool = False, root=None) -> pd.DataFrame:

@@ -64,6 +64,15 @@ def test_mes_completo_en_dos_carpetas_no_se_duplica(geih_root, caplog):
     assert "varias carpetas" in caplog.text
 
 
+def test_carpeta_del_mes_sin_archivos_reconocidos(geih_root):
+    """Junto al mes, otra carpeta con el nombre del mes pero sin módulos (un diccionario): no falla."""
+    otra = geih_root / "datos_csv" / "2016" / "Enero_documentacion"
+    otra.mkdir()
+    (otra / "diccionario.csv").write_text("variable;descripcion\nP6020;Sexo\n", encoding="utf-8")
+    meses = dd.geih.find_months(2016, root=geih_root)
+    assert len(meses) == 1 and meses[0].carpeta.name == "Enero"
+
+
 def test_archivo_reemplazado_se_vuelve_a_revisar(geih_root):
     """Con la app abierta, un CSV dañado que se reemplaza por uno bueno en la misma ruta deja de omitirse."""
     car = next((geih_root / "datos_csv" / "2016" / "Enero").glob("Cabecera - Car*"))
