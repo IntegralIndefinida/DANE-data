@@ -15,6 +15,9 @@
   la próxima descarga lo vuelve a intentar.
 * Corregido: si un mes completo estaba en dos carpetas (por ejemplo, descomprimido dos veces), se sumaban
   las dos y el mes contaba doble. Ahora se usa una sola, con un aviso.
+* Un ZIP dañado ya no se queda en disco para siempre: si lo descargado no es un ZIP válido (descarga
+  cortada o página de error del DANE) se reintenta, y un ZIP en disco que no se puede abrir o extraer se
+  borra y se vuelve a descargar.
 
 ## 0.2.2 (15 de octubre de 2026)
 

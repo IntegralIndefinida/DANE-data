@@ -234,6 +234,93 @@ def test_csv_danados_se_bajan_en_otro_formato(tmp_path):
     assert (tmp_path / "datos_csv" / "2021" / "Septiembre" / "Area - Características generales (Personas).dta").exists()
 
 
+class _Respuesta:
+    def __init__(self, cuerpo: bytes, con_tamano: bool = False):
+        self.cuerpo = cuerpo
+        self.headers = {"content-length": str(len(cuerpo))} if con_tamano else {}
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *a):
+        return False
+
+    def raise_for_status(self):
+        pass
+
+    def iter_content(self, chunk_size):
+        yield self.cuerpo
+
+
+class _Sesion:
+    """``requests.Session`` falsa: devuelve las respuestas en orden y anota cada pedido."""
+
+    def __init__(self, *respuestas):
+        self.respuestas = list(respuestas)
+        self.pedidos = 0
+
+    def get(self, url, **kw):
+        self.pedidos += 1
+        return self.respuestas.pop(0)
+
+
+@pytest.fixture
+def sin_pausas_eam(monkeypatch):
+    monkeypatch.setattr("dane_data.eam.downloader.time.sleep", lambda s: None)
+
+
+@pytest.mark.parametrize("clase", [GEIHDownloader, EAMDownloader])
+def test_zip_danado_en_disco_se_vuelve_a_descargar(tmp_path, sin_pausas_eam, clase):
+    dl = clase(base_dir=tmp_path)
+    destino = tmp_path / "Enero.zip"
+    destino.write_bytes(b"cortado")
+    dl.session = _Sesion(_Respuesta(_zip({"a.csv": "x"})))
+    assert dl.download_file("u", destino)
+    assert dl.session.pedidos == 1 and zipfile.is_zipfile(destino)
+
+    dl.session = _Sesion()
+    assert dl.download_file("u", destino)              # ahora sí está bien: no se pide de nuevo
+    assert dl.session.pedidos == 0
+
+
+@pytest.mark.parametrize("clase", [GEIHDownloader, EAMDownloader])
+def test_respuesta_que_no_es_zip_se_reintenta(tmp_path, sin_pausas_eam, clase):
+    """Sin content-length, una página de error o un corte no se notan por el tamaño."""
+    dl = clase(base_dir=tmp_path)
+    destino = tmp_path / "Enero.zip"
+    dl.session = _Sesion(_Respuesta(b"<html>error</html>"), _Respuesta(_zip({"a.csv": "x"}), con_tamano=True))
+    assert dl.download_file("u", destino)
+    assert dl.session.pedidos == 2 and zipfile.is_zipfile(destino)
+    assert not list(tmp_path.glob("*.part"))
+
+    otro = tmp_path / "Febrero.zip"
+    dl.session = _Sesion(*[_Respuesta(b"<html>error</html>") for _ in range(3)])
+    assert not dl.download_file("u", otro)
+    assert not otro.exists()
+
+
+def _zip_crc_malo() -> bytes:
+    """Un ZIP con su índice bien (``is_zipfile`` lo acepta) pero un archivo dañado adentro."""
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_STORED) as z:
+        z.writestr("Ocupados.CSV", MOD)
+        z.writestr("EAM_2015.csv", MOD)
+    return buf.getvalue().replace(MOD.encode(), MOD.replace("1", "2").encode())
+
+
+def test_zip_que_falla_al_extraer_se_borra(tmp_path, sin_pausas_eam):
+    zip_path = tmp_path / "Marzo 2024.zip"
+    zip_path.write_bytes(_zip_crc_malo())
+    assert zipfile.is_zipfile(zip_path)
+    errores = []
+    GEIHDownloader(base_dir=tmp_path).extract_requested_modules(zip_path, tmp_path / "mes", errores=errores)
+    assert errores and not zip_path.exists()
+
+    zip_path.write_bytes(_zip_crc_malo())
+    EAMDownloader(base_dir=tmp_path).extract_preferred_format(zip_path, tmp_path / "anio")
+    assert not zip_path.exists()
+
+
 class FakeEAMDownloader(EAMDownloader):
     def __init__(self, paquetes: dict, **kw):
         super().__init__(**kw)

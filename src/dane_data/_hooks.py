@@ -43,6 +43,14 @@ class ProgressMixin:
             raise DownloadCancelled("Descarga cancelada por el usuario.")
 
 
+def zip_valido(archivo: Path, nombre: Path | None = None) -> bool:
+    """
+    ``archivo`` es un ZIP legible, o no se espera que lo sea (``nombre``, por defecto el mismo
+    ``archivo``, no termina en ``.zip``). Detecta descargas cortadas y páginas de error del servidor.
+    """
+    return (nombre or archivo).suffix.lower() != ".zip" or zipfile.is_zipfile(archivo)
+
+
 def ya_extraido(member: zipfile.ZipInfo, destino: Path) -> bool:
     """``destino`` ya tiene el archivo completo (mismo tamaño que dentro del ZIP)."""
     return destino.is_file() and destino.stat().st_size == member.file_size

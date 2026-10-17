@@ -33,7 +33,7 @@ from urllib.parse import urljoin
 import requests
 from bs4 import BeautifulSoup
 
-from .._hooks import ProgressMixin, extraer_miembro, ya_extraido
+from .._hooks import ProgressMixin, extraer_miembro, ya_extraido, zip_valido
 from .loader import EXTENSIONES, _pick_files, MesGEIH, month_from_folder
 
 MARCADOR = ".dane_data_ok"  # se escribe tras una extracción exitosa
@@ -466,8 +466,11 @@ class GEIHDownloader(ProgressMixin):
         Descarga un archivo con streaming y verificación de integridad.
         """
         if dest_path.exists() and dest_path.stat().st_size > 0:
-            log.info(f"Archivo ya existente: {dest_path.name} ({dest_path.stat().st_size / 1024 / 1024:.1f} MB). Saltando descarga.")
-            return True
+            if zip_valido(dest_path):
+                log.info(f"Archivo ya existente: {dest_path.name} ({dest_path.stat().st_size / 1024 / 1024:.1f} MB). Saltando descarga.")
+                return True
+            log.warning(f"{dest_path.name} en disco está dañado: se vuelve a descargar.")
+            dest_path.unlink()
 
         temp_dest = dest_path.with_suffix(dest_path.suffix + ".part")
 
@@ -490,6 +493,10 @@ class GEIHDownloader(ProgressMixin):
 
                     if total_size > 0 and downloaded < total_size:
                         log.warning(f"Descarga incompleta ({downloaded}/{total_size} bytes). Reintentando...")
+                        continue
+                    # Sin content-length, un corte o una página de error del ANDA no se notan arriba
+                    if not zip_valido(temp_dest, dest_path):
+                        log.warning(f"{dest_path.name}: lo descargado no es un ZIP válido. Reintentando...")
                         continue
 
                 temp_dest.rename(dest_path)
@@ -577,8 +584,10 @@ class GEIHDownloader(ProgressMixin):
 
             log.info(f"  → Extraídos {extracted_count} CSVs de módulos solicitados desde {zip_path.name}")
         except zipfile.BadZipFile:
-            log.error(f"El archivo {zip_path.name} está corrupto o no es un ZIP válido.")
+            log.error(f"El archivo {zip_path.name} está corrupto o no es un ZIP válido; se borra para volver "
+                      "a descargarlo.")
             errores.append(f"{zip_path.name}: ZIP dañado")
+            zip_path.unlink(missing_ok=True)
         except Exception as e:
             log.error(f"Error extrayendo módulos de {zip_path.name}: {e}")
             errores.append(f"{zip_path.name}: {e}")
