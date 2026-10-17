@@ -354,6 +354,9 @@ def selector_eam(extra: tuple = (), clave: str = "eam"):
         df = df[df["sector"].isin(sectores)]
     if dptos:
         df = df[df["departamento"].isin(dptos)]
+    if df.empty:  # p. ej. un sector que no existe en los departamentos elegidos
+        st.warning("Ningún establecimiento cumple los filtros elegidos.")
+        st.stop()
     carga = f"eam = dd.eam.load(range({lo}, {hi + 1})" + (f", columns={sorted(extra)!r}" if extra else "") + ")"
     if sectores:
         carga += f'\neam = eam[eam["sector"].isin({sectores!r})]'

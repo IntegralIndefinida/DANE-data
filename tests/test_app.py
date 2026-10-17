@@ -36,6 +36,22 @@ def test_eam_anios_no_consecutivos(eam_root, monkeypatch, pagina):
     assert at.select_slider[0].value == (2016, 2024)
 
 
+@pytest.mark.parametrize("pagina, clave", [("eam_industria.py", "eam"), ("eam_microdatos.py", "eamm")])
+def test_eam_filtros_sin_establecimientos(eam_root, monkeypatch, pagina, clave):
+    """Un sector que no está en el departamento elegido: aviso, no un IndexError."""
+    monkeypatch.setitem(dd.config._session, "eam", eam_root)
+    eam = dd.eam.load(2016, root=eam_root)
+    sector = eam.loc[eam["departamento"] == "Antioquia", "sector"].iloc[0]
+
+    at = AppTest.from_file(str(PAGINAS / pagina), default_timeout=60).run()
+    assert not at.exception
+    at.multiselect(key=f"{clave}_sector").set_value([sector])
+    at.multiselect(key=f"{clave}_dpto").set_value(["Valle del Cauca"])
+    at.run()
+    assert not at.exception
+    assert any("Ningún establecimiento" in w.value for w in at.warning)
+
+
 def test_mercado_laboral_precalculado_y_con_filtros(geih_root, tmp_path, monkeypatch):
     monkeypatch.setitem(dd.config._session, "geih", geih_root)
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")

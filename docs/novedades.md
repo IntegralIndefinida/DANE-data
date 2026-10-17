@@ -20,6 +20,9 @@
   borra y se vuelve a descargar.
 * Corregido: las páginas de la EAM en la aplicación se caían (`ValueError: ... is not in iterable`) cuando
   los años descargados no eran consecutivos, por ejemplo 2005 y 2020.
+* Corregido: en la aplicación, la página de indicadores industriales se caía con `IndexError` si ningún
+  establecimiento cumplía los filtros (un sector que no hay en el departamento elegido). Ahora muestra un
+  aviso, como las páginas de la GEIH.
 
 ## 0.2.2 (15 de octubre de 2026)
 
