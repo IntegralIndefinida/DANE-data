@@ -237,6 +237,31 @@ def test_serie_indicadores_con_filtros_y_meses(geih_root, tmp_path, monkeypatch)
         pd.testing.assert_frame_equal(serie, esperado)
 
 
+def test_serie_promedia_sobre_los_meses_cargados(geih_root, tmp_path, monkeypatch):
+    """Un mes sin nadie en el grupo filtrado cuenta como 0 en el promedio mensual, no se descarta."""
+    import shutil
+
+    monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
+    anio = geih_root / "datos_csv" / "2016"
+    shutil.copytree(anio / "Enero", anio / "Febrero")
+    for f in (anio / "Febrero").glob("Resto - *.csv"):  # en febrero nadie vive en el resto (rural)
+        f.write_text(f.read_text(encoding="utf-8").splitlines()[0] + "\n", encoding="utf-8")
+    filtros = {"zona": ["Rural (centros poblados y disperso)"]}
+
+    t = dd.geih.serie_tabla(2016, filtros=filtros, root=geih_root)
+    assert t["total"].item() == pytest.approx(300.25 / 2)          # enero 300,25 y febrero 0
+    ind = dd.geih.serie_indicadores(2016, filtros=filtros, root=geih_root)
+    assert ind["pet"].item() == pytest.approx(300.25 / 2)
+    # Filtrar por mes sí cambia los meses del promedio
+    t = dd.geih.serie_tabla(2016, filtros={**filtros, "mes": [1]}, root=geih_root)
+    assert t["total"].item() == pytest.approx(300.25)
+    # Sobre microdatos se cuentan los meses que quedan, salvo que se indique otra cosa
+    df = dd.geih.filtrar(dd.geih.load(2016, root=geih_root, cache=False), filtros)
+    assert dd.tabla(df)["total"].item() == pytest.approx(300.25)
+    df.attrs["meses_por_anio"] = {2016: 2}
+    assert dd.tabla(df)["total"].item() == pytest.approx(300.25 / 2)
+
+
 def test_serie_cache_distingue_rango_de_lista(geih_root, tmp_path, monkeypatch):
     """``(15, 28)`` es el rango 15–28 y ``[15, 28]`` solo esas dos edades: no comparten caché."""
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")

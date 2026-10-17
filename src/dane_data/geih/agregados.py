@@ -127,6 +127,18 @@ def _meses_por_anio(anios, meses, empalme: bool, root) -> dict[int, list[MesGEIH
     return por_anio
 
 
+def _meses_cargados(df: pd.DataFrame, filtros: dict | None) -> int:
+    """
+    Meses del año sobre los que se promedian los niveles: los cargados, aunque un filtro deje
+    alguno sin filas (ese mes cuenta como 0, como en el promedio de los totales mensuales del DANE).
+    Si se filtra por ``mes``, solo esos meses.
+    """
+    meses = df[["mes"]]
+    if filtros and "mes" in filtros:
+        meses = filtrar(meses, {"mes": filtros["mes"]})
+    return meses["mes"].nunique()
+
+
 def _clave_json(obj):
     """La solicitud lista para ``json.dumps``, que convierte las tuplas en listas: en ``filtros`` una
     tupla es un rango (``between``) y una lista son valores (``isin``), así que se marcan distinto."""
@@ -266,7 +278,10 @@ def serie_indicadores(
     variables = list(dict.fromkeys([*VARIABLES_INDICADORES, *(filtros or {})]))
 
     def calcular(anio):
-        df = filtrar(load(anio, months=meses, empalme=empalme, root=root, variables=variables), filtros)
+        df = load(anio, months=meses, empalme=empalme, root=root, variables=variables)
+        n = _meses_cargados(df, filtros)
+        df = filtrar(df, filtros)
+        df.attrs["meses_por_anio"] = {anio: n}
         partes = []
         for p in POR_PRECALCULADOS:
             for a in (True, False):
@@ -365,6 +380,7 @@ def serie_frecuencias(
             if c not in df.columns:
                 df[c] = np.nan
         d = filtrar(df, filtros, poblacion)
+        d.attrs["meses_por_anio"] = {anio: _meses_cargados(df, filtros)}
         x = d[claves].assign(peso=peso_mensual_promedio(d).to_numpy(), n_muestra=1)
         if variable:
             x = x[x[variable].notna()]

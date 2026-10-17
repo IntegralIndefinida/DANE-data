@@ -37,6 +37,13 @@ def peso_mensual_promedio(df: pd.DataFrame, peso: str = "fex") -> pd.Series:
     Series
         El peso dividido por el número de meses de cada año.
 
+    Notas
+    -----
+    Los meses se cuentan en ``df``: si un filtro deja un mes sin ninguna fila (un grupo pequeño), el
+    promedio se toma sobre los meses restantes. Para promediar sobre los meses que se cargaron, ponga
+    ``df.attrs["meses_por_anio"] = {anio: número de meses}``; así lo hacen ``geih.serie_indicadores``,
+    ``geih.serie_tabla`` y ``geih.serie_frecuencias``.
+
     Ejemplos
     --------
     >>> import pandas as pd
@@ -44,10 +51,15 @@ def peso_mensual_promedio(df: pd.DataFrame, peso: str = "fex") -> pd.Series:
     >>> df = pd.DataFrame({"anio": [2024, 2024, 2024], "mes": [1, 2, 2], "fex": [100.0, 90.0, 30.0]})
     >>> peso_mensual_promedio(df).tolist()
     [50.0, 45.0, 15.0]
+    >>> df.attrs["meses_por_anio"] = {2024: 4}  # se cargaron 4 meses; en dos no quedó nadie
+    >>> peso_mensual_promedio(df).tolist()
+    [25.0, 22.5, 7.5]
     """
     if "mes" not in df.columns or "anio" not in df.columns:
         return df[peso]
     n_meses = df.groupby("anio", observed=True)["mes"].transform("nunique")
+    if meses := df.attrs.get("meses_por_anio"):
+        n_meses = df["anio"].astype("int64").map(meses).fillna(n_meses)
     return df[peso] / n_meses
 
 
