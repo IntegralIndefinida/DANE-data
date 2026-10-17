@@ -9,6 +9,15 @@ import dane_data as dd
 from dane_data.cli import main as cli_main
 
 
+def test_eam_sin_departamento(tmp_path):
+    """Un archivo sin columna de departamento: departamento vacío, no AttributeError."""
+    archivo = tmp_path / "datos" / "2016" / "EAM_2016.csv"
+    archivo.parent.mkdir(parents=True)
+    archivo.write_text("nordest;ciiu4;valagri\n10;1011;80\n", encoding="utf-8")
+    eam = dd.eam.load(2016, root=tmp_path)
+    assert eam["departamento"].isna().all() and eam["sector"].notna().all()
+
+
 def test_eam_load_harmonizes(eam_root):
     eam = dd.eam.load(root=eam_root)
     assert sorted(eam["anio"].unique()) == [1992, 2016, 2024]

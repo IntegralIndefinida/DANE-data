@@ -239,8 +239,10 @@ def harmonize(df: pd.DataFrame, anio: int) -> pd.DataFrame:
     df["division"] = df["ciiu"].str[:2]
     rev = df["ciiu_rev"].iloc[0] if len(df) else None
     df["sector"] = df["division"].map(SECTORES.get(rev, {}))
-    dpto = pd.to_numeric(df.get("dpto"), errors="coerce")
-    df["departamento"] = dpto.map(DEPARTAMENTOS) if dpto is not None else pd.NA
+    if "dpto" in df.columns:
+        df["departamento"] = pd.to_numeric(df["dpto"], errors="coerce").map(DEPARTAMENTOS)
+    else:
+        df["departamento"] = pd.NA
     df.insert(0, "anio", anio)
     return df
 
