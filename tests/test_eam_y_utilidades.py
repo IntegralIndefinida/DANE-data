@@ -19,6 +19,17 @@ def test_crecimiento_no_salta_anios():
     assert crec["crec_valor_agregado"].notna().sum() == 3
 
 
+def test_deflactar_repetido_o_dos_veces():
+    eam = pd.DataFrame({"anio": [2023, 2024], "valagri": [100.0, 110.0], "prodbr2": [200.0, 220.0]})
+    ipp = pd.Series({2023: 100.0, 2024: 110.0})
+    d = dd.eam.deflactar(dd.eam.deflactar(eam, ["valagri"], ipp), ["prodbr2"], ipp)   # antes: error de sufijos
+    assert len(d) == 2 and d["prodbr2_real"].tolist() == pytest.approx([200.0, 200.0])
+    assert [c for c in d.columns if c.startswith("deflactor")] == ["deflactor"]
+    repetido = pd.DataFrame({"anio": [2023, 2023, 2024], "deflactor": [100.0, 101.0, 110.0]})
+    with pytest.raises(ValueError, match="repite"):
+        dd.eam.deflactar(eam, ["valagri"], repetido)
+
+
 def test_eam_sin_departamento(tmp_path):
     """Un archivo sin columna de departamento: departamento vacío, no AttributeError."""
     archivo = tmp_path / "datos" / "2016" / "EAM_2016.csv"

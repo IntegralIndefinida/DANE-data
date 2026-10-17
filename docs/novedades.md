@@ -54,6 +54,8 @@
   para tener los códigos originales, borre la carpeta de 2024 y vuelva a descargar el año.
 * Corregido: {dd}`eam.crecimiento()` calculaba como anual el cambio entre años no consecutivos (por ejemplo,
   de 2015 a 2018 si faltaban los años de en medio). Ahora esa tasa queda vacía.
+* {dd}`eam.deflactar()` se puede aplicar dos veces seguidas (antes fallaba por la columna `deflactor` repetida),
+  y un deflactor con un año repetido lanza `ValueError` en vez de duplicar filas en silencio.
 
 ## 0.2.2 (15 de octubre de 2026)
 

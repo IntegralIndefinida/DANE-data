@@ -244,7 +244,13 @@ def deflactar(df: pd.DataFrame, columnas: Iterable[str], deflactor: pd.DataFrame
     Devuelve
     --------
     DataFrame
-        ``df`` con la columna ``deflactor`` y una columna ``<columna><sufijo>`` por cada columna.
+        ``df`` con la columna ``deflactor`` y una columna ``<columna><sufijo>`` por cada columna. Si ``df``
+        ya tenía una columna ``deflactor`` (de una llamada anterior), se reemplaza.
+
+    Lanza
+    -----
+    ValueError
+        Si el deflactor repite un año (o una combinación de ``on``): duplicaría filas de ``df``.
 
     Avisos
     ------
@@ -275,9 +281,13 @@ def deflactar(df: pd.DataFrame, columnas: Iterable[str], deflactor: pd.DataFrame
     2  2024    230.0         209.1
     """
     on = _as_list(on)
-    d = df.copy()
+    d = df.drop(columns="deflactor", errors="ignore")      # de una llamada anterior: se reemplaza
     if isinstance(deflactor, pd.Series):
         deflactor = deflactor.rename("deflactor").rename_axis(on[0]).reset_index()
+    if deflactor.duplicated(subset=on).any():
+        repetidos = deflactor.loc[deflactor.duplicated(subset=on, keep=False), on].drop_duplicates()
+        raise ValueError(f"El deflactor repite {', '.join(on)}: {repetidos.to_dict('records')}. Cada fila de "
+                         "df se uniría con varios valores y quedaría duplicada.")
     d = d.merge(deflactor[on + ["deflactor"]], on=on, how="left")
     for c in columnas:
         d[f"{c}{sufijo}"] = pd.to_numeric(d[c], errors="coerce") / d["deflactor"] * base
