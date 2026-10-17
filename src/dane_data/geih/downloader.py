@@ -18,22 +18,17 @@ License: MIT
 Version: 1.0.0
 """
 
-import os
 import io
 import re
-import sys
 import json
 import time
 import zipfile
 import logging
-import argparse
 import unicodedata
 from pathlib import Path
-from urllib.parse import urljoin
-import requests
 from bs4 import BeautifulSoup
 
-from .._hooks import ProgressMixin, extraer_miembro, ya_extraido, zip_valido
+from .._hooks import DescargadorANDA, extraer_miembro, ya_extraido
 from .loader import EXTENSIONES, _pick_files, MesGEIH, month_from_folder
 
 MARCADOR = ".dane_data_ok"  # se escribe tras una extracción exitosa
@@ -200,13 +195,6 @@ def is_target_csv(filename: str, modules=DEFAULT_MODULES, extensiones=(".csv",))
 def sanitize_member_name(raw_name: str) -> str:
     """Limpia caracteres corruptos habituales de codificación DOS/Windows en ZIPs."""
     name = Path(raw_name).name
-    # Mapeo de caracteres comunes distorsionados por CP437 en ZIPs antiguos de Windows
-    mojibake_map = {
-        "╡": "A", "µ": "A", "Á": "A",
-        "Ý": "i", "¡": "i", "í": "i",
-        "¾": "o", "¢": "o", "ó": "o",
-        "é": "e", "ú": "u", "ñ": "n", "Ñ": "N"
-    }
     # Intentar decodificación limpia
     try:
         clean = name.encode("cp437").decode("utf-8")
@@ -220,13 +208,14 @@ def sanitize_member_name(raw_name: str) -> str:
     return clean
 
 
-class GEIHDownloader(ProgressMixin):
+class GEIHDownloader(DescargadorANDA):
+    log = log
+
     def __init__(self, base_dir="data", keep_zips=True, extract_csv=True, is_empalme=False, modules=None,
                  progress=None, should_stop=None):
         self.progress = progress
         self.should_stop = should_stop
         self.is_empalme = is_empalme
-        self.base_url = "https://microdatos.dane.gov.co"
         # A diferencia del script original, base_dir ya es la raíz de la serie
         # (la serie de empalme no se anida automáticamente en base_dir/empalme).
         self.base_dir = Path(base_dir)
@@ -244,10 +233,7 @@ class GEIHDownloader(ProgressMixin):
             raise ValueError(f"Módulos desconocidos: {desconocidos}. Opciones: {list(MODULE_PATTERNS)}.")
         self.modules = modules
 
-        self.session = requests.Session()
-        self.session.headers.update({
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-        })
+        self._abrir_sesion()
 
         self._setup_directories()
 
@@ -467,61 +453,6 @@ class GEIHDownloader(ProgressMixin):
                                 f"{formato_de(mes)}: se baja el CSV.")
                 out.append(item)
         return out
-
-    def download_file(self, url: str, dest_path: Path, max_retries: int = 3) -> bool:
-        """
-        Descarga un archivo con streaming y verificación de integridad.
-        """
-        if dest_path.exists() and dest_path.stat().st_size > 0:
-            if zip_valido(dest_path):
-                log.info(f"Archivo ya existente: {dest_path.name} ({dest_path.stat().st_size / 1024 / 1024:.1f} MB). Saltando descarga.")
-                return True
-            log.warning(f"{dest_path.name} en disco está dañado: se vuelve a descargar.")
-            dest_path.unlink()
-
-        temp_dest = dest_path.with_suffix(dest_path.suffix + ".part")
-
-        for attempt in range(1, max_retries + 1):
-            try:
-                log.info(f"Descargando {dest_path.name} (intento {attempt}/{max_retries})...")
-                with self.session.get(url, stream=True, timeout=45) as r:
-                    r.raise_for_status()
-                    total_size = int(r.headers.get("content-length", 0))
-                    downloaded = 0
-
-                    with open(temp_dest, "wb") as f:
-                        for chunk in r.iter_content(chunk_size=65536):
-                            self._check_stop()
-                            if chunk:
-                                f.write(chunk)
-                                downloaded += len(chunk)
-                                if total_size:
-                                    self._emit(None, f"{dest_path.name}: {downloaded / 1e6:.1f} / {total_size / 1e6:.1f} MB")
-
-                    if total_size > 0 and downloaded < total_size:
-                        log.warning(f"Descarga incompleta ({downloaded}/{total_size} bytes). Reintentando...")
-                        continue
-                    # Sin content-length, un corte o una página de error del ANDA no se notan arriba
-                    if not zip_valido(temp_dest, dest_path):
-                        log.warning(f"{dest_path.name}: lo descargado no es un ZIP válido. Reintentando...")
-                        continue
-
-                temp_dest.rename(dest_path)
-                size_mb = dest_path.stat().st_size / 1024 / 1024
-                log.info(f"✓ Descarga completada: {dest_path.name} ({size_mb:.2f} MB)")
-                return True
-
-            except Exception as e:
-                if type(e).__name__ == "DownloadCancelled":
-                    if temp_dest.exists():
-                        temp_dest.unlink()
-                    raise
-                log.error(f"Error descargando {dest_path.name} (intento {attempt}): {e}")
-                if temp_dest.exists():
-                    temp_dest.unlink()
-                time.sleep(2 * attempt)
-
-        return False
 
     def _extract_from_zip(self, z_obj: zipfile.ZipFile, dest_dir: Path, extensiones=(".csv",),
                           errores: list | None = None) -> int:

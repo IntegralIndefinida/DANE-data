@@ -30,22 +30,14 @@ Licencia: MIT
 Versión: 1.0.0
 """
 
-import os
-import io
 import re
-import sys
 import json
 import time
 import zipfile
 import logging
-import argparse
-import unicodedata
 from pathlib import Path
-from urllib.parse import urljoin
-import requests
-from bs4 import BeautifulSoup
 
-from .._hooks import ProgressMixin, extraer_miembro, zip_valido
+from .._hooks import DescargadorANDA, extraer_miembro
 from .loader import EXTENSIONES
 
 __version__ = "1.0.0"
@@ -129,12 +121,13 @@ def _archivos_datos(carpeta: Path) -> list[Path]:
     return sorted(f for f in carpeta.iterdir() if f.is_file() and f.suffix.lower() in EXTENSIONES)
 
 
-class EAMDownloader(ProgressMixin):
+class EAMDownloader(DescargadorANDA):
+    log = log
+
     def __init__(self, base_dir="data", keep_zips=True, extract_data=True, include_tic=False,
                  progress=None, should_stop=None):
         self.progress = progress
         self.should_stop = should_stop
-        self.base_url = "https://microdatos.dane.gov.co"
         self.base_dir = Path(base_dir)
         self.metadata_dir = self.base_dir / "metadata"
         self.raw_dir = self.base_dir / "raw_zips"
@@ -143,10 +136,7 @@ class EAMDownloader(ProgressMixin):
         self.extract_data = extract_data
         self.include_tic = include_tic
 
-        self.session = requests.Session()
-        self.session.headers.update({
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-        })
+        self._abrir_sesion()
 
         self._setup_directories()
 
@@ -212,59 +202,6 @@ class EAMDownloader(ProgressMixin):
                 log.info(f"Metadata metodológica guardada: {metadata_path.name}")
         except Exception as e:
             log.warning(f"No se pudo descargar metadata JSON para catálogo {catalog_id}: {e}")
-
-    def download_file(self, url: str, dest_path: Path, max_retries: int = 3) -> bool:
-        """Descarga un archivo con streaming y verificación de integridad."""
-        if dest_path.exists() and dest_path.stat().st_size > 0:
-            if zip_valido(dest_path):
-                log.info(f"Archivo ya existente: {dest_path.name} ({dest_path.stat().st_size / 1024 / 1024:.1f} MB). Saltando descarga.")
-                return True
-            log.warning(f"{dest_path.name} en disco está dañado: se vuelve a descargar.")
-            dest_path.unlink()
-
-        temp_dest = dest_path.with_suffix(dest_path.suffix + ".part")
-
-        for attempt in range(1, max_retries + 1):
-            try:
-                log.info(f"Descargando {dest_path.name} (intento {attempt}/{max_retries})...")
-                with self.session.get(url, stream=True, timeout=45) as r:
-                    r.raise_for_status()
-                    total_size = int(r.headers.get("content-length", 0))
-                    downloaded = 0
-
-                    with open(temp_dest, "wb") as f:
-                        for chunk in r.iter_content(chunk_size=65536):
-                            self._check_stop()
-                            if chunk:
-                                f.write(chunk)
-                                downloaded += len(chunk)
-                                if total_size:
-                                    self._emit(None, f"{dest_path.name}: {downloaded / 1e6:.1f} / {total_size / 1e6:.1f} MB")
-
-                    if total_size > 0 and downloaded < total_size:
-                        log.warning(f"Descarga incompleta ({downloaded}/{total_size} bytes). Reintentando...")
-                        continue
-                    # Sin content-length, un corte o una página de error del ANDA no se notan arriba
-                    if not zip_valido(temp_dest, dest_path):
-                        log.warning(f"{dest_path.name}: lo descargado no es un ZIP válido. Reintentando...")
-                        continue
-
-                temp_dest.rename(dest_path)
-                size_mb = dest_path.stat().st_size / 1024 / 1024
-                log.info(f"✓ Descarga completada: {dest_path.name} ({size_mb:.2f} MB)")
-                return True
-
-            except Exception as e:
-                if type(e).__name__ == "DownloadCancelled":
-                    if temp_dest.exists():
-                        temp_dest.unlink()
-                    raise
-                log.error(f"Error descargando {dest_path.name} (intento {attempt}): {e}")
-                if temp_dest.exists():
-                    temp_dest.unlink()
-                time.sleep(2 * attempt)
-
-        return False
 
     def extract_preferred_format(self, zip_path: Path, dest_dir: Path) -> list:
         """

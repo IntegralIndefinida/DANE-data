@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
+import logging
 import shutil
+import time
 import zipfile
 from pathlib import Path
 from typing import Callable, Optional
+
+import requests
 
 ProgressFn = Callable[[Optional[float], str], None]
 
@@ -41,6 +45,74 @@ class ProgressMixin:
     def _check_stop(self) -> None:
         if self.should_stop is not None and self.should_stop():
             raise DownloadCancelled("Descarga cancelada por el usuario.")
+
+
+class DescargadorANDA(ProgressMixin):
+    """Lo común de los descargadores de la GEIH y la EAM: la sesión HTTP y la descarga de cada ZIP."""
+
+    base_url = "https://microdatos.dane.gov.co"
+    log = logging.getLogger("dane_data")  # cada descargador pone el suyo
+
+    def _abrir_sesion(self) -> None:
+        self.session = requests.Session()
+        self.session.headers.update({
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+        })
+
+    def download_file(self, url: str, dest_path: Path, max_retries: int = 3) -> bool:
+        """
+        Descarga un archivo con streaming y verificación de integridad.
+        """
+        log = self.log
+        if dest_path.exists() and dest_path.stat().st_size > 0:
+            if zip_valido(dest_path):
+                log.info(f"Archivo ya existente: {dest_path.name} ({dest_path.stat().st_size / 1024 / 1024:.1f} MB). Saltando descarga.")
+                return True
+            log.warning(f"{dest_path.name} en disco está dañado: se vuelve a descargar.")
+            dest_path.unlink()
+
+        temp_dest = dest_path.with_suffix(dest_path.suffix + ".part")
+
+        for attempt in range(1, max_retries + 1):
+            try:
+                log.info(f"Descargando {dest_path.name} (intento {attempt}/{max_retries})...")
+                with self.session.get(url, stream=True, timeout=45) as r:
+                    r.raise_for_status()
+                    total_size = int(r.headers.get("content-length", 0))
+                    downloaded = 0
+
+                    with open(temp_dest, "wb") as f:
+                        for chunk in r.iter_content(chunk_size=65536):
+                            self._check_stop()
+                            if chunk:
+                                f.write(chunk)
+                                downloaded += len(chunk)
+                                if total_size:
+                                    self._emit(None, f"{dest_path.name}: {downloaded / 1e6:.1f} / {total_size / 1e6:.1f} MB")
+
+                    if total_size > 0 and downloaded < total_size:
+                        log.warning(f"Descarga incompleta ({downloaded}/{total_size} bytes). Reintentando...")
+                        continue
+                    # Sin content-length, un corte o una página de error del ANDA no se notan arriba
+                    if not zip_valido(temp_dest, dest_path):
+                        log.warning(f"{dest_path.name}: lo descargado no es un ZIP válido. Reintentando...")
+                        continue
+
+                temp_dest.replace(dest_path)
+                size_mb = dest_path.stat().st_size / 1024 / 1024
+                log.info(f"✓ Descarga completada: {dest_path.name} ({size_mb:.2f} MB)")
+                return True
+
+            except DownloadCancelled:
+                temp_dest.unlink(missing_ok=True)
+                raise
+            except Exception as e:
+                log.error(f"Error descargando {dest_path.name} (intento {attempt}): {e}")
+                temp_dest.unlink(missing_ok=True)
+                time.sleep(2 * attempt)
+
+        temp_dest.unlink(missing_ok=True)
+        return False
 
 
 def zip_valido(archivo: Path, nombre: Path | None = None) -> bool:
