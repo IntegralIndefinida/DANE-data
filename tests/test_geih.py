@@ -237,6 +237,18 @@ def test_cache_interrumpida_no_deja_parquet_a_medias(geih_root, tmp_path, monkey
     assert not [f for f in (tmp_path / "cache").rglob("*") if f.is_file()]
 
 
+def test_cache_corrupta_se_regenera(geih_root, tmp_path, monkeypatch):
+    monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
+    a = dd.geih.load(2016, root=geih_root)
+    dd.geih.serie_indicadores(2016, root=geih_root)
+    for f in (tmp_path / "cache").rglob("*.parquet"):
+        f.write_bytes(b"no es parquet")
+    pd.testing.assert_frame_equal(dd.geih.load(2016, root=geih_root), a)
+    pd.testing.assert_frame_equal(dd.geih.serie_indicadores(2016, root=geih_root),
+                                  dd.geih.indicadores(dd.geih.load(2016, root=geih_root, cache=False)))
+    assert all(pd.read_parquet(f) is not None for f in (tmp_path / "cache").rglob("*.parquet"))
+
+
 def test_cache_temporales_con_nombre_unico(tmp_path, monkeypatch):
     """Dos sesiones de la app (hilos del mismo proceso) no escriben el mismo temporal."""
     from dane_data.geih.loader import _guardar_parquet

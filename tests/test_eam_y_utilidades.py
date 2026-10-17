@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -98,6 +99,119 @@ def test_cli_estado(capsys, geih_root, eam_root, monkeypatch):
     assert cli_main(["estado"]) == 0
     out = capsys.readouterr().out
     assert "GEIH principal" in out and "EAM: 3 años (1992–2024)" in out
+
+
+class _DescargadorFalso:
+    """Anota cómo lo construyen y qué años le piden, sin red."""
+
+    creados = []
+
+    def __init__(self, **kw):
+        self.kw = kw
+        _DescargadorFalso.creados.append(self)
+
+    def run_pipeline(self, target_years=None, **kw):
+        self.anios, self.extra = target_years, kw
+
+
+@pytest.fixture
+def descargador_falso(monkeypatch, tmp_path):
+    _DescargadorFalso.creados = []
+    monkeypatch.setattr(dd.geih, "GEIHDownloader", _DescargadorFalso)
+    monkeypatch.setattr(dd.eam, "EAMDownloader", _DescargadorFalso)
+    monkeypatch.setattr(dd.config, "_session", {"geih": tmp_path / "g", "geih_empalme": tmp_path / "e",
+                                                "eam": tmp_path / "eam"})
+    return _DescargadorFalso.creados
+
+
+def test_cli_descargar_geih_y_eam(descargador_falso, tmp_path):
+    assert cli_main(["descargar", "geih", "--anios", "2024", "2025", "--modulos", "ocupados",
+                     "--empalme", "--limite", "1", "--borrar-zips"]) == 0
+    dl = descargador_falso[-1]
+    assert dl.anios == [2024, 2025] and dl.extra == {"limit_files": 1}
+    assert dl.kw["base_dir"] == tmp_path / "e"              # empalme: su propia carpeta
+    assert dl.kw["modules"] == ["ocupados"] and dl.kw["is_empalme"] and not dl.kw["keep_zips"]
+
+    assert cli_main(["descargar", "eam", "--tic"]) == 0
+    dl = descargador_falso[-1]
+    assert dl.anios is None and dl.kw["include_tic"] and dl.kw["keep_zips"]
+    assert dl.kw["base_dir"] == tmp_path / "eam"
+
+
+def test_download_un_anio_y_carpeta_explicita(descargador_falso, tmp_path):
+    dd.geih.download(2024)
+    assert descargador_falso[-1].anios == [2024]
+    assert descargador_falso[-1].kw["base_dir"] == tmp_path / "g"
+    dd.eam.download("2015", root=tmp_path / "otra")
+    assert descargador_falso[-1].anios == ["2015"]
+    assert descargador_falso[-1].kw["base_dir"] == tmp_path / "otra"
+
+
+def test_cli_config_guarda_las_rutas(capsys, monkeypatch, tmp_path):
+    archivo = tmp_path / "config" / "config.json"
+    monkeypatch.setattr(dd.config, "CONFIG_FILE", archivo)
+    monkeypatch.setattr(dd.config, "_session", {})
+    for var in ("DANE_DATA_GEIH", "DANE_DATA_GEIH_EMPALME", "DANE_DATA_EAM"):
+        monkeypatch.delenv(var, raising=False)
+    assert cli_main(["config", "--geih", str(tmp_path / "geih"), "--eam", str(tmp_path / "eam")]) == 0
+    guardado = json.loads(archivo.read_text(encoding="utf-8"))
+    assert Path(guardado["geih"]) == tmp_path / "geih" and Path(guardado["eam"]) == tmp_path / "eam"
+    assert str(archivo) in capsys.readouterr().out
+    monkeypatch.setattr(dd.config, "_session", {})
+    assert dd.get_path("geih") == tmp_path / "geih"         # una sesión nueva lee el archivo
+
+
+class _ProcesoFalso:
+    def __init__(self, cmd, cwd=None, interrumpir=False):
+        self.cmd, self.cwd, self.interrumpir, self.terminado = cmd, cwd, interrumpir, False
+
+    def wait(self, timeout=None):
+        if self.interrumpir and not self.terminado:
+            raise KeyboardInterrupt
+        return 0
+
+    def terminate(self):
+        self.terminado = True
+
+    def poll(self):
+        return 0
+
+
+@pytest.mark.parametrize("interrumpir", [False, True])
+def test_cli_app_lanza_streamlit(monkeypatch, capsys, interrumpir):
+    from dane_data import cli
+
+    procesos = []
+    monkeypatch.setattr(cli.subprocess, "Popen",
+                        lambda cmd, cwd=None: procesos.append(_ProcesoFalso(cmd, cwd, interrumpir)) or procesos[-1])
+    monkeypatch.setattr(cli, "_puerto_libre", lambda p: p + 1)
+    assert cli_main(["app", "--no-browser", "--port", "8600"]) == 0
+    p = procesos[0]
+    assert p.cmd[1:4] == ["-m", "streamlit", "run"] and p.cmd[4].endswith("Inicio.py")
+    assert p.cmd[p.cmd.index("--server.port") + 1] == "8601"
+    assert p.cmd[p.cmd.index("--server.address") + 1] == "localhost"
+    assert Path(p.cwd).name == "app"                        # para que lea app/.streamlit/config.toml
+    assert p.terminado == interrumpir                       # Ctrl+C cierra Streamlit
+    assert "http://localhost:8601" in capsys.readouterr().out
+
+
+def test_cli_ctrl_c_devuelve_130(monkeypatch, capsys):
+    from dane_data import cli
+
+    def interrumpido(args):
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(cli, "_cmd_estado", interrumpido)
+    assert cli_main(["estado"]) == 130
+    assert "Interrumpido" in capsys.readouterr().out
+
+
+def test_python_m_dane_data():
+    import subprocess
+    import sys
+
+    r = subprocess.run([sys.executable, "-m", "dane_data", "--help"], capture_output=True, text=True, timeout=60)
+    assert r.returncode == 0 and "dane-data" in r.stdout and "descargar" in r.stdout
 
 
 def test_puerto_libre_salta_ocupado():
