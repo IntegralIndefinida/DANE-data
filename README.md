@@ -78,7 +78,9 @@ Cada tabla se descarga en **CSV, Excel o Stata**, y cada página muestra el **c�
 así se pasa de la aplicación al notebook sin empezar de cero.
 
 Para usarla en un aula (el profesor la sirve y los estudiantes entran desde la red local):
-`dane-data app --address 0.0.0.0`.
+`dane-data app --address 0.0.0.0`. La aplicación no tiene usuarios ni contraseña: cualquiera en esa red
+puede cambiar las carpetas de datos, descargar y exportar en el computador del profesor. Úsela solo en
+una red de confianza.
 
 ## 🐍 La librería
 

@@ -59,6 +59,9 @@ def _cmd_app(args) -> int:
            "--server.address", args.address, "--server.headless", "true",
            "--browser.gatherUsageStats", "false"]
     print(f"\n  dane-data se está abriendo en {url}")
+    if args.address not in ("localhost", "127.0.0.1", "::1"):
+        print(f"  Aviso: compartida en la red ({args.address}) y sin contraseña: cualquiera en la red puede "
+              "cambiar las carpetas y descargar en este computador.")
     print("  Para cerrarla, cierre esta ventana o presione Ctrl+C.\n", flush=True)
     proceso = subprocess.Popen(cmd, cwd=app.parent)  # cwd: para que lea app/.streamlit/config.toml
     if not args.no_browser:
@@ -127,7 +130,9 @@ def _parser() -> argparse.ArgumentParser:
     a = sub.add_parser("app", help="Abrir la aplicación gráfica en el navegador")
     a.add_argument("--port", type=int, default=8501, help="Puerto preferido (si está ocupado se usa el siguiente)")
     a.add_argument("--no-browser", action="store_true", help="No abrir el navegador automáticamente")
-    a.add_argument("--address", default="localhost", help="Use 0.0.0.0 para compartir en la red local (aula)")
+    a.add_argument("--address", default="localhost",
+                   help="Use 0.0.0.0 para compartir en la red local (aula). Sin contraseña: cualquiera en la red "
+                        "puede cambiar las carpetas y descargar en este computador")
     a.set_defaults(fn=_cmd_app)
 
     e = sub.add_parser("estado", help="Mostrar rutas y datos disponibles")

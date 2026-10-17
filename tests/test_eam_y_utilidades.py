@@ -265,7 +265,11 @@ def test_cli_app_lanza_streamlit(monkeypatch, capsys, interrumpir):
     assert p.cmd[p.cmd.index("--server.address") + 1] == "localhost"
     assert Path(p.cwd).name == "app"                        # para que lea app/.streamlit/config.toml
     assert p.terminado == interrumpir                       # Ctrl+C cierra Streamlit
-    assert "http://localhost:8601" in capsys.readouterr().out
+    out = capsys.readouterr().out
+    assert "http://localhost:8601" in out and "sin contraseña" not in out
+
+    assert cli_main(["app", "--no-browser", "--address", "0.0.0.0"]) == 0
+    assert "sin contraseña" in capsys.readouterr().out      # compartida en la red: se avisa
 
 
 def test_cli_ctrl_c_devuelve_130(monkeypatch, capsys):

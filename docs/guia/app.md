@@ -66,3 +66,8 @@ dane-data app --address 0.0.0.0
 
 Los estudiantes abren `http://<IP del profesor>:8501` en su navegador. Las demás opciones están en
 {doc}`cli`.
+
+```{warning}
+La aplicación no tiene usuarios ni contraseña: cualquiera en esa red puede cambiar las carpetas de datos,
+descargar y exportar en el computador del profesor. Úsela solo en una red de confianza.
+```

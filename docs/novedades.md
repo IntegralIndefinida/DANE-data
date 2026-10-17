@@ -70,6 +70,8 @@
 * En la aplicación, cada exportación de microdatos tiene su propio archivo (con la población y una huella
   de los filtros, meses y columnas en el nombre). Antes dos exportaciones de los mismos años con distinta
   selección se sobrescribían.
+* `dane-data app --address 0.0.0.0` (para un aula) avisa al abrir que la aplicación queda en la red sin
+  contraseña, y la documentación lo advierte. Las descargas solo siguen enlaces https del ANDA.
 
 ## 0.2.2 (15 de octubre de 2026)
 
