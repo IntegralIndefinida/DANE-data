@@ -1,0 +1,8 @@
+# Las acciones de los flujos están fijadas por commit (no por etiqueta, que puede moverse): Dependabot
+# abre un pull request cuando sale una versión nueva, con el commit y el comentario de versión al día.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
