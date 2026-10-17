@@ -251,7 +251,9 @@ def tabla(
             res = g.agg(total=("_w", "sum"), n_muestra=("_w", "size")).reset_index()
         if estadistico == "porcentaje":
             outer = por[:-1]
-            denom = res.groupby(outer, observed=True)["total"].transform("sum") if outer else res["total"].sum()
+            # dropna=False como en la agregación: un grupo exterior vacío (NaN) también suma 100 %
+            denom = (res.groupby(outer, observed=True, dropna=False)["total"].transform("sum") if outer
+                     else res["total"].sum())
             res["porcentaje"] = 100 * res["total"] / denom
         return res
 

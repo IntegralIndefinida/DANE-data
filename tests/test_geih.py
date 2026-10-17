@@ -319,6 +319,20 @@ def test_serie_indicadores_con_filtros_y_meses(geih_root, tmp_path, monkeypatch)
         pd.testing.assert_frame_equal(serie, esperado)
 
 
+def test_porcentaje_con_grupo_exterior_vacio(geih_root, tmp_path, monkeypatch):
+    """Las personas sin posición ocupacional (NaN: no ocupadas) también suman 100 % dentro de su grupo."""
+    monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
+    df = dd.geih.load(2016, root=geih_root, cache=False)
+    assert df["posicion_ocupacional"].isna().any()
+    por = ["posicion_ocupacional", "sexo"]
+    t = dd.tabla(df, por=por, estadistico="porcentaje")
+    assert t["porcentaje"].notna().all()
+    assert t.groupby("posicion_ocupacional", dropna=False, observed=True)["porcentaje"].sum().tolist() == \
+        pytest.approx([100.0] * t["posicion_ocupacional"].nunique(dropna=False))
+    s = dd.geih.serie_tabla(2016, por=por, estadistico="porcentaje", root=geih_root)
+    pd.testing.assert_frame_equal(s, t, check_dtype=False, rtol=1e-9)
+
+
 def test_serie_promedia_sobre_los_meses_cargados(geih_root, tmp_path, monkeypatch):
     """Un mes sin nadie en el grupo filtrado cuenta como 0 en el promedio mensual, no se descarta."""
     import shutil

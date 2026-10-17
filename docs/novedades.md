@@ -56,6 +56,9 @@
   de 2015 a 2018 si faltaban los años de en medio). Ahora esa tasa queda vacía.
 * {dd}`eam.deflactar()` se puede aplicar dos veces seguidas (antes fallaba por la columna `deflactor` repetida),
   y un deflactor con un año repetido lanza `ValueError` en vez de duplicar filas en silencio.
+* Corregido: con `estadistico="porcentaje"`, las filas cuyo primer grupo estaba vacío (por ejemplo,
+  `posicion_ocupacional` de quien no está ocupado) salían con porcentaje vacío en `dd.tabla` y
+  {dd}`geih.serie_tabla()`. Ahora también suman 100 %.
 
 ## 0.2.2 (15 de octubre de 2026)
 
