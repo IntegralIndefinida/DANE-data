@@ -194,6 +194,48 @@ def test_cache_roundtrip(geih_root, tmp_path, monkeypatch):
     pd.testing.assert_frame_equal(a, b, check_dtype=False, check_categorical=False)
 
 
+def test_cache_interrumpida_no_deja_parquet_a_medias(geih_root, tmp_path, monkeypatch):
+    """Si falla la escritura, no queda ni el parquet (a medias) ni el temporal, y load funciona igual."""
+    monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
+    original = pd.DataFrame.to_parquet
+    temporales = []
+
+    def falla(self, ruta, *a, **k):
+        temporales.append(Path(ruta).name)
+        Path(ruta).write_bytes(b"PAR1 a medias")
+        raise OSError("disco lleno")
+
+    monkeypatch.setattr(pd.DataFrame, "to_parquet", falla)
+    esperado = dd.geih.load(2016, root=geih_root, cache=False)
+    pd.testing.assert_frame_equal(dd.geih.load(2016, root=geih_root), esperado)
+    dd.geih.serie_indicadores(2016, root=geih_root)
+    assert len(temporales) >= 2 and all(t.endswith(".tmp") for t in temporales)
+    assert not [f for f in (tmp_path / "cache").rglob("*") if f.is_file()]
+
+    monkeypatch.setattr(pd.DataFrame, "to_parquet", original)
+    dd.geih.serie_indicadores(2016, root=geih_root)
+    dd.geih.serie_indicadores(2016, root=geih_root, filtros={"sexo": ["Mujer"]})
+    (tmp_path / "cache" / "geih" / "huerfano.parquet.ab12.tmp").write_bytes(b"x")  # de una versión anterior
+    archivos = [f for f in (tmp_path / "cache").rglob("*") if f.is_file()]
+    assert len(archivos) == 4                           # 1 mes (load) + 2 años (serie) + el huérfano
+    assert dd.geih.clear_cache() == 4
+    assert not [f for f in (tmp_path / "cache").rglob("*") if f.is_file()]
+
+
+def test_cache_temporales_con_nombre_unico(tmp_path, monkeypatch):
+    """Dos sesiones de la app (hilos del mismo proceso) no escriben el mismo temporal."""
+    from dane_data.geih.loader import _guardar_parquet
+
+    nombres = []
+    original = pd.DataFrame.to_parquet
+    monkeypatch.setattr(pd.DataFrame, "to_parquet",
+                        lambda self, ruta, *a, **k: nombres.append(Path(ruta).name) or original(self, ruta, *a, **k))
+    for _ in range(2):
+        _guardar_parquet(pd.DataFrame({"x": [1]}), tmp_path / "c" / "a.parquet")
+    assert len(set(nombres)) == 2
+    assert [f.name for f in (tmp_path / "c").iterdir()] == ["a.parquet"]
+
+
 @pytest.mark.parametrize("anual", [True, False])
 @pytest.mark.parametrize("por", dd.geih.POR_PRECALCULADOS)
 def test_serie_indicadores_igual_a_indicadores(geih_root, tmp_path, monkeypatch, por, anual):

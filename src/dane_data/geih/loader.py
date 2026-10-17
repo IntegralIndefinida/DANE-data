@@ -22,6 +22,7 @@ from __future__ import annotations
 import hashlib
 import logging
 import re
+import uuid
 from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
@@ -789,8 +790,7 @@ def load(
                 continue
             if cpath is not None:
                 try:
-                    cpath.parent.mkdir(parents=True, exist_ok=True)
-                    df.to_parquet(cpath, index=False)
+                    _guardar_parquet(df, cpath)
                 except Exception as e:  # columnas de tipo mixto, disco lleno, etc.
                     log.debug(f"No se pudo guardar caché {cpath}: {e}")
         # Mes a mes (harmonize es fila a fila): evita armonizar y copiar el frame
@@ -837,7 +837,23 @@ def clear_cache() -> int:
     412
     """
     n = 0
-    for f in (config.CACHE_DIR / "geih").rglob("*.parquet"):
-        f.unlink()
-        n += 1
+    for f in (config.CACHE_DIR / "geih").rglob("*"):
+        if f.suffix in (".parquet", ".tmp"):  # .tmp: escrituras que se interrumpieron
+            f.unlink(missing_ok=True)
+            n += 1
     return n
+
+
+def _guardar_parquet(df: pd.DataFrame, ruta: Path) -> None:
+    """
+    Escribe la caché con otro nombre y la renombra al terminar, así nunca se lee un parquet a medias.
+    El nombre temporal es único: las sesiones de la app son hilos del mismo proceso y pueden calcular
+    lo mismo a la vez.
+    """
+    ruta.parent.mkdir(parents=True, exist_ok=True)
+    tmp = ruta.with_name(f"{ruta.name}.{uuid.uuid4().hex}.tmp")
+    try:
+        df.to_parquet(tmp, index=False)
+        tmp.replace(ruta)
+    finally:
+        tmp.unlink(missing_ok=True)

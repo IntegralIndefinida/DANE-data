@@ -13,7 +13,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
-import os
+import uuid
 from functools import lru_cache
 from pathlib import Path
 from typing import Callable, Iterable
@@ -25,7 +25,8 @@ from .. import config
 from ..referencias import MESES
 from ..stats import _as_list, peso_mensual_promedio, weighted_quantile
 from .indicadores import _COLUMNAS, indicadores
-from .loader import _HARMONIZE_VERSION, CATEGORIAS, MesGEIH, _firma_archivos, _root, find_months, load
+from .loader import (_HARMONIZE_VERSION, CATEGORIAS, MesGEIH, _firma_archivos, _guardar_parquet, _root, find_months,
+                     load)
 
 log = logging.getLogger("dane_data.geih")
 
@@ -173,10 +174,7 @@ def _por_anio(tipo: str, anios, solicitud: dict, calcular: Callable[[int], pd.Da
                 progress(i / len(por_anio), f"Calculando {anio} (solo la primera vez)")
             tabla = calcular(anio)
             try:
-                ruta.parent.mkdir(parents=True, exist_ok=True)
-                tmp = ruta.with_name(f"{ruta.name}.{os.getpid()}.tmp")  # varias sesiones de la app a la vez
-                tabla.to_parquet(tmp, index=False)
-                tmp.replace(ruta)
+                _guardar_parquet(tabla, ruta)
             except Exception as e:  # disco lleno, sin permisos, etc.
                 log.debug(f"No se pudo guardar caché {ruta}: {e}")
         partes.append(tabla)
@@ -638,7 +636,7 @@ def exportar(
         necesarias = list(dict.fromkeys(["anio", "mes", *variables]))
         leer = list(dict.fromkeys([*necesarias, *(filtros or {}), *([poblacion] if poblacion else [])]))
     ruta.parent.mkdir(parents=True, exist_ok=True)
-    tmp = ruta.with_name(f"{ruta.name}.{os.getpid()}.tmp")
+    tmp = ruta.with_name(f"{ruta.name}.{uuid.uuid4().hex}.tmp")
     filas = 0
     try:
         for i, m in enumerate(lista):

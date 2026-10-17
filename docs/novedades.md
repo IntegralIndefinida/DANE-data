@@ -32,6 +32,10 @@
 * La aplicación requiere Streamlit 1.51 o más reciente (`pip install "dane-data[app]"` lo actualiza). Con
   versiones anteriores, las tablas no aceptaban `width="stretch"` y cada gráfica mostraba un aviso de
   función obsoleta. Los lanzadores ya usaban una versión reciente.
+* La caché ya no puede quedar a medias: {dd}`geih.load()` también la escribe con otro nombre y la renombra
+  al terminar, y los nombres temporales son únicos, así que dos personas usando la misma aplicación a la
+  vez (`--address 0.0.0.0`) no escriben el mismo archivo. {dd}`geih.clear_cache()` borra también los
+  temporales que dejó una escritura interrumpida.
 
 ## 0.2.2 (15 de octubre de 2026)
 
