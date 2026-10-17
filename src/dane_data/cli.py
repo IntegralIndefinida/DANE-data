@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
 import socket
 import subprocess
 import sys
@@ -95,10 +96,20 @@ def _cmd_config(args) -> int:
     print(f"Guardado en {config.CONFIG_FILE}")
     for k, v in config.show_paths().items():
         print(f"  {k:13s} {v}")
+    for clave, valor in (("geih", args.geih), ("geih_empalme", args.empalme), ("eam", args.eam)):
+        env = config._KEYS[clave][0]
+        if valor is not None and os.environ.get(env):
+            print(f"  Aviso: la variable de entorno {env} ({os.environ[env]}) tiene prioridad sobre el archivo "
+                  "en las próximas sesiones.")
     return 0
 
 
 def _cmd_descargar(args) -> int:
+    otras = {"geih": [("--tic", args.tic)],
+             "eam": [("--modulos", args.modulos), ("--empalme", args.empalme), ("--limite", args.limite)]}
+    if sobran := [nombre for nombre, valor in otras[args.encuesta] if valor]:
+        print(f"dane-data descargar {args.encuesta}: {', '.join(sobran)} no aplica a esta encuesta.", file=sys.stderr)
+        return 2
     logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
     if args.encuesta == "geih":
         geih.download(years=args.anios, modules=args.modulos, empalme=args.empalme,

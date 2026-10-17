@@ -168,6 +168,21 @@ def test_cli_descargar_geih_y_eam(descargador_falso, tmp_path):
     assert dl.kw["base_dir"] == tmp_path / "eam"
 
 
+@pytest.mark.parametrize("argv", [["descargar", "eam", "--modulos", "ocupados"], ["descargar", "eam", "--empalme"],
+                                  ["descargar", "eam", "--limite", "1"], ["descargar", "geih", "--tic"]])
+def test_cli_descargar_opciones_de_otra_encuesta(descargador_falso, capsys, argv):
+    assert cli_main(argv) == 2
+    assert "no aplica" in capsys.readouterr().err
+    assert not descargador_falso                            # no descargó nada
+
+
+def test_cli_config_avisa_variable_de_entorno(config_aislada, capsys, monkeypatch, tmp_path):
+    monkeypatch.setenv("DANE_DATA_EAM", str(tmp_path / "env"))
+    assert cli_main(["config", "--eam", str(tmp_path / "eam"), "--geih", str(tmp_path / "geih")]) == 0
+    out = capsys.readouterr().out
+    assert "DANE_DATA_EAM" in out and "DANE_DATA_GEIH " not in out
+
+
 def test_download_un_anio_y_carpeta_explicita(descargador_falso, tmp_path):
     dd.geih.download(2024)
     assert descargador_falso[-1].anios == [2024]

@@ -64,6 +64,9 @@
   actual, `.`), un `config.json` dañado ya no hace fallar la librería y el archivo se escribe sin quedar
   nunca a medias. En la aplicación, "Guardar" solo guarda las carpetas que se cambiaron, así que ya no
   fija en el archivo las que venían de variables de entorno.
+* Línea de comandos: `dane-data descargar eam` con `--modulos`, `--empalme` o `--limite`, o `descargar geih`
+  con `--tic`, ya no ignora esas opciones en silencio: avisa que no aplican y no descarga. `dane-data config`
+  avisa cuando una variable de entorno tiene prioridad sobre la carpeta que se acaba de guardar.
 
 ## 0.2.2 (15 de octubre de 2026)
 
