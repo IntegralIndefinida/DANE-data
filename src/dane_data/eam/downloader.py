@@ -37,7 +37,7 @@ import zipfile
 import logging
 from pathlib import Path
 
-from .._hooks import DescargadorANDA, extraer_miembro
+from .._hooks import DescargadorANDA, extraer_miembro, url_del_anda
 from .loader import EXTENSIONES
 
 __version__ = "1.0.0"
@@ -171,11 +171,14 @@ class EAMDownloader(DescargadorANDA):
                 for name, url in matches:
                     if "tic" in name.lower():
                         continue
+                    if (enlace := url_del_anda(url, self.base_url)) is None:
+                        log.warning(f"Enlace de {name.strip()} fuera del ANDA o sin https, se ignora: {url.strip()}")
+                        continue
                     m = re.search(r"(199\d|20\d\d)", name)
                     if m:
                         yr = m.group(1)
                         if yr not in discovered:
-                            discovered[yr] = (cid, name.strip(), url.strip())
+                            discovered[yr] = (cid, name.strip(), enlace)
             except Exception as e:
                 log.warning(f"Error consultando microdatos para catálogo {cid}: {e}")
 

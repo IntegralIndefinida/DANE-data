@@ -29,7 +29,7 @@ import unicodedata
 from pathlib import Path
 from bs4 import BeautifulSoup
 
-from .._hooks import DescargadorANDA, extraer_miembro, ya_extraido
+from .._hooks import DescargadorANDA, extraer_miembro, url_del_anda, ya_extraido
 from .loader import EXTENSIONES, _pick_files, MesGEIH, month_from_folder
 
 MARCADOR = ".dane_data_ok"  # se escribe tras una extracción exitosa
@@ -382,8 +382,11 @@ class GEIHDownloader(DescargadorANDA):
         # Deduplicar por URL de descarga
         unique_files = {}
         for name, url in matches:
-            clean_url = url.strip()
+            clean_url = url_del_anda(url, self.base_url)
             clean_name = name.strip()
+            if clean_url is None:
+                log.warning(f"Enlace de {clean_name} fuera del ANDA o sin https, se ignora: {url.strip()}")
+                continue
             if clean_url not in unique_files:
                 unique_files[clean_url] = clean_name
         return unique_files

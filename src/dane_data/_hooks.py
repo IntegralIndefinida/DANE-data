@@ -8,6 +8,7 @@ import time
 import zipfile
 from pathlib import Path
 from typing import Callable, Optional
+from urllib.parse import urljoin, urlparse
 
 import requests
 
@@ -113,6 +114,17 @@ class DescargadorANDA(ProgressMixin):
 
         temp_dest.unlink(missing_ok=True)
         return False
+
+
+def url_del_anda(url: str, base: str = DescargadorANDA.base_url) -> str | None:
+    """
+    El enlace de descarga sacado de una página del ANDA, si apunta al ANDA por https (los relativos se
+    completan con ``base``); ``None`` si apunta a otro sitio o por http. Así un enlace raro en la página
+    no hace descargar nada de otro servidor.
+    """
+    completa = urljoin(base + "/", url.strip())
+    partes = urlparse(completa)
+    return completa if partes.scheme == "https" and partes.hostname == urlparse(base).hostname else None
 
 
 def zip_valido(archivo: Path, nombre: Path | None = None) -> bool:

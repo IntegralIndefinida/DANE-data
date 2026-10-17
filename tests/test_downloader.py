@@ -436,15 +436,19 @@ def test_enlaces_de_microdatos_por_epoca(tmp_path):
     dl.session = _ANDA({
         # 2007–2021: un ZIP por formato; se toman los CSV (y se quitan los repetidos)
         "/index.php/catalog/1/get-microdata": _modal(("Enero.csv.zip", "u/1"), ("Enero.sav.zip", "u/2"),
-                                                     ("Enero.csv.zip", "u/1"), ("Febrero.csv.zip", "u/3")),
+                                                     ("Enero.csv.zip", "u/1"), ("Febrero.csv.zip", "u/3"),
+                                                     ("Marzo.csv.zip", "https://otro.example/m.zip"),
+                                                     ("Abril.csv.zip", "http://microdatos.dane.gov.co/a.zip")),
         # 2022+: un ZIP por mes con todos los formatos; fuera los de apoyo
         "/index.php/catalog/2/get-microdata": _modal(("Ene_2024.zip", "u/4"), ("FEX_2024.zip", "u/5"),
                                                      ("Proyecciones.zip", "u/6"), ("Diccionario.pdf", "u/7")),
         "/index.php/catalog/3/get-microdata": _Pagina("<html>sin enlaces</html>"),
     })
-    assert dl.get_csv_download_links("1") == [{"name": "Enero.csv.zip", "url": "u/1"},
-                                              {"name": "Febrero.csv.zip", "url": "u/3"}]
-    assert dl.get_csv_download_links("2") == [{"name": "Ene_2024.zip", "url": "u/4"}]
+    anda = "https://microdatos.dane.gov.co/"
+    # Los relativos se completan; los de otro sitio o sin https se ignoran
+    assert dl.get_csv_download_links("1") == [{"name": "Enero.csv.zip", "url": anda + "u/1"},
+                                              {"name": "Febrero.csv.zip", "url": anda + "u/3"}]
+    assert dl.get_csv_download_links("2") == [{"name": "Ene_2024.zip", "url": anda + "u/4"}]
     assert dl.get_csv_download_links("3") == []
     assert dl.get_csv_download_links("4") == []             # HTTP 404
 
@@ -470,9 +474,11 @@ def test_descubrir_catalogos_eam(tmp_path):
 
     dl = EAMDownloader(base_dir=tmp_path)
     dl.session = _ANDA({"/index.php/catalog/888/get-microdata": _modal(
-        ("EAM_2025.zip", "https://microdatos.dane.gov.co/x/1"), ("EAM_TIC_2025.zip", "u/2"))})
+        ("EAM_2025.zip", "https://microdatos.dane.gov.co/x/1"), ("EAM_TIC_2025.zip", "u/2"),
+        ("EAM_2026.zip", "https://otro.example/x.zip"))})       # fuera del ANDA: se ignora
     cat = dl.discover_catalogs()                            # los demás catálogos dan 404: se avisa y sigue
     assert cat["2025"] == ("888", "EAM_2025.zip", "https://microdatos.dane.gov.co/x/1")
+    assert "2026" not in cat
     assert {k: v for k, v in cat.items() if k != "2025"} == EAM_KNOWN_CATALOGS
 
 
