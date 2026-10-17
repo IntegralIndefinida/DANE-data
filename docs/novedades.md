@@ -52,6 +52,8 @@
   {dd}`eam.load()` lo lee directamente. La conversión cambiaba los códigos por las etiquetas de valor del
   archivo, y cualquier variable con etiquetas quedaba como texto. Los TXT ya convertidos se siguen usando;
   para tener los códigos originales, borre la carpeta de 2024 y vuelva a descargar el año.
+* Corregido: {dd}`eam.crecimiento()` calculaba como anual el cambio entre años no consecutivos (por ejemplo,
+  de 2015 a 2018 si faltaban los años de en medio). Ahora esa tasa queda vacía.
 
 ## 0.2.2 (15 de octubre de 2026)
 

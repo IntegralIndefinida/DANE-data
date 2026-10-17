@@ -9,6 +9,16 @@ import dane_data as dd
 from dane_data.cli import main as cli_main
 
 
+def test_crecimiento_no_salta_anios():
+    res = pd.DataFrame({"anio": [2014, 2015, 2018, 2019], "valor_agregado": [100.0, 110.0, 200.0, 220.0]})
+    crec = dd.eam.crecimiento(res, "valor_agregado")["crec_valor_agregado"]
+    assert crec.isna().tolist() == [True, False, True, False]      # 2018 no sigue a 2017
+    assert crec.dropna().tolist() == pytest.approx([10.0, 10.0])
+    por = pd.concat([res.assign(sector="A"), res.iloc[[0, 1]].assign(sector="B")])
+    crec = dd.eam.crecimiento(por, "valor_agregado", por="sector")
+    assert crec["crec_valor_agregado"].notna().sum() == 3
+
+
 def test_eam_sin_departamento(tmp_path):
     """Un archivo sin columna de departamento: departamento vacío, no AttributeError."""
     archivo = tmp_path / "datos" / "2016" / "EAM_2016.csv"

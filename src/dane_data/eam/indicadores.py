@@ -186,7 +186,8 @@ def crecimiento(df: pd.DataFrame, valor: str, por: str | Iterable[str] | None = 
     Devuelve
     --------
     DataFrame
-        ``df`` ordenado, con la columna ``crec_<valor>`` en % (vacía en el primer año de cada grupo).
+        ``df`` ordenado, con la columna ``crec_<valor>`` en % (vacía en el primer año de cada grupo y en el
+        año que sigue a uno que falta: de 2015 a 2018 no es un crecimiento anual).
 
     Véase también
     -------------
@@ -211,8 +212,9 @@ def crecimiento(df: pd.DataFrame, valor: str, por: str | Iterable[str] | None = 
     """
     por = _as_list(por)
     d = df.sort_values(por + [tiempo]).copy()
-    prev = d.groupby(por)[valor].shift() if por else d[valor].shift()
-    d[f"crec_{valor}"] = 100 * (d[valor] / prev - 1)
+    previo = d.groupby(por)[[valor, tiempo]].shift() if por else d[[valor, tiempo]].shift()
+    consecutivo = (d[tiempo] - previo[tiempo]) == 1        # sin el año anterior no hay tasa anual
+    d[f"crec_{valor}"] = (100 * (d[valor] / previo[valor] - 1)).where(consecutivo)
     return d
 
 
