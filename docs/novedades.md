@@ -59,6 +59,11 @@
 * Corregido: con `estadistico="porcentaje"`, las filas cuyo primer grupo estaba vacío (por ejemplo,
   `posicion_ocupacional` de quien no está ocupado) salían con porcentaje vacío en `dd.tabla` y
   {dd}`geih.serie_tabla()`. Ahora también suman 100 %.
+* `dd.set_paths(..., save=True)` guarda solo las carpetas de esa llamada: las fijadas antes solo para la
+  sesión ya no se vuelven permanentes. Una carpeta vacía lanza `ValueError` (antes quedaba la carpeta
+  actual, `.`), un `config.json` dañado ya no hace fallar la librería y el archivo se escribe sin quedar
+  nunca a medias. En la aplicación, "Guardar" solo guarda las carpetas que se cambiaron, así que ya no
+  fija en el archivo las que venían de variables de entorno.
 
 ## 0.2.2 (15 de octubre de 2026)
 

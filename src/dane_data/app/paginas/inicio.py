@@ -67,10 +67,17 @@ with st.expander("⚙️ Carpetas de datos", expanded=not (len(g) or len(e))):
         p_emp = st.text_input("GEIH serie de empalme", str(dd.get_path("geih_empalme")))
         p_eam = st.text_input("EAM", str(dd.get_path("eam")))
         if st.form_submit_button("Guardar", type="primary"):
-            dd.set_paths(geih=p_geih, geih_empalme=p_emp, eam=p_eam, save=True)
-            st.cache_data.clear()
-            st.cache_resource.clear()
-            st.rerun()
+            # Solo las que cambiaron: así no se fija en el archivo una ruta que viene de una variable de entorno
+            cambios = {k: v.strip() for k, v in (("geih", p_geih), ("geih_empalme", p_emp), ("eam", p_eam))
+                       if v.strip() != str(dd.get_path(k))}
+            try:
+                dd.set_paths(**cambios, save=True)
+            except ValueError as e:
+                st.error(str(e))
+            else:
+                st.cache_data.clear()
+                st.cache_resource.clear()
+                st.rerun()
 
 st.divider()
 st.caption(

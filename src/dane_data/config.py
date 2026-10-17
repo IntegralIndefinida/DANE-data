@@ -35,9 +35,10 @@ _session: dict[str, Path] = {}
 
 def _read_file() -> dict:
     try:
-        return json.loads(CONFIG_FILE.read_text(encoding="utf-8"))
+        data = json.loads(CONFIG_FILE.read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return {}
+    return data if isinstance(data, dict) else {}  # un JSON que no es un objeto: como si no existiera
 
 
 def get_path(key: str) -> Path:
@@ -103,8 +104,14 @@ def set_paths(geih=None, geih_empalme=None, eam=None, save: bool = False) -> Non
     eam
         Carpeta de la EAM.
     save
-        Si True, las guarda en ``~/.config/dane_data/config.json``: valen para las próximas sesiones,
-        para la línea de comandos y para la aplicación. Si False, solo para esta sesión.
+        Si True, guarda las carpetas indicadas en esta llamada en ``~/.config/dane_data/config.json``:
+        valen para las próximas sesiones, para la línea de comandos y para la aplicación. Si False, solo
+        para esta sesión.
+
+    Lanza
+    -----
+    ValueError
+        Si alguna carpeta es un texto vacío (sería la carpeta desde donde se ejecuta Python).
 
     Véase también
     -------------
@@ -116,14 +123,19 @@ def set_paths(geih=None, geih_empalme=None, eam=None, save: bool = False) -> Non
     >>> import dane_data as dd
     >>> dd.set_paths(geih="~/datos/GEIH", eam="~/datos/EAM", save=True)  # doctest: +SKIP
     """
-    for key, val in (("geih", geih), ("geih_empalme", geih_empalme), ("eam", eam)):
-        if val is not None:
-            _session[key] = Path(val).expanduser()
+    nuevas = {k: v for k, v in (("geih", geih), ("geih_empalme", geih_empalme), ("eam", eam)) if v is not None}
+    if vacias := [k for k, v in nuevas.items() if not str(v).strip()]:
+        raise ValueError(f"Carpeta vacía para {', '.join(vacias)}: indique una ruta.")
+    for key, val in nuevas.items():
+        _session[key] = Path(val).expanduser()
     if save:
+        # Solo las de esta llamada: las fijadas antes solo para la sesión no se vuelven permanentes
         data = _read_file()
-        data.update({k: str(v) for k, v in _session.items()})
+        data.update({k: str(_session[k]) for k in nuevas})
         CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
-        CONFIG_FILE.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+        tmp = CONFIG_FILE.with_name(f"{CONFIG_FILE.name}.tmp")
+        tmp.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+        tmp.replace(CONFIG_FILE)  # un corte a mitad de escritura no deja el archivo vacío
 
 
 def show_paths() -> dict[str, str]:

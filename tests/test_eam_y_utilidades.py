@@ -191,6 +191,34 @@ def test_cli_config_guarda_las_rutas(capsys, monkeypatch, tmp_path):
     assert dd.get_path("geih") == tmp_path / "geih"         # una sesión nueva lee el archivo
 
 
+@pytest.fixture
+def config_aislada(monkeypatch, tmp_path):
+    archivo = tmp_path / "config" / "config.json"
+    monkeypatch.setattr(dd.config, "CONFIG_FILE", archivo)
+    monkeypatch.setattr(dd.config, "_session", {})
+    for var in ("DANE_DATA_GEIH", "DANE_DATA_GEIH_EMPALME", "DANE_DATA_EAM"):
+        monkeypatch.delenv(var, raising=False)
+    return archivo
+
+
+def test_set_paths_guarda_solo_lo_pedido(config_aislada, tmp_path):
+    dd.set_paths(eam=tmp_path / "solo_sesion")                 # sin save: solo esta sesión
+    dd.set_paths(geih=tmp_path / "geih", save=True)
+    assert json.loads(config_aislada.read_text(encoding="utf-8")) == {"geih": str(tmp_path / "geih")}
+    assert not list(config_aislada.parent.glob("*.tmp"))
+    with pytest.raises(ValueError, match="vacía"):
+        dd.set_paths(eam="  ", save=True)
+    assert dd.get_path("eam") == tmp_path / "solo_sesion"     # el error no cambió nada
+
+
+def test_config_que_no_es_un_objeto(config_aislada):
+    config_aislada.parent.mkdir(parents=True)
+    config_aislada.write_text("[1, 2]", encoding="utf-8")
+    assert dd.get_path("geih") == dd.config.DEFAULT_HOME / "geih"
+    dd.set_paths(eam="/datos/eam", save=True)
+    assert json.loads(config_aislada.read_text(encoding="utf-8")) == {"eam": "/datos/eam"}
+
+
 class _ProcesoFalso:
     def __init__(self, cmd, cwd=None, interrumpir=False):
         self.cmd, self.cwd, self.interrumpir, self.terminado = cmd, cwd, interrumpir, False

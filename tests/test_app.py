@@ -1,5 +1,6 @@
 """Páginas de la app con el probador de Streamlit (se salta si no está instalado el extra `app`)."""
 
+import json
 from pathlib import Path
 
 import pandas as pd
@@ -25,6 +26,26 @@ def test_descargar_toda_la_serie_eam(tmp_path, monkeypatch):
     next(b for b in at.button if b.label.endswith("Descargar")).click().run()
     assert not at.exception
     assert pedidos == [dd.eam.ANIOS_DISPONIBLES]
+
+
+def test_inicio_guarda_solo_las_carpetas_cambiadas(tmp_path, monkeypatch):
+    archivo = tmp_path / "config.json"
+    monkeypatch.setattr(dd.config, "CONFIG_FILE", archivo)
+    monkeypatch.setattr(dd.config, "_session", {})
+    monkeypatch.setenv("DANE_DATA_GEIH", str(tmp_path / "desde_env"))
+    monkeypatch.setenv("DANE_DATA_GEIH_EMPALME", str(tmp_path / "emp"))
+    monkeypatch.setenv("DANE_DATA_EAM", str(tmp_path / "eam_env"))
+    at = AppTest.from_file(str(PAGINAS / "inicio.py"), default_timeout=60).run()
+    campo = lambda etiqueta: next(t for t in at.text_input if t.label == etiqueta)  # noqa: E731
+    campo("EAM").set_value(str(tmp_path / "eam_nueva"))
+    next(b for b in at.button if b.label == "Guardar").click().run()
+    assert not at.exception
+    assert json.loads(archivo.read_text(encoding="utf-8")) == {"eam": str(tmp_path / "eam_nueva")}
+
+    campo("GEIH serie principal").set_value("")
+    next(b for b in at.button if b.label == "Guardar").click().run()
+    assert not at.exception
+    assert any("vacía" in e.value for e in at.error)
 
 
 def test_descargar_geih_sin_modulos(tmp_path, monkeypatch):
