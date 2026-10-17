@@ -176,6 +176,11 @@ def test_cli_descargar_opciones_de_otra_encuesta(descargador_falso, capsys, argv
     assert not descargador_falso                            # no descargó nada
 
 
+def test_cli_config_carpeta_vacia(config_aislada, capsys):
+    assert cli_main(["config", "--geih", ""]) == 2
+    assert "vacía" in capsys.readouterr().err and not config_aislada.exists()
+
+
 def test_cli_config_avisa_variable_de_entorno(config_aislada, capsys, monkeypatch, tmp_path):
     monkeypatch.setenv("DANE_DATA_EAM", str(tmp_path / "env"))
     assert cli_main(["config", "--eam", str(tmp_path / "eam"), "--geih", str(tmp_path / "geih")]) == 0

@@ -95,7 +95,11 @@ def _cmd_estado(args) -> int:
 
 
 def _cmd_config(args) -> int:
-    config.set_paths(geih=args.geih, geih_empalme=args.empalme, eam=args.eam, save=True)
+    try:
+        config.set_paths(geih=args.geih, geih_empalme=args.empalme, eam=args.eam, save=True)
+    except ValueError as e:  # una carpeta vacía
+        print(f"dane-data config: {e}", file=sys.stderr)
+        return 2
     print(f"Guardado en {config.CONFIG_FILE}")
     for k, v in config.show_paths().items():
         print(f"  {k:13s} {v}")
