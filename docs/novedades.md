@@ -1,64 +1,84 @@
 # Novedades
 
-## Sin publicar
+## 0.3.0 (17 de octubre de 2026)
 
-* Corregido: {dd}`geih.exportar()` sin `variables` escribía solo `anio`, `mes` y las columnas de los
-  filtros. Ahora escribe todas las variables armonizadas, como dice su documentación.
-* Corregido: en {dd}`geih.serie_indicadores()`, {dd}`geih.serie_tabla()` y
-  {dd}`geih.serie_frecuencias()`, un filtro de rango (`{"edad": (15, 28)}`) y uno de valores
-  (`{"edad": [15, 28]}`) compartían la caché, así que el segundo devolvía el resultado del primero. Las
-  cachés anteriores se recalculan solas.
-* Las descargas ya no dejan archivos a medias: si se interrumpe la extracción (Ctrl+C, disco lleno), el
-  archivo no queda con su nombre final, y un archivo de distinto tamaño que el del ZIP se vuelve a extraer.
-  Antes, la próxima descarga daba el mes o el año por completo con los datos cortados.
-* Si un mes del paquete anual del empalme (o un ZIP anidado de un mes) no se puede abrir, el año ya no queda
-  marcado como completo y el ZIP se borra: la próxima descarga lo vuelve a bajar.
-* Corregido: si un mes completo estaba en dos carpetas (por ejemplo, descomprimido dos veces), se sumaban
-  las dos y el mes contaba doble. Ahora se usa una sola, con un aviso.
-* Un ZIP dañado ya no se queda en disco para siempre: si lo descargado no es un ZIP válido (descarga
-  cortada o página de error del DANE) se reintenta, y un ZIP en disco que no se puede abrir o extraer se
-  borra y se vuelve a descargar.
-* Corregido: las páginas de la EAM en la aplicación se caían (`ValueError: ... is not in iterable`) cuando
-  los años descargados no eran consecutivos, por ejemplo 2005 y 2020.
-* Corregido: en la aplicación, la página de indicadores industriales se caía con `IndexError` si ningún
-  establecimiento cumplía los filtros (un sector que no hay en el departamento elegido). Ahora muestra un
-  aviso, como las páginas de la GEIH.
+**Al actualizar**
+
+* La aplicación requiere Streamlit 1.51 o más reciente (`pip install "dane-data[app]"` lo actualiza). Con
+  versiones anteriores, las tablas no aceptaban `width="stretch"` y cada gráfica mostraba un aviso de
+  función obsoleta. Los lanzadores ya usaban una versión reciente.
+* Corregido: `dd.geih.download([])` y `dd.eam.download([])` descargaban la serie entera; ahora no descargan
+  nada (`None` sigue siendo "todos"). Un año que no está en el ANDA, como 2030, ya no se ignora en silencio:
+  se avisa. En {dd}`geih.download()`, `modules=[]` (que bajaba todos los módulos) o un nombre mal escrito
+  lanzan `ValueError`, y en la aplicación el botón de descargar se desactiva si no hay módulos elegidos.
+* EAM 2024: el archivo de Stata del ANDA ya no se convierte a TXT al descargarlo; se guarda tal cual y
+  {dd}`eam.load()` lo lee directamente. La conversión cambiaba los códigos por las etiquetas de valor del
+  archivo, y cualquier variable con etiquetas quedaba como texto. Los TXT ya convertidos se siguen usando;
+  para tener los códigos originales, borre la carpeta de 2024 y vuelva a descargar el año.
+
+**Cifras**
+
 * Corregido: si un filtro dejaba algún mes sin ninguna persona (un grupo pequeño), el promedio mensual de los
   niveles se dividía por menos meses y salía más alto. Ahora un mes vacío cuenta como 0, como en el promedio
   de los totales mensuales del DANE, en las funciones `serie_*` y en `dd.tabla` / {dd}`geih.indicadores()`
   después de {dd}`geih.filtrar()`, que anota los meses cargados en `df.attrs["meses_por_anio"]`. Las tasas
   no cambian. Elegir meses con `df[df.mes <= 3]` sigue contando solo esos meses.
-* La aplicación requiere Streamlit 1.51 o más reciente (`pip install "dane-data[app]"` lo actualiza). Con
-  versiones anteriores, las tablas no aceptaban `width="stretch"` y cada gráfica mostraba un aviso de
-  función obsoleta. Los lanzadores ya usaban una versión reciente.
-* La caché ya no puede quedar a medias: {dd}`geih.load()` también la escribe con otro nombre y la renombra
-  al terminar, y los nombres temporales son únicos, así que dos personas usando la misma aplicación a la
-  vez (`--address 0.0.0.0`) no escriben el mismo archivo. {dd}`geih.clear_cache()` borra también los
-  temporales que dejó una escritura interrumpida.
+* Corregido: en {dd}`geih.serie_indicadores()`, {dd}`geih.serie_tabla()` y
+  {dd}`geih.serie_frecuencias()`, un filtro de rango (`{"edad": (15, 28)}`) y uno de valores
+  (`{"edad": [15, 28]}`) compartían la caché, así que el segundo devolvía el resultado del primero. Las
+  cachés anteriores se recalculan solas.
+* Corregido: si un mes completo estaba en dos carpetas (por ejemplo, descomprimido dos veces), se sumaban
+  las dos y el mes contaba doble. Ahora se usa una sola, con un aviso.
+* Corregido: con `estadistico="porcentaje"`, las filas cuyo primer grupo estaba vacío (por ejemplo,
+  `posicion_ocupacional` de quien no está ocupado) salían con porcentaje vacío en `dd.tabla` y
+  {dd}`geih.serie_tabla()`. Ahora también suman 100 %.
+* Corregido: {dd}`eam.crecimiento()` calculaba como anual el cambio entre años no consecutivos (por ejemplo,
+  de 2015 a 2018 si faltaban los años de en medio). Ahora esa tasa queda vacía.
+* {dd}`eam.deflactar()` se puede aplicar dos veces seguidas (antes fallaba por la columna `deflactor` repetida),
+  y un deflactor con un año repetido lanza `ValueError` en vez de duplicar filas en silencio.
+* Corregido: {dd}`geih.exportar()` sin `variables` escribía solo `anio`, `mes` y las columnas de los
+  filtros. Ahora escribe todas las variables armonizadas, como dice su documentación.
 * Corregido: un solo valor o nombre en vez de una lista se partía en letras. `filtros={"sexo": "Mujer"}`
   no dejaba a nadie, y `columns="P6500"` o `modules="ocupados"` no agregaban nada. Ahora valen igual que
   `["Mujer"]`, `["P6500"]` o `["ocupados"]` en {dd}`geih.load()`, {dd}`geih.load_month()`,
   {dd}`geih.filtrar()`, las funciones `serie_*`, {dd}`geih.exportar()` (`variables="fex"`),
   {dd}`eam.load()` y {dd}`eam.deflactar()`.
-* Corregido: `dd.geih.download([])` y `dd.eam.download([])` descargaban la serie entera; ahora no descargan
-  nada (`None` sigue siendo "todos"). Un año que no está en el ANDA, como 2030, ya no se ignora en silencio:
-  se avisa. En {dd}`geih.download()`, `modules=[]` (que bajaba todos los módulos) o un nombre mal escrito
-  lanzan `ValueError`, y en la aplicación el botón de descargar se desactiva si no hay módulos elegidos.
-* Corregido: {dd}`eam.load()` fallaba con `AttributeError` si un archivo no traía la columna de departamento;
-  ahora `departamento` queda vacío.
+
+**Descargas**
+
+* Las descargas ya no dejan archivos a medias: si se interrumpe la extracción (Ctrl+C, disco lleno), el
+  archivo no queda con su nombre final, y un archivo de distinto tamaño que el del ZIP se vuelve a extraer.
+  Antes, la próxima descarga daba el mes o el año por completo con los datos cortados.
+* Si un mes del paquete anual del empalme (o un ZIP anidado de un mes) no se puede abrir, el año ya no queda
+  marcado como completo y el ZIP se borra: la próxima descarga lo vuelve a bajar.
+* Un ZIP dañado ya no se queda en disco para siempre: si lo descargado no es un ZIP válido (descarga
+  cortada o página de error del DANE) se reintenta, y un ZIP en disco que no se puede abrir o extraer se
+  borra y se vuelve a descargar.
 * Con la aplicación abierta, un archivo de la GEIH reemplazado en la misma carpeta (por ejemplo, un CSV
   dañado que se vuelve a descargar) se revisa de nuevo; antes había que reiniciar la aplicación.
-* EAM 2024: el archivo de Stata del ANDA ya no se convierte a TXT al descargarlo; se guarda tal cual y
-  {dd}`eam.load()` lo lee directamente. La conversión cambiaba los códigos por las etiquetas de valor del
-  archivo, y cualquier variable con etiquetas quedaba como texto. Los TXT ya convertidos se siguen usando;
-  para tener los códigos originales, borre la carpeta de 2024 y vuelva a descargar el año.
-* Corregido: {dd}`eam.crecimiento()` calculaba como anual el cambio entre años no consecutivos (por ejemplo,
-  de 2015 a 2018 si faltaban los años de en medio). Ahora esa tasa queda vacía.
-* {dd}`eam.deflactar()` se puede aplicar dos veces seguidas (antes fallaba por la columna `deflactor` repetida),
-  y un deflactor con un año repetido lanza `ValueError` en vez de duplicar filas en silencio.
-* Corregido: con `estadistico="porcentaje"`, las filas cuyo primer grupo estaba vacío (por ejemplo,
-  `posicion_ocupacional` de quien no está ocupado) salían con porcentaje vacío en `dd.tabla` y
-  {dd}`geih.serie_tabla()`. Ahora también suman 100 %.
+* Corregido: {dd}`eam.load()` fallaba con `AttributeError` si un archivo no traía la columna de departamento;
+  ahora `departamento` queda vacío.
+
+**Aplicación**
+
+* Corregido: las páginas de la EAM en la aplicación se caían (`ValueError: ... is not in iterable`) cuando
+  los años descargados no eran consecutivos, por ejemplo 2005 y 2020.
+* Corregido: en la aplicación, la página de indicadores industriales se caía con `IndexError` si ningún
+  establecimiento cumplía los filtros (un sector que no hay en el departamento elegido). Ahora muestra un
+  aviso, como las páginas de la GEIH.
+* En la aplicación, cada exportación de microdatos tiene su propio archivo (con la población y una huella
+  de los filtros, meses y columnas en el nombre). Antes dos exportaciones de los mismos años con distinta
+  selección se sobrescribían.
+* `dane-data app --address 0.0.0.0` (para un aula) avisa al abrir que la aplicación queda en la red sin
+  contraseña, y la documentación lo advierte. Las descargas solo siguen enlaces https del ANDA.
+* La caché ya no puede quedar a medias: {dd}`geih.load()` también la escribe con otro nombre y la renombra
+  al terminar, y los nombres temporales son únicos, así que dos personas usando la misma aplicación a la
+  vez (`--address 0.0.0.0`) no escriben el mismo archivo. {dd}`geih.clear_cache()` borra también los
+  temporales que dejó una escritura interrumpida.
+* Los lanzadores para estudiantes usan siempre las versiones exactas de `uv.lock` (`uv run --frozen`).
+
+**Configuración y línea de comandos**
+
 * `dd.set_paths(..., save=True)` guarda solo las carpetas de esa llamada: las fijadas antes solo para la
   sesión ya no se vuelven permanentes. Una carpeta vacía lanza `ValueError` (antes quedaba la carpeta
   actual, `.`), un `config.json` dañado ya no hace fallar la librería y el archivo se escribe sin quedar
@@ -67,12 +87,9 @@
 * Línea de comandos: `dane-data descargar eam` con `--modulos`, `--empalme` o `--limite`, o `descargar geih`
   con `--tic`, ya no ignora esas opciones en silencio: avisa que no aplican y no descarga. `dane-data config`
   avisa cuando una variable de entorno tiene prioridad sobre la carpeta que se acaba de guardar.
-* En la aplicación, cada exportación de microdatos tiene su propio archivo (con la población y una huella
-  de los filtros, meses y columnas en el nombre). Antes dos exportaciones de los mismos años con distinta
-  selección se sobrescribían.
-* `dane-data app --address 0.0.0.0` (para un aula) avisa al abrir que la aplicación queda en la red sin
-  contraseña, y la documentación lo advierte. Las descargas solo siguen enlaces https del ANDA.
-* Los lanzadores para estudiantes usan siempre las versiones exactas de `uv.lock` (`uv run --frozen`).
+
+**Compatibilidad**
+
 * Con pandas 2 (Google Colab) ya no aparecen avisos `FutureWarning` al calcular indicadores ni al
   armonizar; los resultados son los mismos.
 

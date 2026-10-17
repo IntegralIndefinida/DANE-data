@@ -1,14 +1,38 @@
-## Novedades de la versión 0.2.2
+## Novedades de la versión 0.3.0
 
-**Corregido: la GEIH de 2021 en Google Colab.** Con pandas 2 (el que trae Colab), `dd.geih.download([2021])`
-y la carga de 2021 fallaban con `ValueError: Version of given Stata file is 110`. El DANE publica septiembre
-de 2021 en Stata 7 (formato 110), que pandas solo lee desde la versión 3; ahora se lee con cualquier pandas
-desde la 2.0. Las cifras no cambian, y si ya tenía 2021 descargado no hace falta volver a descargarlo.
+Una revisión completa de la librería: correcciones en cifras, descargas más seguras y una aplicación que ya
+no se cae en casos raros. La lista completa está en
+[Novedades](https://integralindefinida.github.io/DANE-data/novedades.html).
 
-Para actualizar: `pip install -U "dane-data[app]"` (en Colab, reinicie la sesión después).
+**Al actualizar**
+- La aplicación requiere **Streamlit 1.51** o más reciente: `pip install -U "dane-data[app]"` lo actualiza (los
+  lanzadores del zip ya lo hacen solos).
+- `dd.geih.download([])` y `dd.eam.download([])` ya no descargan la serie entera: una lista vacía es ningún año
+  (`None` sigue siendo "todos").
+- **EAM 2024** se guarda en el Stata original del DANE y se lee con sus códigos. Si quiere los códigos en vez
+  de las etiquetas, borre la carpeta de 2024 y vuelva a descargarla.
 
-**Documentación nueva** en <https://integralindefinida.github.io/DANE-data/>: guía de usuario, galería de
-ejemplos con datos reales y referencia de la API con una página por función.
+**Cifras**
+- Si un filtro deja un mes sin nadie (un grupo pequeño), ese mes cuenta como 0 en el promedio mensual, como
+  hace el DANE; antes los niveles salían más altos. Las tasas no cambian.
+- Un filtro de rango (`{"edad": (15, 28)}`) y uno de valores (`{"edad": [15, 28]}`) ya no comparten caché.
+- Un mes descomprimido dos veces ya no cuenta doble.
+- `estadistico="porcentaje"` incluye las filas con el primer grupo vacío, y `eam.crecimiento` no calcula tasas
+  anuales entre años no consecutivos.
+- `exportar()` sin `variables` escribe todas las variables armonizadas, y un solo valor (`{"sexo": "Mujer"}`,
+  `columns="P6500"`) ya no se parte en letras.
+
+**Descargas**
+- Una descarga interrumpida o un ZIP dañado ya no dejan datos cortados que se den por buenos: se detectan y se
+  vuelven a bajar.
+- Solo se siguen enlaces https del ANDA.
+
+**Aplicación**
+- Las páginas de la EAM ya no se caen con años no consecutivos ni con filtros sin establecimientos.
+- Cada exportación de microdatos tiene su propio archivo.
+- En un aula (`dane-data app --address 0.0.0.0`) avisa que queda en la red sin contraseña.
+
+Las cifras de la GEIH siguen coincidiendo mes a mes con los anexos del DANE (2007–2026 y empalme 2010–2020).
 
 ---
 
