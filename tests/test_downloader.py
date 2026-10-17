@@ -362,6 +362,148 @@ def test_zip_que_falla_al_extraer_se_borra(tmp_path, sin_pausas_eam):
     assert not zip_path.exists()
 
 
+# --------------------------------------------------------------------------- #
+# Raspado del ANDA (páginas de búsqueda, get-microdata y metadata) sin red
+# --------------------------------------------------------------------------- #
+class _Pagina:
+    def __init__(self, texto="", estado=200, datos=None):
+        self.text, self.status_code, self.datos = texto, estado, datos
+
+    def raise_for_status(self):
+        if self.status_code >= 400:
+            raise OSError(f"HTTP {self.status_code}")
+
+    def json(self):
+        return self.datos
+
+
+class _ANDA:
+    """``requests.Session`` falsa que responde según la URL (y la página de la búsqueda)."""
+
+    def __init__(self, rutas: dict, falla: bool = False):
+        self.rutas, self.falla, self.pedidos = rutas, falla, []
+
+    def get(self, url, params=None, **kw):
+        self.pedidos.append((url, params))
+        if self.falla:
+            raise OSError("sin conexión")
+        clave = url.split("microdatos.dane.gov.co")[-1] + (f"?page={params['page']}" if params else "")
+        return self.rutas.get(clave, _Pagina(estado=404))
+
+
+def _busqueda(*titulos):
+    return _Pagina("".join(f'<a href="/index.php/catalog/{cid}">{t}</a>' for cid, t in titulos)
+                   + '<a href="/index.php/catalog/search?page=2">siguiente</a>')
+
+
+def _modal(*archivos):
+    return _Pagina("".join(f"<a onclick=\"mostrarModal('{n}', '{u}')\">{n}</a>" for n, u in archivos))
+
+
+def test_descubrir_catalogos_geih(tmp_path):
+    from dane_data.geih.downloader import KNOWN_CATALOGS
+
+    dl = GEIHDownloader(base_dir=tmp_path)
+    dl.session = _ANDA({
+        "/index.php/catalog/search?page=1": _busqueda(
+            ("999", "Gran Encuesta Integrada de Hogares - GEIH - 2027"),
+            ("998", "GEIH 2024 - San Andrés"),                   # módulo satélite: no cuenta
+            ("997", "GEIH Empalme 2015 Marco 2018"),             # empalme: no es la serie principal
+            ("996", "Encuesta de Calidad de Vida 2024")),         # otra encuesta
+        "/index.php/catalog/search?page=2": _busqueda(),          # sin más resultados: para
+    })
+    cat = dl.discover_catalogs()
+    assert cat["2027"] == "999"
+    assert cat["2024"] == KNOWN_CATALOGS["2024"]
+    assert len(dl.session.pedidos) == 2
+
+
+def test_descubrir_catalogos_empalme_y_sin_conexion(tmp_path):
+    from dane_data.geih.downloader import EMPALME_CATALOGS, KNOWN_CATALOGS
+
+    dl = GEIHDownloader(base_dir=tmp_path, is_empalme=True)
+    dl.session = _ANDA({"/index.php/catalog/search?page=1": _busqueda(("995", "GEIH Empalme 2019"),
+                                                                      ("994", "GEIH 2019"))})
+    assert dl.discover_catalogs() == {**EMPALME_CATALOGS, "2019": "995"}
+
+    dl = GEIHDownloader(base_dir=tmp_path)
+    dl.session = _ANDA({}, falla=True)                       # sin internet: los catálogos conocidos
+    assert dl.discover_catalogs() == KNOWN_CATALOGS
+
+
+def test_enlaces_de_microdatos_por_epoca(tmp_path):
+    dl = GEIHDownloader(base_dir=tmp_path)
+    dl.session = _ANDA({
+        # 2007–2021: un ZIP por formato; se toman los CSV (y se quitan los repetidos)
+        "/index.php/catalog/1/get-microdata": _modal(("Enero.csv.zip", "u/1"), ("Enero.sav.zip", "u/2"),
+                                                     ("Enero.csv.zip", "u/1"), ("Febrero.csv.zip", "u/3")),
+        # 2022+: un ZIP por mes con todos los formatos; fuera los de apoyo
+        "/index.php/catalog/2/get-microdata": _modal(("Ene_2024.zip", "u/4"), ("FEX_2024.zip", "u/5"),
+                                                     ("Proyecciones.zip", "u/6"), ("Diccionario.pdf", "u/7")),
+        "/index.php/catalog/3/get-microdata": _Pagina("<html>sin enlaces</html>"),
+    })
+    assert dl.get_csv_download_links("1") == [{"name": "Enero.csv.zip", "url": "u/1"},
+                                              {"name": "Febrero.csv.zip", "url": "u/3"}]
+    assert dl.get_csv_download_links("2") == [{"name": "Ene_2024.zip", "url": "u/4"}]
+    assert dl.get_csv_download_links("3") == []
+    assert dl.get_csv_download_links("4") == []             # HTTP 404
+
+
+def test_metadata_se_guarda_y_se_reutiliza(tmp_path):
+    dl = GEIHDownloader(base_dir=tmp_path)
+    dl.session = _ANDA({"/index.php/metadata/export/819/json": _Pagina(datos={"titulo": "GEIH 2024"})})
+    assert dl.fetch_metadata("2024", "819") == {"titulo": "GEIH 2024"}
+    assert dl.fetch_metadata("2024", "819") == {"titulo": "GEIH 2024"}
+    assert len(dl.session.pedidos) == 1                     # la segunda vez, del disco
+    assert dl.fetch_metadata("2025", "853") == {}           # HTTP 404: sigue sin metadata
+
+    eam = EAMDownloader(base_dir=tmp_path / "eam")
+    eam.session = _ANDA({"/index.php/metadata/export/491/json": _Pagina(datos={"titulo": "EAM"})})
+    eam.fetch_metadata("491")
+    eam.fetch_metadata("491")
+    assert len(eam.session.pedidos) == 1
+    assert json.loads((tmp_path / "eam" / "metadata" / "catalogo_491.json").read_text()) == {"titulo": "EAM"}
+
+
+def test_descubrir_catalogos_eam(tmp_path):
+    from dane_data.eam.downloader import EAM_KNOWN_CATALOGS
+
+    dl = EAMDownloader(base_dir=tmp_path)
+    dl.session = _ANDA({"/index.php/catalog/888/get-microdata": _modal(
+        ("EAM_2025.zip", "https://microdatos.dane.gov.co/x/1"), ("EAM_TIC_2025.zip", "u/2"))})
+    cat = dl.discover_catalogs()                            # los demás catálogos dan 404: se avisa y sigue
+    assert cat["2025"] == ("888", "EAM_2025.zip", "https://microdatos.dane.gov.co/x/1")
+    assert {k: v for k, v in cat.items() if k != "2025"} == EAM_KNOWN_CATALOGS
+
+
+@pytest.mark.parametrize("clase", [GEIHDownloader, EAMDownloader])
+def test_descarga_cancelada_no_deja_nada(tmp_path, sin_pausas_eam, clase):
+    from dane_data import DownloadCancelled
+
+    class Trozos(_Respuesta):
+        def iter_content(self, chunk_size):
+            yield from (self.cuerpo[:10], self.cuerpo[10:])
+
+    pedidos = iter([False, True])                           # cancelar después del primer trozo
+    dl = clase(base_dir=tmp_path, should_stop=lambda: next(pedidos))
+    dl.session = _Sesion(Trozos(_zip({"a.csv": "x" * 100})))
+    with pytest.raises(DownloadCancelled):
+        dl.download_file("u", tmp_path / "Enero.zip")
+    assert not list(tmp_path.glob("Enero.zip*"))
+
+
+@pytest.mark.parametrize("clase", [GEIHDownloader, EAMDownloader])
+def test_descarga_mas_corta_que_content_length_se_reintenta(tmp_path, sin_pausas_eam, clase):
+    cuerpo = _zip({"a.csv": "x"})
+    corta = _Respuesta(cuerpo[:-5])
+    corta.headers = {"content-length": str(len(cuerpo))}
+    dl = clase(base_dir=tmp_path)
+    dl.session = _Sesion(corta, _Respuesta(cuerpo, con_tamano=True))
+    assert dl.download_file("u", tmp_path / "Enero.zip")
+    assert dl.session.pedidos == 2
+    assert (tmp_path / "Enero.zip").read_bytes() == cuerpo
+
+
 class FakeEAMDownloader(EAMDownloader):
     def __init__(self, paquetes: dict, **kw):
         super().__init__(**kw)
