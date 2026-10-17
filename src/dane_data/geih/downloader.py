@@ -33,7 +33,7 @@ from urllib.parse import urljoin
 import requests
 from bs4 import BeautifulSoup
 
-from .._hooks import ProgressMixin
+from .._hooks import ProgressMixin, extraer_miembro, ya_extraido
 from .loader import EXTENSIONES, _pick_files, MesGEIH, month_from_folder
 
 MARCADOR = ".dane_data_ok"  # se escribe tras una extracción exitosa
@@ -538,12 +538,8 @@ class GEIHDownloader(ProgressMixin):
                 clean_filename = sanitize_member_name(member.filename)
                 target_file = dest_dir / clean_filename
 
-                if target_file.exists() and target_file.stat().st_size > 0:
-                    count += 1
-                    continue
-
-                with z_obj.open(member) as source, open(target_file, "wb") as dest:
-                    dest.write(source.read())
+                if not ya_extraido(member, target_file):
+                    extraer_miembro(z_obj, member, target_file)
                 count += 1
         return count
 

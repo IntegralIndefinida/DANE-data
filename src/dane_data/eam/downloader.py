@@ -45,7 +45,7 @@ from urllib.parse import urljoin
 import requests
 from bs4 import BeautifulSoup
 
-from .._hooks import ProgressMixin
+from .._hooks import ProgressMixin, extraer_miembro
 
 __version__ = "1.0.0"
 
@@ -279,10 +279,8 @@ class EAMDownloader(ProgressMixin):
                 csv_members = [m for m in members if m.filename.lower().endswith(".csv")]
                 if csv_members:
                     for m in csv_members:
-                        clean_name = sanitize_member_name(m.filename)
-                        target = dest_dir / clean_name
-                        with z.open(m) as src, open(target, "wb") as dst:
-                            dst.write(src.read())
+                        target = dest_dir / sanitize_member_name(m.filename)
+                        extraer_miembro(z, m, target)
                         extracted_files.append(target)
                     log.info(f"  → Extraído formato CSV: {[f.name for f in extracted_files]}")
                     return extracted_files
@@ -291,10 +289,8 @@ class EAMDownloader(ProgressMixin):
                 txt_members = [m for m in members if m.filename.lower().endswith(".txt")]
                 if txt_members:
                     for m in txt_members:
-                        clean_name = sanitize_member_name(m.filename)
-                        target = dest_dir / clean_name
-                        with z.open(m) as src, open(target, "wb") as dst:
-                            dst.write(src.read())
+                        target = dest_dir / sanitize_member_name(m.filename)
+                        extraer_miembro(z, m, target)
                         extracted_files.append(target)
                     log.info(f"  → Extraído formato TXT (alternativa al no haber CSV): {[f.name for f in extracted_files]}")
                     return extracted_files
@@ -307,18 +303,21 @@ class EAMDownloader(ProgressMixin):
                         txt_name = Path(clean_name).stem + ".txt"
                         target_txt = dest_dir / txt_name
 
+                        tmp_txt = target_txt.with_name(target_txt.name + ".part")
                         try:
                             import pandas as pd
                             dta_bytes = io.BytesIO(z.read(m))
                             df = pd.read_stata(dta_bytes)
-                            df.to_csv(target_txt, sep="\t", index=False)
+                            # Con otro nombre y renombrado al final: un TXT a medias daría el año por descargado
+                            df.to_csv(tmp_txt, sep="\t", index=False)
+                            tmp_txt.replace(target_txt)
                             extracted_files.append(target_txt)
                             log.info(f"  → Generado formato TXT tabulado a partir del archivo Stata .dta: {target_txt.name}")
                         except Exception as e:
+                            tmp_txt.unlink(missing_ok=True)
                             # Respaldo en caso de fallo de pandas: extraer directamente el .dta
                             target_dta = dest_dir / clean_name
-                            with z.open(m) as src, open(target_dta, "wb") as dst:
-                                dst.write(src.read())
+                            extraer_miembro(z, m, target_dta)
                             extracted_files.append(target_dta)
                             log.warning(f"  → Extraído .dta directamente por error al convertir a TXT: {e}")
 

@@ -8,6 +8,9 @@
   {dd}`geih.serie_frecuencias()`, un filtro de rango (`{"edad": (15, 28)}`) y uno de valores
   (`{"edad": [15, 28]}`) compartían la caché, así que el segundo devolvía el resultado del primero. Las
   cachés anteriores se recalculan solas.
+* Las descargas ya no dejan archivos a medias: si se interrumpe la extracción (Ctrl+C, disco lleno), el
+  archivo no queda con su nombre final, y un archivo de distinto tamaño que el del ZIP se vuelve a extraer.
+  Antes, la próxima descarga daba el mes o el año por completo con los datos cortados.
 
 ## 0.2.2 (15 de octubre de 2026)
 

@@ -86,6 +86,41 @@ def test_skip_uses_marker_then_reextracts_incomplete_legacy(tmp_path):
     assert (mes / "No ocupados.CSV").exists() and mes_completo(mes, TODOS)
 
 
+def test_extraccion_interrumpida_no_deja_archivos_a_medias(tmp_path, monkeypatch):
+    """Si la copia se corta, no queda el archivo con su nombre final (ni el .part) ni el marcador."""
+    import dane_data._hooks as hooks
+
+    original = hooks.shutil.copyfileobj
+
+    def cortar(src, dst, *a):
+        if "Ocupados" in getattr(dst, "name", "") and "No ocupados" not in dst.name:
+            dst.write(src.read(5))
+            raise OSError("disco lleno")
+        return original(src, dst, *a)
+
+    monkeypatch.setattr(hooks.shutil, "copyfileobj", cortar)
+    dl = FakeDownloader({"Marzo 2024.zip": _mes_2024()}, base_dir=tmp_path)
+    dl.process_year("2024", "819")
+    mes = tmp_path / "datos_csv" / "2024" / "Marzo 2024"
+    assert not (mes / "Ocupados.CSV").exists()
+    assert not list(mes.glob("*.part"))
+    assert not (mes / MARCADOR).exists()
+
+    monkeypatch.setattr(hooks.shutil, "copyfileobj", original)
+    dl.process_year("2024", "819")
+    assert (mes / "Ocupados.CSV").read_text() == MOD
+    assert mes_completo(mes, TODOS)
+
+
+def test_archivo_truncado_se_vuelve_a_extraer(tmp_path):
+    """Un CSV de distinto tamaño que en el ZIP no se da por extraído."""
+    mes = tmp_path / "datos_csv" / "2024" / "Marzo 2024"
+    mes.mkdir(parents=True)
+    (mes / "Ocupados.CSV").write_text(MOD[:10])
+    FakeDownloader({"Marzo 2024.zip": _mes_2024()}, base_dir=tmp_path).process_year("2024", "819")
+    assert (mes / "Ocupados.CSV").read_text() == MOD
+
+
 def test_marcador_registra_modulos(tmp_path):
     """Una descarga previa de solo Características no impide completar el mes después."""
     FakeDownloader({"Marzo 2024.zip": _mes_2024()}, base_dir=tmp_path,
@@ -190,6 +225,24 @@ class FakeEAMDownloader(EAMDownloader):
         self.descargas.append(url)
         dest_path.write_bytes(self.paquetes[url])
         return True
+
+
+def test_eam_conversion_dta_fallida_no_deja_txt(tmp_path, monkeypatch):
+    """Si falla la conversión del Stata a TXT, no queda un TXT a medias que daría el año por descargado."""
+    def falla(df, ruta, **kw):
+        open(ruta, "w").write("nordest\t")
+        raise OSError("disco lleno")
+
+    monkeypatch.setattr(pd.DataFrame, "to_csv", falla)
+    dta = io.BytesIO()
+    pd.DataFrame({"nordest": [1], "valagri": [10.0]}).to_stata(dta, write_index=False)
+    zip_path = tmp_path / "EAM_2024.zip"
+    zip_path.write_bytes(_zip({"EAM_2024.dta": dta.getvalue()}))
+    dl = EAMDownloader(base_dir=tmp_path)
+    destino = tmp_path / "datos" / "2024"
+    archivos = dl.extract_preferred_format(zip_path, destino)
+    assert [f.name for f in archivos] == ["EAM_2024.dta"]
+    assert sorted(f.name for f in destino.iterdir()) == ["EAM_2024.dta"]
 
 
 def test_eam_tic_en_anio_ya_descargado(tmp_path):
