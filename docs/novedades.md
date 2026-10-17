@@ -11,6 +11,8 @@
 * Las descargas ya no dejan archivos a medias: si se interrumpe la extracción (Ctrl+C, disco lleno), el
   archivo no queda con su nombre final, y un archivo de distinto tamaño que el del ZIP se vuelve a extraer.
   Antes, la próxima descarga daba el mes o el año por completo con los datos cortados.
+* Si un mes del paquete anual del empalme no se puede abrir, el año ya no queda marcado como completo:
+  la próxima descarga lo vuelve a intentar.
 
 ## 0.2.2 (15 de octubre de 2026)
 

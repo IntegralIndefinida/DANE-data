@@ -121,6 +121,28 @@ def test_archivo_truncado_se_vuelve_a_extraer(tmp_path):
     assert (mes / "Ocupados.CSV").read_text() == MOD
 
 
+def test_empalme_con_un_mes_ilegible_no_escribe_marcador(tmp_path):
+    """Un ZIP mensual dañado dentro del paquete anual: el año no queda como completo."""
+    mes = _zip({"Características generales (personas).CSV": CAR, "Ocupados.CSV": MOD,
+                "Fuerza de trabajo.CSV": MOD, "Desocupados.CSV": MOD})
+    nombres = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre",
+               "Octubre", "Noviembre", "Diciembre"]
+    danado = _zip({f"{i}. {m}.zip": (b"no es un zip" if m == "Marzo" else mes)
+                   for i, m in enumerate(nombres, start=1)})
+    modulos = ("caracteristicas", "ocupados", "fuerza_trabajo", "desocupados")
+    dl = FakeDownloader({"GEIH_Empalme_2016.zip": danado}, base_dir=tmp_path, is_empalme=True, modules=modulos)
+    dl.process_year("2016", "757")
+    anio = tmp_path / "datos_csv" / "2016"
+    assert (anio / "1. Enero" / "Ocupados.CSV").exists()
+    assert not (anio / MARCADOR).exists()
+
+    dl.paquetes["GEIH_Empalme_2016.zip"] = _zip({f"{i}. {m}.zip": mes for i, m in enumerate(nombres, start=1)})
+    (tmp_path / "raw_zips" / "2016" / "GEIH_Empalme_2016.zip").unlink()
+    dl.process_year("2016", "757")                      # se vuelve a intentar
+    assert len(dl.descargas) == 2
+    assert (anio / "3. Marzo" / "Ocupados.CSV").exists() and (anio / MARCADOR).exists()
+
+
 def test_marcador_registra_modulos(tmp_path):
     """Una descarga previa de solo Características no impide completar el mes después."""
     FakeDownloader({"Marzo 2024.zip": _mes_2024()}, base_dir=tmp_path,

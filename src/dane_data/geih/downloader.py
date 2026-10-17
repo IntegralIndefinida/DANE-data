@@ -509,7 +509,9 @@ class GEIHDownloader(ProgressMixin):
 
         return False
 
-    def _extract_from_zip(self, z_obj: zipfile.ZipFile, dest_dir: Path, extensiones=(".csv",)) -> int:
+    def _extract_from_zip(self, z_obj: zipfile.ZipFile, dest_dir: Path, extensiones=(".csv",),
+                          errores: list | None = None) -> int:
+        """Extrae los módulos pedidos (también de ZIPs anidados); los fallos se anotan en ``errores``."""
         count = 0
         for member in z_obj.infolist():
             if member.is_dir():
@@ -529,9 +531,11 @@ class GEIHDownloader(ProgressMixin):
                         else:
                             target_dest = dest_dir
                         target_dest.mkdir(parents=True, exist_ok=True)
-                        count += self._extract_from_zip(nested_z, target_dest, extensiones)
+                        count += self._extract_from_zip(nested_z, target_dest, extensiones, errores)
                 except Exception as e:
                     log.warning(f"Error abriendo ZIP anidado {member.filename}: {e}")
+                    if errores is not None:
+                        errores.append(f"{member.filename}: {e}")
                 continue
 
             if is_target_csv(member.filename, self.modules, extensiones):
@@ -543,7 +547,8 @@ class GEIHDownloader(ProgressMixin):
                 count += 1
         return count
 
-    def extract_requested_modules(self, zip_path: Path, dest_dir: Path, extensiones=(".csv",)) -> int:
+    def extract_requested_modules(self, zip_path: Path, dest_dir: Path, extensiones=(".csv",),
+                                  errores: list | None = None) -> int:
         """
         Inspecciona el archivo ZIP descargado y extrae EXCLUSIVAMENTE los archivos CSV
         de los módulos solicitados:
@@ -555,8 +560,12 @@ class GEIHDownloader(ProgressMixin):
         Conserva los identificadores de personas (DIRECTORIO, SECUENCIA_P, ORDEN)
         y geográficos (DPTO, MPIO, CLASE, AREA) ya incluidos en dichas tablas.
         Soporta además archivos ZIP anidados internamente (ej. CSV.zip o meses).
+        Si se pasa ``errores``, se le agregan los fallos (ZIP dañado, ZIP anidado ilegible...).
         """
+        if errores is None:
+            errores = []
         if not zip_path.exists():
+            errores.append(f"{zip_path.name}: no existe")
             return 0
 
         dest_dir.mkdir(parents=True, exist_ok=True)
@@ -564,13 +573,15 @@ class GEIHDownloader(ProgressMixin):
 
         try:
             with zipfile.ZipFile(zip_path, "r") as z:
-                extracted_count = self._extract_from_zip(z, dest_dir, extensiones)
+                extracted_count = self._extract_from_zip(z, dest_dir, extensiones, errores)
 
             log.info(f"  → Extraídos {extracted_count} CSVs de módulos solicitados desde {zip_path.name}")
         except zipfile.BadZipFile:
             log.error(f"El archivo {zip_path.name} está corrupto o no es un ZIP válido.")
+            errores.append(f"{zip_path.name}: ZIP dañado")
         except Exception as e:
             log.error(f"Error extrayendo módulos de {zip_path.name}: {e}")
+            errores.append(f"{zip_path.name}: {e}")
 
         return extracted_count
 
@@ -618,9 +629,15 @@ class GEIHDownloader(ProgressMixin):
 
                 success = self.download_file(item["url"], zip_dest)
                 if success and self.extract_csv:
-                    n = self.extract_requested_modules(zip_dest, year_csv_dir)
-                    if n:
+                    errores = []
+                    n = self.extract_requested_modules(zip_dest, year_csv_dir, errores=errores)
+                    # Con un mes ilegible el marcador daría el año por completo y ese mes no se
+                    # volvería a intentar: sin marcador, la próxima vez se revisa mes a mes.
+                    if n and not errores:
                         _escribir_marcador(year_csv_dir, item["name"], n, self.modules)
+                    elif errores:
+                        log.warning(f"Empalme {year}: extracción con errores ({'; '.join(errores)}). "
+                                    "Vuelva a descargar el año.")
                     if not self.keep_zips and zip_dest.exists():
                         zip_dest.unlink()
             else:
@@ -639,8 +656,10 @@ class GEIHDownloader(ProgressMixin):
 
                 success = self.download_file(item["url"], zip_dest)
                 if success and self.extract_csv:
-                    n = self.extract_requested_modules(zip_dest, month_csv_dir, (f".{item.get('formato', 'csv')}",))
-                    if n:
+                    errores = []
+                    n = self.extract_requested_modules(zip_dest, month_csv_dir, (f".{item.get('formato', 'csv')}",),
+                                                       errores=errores)
+                    if n and not errores:
                         _escribir_marcador(month_csv_dir, item["name"], n, self.modules)
                     falta = faltantes_mes(month_csv_dir, self.modules)
                     if falta:
