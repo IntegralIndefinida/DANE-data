@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Configuración del artefacto en SignPath (proyecto dane-data, en signpath.io: Project > Artifact
+     Configurations). El artefacto es el zip que sube actions/upload-artifact en release.yml, con el .exe
+     en la raíz; la versión la envía el release. -->
+<artifact-configuration xmlns="http://signpath.io/artifact-configuration/v1">
+  <parameters>
+    <parameter name="version" required="true" />
+  </parameters>
+  <zip-file>
+    <pe-file path="Abrir dane-data.exe" product-name="dane-data" product-version="${version}">
+      <authenticode-sign />
+    </pe-file>
+  </zip-file>
+</artifact-configuration>

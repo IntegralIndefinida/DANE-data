@@ -1,9 +1,10 @@
 # Al publicar una etiqueta de versión (p. ej. `git tag v0.1.0 && git push origin v0.1.0`):
 #   1. verifica que la etiqueta coincida con la versión de pyproject.toml y __init__.py,
 #   2. corre las pruebas,
-#   3. arma dane-data-<versión>.zip con la app y los lanzadores (sin tests/ ni .github/),
-#   4. crea el Release en GitHub con ese zip adjunto,
-#   5. publica el paquete en PyPI (Trusted Publishing, entorno `pypi`; sin token guardado).
+#   3. compila el lanzador de Windows (lanzador/compilar.sh) y lo firma con SignPath si está configurado,
+#   4. arma dane-data-<versión>.zip con la app y los lanzadores (sin tests/ ni .github/),
+#   5. crea el Release en GitHub con ese zip adjunto,
+#   6. publica el paquete en PyPI (Trusted Publishing, entorno `pypi`; sin token guardado).
 name: Release
 
 on:
@@ -12,6 +13,7 @@ on:
 
 permissions:
   contents: write
+  actions: read  # SignPath descarga de esta ejecución el lanzador sin firmar
 
 jobs:
   release:
@@ -26,17 +28,53 @@ jobs:
           INIT=$(grep -m1 '^__version__ = ' src/dane_data/__init__.py | cut -d'"' -f2)
           echo "etiqueta=${VERSION} pyproject=${PYPROJECT} __init__=${INIT}"
           test "${VERSION}" = "${PYPROJECT}" && test "${VERSION}" = "${INIT}"
+          echo "VERSION=${VERSION}" >> "$GITHUB_ENV"
 
       - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e  # v6.8.0
 
       - name: Pruebas
         run: uv run --extra dev --extra app pytest -q
 
+      - name: Compilar el lanzador de Windows
+        run: lanzador/compilar.sh "build/Abrir dane-data.exe"
+
+      # Firma con SignPath (certificado gratuito de SignPath Foundation para código abierto). Se activa al
+      # definir en el repositorio la variable SIGNPATH_ORGANIZATION_ID y el secreto SIGNPATH_API_TOKEN; sin
+      # ellos el .exe va sin firmar. Cada firma se aprueba a mano en signpath.io mientras este paso espera.
+      # La configuración del artefacto en SignPath es lanzador/signpath.xml.
+      - name: Subir el lanzador sin firmar
+        id: sin-firmar
+        if: vars.SIGNPATH_ORGANIZATION_ID != ''
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+        with:
+          name: lanzador-sin-firmar
+          path: build/Abrir dane-data.exe
+          if-no-files-found: error
+
+      - name: Firmar el lanzador
+        if: vars.SIGNPATH_ORGANIZATION_ID != ''
+        uses: signpath/github-action-submit-signing-request@f6d04783b4569d051e0c80105fe66e82819d0092  # v3.0
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG || 'dane-data' }}
+          signing-policy-slug: ${{ vars.SIGNPATH_POLICY_SLUG || 'release-signing' }}
+          github-artifact-id: ${{ steps.sin-firmar.outputs.artifact-id }}
+          wait-for-completion: true
+          wait-for-completion-timeout-in-seconds: 3600
+          output-artifact-directory: build/firmado
+          parameters: |
+            version: ${{ toJSON(env.VERSION) }}
+
+      - name: Usar el lanzador firmado
+        if: vars.SIGNPATH_ORGANIZATION_ID != ''
+        run: mv "build/firmado/Abrir dane-data.exe" "build/Abrir dane-data.exe"
+
       - name: Armar zip
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
           NOMBRE="dane-data-${VERSION}"
-          git archive --format=zip --prefix="${NOMBRE}/" -o "${NOMBRE}.zip" "${GITHUB_REF_NAME}"
+          git archive --format=zip --prefix="${NOMBRE}/" --add-file="build/Abrir dane-data.exe" \
+            -o "${NOMBRE}.zip" "${GITHUB_REF_NAME}"
           unzip -l "${NOMBRE}.zip"
           echo "ZIP=${NOMBRE}.zip" >> "$GITHUB_ENV"
 
