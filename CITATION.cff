@@ -13,8 +13,8 @@ abstract: >-
 authors:
   - family-names: Ramírez
     given-names: Luis
-version: 0.3.0
-date-released: "2026-10-17"
+version: 0.3.1
+date-released: "2026-10-19"
 license: MIT
 repository-code: "https://github.com/IntegralIndefinida/DANE-data"
 url: "https://integralindefinida.github.io/DANE-data/"

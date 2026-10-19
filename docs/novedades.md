@@ -1,6 +1,6 @@
 # Novedades
 
-## Sin publicar
+## 0.3.1 (19 de octubre de 2026)
 
 * Windows: el zip para estudiantes trae `Abrir dane-data.exe`, un lanzador que hace lo mismo que el `.bat`
   (que sigue en el zip) y que se puede firmar; Windows no firma archivos `.bat`. Vea la
