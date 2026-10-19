@@ -1,0 +1,43 @@
+# Cómo citar dane-data (https://citation-file-format.github.io). GitHub lo muestra como "Cite this
+# repository". Al publicar una versión, actualice version y date-released (release.yml verifica version).
+cff-version: 1.2.0
+message: >-
+  Si dane-data le sirvió en un trabajo, cítelo con estos datos. Cite también los microdatos del DANE que
+  usó (vea references).
+type: software
+title: "dane-data: microdatos del DANE (GEIH y EAM) listos para analizar"
+abstract: >-
+  Descarga, carga, armoniza y analiza los microdatos del DANE para Colombia: la Gran Encuesta Integrada de
+  Hogares (GEIH, 2007–2026 y el empalme 2010–2020) y la Encuesta Anual Manufacturera (EAM, 1992–2024).
+  Incluye una librería de Python, una línea de comandos y una aplicación de Streamlit para estudiantes.
+authors:
+  - family-names: Ramírez
+    given-names: Luis
+version: 0.3.0
+date-released: "2026-10-17"
+license: MIT
+repository-code: "https://github.com/IntegralIndefinida/DANE-data"
+url: "https://integralindefinida.github.io/DANE-data/"
+keywords:
+  - DANE
+  - GEIH
+  - EAM
+  - Colombia
+  - microdatos
+  - mercado laboral
+  - encuestas de hogares
+references:
+  - type: data
+    title: "Gran Encuesta Integrada de Hogares (GEIH)"
+    authors:
+      - name: "Departamento Administrativo Nacional de Estadística (DANE)"
+    publisher:
+      name: "Archivo Nacional de Datos (ANDA)"
+    url: "https://microdatos.dane.gov.co"
+  - type: data
+    title: "Encuesta Anual Manufacturera (EAM)"
+    authors:
+      - name: "Departamento Administrativo Nacional de Estadística (DANE)"
+    publisher:
+      name: "Archivo Nacional de Datos (ANDA)"
+    url: "https://microdatos.dane.gov.co"

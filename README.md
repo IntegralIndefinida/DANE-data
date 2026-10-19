@@ -273,3 +273,7 @@ Para desinstalar, vea [Desinstalar](https://integralindefinida.github.io/DANE-da
 
 Código: MIT. Datos: DANE, Archivo Nacional de Datos (ANDA). Cite como
 *DANE. Gran Encuesta Integrada de Hogares (GEIH) [microdatos]* / *Encuesta Anual Manufacturera (EAM) [microdatos]*.
+
+Si `dane-data` le sirvió en un trabajo, cítelo también: el botón *Cite this repository* de GitHub da la cita
+en APA y BibTeX (sale de [`CITATION.cff`](CITATION.cff)), y la página
+[Cómo citar](https://integralindefinida.github.io/DANE-data/citar.html) tiene los detalles.

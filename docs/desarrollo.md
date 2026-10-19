@@ -80,7 +80,8 @@ Cuando los datos contradicen lo que publica el DANE (diccionarios, etiquetas, no
 
 ## Publicar una versión
 
-1. Actualice la versión en `pyproject.toml` y en `src/dane_data/__init__.py`, y corra `uv lock`.
+1. Actualice la versión en `pyproject.toml`, en `src/dane_data/__init__.py` y en `CITATION.cff` (con
+   `date-released`), y corra `uv lock`.
 2. Escriba las notas en `.github/NOTAS_RELEASE.md` y en {doc}`novedades`.
 3. `git tag vX.Y.Z && git push origin vX.Y.Z`.
 

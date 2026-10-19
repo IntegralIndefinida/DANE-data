@@ -1,5 +1,5 @@
 # Al publicar una etiqueta de versión (p. ej. `git tag v0.1.0 && git push origin v0.1.0`):
-#   1. verifica que la etiqueta coincida con la versión de pyproject.toml y __init__.py,
+#   1. verifica que la etiqueta coincida con la versión de pyproject.toml, __init__.py y CITATION.cff,
 #   2. corre las pruebas,
 #   3. compila el lanzador de Windows (lanzador/compilar.sh) y lo firma con SignPath si está configurado,
 #   4. arma dane-data-<versión>.zip con la app y los lanzadores (sin tests/ ni .github/),
@@ -26,8 +26,9 @@ jobs:
           VERSION="${GITHUB_REF_NAME#v}"
           PYPROJECT=$(grep -m1 '^version = ' pyproject.toml | cut -d'"' -f2)
           INIT=$(grep -m1 '^__version__ = ' src/dane_data/__init__.py | cut -d'"' -f2)
-          echo "etiqueta=${VERSION} pyproject=${PYPROJECT} __init__=${INIT}"
-          test "${VERSION}" = "${PYPROJECT}" && test "${VERSION}" = "${INIT}"
+          CFF=$(grep -m1 '^version: ' CITATION.cff | cut -d' ' -f2)
+          echo "etiqueta=${VERSION} pyproject=${PYPROJECT} __init__=${INIT} CITATION.cff=${CFF}"
+          test "${VERSION}" = "${PYPROJECT}" && test "${VERSION}" = "${INIT}" && test "${VERSION}" = "${CFF}"
           echo "VERSION=${VERSION}" >> "$GITHUB_ENV"
 
       - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e  # v6.8.0

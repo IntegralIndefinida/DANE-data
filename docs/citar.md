@@ -12,7 +12,9 @@ Los microdatos son del DANE. Cite la encuesta y el catálogo del ANDA que usó:
 
 ## dane-data
 
-Si `dane-data` le sirvió en un trabajo, puede citarlo así:
+Si `dane-data` le sirvió en un trabajo, puede citarlo así. En GitHub, el botón *Cite this repository* da la
+misma cita en APA y BibTeX, tomada de
+[`CITATION.cff`](https://github.com/IntegralIndefinida/DANE-data/blob/main/CITATION.cff).
 
 > Ramírez, L. (2026). *dane-data: microdatos del DANE (GEIH y EAM) listos para analizar* (versión
 > {{ version }}) [software]. <https://github.com/IntegralIndefinida/DANE-data>
