@@ -41,7 +41,7 @@ Las cifras de la GEIH siguen coincidiendo mes a mes con los anexos del DANE (200
 1. Descargue **`dane-data-….zip`** (abajo, en *Assets*) — no el "Source code".
 2. Descomprímalo donde quiera (Documentos, Escritorio…).
 3. Doble clic en el lanzador de su sistema:
-   - **Windows:** `Abrir dane-data (Windows).bat`
+   - **Windows:** `Abrir dane-data.exe` (o `Abrir dane-data (Windows).bat`, que hace lo mismo)
    - **Mac:** `Abrir dane-data (Mac).command`
    - **Linux:** `abrir-dane-data.sh`
 
@@ -51,5 +51,7 @@ el navegador se abre solo. No hace falta tener Python instalado.
 **Avisos de seguridad la primera vez**
 - *Windows* puede mostrar "Windows protegió su PC": clic en **Más información → Ejecutar de todas formas**.
 - *Mac* puede decir que el archivo es de un desarrollador no identificado: **clic derecho → Abrir → Abrir**.
+
+El `.exe` de Windows se firma según la [Code signing policy (política de firma de código)](https://github.com/IntegralIndefinida/DANE-data#política-de-firma-de-código-code-signing-policy).
 
 **Si ya tiene Python:** `pip install "dane-data[app]"` y luego `dane-data app`.

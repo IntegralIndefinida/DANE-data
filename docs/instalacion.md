@@ -28,7 +28,7 @@ uvx --from "dane-data[app]" dane-data app    # o abrir la aplicación sin instal
 
    | Sistema | Archivo |
    |---|---|
-   | Windows | `Abrir dane-data (Windows).bat` |
+   | Windows | `Abrir dane-data.exe` (o `Abrir dane-data (Windows).bat`, que hace lo mismo) |
    | Mac | `Abrir dane-data (Mac).command` |
    | Linux | `abrir-dane-data.sh` |
 
@@ -38,7 +38,8 @@ dentro de la carpeta, sin tocar el resto del sistema. Las siguientes veces abre 
 se abre solo.
 
 En **Windows**, si aparece «Windows protegió su PC»: *Más información* → *Ejecutar de todas formas*. En
-**Mac**, si dice «desarrollador no identificado»: clic derecho → *Abrir* → *Abrir*.
+**Mac**, si dice «desarrollador no identificado»: clic derecho → *Abrir* → *Abrir*. El `.exe` de Windows
+se firma según la [política de firma de código](https://github.com/IntegralIndefinida/DANE-data#política-de-firma-de-código-code-signing-policy).
 :::
 
 :::{tab-item} Para desarrollo
@@ -83,3 +84,20 @@ pip install --upgrade "dane-data[app]"
 
 Los cambios de cada versión están en {doc}`novedades`. Los resultados guardados en caché se recalculan solos
 con la versión nueva.
+
+## Desinstalar
+
+* Con pip: `pip uninstall dane-data`.
+* Con el zip para estudiantes: borre la carpeta del zip (incluye el entorno `.venv/`). Si no usa uv para
+  nada más, bórrelo también. En Windows, en PowerShell:
+
+  ```powershell
+  & "$env:USERPROFILE\.local\bin\uv.exe" cache clean
+  & "$env:USERPROFILE\.local\bin\uv.exe" python uninstall --all
+  Remove-Item "$env:USERPROFILE\.local\bin\uv*.exe"
+  ```
+
+  En Mac y Linux: `~/.local/bin/uv cache clean`, `~/.local/bin/uv python uninstall --all` y
+  `rm ~/.local/bin/uv ~/.local/bin/uvx`.
+* Los datos descargados, las cachés y la configuración no se borran solos. Están en su carpeta de usuario:
+  `dane_data_datos/` (la carpeta de datos por defecto), `.cache/dane_data/` y `.config/dane_data/`.

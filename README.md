@@ -26,7 +26,7 @@ indicadores ponderados como lo hace el DANE.
 
    | Sistema | Archivo |
    |---|---|
-   | Windows | `Abrir dane-data (Windows).bat` |
+   | Windows | `Abrir dane-data.exe` (o `Abrir dane-data (Windows).bat`, que hace lo mismo) |
    | Mac | `Abrir dane-data (Mac).command` |
    | Linux | `abrir-dane-data.sh` |
 
@@ -37,6 +37,8 @@ app basta cerrar la ventana de la terminal.
 
 > Primera vez en **Windows**: si aparece "Windows protegió su PC" → *Más información* → *Ejecutar de todas
 > formas*. En **Mac**: si dice "desarrollador no identificado" → clic derecho → *Abrir* → *Abrir*.
+
+El `.exe` de Windows se firma según la [política de firma de código](#política-de-firma-de-código-code-signing-policy).
 
 ## Instalación con pip
 
@@ -234,6 +236,38 @@ src/dane_data/
 
 Los descargadores provienen de los repositorios `GEIH` y `EAM` originales; se adaptaron para reportar
 progreso y permitir cancelar.
+
+## Política de firma de código (Code signing policy)
+
+Free code signing provided by [SignPath.io](https://about.signpath.io), certificate by
+[SignPath Foundation](https://signpath.org).
+
+El lanzador de Windows `Abrir dane-data.exe` se compila en GitHub Actions desde el código de este
+repositorio ([`lanzador/`](lanzador/), con [`release.yml`](.github/workflows/release.yml)) y se firma con
+el certificado de SignPath Foundation, que aparece como editor. Solo se firma lo que se compila aquí, y
+cada firma se aprueba a mano. Mientras SignPath Foundation revisa el proyecto, el `.exe` se publica sin
+firma.
+
+| Rol | Quién |
+|---|---|
+| Autores (cambian el código sin otra revisión) | [IntegralIndefinida](https://github.com/IntegralIndefinida) |
+| Revisores (revisan los *pull requests* de otras personas) | [IntegralIndefinida](https://github.com/IntegralIndefinida) |
+| Aprobadores (aprueban cada firma) | [IntegralIndefinida](https://github.com/IntegralIndefinida) |
+
+**Privacidad.** This program will not transfer any information to other networked systems unless
+specifically requested by the user or the person installing or operating it. En concreto, solo se conecta
+a internet para lo siguiente:
+
+- El lanzador, la primera vez, instala [uv](https://docs.astral.sh/uv/) desde `astral.sh` en
+  `%USERPROFILE%\.local\bin`, sin cambiar el `PATH` del usuario. uv descarga Python y las librerías de
+  `uv.lock` (desde GitHub y PyPI): Python y la caché quedan en las carpetas de uv del usuario, y el entorno
+  en `.venv/`, dentro de la carpeta del zip.
+- La app y la librería descargan los microdatos del ANDA del DANE (`microdatos.dane.gov.co`) solo cuando
+  usted lo pide.
+- La app usa [Streamlit](https://streamlit.io) con las estadísticas de uso desactivadas
+  (`gatherUsageStats = false`) y, salvo que se pida `--address`, solo abre su servidor en este computador.
+
+Para desinstalar, vea [Desinstalar](https://integralindefinida.github.io/DANE-data/instalacion.html#desinstalar).
 
 ## Licencia y cita
 

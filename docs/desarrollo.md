@@ -84,5 +84,18 @@ Cuando los datos contradicen lo que publica el DANE (diccionarios, etiquetas, no
 2. Escriba las notas en `.github/NOTAS_RELEASE.md` y en {doc}`novedades`.
 3. `git tag vX.Y.Z && git push origin vX.Y.Z`.
 
-El flujo de GitHub Actions corre las pruebas, crea la versión en GitHub con el zip para estudiantes y
-publica el paquete en PyPI.
+El flujo de GitHub Actions corre las pruebas, compila el lanzador de Windows, crea la versión en GitHub con
+el zip para estudiantes y publica el paquete en PyPI.
+
+### El lanzador de Windows
+
+`Abrir dane-data.exe` es un programa corto en C (`lanzador/lanzador.c`) que hace lo mismo que el `.bat`.
+`lanzador/compilar.sh` lo compila desde Linux o macOS con zig, que uv descarga de PyPI; la versión del
+ejecutable sale de `pyproject.toml`. Para probarlo sin Windows sirve [Wine](https://www.winehq.org).
+
+El release lo firma con [SignPath](https://signpath.org) (certificado gratuito de SignPath Foundation para
+proyectos de código abierto) cuando el repositorio tiene la variable `SIGNPATH_ORGANIZATION_ID` y el
+secreto `SIGNPATH_API_TOKEN`; sin ellos el `.exe` va sin firmar. Si el proyecto o la política de firma de
+SignPath no se llaman `dane-data` y `release-signing`, defina también `SIGNPATH_PROJECT_SLUG` y
+`SIGNPATH_POLICY_SLUG`. La configuración del artefacto en SignPath es `lanzador/signpath.xml`. Cada firma
+se aprueba a mano en signpath.io mientras el release espera (hasta una hora).
