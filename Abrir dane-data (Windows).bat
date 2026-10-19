@@ -15,6 +15,8 @@ if not errorlevel 1 goto preparar
 
 echo.
 echo Primera vez: instalando el asistente uv, unos segundos...
+rem Sin tocar el PATH del usuario: este lanzador agrega %USERPROFILE%\.local\bin solo para si mismo.
+set "UV_NO_MODIFY_PATH=1"
 powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://astral.sh/uv/install.ps1 | iex"
 where uv >nul 2>nul
 if not errorlevel 1 goto preparar
