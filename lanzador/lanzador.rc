@@ -1,0 +1,35 @@
+// Recursos del lanzador: ícono, manifiesto y datos de versión (Propiedades > Detalles en Windows).
+// version.h lo genera compilar.sh desde pyproject.toml.
+#include <winver.h>
+#include "version.h"
+
+1 ICON "dane-data.ico"
+1 24 "lanzador.manifest"
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION     VERSION_NUMEROS
+PRODUCTVERSION  VERSION_NUMEROS
+FILEFLAGSMASK   VS_FFI_FILEFLAGSMASK
+FILEFLAGS       0
+FILEOS          VOS_NT_WINDOWS32
+FILETYPE        VFT_APP
+FILESUBTYPE     0
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "0C0A04B0"
+        BEGIN
+            VALUE "FileDescription",  "dane-data - Microdatos del DANE"
+            VALUE "FileVersion",      VERSION_TEXTO
+            VALUE "InternalName",     "lanzador"
+            VALUE "LegalCopyright",   "Copyright (c) 2026 Luis Ramirez. Licencia MIT."
+            VALUE "OriginalFilename", "Abrir dane-data.exe"
+            VALUE "ProductName",      "dane-data"
+            VALUE "ProductVersion",   VERSION_TEXTO
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x0C0A, 1200
+    END
+END
