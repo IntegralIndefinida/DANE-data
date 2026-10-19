@@ -84,3 +84,9 @@ st.caption(
     "Fuente: DANE — Archivo Nacional de Datos (ANDA), microdatos anonimizados de uso público. "
     "Cite: *DANE, Gran Encuesta Integrada de Hogares (GEIH)* / *Encuesta Anual Manufacturera (EAM)*."
 )
+st.caption(
+    "Si dane-data le sirvió, cítelo también: Ramírez, L. (2026). *dane-data: microdatos del DANE (GEIH y EAM) "
+    f"listos para analizar* (versión {dd.__version__}) [software]. "
+    "https://github.com/IntegralIndefinida/DANE-data · "
+    "[BibTeX y más](https://integralindefinida.github.io/DANE-data/citar.html)"
+)

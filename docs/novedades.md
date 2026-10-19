@@ -8,7 +8,7 @@
 * Los lanzadores de Windows instalan uv sin cambiar el `PATH` del usuario.
 * Nueva sección [Desinstalar](instalacion.md#desinstalar) en la instalación.
 * El repositorio trae `CITATION.cff`: en GitHub, *Cite this repository* da la cita de `dane-data` en APA y
-  BibTeX (vea {doc}`citar`).
+  BibTeX (vea {doc}`citar`). La página de inicio de la aplicación y el README también muestran cómo citarlo.
 
 ## 0.3.0 (17 de octubre de 2026)
 
