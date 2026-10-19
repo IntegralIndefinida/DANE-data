@@ -36,6 +36,12 @@ st.markdown(
     "3. **Exporte:** cada tabla se descarga en CSV, Excel o Stata. Cada página muestra el "
     "**código Python** equivalente para pasar a un notebook cuando esté listo."
 )
+st.info(
+    "**¿Usa dane-data en una tesis, un trabajo o un artículo?** Por favor cítelo, junto con los datos del "
+    "DANE: así otras personas lo encuentran y el proyecto puede seguir creciendo. La cita lista para copiar "
+    "(APA y BibTeX) está en **📝 Cómo citar** (menú izquierdo).",
+    icon="🎓",
+)
 
 # ---------------------------------------------------------------- Estado de datos
 st.subheader("Datos disponibles en este computador")
@@ -83,10 +89,4 @@ st.divider()
 st.caption(
     "Fuente: DANE — Archivo Nacional de Datos (ANDA), microdatos anonimizados de uso público. "
     "Cite: *DANE, Gran Encuesta Integrada de Hogares (GEIH)* / *Encuesta Anual Manufacturera (EAM)*."
-)
-st.caption(
-    "Si dane-data le sirvió, cítelo también: Ramírez, L. (2026). *dane-data: microdatos del DANE (GEIH y EAM) "
-    f"listos para analizar* (versión {dd.__version__}) [software]. "
-    "https://github.com/IntegralIndefinida/DANE-data · "
-    "[BibTeX y más](https://integralindefinida.github.io/DANE-data/citar.html)"
 )

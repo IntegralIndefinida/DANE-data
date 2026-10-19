@@ -28,6 +28,14 @@ def test_descargar_toda_la_serie_eam(tmp_path, monkeypatch):
     assert pedidos == [dd.eam.ANIOS_DISPONIBLES]
 
 
+def test_citar_usa_la_version_instalada():
+    at = AppTest.from_file(str(PAGINAS / "citar.py")).run()
+    assert not at.exception
+    apa, bibtex = at.code[0].value, at.code[1].value
+    assert f"(versión {dd.__version__})" in apa
+    assert f"version = {{{dd.__version__}}}" in bibtex
+
+
 def test_inicio_guarda_solo_las_carpetas_cambiadas(tmp_path, monkeypatch):
     archivo = tmp_path / "config.json"
     monkeypatch.setattr(dd.config, "CONFIG_FILE", archivo)

@@ -17,6 +17,7 @@ paginas = {
     "Herramientas": [
         st.Page("paginas/descargar.py", title="Descargar datos", icon="⬇️"),
         st.Page("paginas/diccionario.py", title="Diccionario de variables", icon="📚"),
+        st.Page("paginas/citar.py", title="Cómo citar", icon="📝"),
     ],
 }
 st.navigation(paginas).run()
