@@ -8,6 +8,12 @@
   no: en 2024 la división 32 suma el 11,0 % del valor agregado en los microdatos y el 2,2 % en el anexo.
   Vea [Actividad anonimizada](guia/eam.md#actividad-anonimizada) y {doc}`guia/diferencias`. La aplicación
   lo advierte al desagregar por sector.
+* EAM: nuevas columnas `microagregado` y `grupo_microagregacion`. Cada año, los valores de 13–25 % de los
+  establecimientos (la mitad del valor agregado o más) son el promedio de un grupo de establecimientos,
+  casi siempre de 3, y no los propios. Sirven para agregados, no para análisis por planta. {dd}`eam.panel()`
+  avisa cuántos establecimientos del panel están microagregados y los quita con
+  `excluir_microagregados=True`; la página de panel de la aplicación tiene la misma opción. Vea
+  [Microagregación](guia/eam.md#microagregación).
 
 ## 0.3.1 (19 de octubre de 2026)
 

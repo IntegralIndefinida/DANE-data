@@ -21,6 +21,9 @@ GLOSARIO = {
     "Código de reserva": "Código CIIU residual («otras industrias manufactureras»: 3909, 3699 o 3290) con el que el "
                          "ANDA publica muchos establecimientos grandes para ocultar su actividad. Infla esa división y "
                          "subestima las demás; los totales no cambian.",
+    "Microagregación": "Anonimización que reemplaza los valores de un grupo de establecimientos (casi siempre 3) "
+                       "del mismo departamento y CIIU por el promedio del grupo. Conserva las sumas; la columna "
+                       "microagregado marca esos registros.",
 }
 
 
@@ -301,7 +304,8 @@ def deflactar(df: pd.DataFrame, columnas: Iterable[str], deflactor: pd.DataFrame
     return d
 
 
-def panel(df: pd.DataFrame, balanceado: bool = False, anios: Iterable[int] | None = None) -> pd.DataFrame:
+def panel(df: pd.DataFrame, balanceado: bool = False, anios: Iterable[int] | None = None,
+          excluir_microagregados: bool = False) -> pd.DataFrame:
     """
     Panel de establecimientos: una fila por establecimiento y año.
 
@@ -313,6 +317,10 @@ def panel(df: pd.DataFrame, balanceado: bool = False, anios: Iterable[int] | Non
         Conservar solo los establecimientos observados en todos los años de ``anios``.
     anios
         Años del panel. Por defecto, todos los de ``df``.
+    excluir_microagregados
+        Quitar los registros ``microagregado``, que traen el promedio de su grupo y no los valores del
+        establecimiento. Se quitan antes de balancear: con ``balanceado=True`` sale todo establecimiento
+        microagregado en alguno de los años.
 
     Devuelve
     --------
@@ -320,6 +328,17 @@ def panel(df: pd.DataFrame, balanceado: bool = False, anios: Iterable[int] | Non
         Indexado por (``nordest``, ``anio``) y ordenado, listo para modelos de panel (por ejemplo
         ``linearmodels.PanelOLS``). Si un establecimiento aparece dos veces en un año, se conserva la
         primera.
+
+    Lanza
+    -----
+    ValueError
+        Si ``excluir_microagregados=True`` y ``df`` no tiene la columna ``microagregado`` (la agrega
+        ``load`` con ``harmonize_vars=True``).
+
+    Avisos
+    ------
+    UserWarning
+        Si en el panel quedan establecimientos con registros microagregados.
 
     Véase también
     -------------
@@ -329,6 +348,11 @@ def panel(df: pd.DataFrame, balanceado: bool = False, anios: Iterable[int] | Non
     -----
     La anonimización del ANDA puede cambiar los identificadores entre catálogos; revise la persistencia
     con ``supervivencia`` antes de usar un panel largo.
+
+    Además, cada año el ANDA reemplaza los valores de 13–25 % de los establecimientos, que suman la mitad
+    del valor agregado o más, por el promedio de su grupo (vea ``harmonize``). Las sumas no cambian, pero
+    para análisis por establecimiento (productividad, funciones de producción, efectos fijos) excluya esos
+    registros o contrólelos con la columna ``microagregado``.
 
     Ejemplos
     --------
@@ -347,10 +371,21 @@ def panel(df: pd.DataFrame, balanceado: bool = False, anios: Iterable[int] | Non
     d = df.dropna(subset=["nordest"]).copy()
     anios = sorted(set(anios) if anios is not None else d["anio"].unique())
     d = d[d["anio"].isin(anios)]
+    if excluir_microagregados:
+        if "microagregado" not in d.columns:
+            raise ValueError("excluir_microagregados=True necesita la columna microagregado: cargue con "
+                             "dd.eam.load(..., harmonize_vars=True).")
+        d = d[~d["microagregado"].astype(bool)]
     d = d.drop_duplicates(subset=["nordest", "anio"])
     if balanceado:
         n = d.groupby("nordest")["anio"].nunique()
         d = d[d["nordest"].isin(n[n == len(anios)].index)]
+    if "microagregado" in d.columns and d["microagregado"].any():
+        import warnings
+        micro = d.loc[d["microagregado"].astype(bool), "nordest"].nunique()
+        warnings.warn(f"{micro} de {d['nordest'].nunique()} establecimientos del panel tienen algún año con valores "
+                      "microagregados (el promedio de su grupo, no los propios). Para análisis por establecimiento "
+                      "use excluir_microagregados=True o controle con la columna microagregado.", stacklevel=2)
     return d.set_index(["nordest", "anio"]).sort_index()
 
 

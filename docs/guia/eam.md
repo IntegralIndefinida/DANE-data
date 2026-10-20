@@ -5,7 +5,7 @@
 ```python
 >>> eam = dd.eam.load(range(2012, 2025))
 >>> eam.shape
-(104010, 30)
+(104010, 32)
 >>> eam[["anio", "ciiu", "ciiu_rev", "division", "sector", "departamento"]].head(3)
 ```
 
@@ -21,6 +21,8 @@ minúscula y agrega:
 | `division` | Los dos primeros dígitos del código |
 | `sector` | Nombre de la división (de `dd.eam.SECTORES`) |
 | `departamento` | Nombre del departamento |
+| `microagregado` | Si los valores del registro son el promedio de un grupo de establecimientos: vea [Microagregación](#microagregación) |
+| `grupo_microagregacion` | Número del grupo dentro del año (vacío si no está microagregado) |
 
 ## Variables
 
@@ -157,7 +159,8 @@ eam_real = dd.eam.deflactar(eam, ["valagri", "prodbr2"], ipp)          # agrega 
 ```
 
 Con `balanceado=True` solo quedan los establecimientos presentes en todos los años: aquí, 5 428 plantas
-observadas de 2012 a 2024.
+observadas de 2012 a 2024. `panel` avisa además cuántas tienen valores microagregados (vea
+[Microagregación](#microagregación)).
 
 Antes de armar un panel largo revise que los identificadores se mantengan. El ANDA anonimiza cada catálogo
 y los identificadores pueden cambiar entre años; {dd}`eam.supervivencia()` muestra cuántos
@@ -173,3 +176,33 @@ establecimientos de cada año reaparecen al siguiente:
 ```
 
 Una caída brusca de `pct_siguen` suele indicar un cambio de identificadores, no el cierre de plantas.
+
+### Microagregación
+
+Cada año, los valores de 13–25 % de los establecimientos no son los propios: son el **promedio de un grupo**
+de establecimientos, casi siempre de 3, del mismo departamento y CIIU. Son sobre todo plantas grandes,
+así que suman entre la mitad y tres cuartas partes del valor agregado del año. Los catálogos del ANDA no lo
+mencionan; se reconoce porque los miembros de un grupo comparten exactamente la producción, el consumo
+intermedio, el valor agregado, el personal, los salarios, los activos y la energía. Además, en 1998, 1999,
+2002 y 2006 los únicos montos con decimales, fracciones como ,6666667 (tercios), son de estos registros.
+Las sumas no cambian, así que los totales coinciden con los del DANE. Es una deducción de los datos que el
+DANE no ha confirmado.
+
+`load` marca esos registros en `microagregado` y numera su grupo en `grupo_microagregacion`. Sirven para
+agregados; para análisis por establecimiento (productividad, funciones de producción, efectos fijos),
+exclúyalos o contrólelos. {dd}`eam.panel()` avisa cuántos hay:
+
+```python
+>>> panel = dd.eam.panel(eam, balanceado=True)
+UserWarning: 2208 de 5428 establecimientos del panel tienen algún año con valores microagregados (el
+promedio de su grupo, no los propios). Para análisis por establecimiento use excluir_microagregados=True o
+controle con la columna microagregado.
+>>> sin_micro = dd.eam.panel(eam, balanceado=True, excluir_microagregados=True)
+>>> sin_micro.index.get_level_values("nordest").nunique()
+3220
+```
+
+`excluir_microagregados=True` quita los registros, no los establecimientos: en un panel no balanceado, una
+planta microagregada en un solo año conserva los demás. En uno balanceado, como aquí, sale toda planta
+microagregada en alguno de los años. Excluirlos deja fuera a la mayoría de las plantas grandes: compare los
+resultados con y sin ellas.

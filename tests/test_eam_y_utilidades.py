@@ -52,6 +52,40 @@ def test_eam_load_harmonizes(eam_root):
     assert not any(c.startswith("ciiu") and c not in ("ciiu", "ciiu_rev") for c in eam.columns)
 
 
+def test_eam_microagregacion(tmp_path):
+    """Grupos con los mismos montos, departamento y CIIU, aunque difieran las ventas; no los que solo coinciden en ceros."""
+    archivo = tmp_path / "datos" / "2024" / "EAM_2024.csv"
+    archivo.parent.mkdir(parents=True)
+    archivo.write_text(
+        "nordemp;nordest;dpto;ciiu4;valagri;prodbr2;pertotal;valorven\n"
+        "1;10;5;1104;100,5;200;30;150\n2;11;5;1104;100,5;200;30;151\n3;12;5;1104;100,5;200;30;150\n"
+        "4;13;8;1104;100,5;200;30;150\n"            # mismo monto en otro departamento: no es del grupo
+        "5;14;5;1011;7;9;2;8\n6;15;5;1011;7;9;2;8\n"  # otro grupo
+        "7;16;5;1011;0;0;0;0\n8;17;5;1011;0;0;0;0\n"  # sin datos
+        "9;18;5;1011;7;9;3;8\n",
+        encoding="utf-8")
+    eam = dd.eam.load(root=tmp_path).set_index("nordest")
+    assert eam.loc[eam["microagregado"]].index.tolist() == [10, 11, 12, 14, 15]
+    grupo = eam["grupo_microagregacion"]
+    assert grupo[10] == grupo[11] == grupo[12] != grupo[14] == grupo[15]
+    assert grupo[[13, 16, 17, 18]].isna().all()
+
+
+def test_eam_panel_microagregados(eam_root):
+    eam = dd.eam.load(root=eam_root)
+    eam.loc[(eam["anio"] == 2016) & (eam["nordest"] == 10), "microagregado"] = True
+    with pytest.warns(UserWarning, match="1 de 3 establecimientos"):
+        dd.eam.panel(eam)
+    sin = dd.eam.panel(eam, excluir_microagregados=True)
+    assert (10, 2016) not in sin.index and (10, 2024) in sin.index      # se quita el registro, no la planta
+    with pytest.warns(UserWarning):
+        assert len(dd.eam.panel(eam, balanceado=True)) == 3
+    # sin su registro de 2016, la planta 10 ya no está en todos los años
+    assert dd.eam.panel(eam, balanceado=True, excluir_microagregados=True).empty
+    with pytest.raises(ValueError, match="microagregado"):
+        dd.eam.panel(eam.drop(columns="microagregado"), excluir_microagregados=True)
+
+
 def test_eam_resumen(eam_root):
     eam = dd.eam.load(root=eam_root)
     r = dd.eam.resumen(eam, por="anio").set_index("anio")

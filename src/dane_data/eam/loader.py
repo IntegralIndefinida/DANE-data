@@ -12,6 +12,9 @@ nombres en minúscula y agrega:
 * ``ciiu_rev``  revisión de la CIIU (2, 3 o 4) según la variable de origen.
 * ``division``  primeros 2 dígitos del CIIU y ``sector`` su nombre.
 * ``departamento`` nombre del departamento.
+* ``microagregado`` si los valores del registro son el promedio de un grupo de
+                establecimientos y no los propios; ``grupo_microagregacion``
+                numera el grupo dentro del año.
 
 Valores monetarios en **miles de pesos corrientes** (p. ej. el valor agregado
 total de 2024 suma ~1,48e11, es decir ~148 billones de pesos). Para comparar
@@ -106,6 +109,10 @@ SECTORES = {
 
 _CIIU_COL = re.compile(r"^ciiu(_?\d)?(n\d)?$")
 
+# Lo que no entra en la clave de la microagregación: identificadores, y las ventas, que a veces difieren
+# dentro de un grupo (1 de 541 grupos en 2024).
+_FUERA_DE_LA_CLAVE = {"nordemp", "nordest", "dpto", "periodo", "valorven"}
+
 
 def _root(root) -> Path:
     return Path(root).expanduser() if root is not None else config.get_path("eam")
@@ -198,6 +205,27 @@ def _ciiu_rev(colname: str, anio: int) -> int:
     return 2 if anio <= 2000 else 3 if anio <= 2011 else 4
 
 
+def _microagregacion(df: pd.DataFrame) -> tuple[pd.Series, pd.Series]:
+    """
+    ``(microagregado, grupo_microagregacion)``. El ANDA reemplaza los valores de grupos de establecimientos
+    del mismo departamento y CIIU por el promedio del grupo (deducido de los datos; el DANE no lo documenta,
+    ver README). Se reconocen porque comparten todos los montos de ``CORE`` que haya, salvo las ventas.
+    """
+    montos = [c for c in CORE if c in df.columns and c not in _FUERA_DE_LA_CLAVE]
+    if not montos:
+        return pd.Series(False, index=df.index), pd.Series(pd.NA, index=df.index, dtype="Int64")
+    clave = df[montos].apply(pd.to_numeric, errors="coerce")
+    for c in ("dpto", "ciiu"):
+        if c in df.columns:
+            clave[f"_{c}"] = df[c]
+    n = clave.groupby(list(clave.columns), dropna=False).ngroup()
+    # Establecimientos distintos (un registro repetido no es un grupo) y con algún monto: plantas sin datos
+    # coinciden en ceros sin estar agrupadas.
+    plantas = df["nordest"] if "nordest" in df.columns else pd.Series(range(len(df)), index=df.index)
+    agrupado = (plantas.groupby(n).transform("nunique") > 1) & clave[montos].fillna(0).ne(0).any(axis=1)
+    return agrupado, n.where(agrupado).rank(method="dense").astype("Int64")
+
+
 def harmonize(df: pd.DataFrame, anio: int) -> pd.DataFrame:
     """
     Agrega las variables armonizadas a los datos de un año.
@@ -213,8 +241,10 @@ def harmonize(df: pd.DataFrame, anio: int) -> pd.DataFrame:
     --------
     DataFrame
         Una copia de ``df`` con ``anio``, ``ciiu`` (texto), ``ciiu_rev`` (2, 3 o 4), ``division`` (los dos
-        primeros dígitos), ``sector`` (nombre de la división, de ``SECTORES``) y ``departamento``. Las
-        columnas CIIU originales (``ciiu2``, ``ciiu3``, ``ciiu4``...) se reemplazan por ``ciiu``.
+        primeros dígitos), ``sector`` (nombre de la división, de ``SECTORES``),
+        ``departamento``, ``microagregado`` (True o False) y ``grupo_microagregacion`` (número del grupo
+        dentro del año; vacío si no está microagregado). Las columnas CIIU originales (``ciiu2``,
+        ``ciiu3``, ``ciiu4``...) se reemplazan por ``ciiu``.
 
     Véase también
     -------------
@@ -230,6 +260,12 @@ def harmonize(df: pd.DataFrame, anio: int) -> pd.DataFrame:
     actividad, con el código residual de la revisión («otras industrias manufactureras»: 3909 en la
     Rev. 2, 3699 en la Rev. 3, 3290 en la Rev. 4), así que su ``division`` puede no ser la real. El código
     se deja como lo publica el ANDA (ver README).
+
+    Además, el ANDA **microagrega**: reemplaza los valores de grupos de establecimientos (casi siempre 3)
+    del mismo departamento y CIIU por el promedio del grupo. ``microagregado`` marca los registros que
+    comparten exactamente todos los montos de ``CORE`` presentes, salvo las ventas (``valorven``), con otro
+    establecimiento del mismo departamento y CIIU. Es una deducción de los datos, que el DANE no ha
+    confirmado. Las sumas no cambian, pero esos valores no son los del establecimiento.
     """
     df = df.copy()
     ciiu_cols = [c for c in df.columns if _CIIU_COL.match(c)]
@@ -256,6 +292,7 @@ def harmonize(df: pd.DataFrame, anio: int) -> pd.DataFrame:
         df["departamento"] = pd.to_numeric(df["dpto"], errors="coerce").map(DEPARTAMENTOS)
     else:
         df["departamento"] = pd.NA
+    df["microagregado"], df["grupo_microagregacion"] = _microagregacion(df)
     df.insert(0, "anio", anio)
     return df
 
@@ -278,8 +315,8 @@ def load(
         ``"core"`` (las de ``CORE``, comparables entre años; por defecto), ``"all"`` o una lista de
         variables extra en minúscula o mayúscula, por ejemplo ``["c3r10c1", "c4r5c1"]``.
     harmonize_vars
-        Agregar ``ciiu``, ``ciiu_rev``, ``division``, ``sector`` y ``departamento``. Si False, solo
-        ``anio``.
+        Agregar ``ciiu``, ``ciiu_rev``, ``division``, ``sector``, ``departamento``, ``microagregado`` y
+        ``grupo_microagregacion``. Si False, solo ``anio``.
     root
         Carpeta raíz. Por defecto, la configurada.
     progress
@@ -309,7 +346,8 @@ def load(
     Los totales nacionales y por departamento coinciden con los anexos del DANE, pero la composición por
     división no: para anonimizar, el ANDA publica la actividad de muchos establecimientos grandes con el
     código residual (3909, 3699 o 3290), que queda inflado (vea ``harmonize``). Para la composición por
-    sector, use los anexos del DANE.
+    sector, use los anexos del DANE. Los registros ``microagregado`` traen el promedio de su grupo: sirven para
+    agregados, no para análisis por establecimiento.
 
     Ejemplos
     --------

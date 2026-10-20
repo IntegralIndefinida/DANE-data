@@ -1,3 +1,5 @@
+import warnings
+
 import streamlit as st
 
 import dane_data as dd
@@ -28,8 +30,20 @@ with tab1:
         grafico(linea(sup, x="anio", y="pct_siguen", titulo_y="% que reaparece al año siguiente", pct=True))
         st.caption("Caídas bruscas suelen indicar cambios de identificador o de cobertura, no cierres reales.")
     bal = st.toggle("Panel balanceado")
-    pan = dd.eam.panel(eam, balanceado=bal)
+    sin_micro = st.toggle(
+        "Excluir registros microagregados",
+        help="El ANDA reemplaza los valores de grupos de establecimientos (casi siempre 3) por el promedio del "
+             "grupo. Las sumas no cambian, pero esos valores no son los de cada planta: para análisis por "
+             "establecimiento conviene excluirlos.")
+    with warnings.catch_warnings():  # el aviso de dd.eam.panel se muestra abajo, en la página
+        warnings.simplefilter("ignore", UserWarning)
+        pan = dd.eam.panel(eam, balanceado=bal, excluir_microagregados=sin_micro)
     n_est = pan.index.get_level_values("nordest").nunique()
+    if not sin_micro and pan["microagregado"].any():
+        n_micro = pan.loc[pan["microagregado"], :].index.get_level_values("nordest").nunique()
+        st.info(f"ℹ️ {fmt_num(n_micro)} de {fmt_num(n_est)} establecimientos tienen algún año con valores "
+                "**microagregados** (el promedio de su grupo, no los propios). Sirven para sumas; para análisis "
+                "por establecimiento, exclúyalos o contrólelos con la columna `microagregado`.")
     c = st.columns(3)
     c[0].metric("Establecimientos", f"{n_est:,}".replace(",", "."))
     c[1].metric("Años", pan.index.get_level_values("anio").nunique())
@@ -42,7 +56,7 @@ with tab1:
 import dane_data as dd
 
 {params["carga"]}
-panel = dd.eam.panel(eam, balanceado={bal})   # índice (nordest, anio), listo para linearmodels/statsmodels
+panel = dd.eam.panel(eam, balanceado={bal}, excluir_microagregados={sin_micro})   # índice (nordest, anio)
 dd.eam.supervivencia(eam)
 ''')
 
