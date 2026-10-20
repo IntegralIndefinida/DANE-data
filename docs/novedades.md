@@ -1,5 +1,14 @@
 # Novedades
 
+## Sin publicar
+
+* Documentación de la EAM: nueva sección [Anonimización](guia/eam.md#anonimización-lo-que-los-totales-no-muestran)
+  en la guía, una advertencia metodológica y una fila en {doc}`guia/diferencias`. En 2012–2015 y 2018–2024 los
+  establecimientos bajo reserva traen CIIU 3290 («Otras manufacturas») en lugar de su actividad, lo que infla
+  esa división y subestima otras como bebidas; y entre 13 % y 25 % de los registros de cada año vienen en
+  grupos con valores idénticos, que sirven para agregados pero no para análisis por planta. Los totales por
+  año y por departamento no cambian.
+
 ## 0.3.1 (19 de octubre de 2026)
 
 * Windows: el zip para estudiantes trae `Abrir dane-data.exe`, un lanzador que hace lo mismo que el `.bat`

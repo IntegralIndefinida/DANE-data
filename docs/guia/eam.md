@@ -47,6 +47,80 @@ entre revisiones hace falta una tabla correlativa. Los totales de toda la indust
 La documentación del ANDA ubica los cambios de revisión en otros años; `dane-data` sigue lo que muestran
 los archivos (vea {doc}`diferencias`).
 
+## Anonimización: lo que los totales no muestran
+
+Los microdatos del ANDA están anonimizados por la reserva estadística (Ley 79 de 1993, art. 5). El DANE no
+publica la técnica, pero en los archivos se ven dos efectos. Ninguno cambia los totales de toda la
+industria ni los de cada departamento: en 2024 el valor agregado suma 148,27 billones de pesos y hay 6 583
+establecimientos, igual que en el boletín. Sí cambian los resultados por sector y por planta.
+
+### Actividad bajo reserva: CIIU 3290
+
+En 2012–2015 y 2018–2024 varios establecimientos aparecen con CIIU **3290** («Otras industrias
+manufactureras n.c.p.») en lugar de su actividad. En 2016–2017 la actividad se protege de otra forma: el
+código se publica truncado a 2 o 3 dígitos (`110`, `29`...), que conserva la división.
+
+| Años | Cómo se protege la actividad | Bebidas (% del valor agregado) | División 32 (% del valor agregado) |
+|---|---|---|---|
+| 2012–2015 | Código 3290 | 3,9–5,1 | 11,9–12,9 |
+| 2016–2017 | Código truncado a 2–3 dígitos | 10,0–10,3 | 3,3–3,8 |
+| 2018–2024 | Código 3290 | 4,2–5,8 | 9,3–14,2 |
+
+El boletín de 2024 da a bebidas el 9,7 % del valor agregado y no pone a «otras manufacturas» entre los
+grupos principales. Así, con `sector` o `division`:
+
+- «Otras manufacturas» queda inflada y bebidas subestimada, salvo en 2016–2017.
+- Las series por sector tienen saltos que no ocurrieron: la división 32 pasa de 3,4 a 13,4 billones de
+  pesos de valor agregado entre 2017 y 2018.
+- Un mismo establecimiento puede cambiar de sector. Los dos de la refinería de Cartagena (`nordest` 867619 y
+  981842) son 1921 (refinación) en 2014–2017 y 3290 desde 2018; en 2024 suman el 18 % de los activos fijos
+  de la industria. La de Barrancabermeja sigue como 1921.
+
+Para encontrar los establecimientos afectados en sus datos:
+
+```python
+eam = dd.eam.load(range(2012, 2025))
+truncado = eam["ciiu"].str.len() < 4
+# 3290 en algún año y otro código de 4 dígitos en otro: casi seguro bajo reserva
+otro = eam[(eam["ciiu"] != "3290") & ~truncado].groupby("nordest")["ciiu"].last()
+reservado = (eam["ciiu"] == "3290") & eam["nordest"].isin(otro.index)
+```
+
+Un establecimiento que siempre tuvo 3290 puede ser de otras manufacturas o estar bajo reserva todos los
+años; los datos no permiten distinguirlos. Para un análisis por sector, compare con los años 2016–2017 o
+con el boletín del DANE, y prefiera los resultados por departamento, que no se alteran.
+
+### Valores promediados en grupos de establecimientos
+
+En todos los años, entre 13 % y 25 % de los registros vienen en grupos (casi siempre de 3, a veces de 2 a 11)
+de establecimientos distintos que tienen **exactamente los mismos valores** en las variables numéricas
+(25 % en 2022–2024). Dentro de cada grupo el departamento y el CIIU son los mismos, pero `nordest` y casi
+siempre `nordemp` son distintos: no son duplicados. Los grupos se concentran en celdas pequeñas de
+departamento y actividad y en plantas grandes. Es el patrón de una microagregación: cada planta recibe el
+promedio de su grupo, lo que conserva las sumas. Algunos archivos lo delatan, porque traen valores como
+`83779570,6666667`, el promedio de tres números enteros. El DANE no lo ha confirmado.
+
+Consecuencias:
+
+- **Agregados** ({dd}`eam.resumen()`, {dd}`eam.participacion()`, totales por año, sector o departamento):
+  no se afectan.
+- **Análisis por planta** (productividad por establecimiento y su dispersión, funciones de producción,
+  markups, mala asignación): una cuarta parte de las plantas tiene el promedio de su grupo, así que la
+  varianza entre plantas queda subestimada y las estimaciones se sesgan.
+- **Panel y crecimiento por planta**: el valor de una planta agrupada cambia cuando cambian los otros
+  miembros de su grupo, de modo que su «crecimiento» mezcla plantas distintas. {dd}`eam.supervivencia()`
+  no se afecta: los identificadores son reales.
+
+Para marcar los registros agrupados:
+
+```python
+num = ["valagri", "prodbr2", "consin2", "pertotal", "activfi", "salpeyte", "eelec", "invebrta"]
+eam["grupo"] = eam.groupby(["anio", "dpto", "ciiu", *num], dropna=False).ngroup()
+eam["microagregado"] = (eam.groupby("grupo")["grupo"].transform("size") > 1) & eam["valagri"].fillna(0).ne(0)
+```
+
+y repita el análisis por planta sin ellos o con una variable que los identifique.
+
 ## Agregados industriales
 
 {dd}`eam.resumen()` suma los establecimientos de cada grupo y calcula los indicadores derivados:
@@ -134,3 +208,6 @@ establecimientos de cada año reaparecen al siguiente:
 ```
 
 Una caída brusca de `pct_siguen` suele indicar un cambio de identificadores, no el cierre de plantas.
+Además, hasta una de cada cuatro plantas trae el promedio de su grupo y no sus propios valores, y algunas cambian
+de sector por la reserva estadística: vea [Anonimización](#anonimización-lo-que-los-totales-no-muestran)
+antes de estimar con el panel.

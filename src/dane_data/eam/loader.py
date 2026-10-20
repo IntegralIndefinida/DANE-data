@@ -8,7 +8,8 @@ nombres en minúscula y agrega:
 
 * ``anio``      año de referencia.
 * ``ciiu``      código CIIU (texto; normalmente 4 dígitos, pero en algunos años
-                se publica a 2–3 dígitos por anonimización).
+                se publica a 2–3 dígitos por anonimización, y en 2012–2015 y
+                2018–2024 los establecimientos bajo reserva traen 3290).
 * ``ciiu_rev``  revisión de la CIIU (2, 3 o 4) según la variable de origen.
 * ``division``  primeros 2 dígitos del CIIU y ``sector`` su nombre.
 * ``departamento`` nombre del departamento.
@@ -224,7 +225,9 @@ def harmonize(df: pd.DataFrame, anio: int) -> pd.DataFrame:
     -----
     La revisión se deduce de la variable de origen (``ciiu2`` → Rev. 2, ``ciiu3`` → Rev. 3, ``ciiu4`` →
     Rev. 4). Algunos años publican el código a 2 o 3 dígitos por anonimización; los dos primeros son
-    siempre la división.
+    siempre la división. En 2012–2015 y 2018–2024 los establecimientos bajo reserva traen el código 3290
+    («Otras manufacturas») en lugar de su actividad: ``division`` y ``sector`` quedan mal para ellos, y
+    ``harmonize`` no lo corrige.
     """
     df = df.copy()
     ciiu_cols = [c for c in df.columns if _CIIU_COL.match(c)]
@@ -297,6 +300,11 @@ def load(
     -----
     La CIIU cambia de revisión: Rev. 2 hasta 2000, Rev. 3 en 2001–2011 y Rev. 4 desde 2012. Los
     ``sector`` de revisiones distintas no son comparables sin una correlativa.
+
+    Los microdatos están anonimizados. Los establecimientos bajo reserva traen CIIU 3290 en 2012–2015 y
+    2018–2024 (o un código truncado en 2016–2017), y entre 13 % y 25 % de los registros de cada año vienen
+    en grupos con valores idénticos, al parecer el promedio del grupo. Los totales por año y por
+    departamento no cambian; los resultados por sector y por planta sí. Vea la guía de la EAM.
 
     Ejemplos
     --------

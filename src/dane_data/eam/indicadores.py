@@ -327,6 +327,10 @@ def panel(df: pd.DataFrame, balanceado: bool = False, anios: Iterable[int] | Non
     La anonimización del ANDA puede cambiar los identificadores entre catálogos; revise la persistencia
     con ``supervivencia`` antes de usar un panel largo.
 
+    Entre 13 % y 25 % de los registros de cada año vienen en grupos de establecimientos con valores
+    idénticos, al parecer el promedio del grupo: el valor de esas plantas no es el suyo y su crecimiento
+    mezcla plantas distintas. Para análisis por planta, márquelos o exclúyalos (vea la guía de la EAM).
+
     Ejemplos
     --------
     >>> import pandas as pd
