@@ -294,13 +294,41 @@ def test_cache_temporales_con_nombre_unico(tmp_path, monkeypatch):
     assert [f.name for f in (tmp_path / "c").iterdir()] == ["a.parquet"]
 
 
+@pytest.mark.parametrize("dropna", [True, False])
 @pytest.mark.parametrize("anual", [True, False])
 @pytest.mark.parametrize("por", dd.geih.POR_PRECALCULADOS)
-def test_serie_indicadores_igual_a_indicadores(geih_root, tmp_path, monkeypatch, por, anual):
+def test_serie_indicadores_igual_a_indicadores(geih_root, tmp_path, monkeypatch, por, anual, dropna):
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
-    esperado = dd.geih.indicadores(dd.geih.load([2016, 2025], root=geih_root, cache=False), por=por, anual=anual)
-    serie = dd.geih.serie_indicadores([2016, 2025], por=por, anual=anual, root=geih_root)
+    df = dd.geih.load([2016, 2025], root=geih_root, cache=False)
+    esperado = dd.geih.indicadores(df, por=por, anual=anual, dropna=dropna)
+    serie = dd.geih.serie_indicadores([2016, 2025], por=por, anual=anual, root=geih_root, dropna=dropna)
     pd.testing.assert_frame_equal(serie, esperado)
+
+
+def test_serie_indicadores_sin_grupo_vacio(geih_root, tmp_path, monkeypatch):
+    """
+    Por defecto serie_indicadores deja fuera la fila de nivel educativo vacío (en los datos reales, los
+    menores fuera de la PET); indicadores la conserva para que los grupos sumen el total.
+    """
+    monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
+    mod = sys.modules["dane_data.geih.agregados"]
+    original = mod.load
+
+    def sin_educacion(*a, **k):
+        df = original(*a, **k)
+        df.loc[df["pet"] == 0, "nivel_educativo"] = None
+        return df
+
+    monkeypatch.setattr(mod, "load", sin_educacion)
+    df = sin_educacion(2016, root=geih_root, cache=False)
+    con_vacio = dd.geih.indicadores(df, por="nivel_educativo")
+    assert con_vacio["nivel_educativo"].isna().sum() == 1
+    assert con_vacio["n_muestra"].sum() == len(df)                  # los grupos suman el total
+    serie = dd.geih.serie_indicadores(2016, por="nivel_educativo", root=geih_root)
+    assert serie["nivel_educativo"].notna().all() and len(serie) == len(con_vacio) - 1
+    pd.testing.assert_frame_equal(serie, dd.geih.indicadores(df, por="nivel_educativo", dropna=True))
+    pd.testing.assert_frame_equal(
+        dd.geih.serie_indicadores(2016, por="nivel_educativo", root=geih_root, dropna=False), con_vacio)
 
 
 def test_serie_indicadores_usa_cache_y_se_invalida(geih_root, tmp_path, monkeypatch):
@@ -331,7 +359,7 @@ def test_serie_indicadores_con_filtros_y_meses(geih_root, tmp_path, monkeypatch)
     filtros = {"sexo": ["Mujer"], "edad": (20, 60)}
     df = dd.geih.filtrar(dd.geih.load([2016, 2025], months=[1], root=geih_root, cache=False), filtros)
     for por, anual in (("zona", True), (None, False)):
-        esperado = dd.geih.indicadores(df, por=por, anual=anual)
+        esperado = dd.geih.indicadores(df, por=por, anual=anual, dropna=True)
         serie = dd.geih.serie_indicadores([2016, 2025], por=por, anual=anual, root=geih_root, filtros=filtros,
                                           meses=[1])
         pd.testing.assert_frame_equal(serie, esperado)

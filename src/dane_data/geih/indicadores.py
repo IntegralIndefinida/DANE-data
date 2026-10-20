@@ -24,7 +24,8 @@ _COLUMNAS = ["pet", "fuerza_trabajo", "ocupados", "desocupados", "inactivos", "t
              "tasa_informalidad", "ingreso_medio", "ingreso_mediano", "n_muestra"]
 
 
-def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, anual: bool = True) -> pd.DataFrame:
+def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, anual: bool = True,
+                dropna: bool = False) -> pd.DataFrame:
     r"""
     Indicadores del mercado laboral, ponderados como los calcula el DANE.
 
@@ -40,6 +41,10 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, anual:
     anual
         Si True, un resultado por año: los niveles son el promedio de los meses del año. Si False, uno por
         mes.
+    dropna
+        Dejar fuera a las personas con valor vacío en alguna variable de ``por`` (por ejemplo, el
+        ``nivel_educativo`` de los menores que no responden educación). Si False, forman una fila con el
+        grupo vacío, y los grupos suman el total.
 
     Devuelve
     --------
@@ -129,7 +134,7 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, anual:
         "inactivos": np.where(es("inactivo"), w, 0.0),
         "informales": np.where(ocupado & (df["formal"].to_numpy("float64", na_value=np.nan) == 0), w, 0.0),
     }, index=df.index)
-    g = sumas.groupby([df[k] for k in keys], observed=True, dropna=False)
+    g = sumas.groupby([df[k] for k in keys], observed=True, dropna=dropna)
     res = g.sum()
     res["n_muestra"] = g.size()
     with np.errstate(divide="ignore", invalid="ignore"):
@@ -143,7 +148,7 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, anual:
     if con_ingreso.any():
         ocup = df.loc[con_ingreso, keys].assign(_y=ingreso[con_ingreso], _w=w[con_ingreso])
         # Solo _y y _w: con las columnas de grupo dentro, pandas 2 avisa que dejarán de pasarse a apply
-        gi = ocup.groupby(keys, observed=True, dropna=False)[["_y", "_w"]]
+        gi = ocup.groupby(keys, observed=True, dropna=dropna)[["_y", "_w"]]
         res["ingreso_medio"] = gi.apply(lambda x: weighted_mean(x["_y"], x["_w"]))
         res["ingreso_mediano"] = gi.apply(lambda x: weighted_quantile(x["_y"], x["_w"], 0.5))
     else:

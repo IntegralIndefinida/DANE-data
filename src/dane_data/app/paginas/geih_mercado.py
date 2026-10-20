@@ -84,8 +84,6 @@ por = DESAGREGAR[nombre_por]
 anual = frecuencia == "Anual"
 
 res = calcular(por, anual)
-if por:
-    res = res[res[por].notna()]
 if por:  # grupos sin dato (p. ej. 0–14 años no está en la PET)
     res = res[res.groupby(por, observed=True)[col].transform("count") > 0]
 if not anual:

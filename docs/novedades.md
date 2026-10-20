@@ -2,13 +2,22 @@
 
 ## Sin publicar
 
-* EAM: nueva advertencia sobre la composición por sector. Para anonimizar, el ANDA publica muchos
+**Al actualizar**
+
+* {dd}`geih.serie_indicadores()` ya no devuelve la fila del grupo vacío al desagregar con `por`. Con
+  `por="nivel_educativo"` esa fila juntaba a los menores que no responden educación: tenía una muestra
+  grande y casi nadie en la PET. Para conservarla, use `dropna=False`. {dd}`geih.indicadores()` tiene el
+  mismo parámetro, pero por defecto la sigue conservando, para que los grupos sumen el total.
+
+**EAM**
+
+* Nueva advertencia sobre la composición por sector. Para anonimizar, el ANDA publica muchos
   establecimientos grandes con el código residual «otras industrias manufactureras» (3909, 3699 o 3290) o
   con el código truncado a 2–3 dígitos. Los totales coinciden con el DANE, pero la composición por división
   no: en 2024 la división 32 suma el 11,0 % del valor agregado en los microdatos y el 2,2 % en el anexo.
   Vea [Actividad anonimizada](guia/eam.md#actividad-anonimizada) y {doc}`guia/diferencias`. La aplicación
   lo advierte al desagregar por sector.
-* EAM: nuevas columnas `microagregado` y `grupo_microagregacion`. Cada año, los valores de 13–25 % de los
+* Nuevas columnas `microagregado` y `grupo_microagregacion`. Cada año, los valores de 13–25 % de los
   establecimientos (la mitad del valor agregado o más) son el promedio de un grupo de establecimientos,
   casi siempre de 3, y no los propios. Sirven para agregados, no para análisis por planta. {dd}`eam.panel()`
   avisa cuántos establecimientos del panel están microagregados y los quita con

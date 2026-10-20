@@ -215,13 +215,14 @@ def serie_indicadores(
     progress=None,
     filtros: dict | None = None,
     meses: Iterable[int] | int | None = None,
+    dropna: bool = True,
 ) -> pd.DataFrame:
     """
     Indicadores del mercado laboral de muchos años, sin cargar los microdatos en memoria.
 
     Da exactamente lo mismo que
-    ``indicadores(filtrar(load(anios, months=meses), filtros), por=por, anual=anual)``, pero carga un
-    año a la vez y guarda el resultado de cada año en disco.
+    ``indicadores(filtrar(load(anios, months=meses), filtros), por=por, anual=anual, dropna=dropna)``,
+    pero carga un año a la vez y guarda el resultado de cada año en disco.
 
     Parámetros
     ----------
@@ -242,6 +243,10 @@ def serie_indicadores(
         Filtros con el formato de ``filtrar``, por ejemplo ``{"edad": (15, 28)}``.
     meses
         Mes o lista de meses de cada año. Por defecto, todos los que haya.
+    dropna
+        Dejar fuera la fila de las personas con ``por`` vacío (por ejemplo, el ``nivel_educativo`` de
+        los menores que no responden educación, casi todos fuera de la PET). Con False se conserva, como en
+        ``indicadores``, y los grupos suman el total.
 
     Devuelve
     --------
@@ -316,6 +321,8 @@ def serie_indicadores(
     if por:
         res[por] = res["grupo"].astype(CATEGORIAS[por])
         keys.append(por)
+        if dropna:  # la caché guarda también el grupo vacío: se quita aquí
+            res = res[res[por].notna()].reset_index(drop=True)
     return res[keys + _COLUMNAS]
 
 

@@ -19,7 +19,7 @@ laborales, `dd.geih.VARIABLES_INDICADORES` tiene justo lo que necesita {dd}`geih
 
 | Función | Equivale a |
 |---|---|
-| {dd}`geih.serie_indicadores()` | `indicadores(filtrar(load(anios), filtros), por, anual)` |
+| {dd}`geih.serie_indicadores()` | `indicadores(filtrar(load(anios), filtros), por, anual, dropna=True)` |
 | {dd}`geih.serie_tabla()` | `dd.tabla(filtrar(load(anios), filtros, poblacion), por, variable, estadistico)` |
 | {dd}`geih.serie_frecuencias()` | La distribución ponderada de una variable, de la que salen las dos anteriores |
 

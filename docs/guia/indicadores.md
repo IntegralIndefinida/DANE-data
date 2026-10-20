@@ -104,6 +104,10 @@ años en memoria: calcula cada año por separado y lo guarda en disco (vea {doc}
 1  Rural (centros poblados y disperso)  60.2  55.7   7.4               84.5
 ```
 
+Quien no tiene valor en la variable de `por` queda fuera: por ejemplo, el `nivel_educativo` de los menores
+que no responden educación, casi todos fuera de la PET. Con `dropna=False` forman una fila con el grupo
+vacío, como en {dd}`geih.indicadores()`, que los conserva por defecto para que los grupos sumen el total.
+
 ### Filtros
 
 `filtros` restringe la población antes de calcular, con el formato de {dd}`geih.filtrar()`: una lista de
