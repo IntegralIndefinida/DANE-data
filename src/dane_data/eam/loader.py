@@ -225,6 +225,11 @@ def harmonize(df: pd.DataFrame, anio: int) -> pd.DataFrame:
     La revisión se deduce de la variable de origen (``ciiu2`` → Rev. 2, ``ciiu3`` → Rev. 3, ``ciiu4`` →
     Rev. 4). Algunos años publican el código a 2 o 3 dígitos por anonimización; los dos primeros son
     siempre la división.
+
+    En los demás años, el ANDA anonimiza publicando muchos establecimientos grandes, de cualquier
+    actividad, con el código residual de la revisión («otras industrias manufactureras»: 3909 en la
+    Rev. 2, 3699 en la Rev. 3, 3290 en la Rev. 4), así que su ``division`` puede no ser la real. El código
+    se deja como lo publica el ANDA (ver README).
     """
     df = df.copy()
     ciiu_cols = [c for c in df.columns if _CIIU_COL.match(c)]
@@ -244,6 +249,9 @@ def harmonize(df: pd.DataFrame, anio: int) -> pd.DataFrame:
     df["division"] = df["ciiu"].str[:2]
     rev = df["ciiu_rev"].iloc[0] if len(df) else None
     df["sector"] = df["division"].map(SECTORES.get(rev, {}))
+    # Lo publicado como 3290 (o 3909, 3699) no siempre es esa clase, aunque el DDI la describe como una más: el
+    # ANDA esconde ahí la actividad de establecimientos grandes, y los anexos del DANE muestran muchos menos (ver
+    # README). Se deja así, sin marcarlos ni deducir su actividad, para no deshacer la anonimización.
     if "dpto" in df.columns:
         df["departamento"] = pd.to_numeric(df["dpto"], errors="coerce").map(DEPARTAMENTOS)
     else:
@@ -297,6 +305,11 @@ def load(
     -----
     La CIIU cambia de revisión: Rev. 2 hasta 2000, Rev. 3 en 2001–2011 y Rev. 4 desde 2012. Los
     ``sector`` de revisiones distintas no son comparables sin una correlativa.
+
+    Los totales nacionales y por departamento coinciden con los anexos del DANE, pero la composición por
+    división no: para anonimizar, el ANDA publica la actividad de muchos establecimientos grandes con el
+    código residual (3909, 3699 o 3290), que queda inflado (vea ``harmonize``). Para la composición por
+    sector, use los anexos del DANE.
 
     Ejemplos
     --------

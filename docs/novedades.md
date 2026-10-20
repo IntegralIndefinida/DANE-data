@@ -1,5 +1,14 @@
 # Novedades
 
+## Sin publicar
+
+* EAM: nueva advertencia sobre la composición por sector. Para anonimizar, el ANDA publica muchos
+  establecimientos grandes con el código residual «otras industrias manufactureras» (3909, 3699 o 3290) o
+  con el código truncado a 2–3 dígitos. Los totales coinciden con el DANE, pero la composición por división
+  no: en 2024 la división 32 suma el 11,0 % del valor agregado en los microdatos y el 2,2 % en el anexo.
+  Vea [Actividad anonimizada](guia/eam.md#actividad-anonimizada) y {doc}`guia/diferencias`. La aplicación
+  lo advierte al desagregar por sector.
+
 ## 0.3.1 (19 de octubre de 2026)
 
 * Windows: el zip para estudiantes trae `Abrir dane-data.exe`, un lanzador que hace lo mismo que el `.bat`

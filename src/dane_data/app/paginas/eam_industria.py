@@ -71,6 +71,12 @@ if por:
     if por == "sector" and revs > 1 and vista == "Evolución":
         st.warning("⚠️ Los años elegidos mezclan revisiones de la CIIU: los sectores cambian de definición y "
                    "las series se cortan. Elija años de una sola revisión (p. ej. 2012 en adelante).")
+    if por == "sector":
+        st.warning("⚠️ Para anonimizar, el ANDA publica muchos establecimientos grandes con el código residual "
+                   "«otras industrias manufactureras» (3290, 3699 o 3909): **Otras manufacturas** sale inflada y "
+                   "las demás divisiones, subestimadas (en 2024, bebidas suma 5,3 % del valor agregado frente a "
+                   "9,7 % en el anexo del DANE). En 2016–2017 el código se trunca y la división sí es la real, "
+                   "así que las series saltan. Para la composición por sector, use los anexos del DANE.")
 
 if vista == "Evolución":
     indice = False

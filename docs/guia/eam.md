@@ -47,6 +47,45 @@ entre revisiones hace falta una tabla correlativa. Los totales de toda la indust
 La documentación del ANDA ubica los cambios de revisión en otros años; `dane-data` sigue lo que muestran
 los archivos (vea {doc}`diferencias`).
 
+## Actividad anonimizada
+
+Los totales nacionales y por departamento de los microdatos coinciden con los anexos del DANE. La
+composición por actividad, no: para anonimizar, el ANDA publica muchos establecimientos, sobre todo los
+grandes, con el **código residual** de la revisión, «otras industrias manufactureras» (3909, 3699 o
+3290), o con el código **truncado** a 2 o 3 dígitos. Los catálogos no lo explican; se ve al comparar los
+microdatos con los anexos:
+
+| División, 2024 | Microdatos | Anexo del DANE |
+|---|---|---|
+| 11 Bebidas | 53 establecimientos, 5,3 % del valor agregado | 101 establecimientos, 9,7 % |
+| 19 Refinación de petróleo | 122, 2,6 % | 136, 3,8 % |
+| 24 Metalurgia básica | 125, 2,5 % | 138, 3,4 % |
+| 32 Otras manufacturas | 604, 11,0 % | 313, 2,2 % |
+| Total | 6 583 | 6 583 |
+
+Lo mismo pasa en las revisiones anteriores. En 1998 el anexo trae 8 refinerías y los microdatos ninguna; en
+2008–2011 el anexo trae 131–141 establecimientos en la clase 3699 (menos del 1 % de la producción) y los
+microdatos, 566–600 (20–23 %). Cada año usa una de las dos formas:
+
+| Años | Revisión | Anonimización | Registros con el código residual | Su parte del valor agregado |
+|---|---|---|---|---|
+| 1992–1994 | Rev. 2 | Truncado (1 922–2 163 registros, 31–37 % del valor agregado) | 84–125 con 3909 | 1,4–1,8 % |
+| 1995–2000 | Rev. 2 | Código residual 3909 | 476–532 | 15–20 % |
+| 2001–2011 | Rev. 3 | Código residual 3699 | 551–601 | 15–32 % |
+| 2012–2015 | Rev. 4 | Código residual 3290 | 550–614 | 11,5–12,5 % |
+| 2016–2017 | Rev. 4 | Truncado (1 039–1 135 registros, 23 % del valor agregado) | 409–455 con 3290 | 3,3–3,6 % |
+| 2018–2024 | Rev. 4 | Código residual 3290 | 495–530 | 8,8–13,8 % |
+
+Un código truncado conserva la división (los dos primeros dígitos), así que solo se pierde el detalle de
+grupo y clase. El código residual, en cambio, saca al establecimiento de su división: la división
+residual (39, 36 o 32) queda inflada y las demás, subestimadas. Por eso las participaciones por sector
+cambian bruscamente en 2016 (bebidas pasa de 4 % a 10 % del valor agregado y vuelve a 4 % en 2018).
+
+`dane-data` deja `ciiu` tal como lo publica el ANDA: no marca esos registros ni intenta deducir su
+actividad, porque eso desharía la anonimización del DANE. Para la composición por sector, use los anexos
+del DANE; con los microdatos, lea la división residual como inflada y las demás participaciones como
+mínimos. Los totales de la industria y de cada departamento no se ven afectados.
+
 ## Agregados industriales
 
 {dd}`eam.resumen()` suma los establecimientos de cada grupo y calcula los indicadores derivados:

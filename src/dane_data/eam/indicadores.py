@@ -18,6 +18,9 @@ GLOSARIO = {
     "Remuneración media": "(Salarios + prestaciones de permanentes y temporales) / empleados permanentes y temporales.",
     "Participación laboral": "Remuneraciones / valor agregado × 100: qué parte del valor agregado se paga al trabajo.",
     "Panel": "Seguimiento del mismo establecimiento (nordest) a través de los años.",
+    "Código de reserva": "Código CIIU residual («otras industrias manufactureras»: 3909, 3699 o 3290) con el que el "
+                         "ANDA publica muchos establecimientos grandes para ocultar su actividad. Infla esa división y "
+                         "subestima las demás; los totales no cambian.",
 }
 
 
