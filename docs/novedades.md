@@ -11,8 +11,8 @@
   subsidiado y a los beneficiarios, y como informales a los pensionados y a todos los independientes sin
   pensión. La medición necesita preguntas del cuestionario de 2022, así que antes de 2022 `formal` y
   `tasa_informalidad` quedan vacías; la guía de {doc}`guia/variables` explica cómo armar la aproximación
-  anterior para series largas. `load` lee 17 variables más del DANE, y la caché de cada mes se vuelve a
-  crear una vez.
+  anterior para series largas. `load` lee 17 variables más del DANE (en `float32`, para que ocupen la mitad
+  de memoria), y la caché de cada mes se vuelve a crear una vez.
 * Nueva columna `formal_marco2005` y nueva `tasa_informalidad_marco2005` en {dd}`geih.indicadores()` y
   {dd}`geih.serie_indicadores()`: la medición anterior del DANE (marco 2005, empresas de hasta 5 personas),
   para 2007–2021. Coincide con la que el DANE publicó para 13 y 23 ciudades en cada trimestre móvil de

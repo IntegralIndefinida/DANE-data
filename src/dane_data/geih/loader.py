@@ -43,6 +43,15 @@ log = logging.getLogger("dane_data.geih")
 KEYS_PERSONA = ["DIRECTORIO", "SECUENCIA_P", "ORDEN"]
 KEYS_HOGAR = ["DIRECTORIO", "SECUENCIA_P"]
 
+# Informalidad del DANE (cuestionario del marco 2018, desde 2022): ver _formal_dane
+# y la medición anterior (marco 2005, hasta 2021): ver _formal_marco2005.
+# Son códigos pequeños y cada una existe solo en unos años: load_month las deja en float32, que ocupa la
+# mitad (en float64 eran 6 a 11 MB de unos 30 por mes, y con muchos años juntos quedan vacías en los demás).
+_COMPACTAS = (
+    "P6870", "OFICIO",
+    "OFICIO_C8", "P3045S1", "P3046", "P3069", "P6765", "P3065", "P3066", "P3067", "P3067S1", "P3067S2",
+    "P6775", "P3068", "P6100", "P6110", "P6450", "P6930", "P6940",
+)
 # Variables originales que se leen siempre (si existen) para poder armonizar.
 CORE_RAW = [
     *KEYS_PERSONA, "HOGAR", "MES", "PERIODO", "DPTO", "AREA", "CLASE",
@@ -51,11 +60,7 @@ CORE_RAW = [
     "OCI", "DSI", "INI", "FFT", "FT", "PET", "PETI",
     "INGLABO", "P6090", "P6920", "P6430", "P6800",
     "RAMA2D", "RAMA2D_R4", "P6210", "P3042",
-    # Informalidad del DANE (cuestionario del marco 2018, desde 2022): ver _formal_dane
-    # y la medición anterior (marco 2005, hasta 2021): ver _formal_marco2005
-    "P6870", "OFICIO",
-    "OFICIO_C8", "P3045S1", "P3046", "P3069", "P6765", "P3065", "P3066", "P3067", "P3067S1", "P3067S2",
-    "P6775", "P3068", "P6100", "P6110", "P6450", "P6930", "P6940",
+    *_COMPACTAS,
 ]
 
 MODULOS = ("caracteristicas", "fuerza", "ocupados", "no_ocupados", "otras", "vivienda")
@@ -69,7 +74,7 @@ _RE_NO_OCU = re.compile(r"\bno ocupados?(?![a-z])")
 _RE_DESOCU = re.compile(r"\bd(?:e|es)ocupados?(?![a-z])")
 _RE_INACT = re.compile(r"\binactivos?(?![a-z])")
 _RE_OCU = re.compile(r"\bocupados?(?![a-z])")
-_HARMONIZE_VERSION = "9"
+_HARMONIZE_VERSION = "10"
 # Formatos de los microdatos. Se baja el CSV salvo donde el del ANDA está dañado (ver
 # CSV_DANADOS en el descargador); dentro de una carpeta se prefiere el formato alterno.
 EXTENSIONES = {".dta": 0, ".txt": 1, ".csv": 2}
@@ -494,6 +499,10 @@ def load_month(mes: MesGEIH, columns="core", modules: Iterable[str] | None = Non
     if "vivienda" in mes.archivos and "vivienda" in modules:
         df = _read_module(mes.archivos["vivienda"], selector)
         base = _merge_new_columns(base, df, KEYS_HOGAR)
+
+    for c in set(_COMPACTAS) & set(base.columns):
+        if pd.api.types.is_float_dtype(base[c]) or pd.api.types.is_integer_dtype(base[c]):
+            base[c] = base[c].astype("float32")
 
     ids = pd.DataFrame({"anio": mes.anio, "mes": mes.mes}, index=base.index)
     return pd.concat([ids, base], axis=1)

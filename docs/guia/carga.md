@@ -59,7 +59,7 @@ dos formas de cambiarlo:
   `anio` y `mes` se conservan siempre. Una variable del DANE fuera del núcleo hay que pedirla en los dos
   lugares: `columns=["P6500"], variables=["fex", "P6500"]`.
 
-Como referencia, el primer trimestre de 2024 ocupa 66 MB con las variables por defecto y 7 MB con
+Como referencia, el primer trimestre de 2024 ocupa 80 MB con las variables por defecto y 7 MB con
 `variables=["fex", "sexo", "ocupado", "ingreso_laboral"]`.
 
 ## Qué hace `load` por dentro

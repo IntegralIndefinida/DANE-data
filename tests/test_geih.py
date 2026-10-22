@@ -210,6 +210,15 @@ def test_indicadores_weighted(geih_root):
     assert dd.geih.indicadores(dd.geih.load(2025, months=1, root=geih_root, cache=False))["tasa_informalidad"].item() == 0
 
 
+def test_preguntas_de_informalidad_en_float32(geih_root):
+    """Son códigos pequeños que solo existen en unos años: en float32 ocupan la mitad de memoria."""
+    from dane_data.geih.loader import _COMPACTAS
+
+    df = dd.geih.load(2025, months=1, root=geih_root, cache=False)
+    presentes = [c for c in _COMPACTAS if c in df.columns]
+    assert presentes and all(df[c].dtype == "float32" for c in presentes)
+
+
 def test_informalidad_vacia_si_falta_la_medicion():
     """Marzo de 2020: sin P6870 para la mayoría, la tasa marco 2005 queda vacía en vez de salir muy baja."""
     df = pd.DataFrame({"anio": 2020, "mes": [2, 2, 2, 3, 3, 3], "fex": [100.0, 100.0, 1.0, 100.0, 100.0, 100.0],
