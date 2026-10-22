@@ -1,0 +1,4 @@
+# El sdist trae las pruebas completas (conftest.py arma los datos sintéticos; tests/datos/ tiene las cifras
+# publicadas por el DANE). Sin ellos, pytest desde el sdist fallaba.
+graft tests
+global-exclude __pycache__ *.py[cod]

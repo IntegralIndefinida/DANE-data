@@ -13,6 +13,7 @@ import dane_data as dd
 API = Path(__file__).parent.parent / "docs" / "api"
 
 
+@pytest.mark.skipif(not API.is_dir(), reason="sin docs/ (por ejemplo, desde el sdist)")
 @pytest.mark.parametrize("modulo, pagina, prefijo", [
     (dd, "general.md", "dd."),
     (dd.geih, "geih.md", ""),

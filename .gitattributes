@@ -11,3 +11,4 @@ docs/            export-ignore
 .gitattributes   export-ignore
 CLAUDE.md        export-ignore
 lanzador/        export-ignore
+MANIFEST.in      export-ignore
