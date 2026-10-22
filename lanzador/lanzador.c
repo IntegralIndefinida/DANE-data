@@ -82,6 +82,15 @@ int wmain(void) {
              L"  dane-data - Microdatos del DANE\n"
              L"==============================================\n");
 
+    /* Abierto desde dentro del .zip, el Explorador saca solo el .exe a una carpeta temporal: sin
+       pyproject.toml, uv da un error que no dice qué pasó */
+    if (GetFileAttributesW(L"pyproject.toml") == INVALID_FILE_ATTRIBUTES) {
+        escribir(L"\nEste lanzador tiene que estar dentro de la carpeta de dane-data ya descomprimida.\n"
+                 L"Si abrió el .zip con doble clic, cierre esta ventana, haga clic derecho sobre el .zip,\n"
+                 L"elija \"Extraer todo...\" y abra el lanzador desde la carpeta extraída.\n");
+        return pausa_y_salir(1);
+    }
+
     if (!buscar_uv()) {
         escribir(L"\nPrimera vez: instalando el asistente uv, unos segundos...\n");
         /* Sin tocar el PATH del usuario: este lanzador agrega esa carpeta solo para sí mismo. */

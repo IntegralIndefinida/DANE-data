@@ -23,7 +23,9 @@ uvx --from "dane-data[app]" dane-data app    # o abrir la aplicación sin instal
 :::{tab-item} Sin Python (estudiantes)
 1. En la página de [versiones](https://github.com/IntegralIndefinida/DANE-data/releases) descargue
    `dane-data-<versión>.zip` (en *Assets*, no el «Source code»).
-2. Descomprímalo donde quiera.
+2. Descomprímalo (en Windows: clic derecho → *Extraer todo…*; abrirlo con doble clic no basta) en una
+   carpeta fuera de OneDrive, por ejemplo `C:\dane-data`: la primera vez se crean miles de archivos
+   (`.venv/`) que OneDrive se pondría a sincronizar.
 3. Haga doble clic en el lanzador de su sistema:
 
    | Sistema | Archivo |

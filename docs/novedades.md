@@ -17,6 +17,9 @@
 
 **Instalación**
 
+* Los lanzadores de Windows (`.exe` y `.bat`) abiertos desde dentro del zip, sin descomprimirlo, ahora
+  explican que hay que extraerlo primero, en vez de «La aplicación se cerró con un error». La instalación
+  recomienda descomprimir fuera de OneDrive, que se ponía a sincronizar los miles de archivos de `.venv/`.
 * Las instrucciones para abrir el lanzador en Mac la primera vez se actualizaron para macOS 15 (Sequoia) y
   posteriores, que quitaron el atajo de clic derecho → *Abrir*: ahora es *Configuración del Sistema* →
   *Privacidad y seguridad* → *Abrir de todos modos*.

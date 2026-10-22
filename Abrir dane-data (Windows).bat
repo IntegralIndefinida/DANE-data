@@ -10,6 +10,17 @@ echo ==============================================
 echo   dane-data - Microdatos del DANE
 echo ==============================================
 
+rem Abierto desde dentro del .zip, el Explorador saca solo este archivo a una carpeta temporal: sin
+rem pyproject.toml, uv da un error que no dice que paso.
+if exist "pyproject.toml" goto descomprimido
+echo.
+echo Este lanzador tiene que estar dentro de la carpeta de dane-data ya descomprimida.
+echo Si abrio el .zip con doble clic, cierre esta ventana, haga clic derecho sobre el .zip,
+echo elija "Extraer todo..." y abra el lanzador desde la carpeta extraida.
+pause
+exit /b 1
+
+:descomprimido
 where uv >nul 2>nul
 if not errorlevel 1 goto preparar
 
