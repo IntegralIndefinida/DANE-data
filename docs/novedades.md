@@ -17,6 +17,7 @@
 
 **Instalación**
 
+* `dane-data app` sin el extra `[app]` decía «No module named streamlit»; ahora explica cómo instalarlo.
 * Los lanzadores de Windows (`.exe` y `.bat`) abiertos desde dentro del zip, sin descomprimirlo, ahora
   explican que hay que extraerlo primero, en vez de «La aplicación se cerró con un error». La instalación
   recomienda descomprimir fuera de OneDrive, que se ponía a sincronizar los miles de archivos de `.venv/`.

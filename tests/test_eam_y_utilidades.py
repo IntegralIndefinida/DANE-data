@@ -425,3 +425,15 @@ def test_abre_navegador_cuando_responde(monkeypatch):
 def test_eam_anio_de_numpy(eam_root):
     eam = dd.eam.load(np.int64(2016), root=eam_root)
     assert eam["anio"].unique().tolist() == [2016]
+
+
+def test_cli_app_sin_streamlit(monkeypatch, capsys):
+    """Sin el extra [app], el subproceso solo diría "No module named streamlit"."""
+    import importlib.util
+
+    original = importlib.util.find_spec
+    monkeypatch.setattr(importlib.util, "find_spec", lambda nombre, *a: None if nombre == "streamlit"
+                        else original(nombre, *a))
+    monkeypatch.setattr("dane_data.cli.subprocess.Popen", lambda *a, **k: pytest.fail("no debía arrancar"))
+    assert cli_main(["app", "--no-browser"]) == 1
+    assert 'pip install "dane-data[app]"' in capsys.readouterr().err

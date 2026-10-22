@@ -12,6 +12,7 @@ Línea de comandos de dane_data.
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import logging
 import os
 import socket
@@ -51,6 +52,10 @@ def _abrir_navegador_cuando_lista(url: str, proceso: subprocess.Popen, espera_ma
 
 
 def _cmd_app(args) -> int:
+    if importlib.util.find_spec("streamlit") is None:  # si no, el subproceso solo dice "No module named streamlit"
+        print('dane-data app: falta instalar la aplicación. Use  pip install "dane-data[app]"  o, en la carpeta '
+              "de dane-data,  uv run --extra app dane-data app", file=sys.stderr)
+        return 1
     app = Path(__file__).parent / "app" / "Inicio.py"
     puerto = _puerto_libre(args.port)
     url = f"http://localhost:{puerto}"
