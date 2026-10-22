@@ -732,6 +732,8 @@ def test_formal_como_el_codigo_del_dane():
         "cuenta propia que no sabe, profesional (2310)": (dict(P6430=4, P6765=1, P3065=9, P3066=9, OFICIO_C8=2310), 0),
         "cuenta propia que no sabe, directivo (1120)": (dict(P6430=4, P6765=1, P3065=9, P3066=9, OFICIO_C8=1120), 1),
         "cuenta propia que no sabe, oficio 0 (0000)": (dict(P6430=4, P6765=1, P3065=9, P3066=9, OFICIO_C8=0), 1),
+        "cuenta propia que no sabe, oficio con decimales": (dict(P6430=4, P6765=1, P3065=9, P3066=9, OFICIO_C8=1120.5),
+                                                            None),
         "patrón que no sabe, 6 o más personas": (dict(P6430=5, P6765=1, P3065=9, P3066=9, P3069=4), 1),
         "patrón que no sabe, hasta 5 personas": (dict(P6430=5, P6765=1, P3065=9, P3066=9, P3069=3), 0),
         "negocio registrado y renovado el año pasado": (dict(P6430=4, P6765=7, P3067=1, P3067S1=1, P3067S2=2024), 1),

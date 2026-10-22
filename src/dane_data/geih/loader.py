@@ -540,7 +540,9 @@ def _formal_dane(df: pd.DataFrame, anio: pd.Series) -> pd.Series:
     def es(c, *k): return v[c].isin(k)                      # noqa: E301,E704
     def ge(c, k): return v[c] >= k                          # noqa: E301,E704  vacío: no
     def le(c, k): return v[c].isna() | (v[c] <= k)          # noqa: E301,E704  vacío: sí, como en SAS
-    oficio = v["OFICIO_C8"].astype("Int64").astype("string").str.zfill(4).str[:2]
+    # Un código con decimales queda sin oficio: astype("Int64") fallaría para todo el mes
+    of = v["OFICIO_C8"]
+    oficio = of.where(of % 1 == 0).astype("Int64").astype("string").str.zfill(4).str[:2]
     of_bajo = oficio.between("00", "20").fillna(False).astype(bool)   # directivos y profesionales
     of_alto = (oficio >= "21").fillna(False).astype(bool)
     rama = es("RAMA2D_R4", 84, 99)                         # administración pública, organismos extraterritoriales
