@@ -525,7 +525,8 @@ def _formal_dane(df: pd.DataFrame, anio: pd.Series) -> pd.Series:
     los del anexo (tests/datos/dane_informalidad.csv). Lo que el código no dice y hubo que suponer:
 
     * ``OFICIO_C8`` viene como número en los archivos del ANDA y pierde el cero inicial (``110`` es el
-      código ``0110``): se completa a 4 dígitos antes de tomar los 2 primeros, como el texto del DANE.
+      código ``0110``): se completa a 4 dígitos antes de tomar los 2 primeros, como el texto del DANE (ver
+      README, «Diferencias con la documentación del DANE»).
       Hay independientes con código ``0`` que el DANE cuenta como formales; sin completar, quedarían sin
       clasificar.
     * ``PER``, «el año de análisis», es ``anio``.
@@ -588,7 +589,8 @@ def _formal_dane(df: pd.DataFrame, anio: pd.Series) -> pd.Series:
         (no_reg & (v["P6775"] == 1) & (v["P3068"] == 2), 0),
         (no_reg & (v["P6775"] == 3) & of_bajo, 1),
         (no_reg & (v["P6775"] == 3) & of_alto, 0),
-        (no_reg & (v["P6775"] == 1) & es("P3068", 3, 9), 0),  # el 3 reemplaza al 9 desde 2023
+        # El 3 reemplaza al 9 desde 2023, como dice el código del DANE; el DDI solo trae 1, 2 y 9 (ver README)
+        (no_reg & (v["P6775"] == 1) & es("P3068", 3, 9), 0),
         (no_reg & (v["P6775"] == 2), 0),
         (no_reg & pat & (v["P6775"] == 9) & ge("P3069", 4), 1),
         (no_reg & pat & (v["P6775"] == 9) & le("P3069", 3), 0),
