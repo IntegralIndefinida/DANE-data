@@ -13,6 +13,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import numbers
 import uuid
 from functools import lru_cache
 from pathlib import Path
@@ -132,7 +133,7 @@ def _firma_codigo() -> str:
 def _meses(meses) -> list[int] | None:
     if meses is None:
         return None
-    return sorted({int(m) for m in ([meses] if isinstance(meses, (int, str)) else meses)})
+    return sorted({int(m) for m in ([meses] if isinstance(meses, (numbers.Integral, str)) else meses)})
 
 
 def _meses_por_anio(anios, meses, empalme: bool, root) -> dict[int, list[MesGEIH]]:

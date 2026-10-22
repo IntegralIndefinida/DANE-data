@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import numbers
 from typing import Iterable
 
 from .. import config
@@ -97,7 +98,7 @@ def download(
     >>> dd.geih.download(2025, limit_files=1)  # solo enero, para probar  # doctest: +SKIP
     >>> dd.geih.download(2024, forzar=True)  # el DANE volvió a publicar 2024  # doctest: +SKIP
     """
-    if isinstance(years, (int, str)):
+    if isinstance(years, (numbers.Integral, str)):
         years = [years]
     root = root or config.get_path("geih_empalme" if empalme else "geih")
     dl = GEIHDownloader(

@@ -24,6 +24,7 @@ entre años hay que deflactar (``dd.eam.deflactar``).
 from __future__ import annotations
 
 import logging
+import numbers
 import re
 from pathlib import Path
 from typing import Iterable
@@ -149,7 +150,8 @@ def find_files(years: Iterable[int] | int | None = None, root=None) -> dict[int,
     if not base.is_dir():
         return {}
     if years is not None:
-        years = {int(y) for y in ([years] if isinstance(years, (int, str)) else years)}
+        # numbers.Integral: también un año de numpy (eam.anio.max())
+        years = {int(y) for y in ([years] if isinstance(years, (numbers.Integral, str)) else years)}
     out = {}
     for ydir in sorted(p for p in base.iterdir() if p.is_dir() and p.name.isdigit()):
         anio = int(ydir.name)

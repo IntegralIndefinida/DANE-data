@@ -251,6 +251,8 @@ def test_cli_config_avisa_variable_de_entorno(config_aislada, capsys, monkeypatc
 
 def test_download_un_anio_y_carpeta_explicita(descargador_falso, tmp_path):
     dd.geih.download(2024)
+    dd.geih.download(np.int64(2024))
+    assert descargador_falso[-1].anios == [2024]
     assert descargador_falso[-1].anios == [2024]
     assert descargador_falso[-1].kw["base_dir"] == tmp_path / "g"
     dd.eam.download("2015", root=tmp_path / "otra")
@@ -388,3 +390,8 @@ def test_abre_navegador_cuando_responde(monkeypatch):
         proc.kill()
         srv.shutdown()
     assert abiertos == [url]
+
+
+def test_eam_anio_de_numpy(eam_root):
+    eam = dd.eam.load(np.int64(2016), root=eam_root)
+    assert eam["anio"].unique().tolist() == [2016]

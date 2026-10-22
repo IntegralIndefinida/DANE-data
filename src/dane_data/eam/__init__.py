@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import numbers
 from typing import Iterable
 
 from .. import config
@@ -72,7 +73,7 @@ def download(
     >>> dd.eam.download([2022, 2023, 2024])  # doctest: +SKIP
     >>> dd.eam.download()  # toda la serie, 1992–2024  # doctest: +SKIP
     """
-    if isinstance(years, (int, str)):
+    if isinstance(years, (numbers.Integral, str)):
         years = [years]
     dl = EAMDownloader(
         base_dir=root or config.get_path("eam"),

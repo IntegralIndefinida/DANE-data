@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import hashlib
 import logging
+import numbers
 import re
 import uuid
 from dataclasses import dataclass, field
@@ -266,7 +267,8 @@ def find_months(years: Iterable[int] | int | None = None, empalme: bool = False,
     if not base.is_dir():
         return []
     if years is not None:
-        years = {int(y) for y in ([years] if isinstance(years, (int, str)) else years)}
+        # numbers.Integral: también un año de numpy (df.anio.max())
+        years = {int(y) for y in ([years] if isinstance(years, (numbers.Integral, str)) else years)}
     result = []
     for ydir in sorted(p for p in base.iterdir() if p.is_dir() and p.name.isdigit()):
         anio = int(ydir.name)
@@ -787,7 +789,7 @@ def load(
     >>> df = dd.geih.load(range(2007, 2026), variables=["fex", "sexo", "ocupado", "ingreso_laboral"])  # doctest: +SKIP
     """
     columns, modules = _lista_columnas(columns), _lista(modules)
-    if isinstance(months, int):
+    if isinstance(months, numbers.Integral):
         months = [months]
     conservar = None
     if variables is not None:

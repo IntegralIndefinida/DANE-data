@@ -625,3 +625,14 @@ def test_real_serie_mensual_sin_saltos(empalme):
                 problemas.append(f"{a}-{ms:02d}: {tasa.upper()} salta {salto:+.1f} p.p.")
     assert not problemas, f"{len(problemas)} problema(s) en la serie {'empalme' if empalme else 'principal'}:\n" + \
         "\n".join(sorted(problemas))
+
+
+def test_anios_y_meses_de_numpy(geih_root, tmp_path, monkeypatch):
+    """dd.geih.load(df.anio.max()) da un entero de numpy, que no es int."""
+    import numpy as np
+
+    monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
+    df = dd.geih.load(np.int64(2016), months=np.int64(1), root=geih_root, cache=False)
+    assert df["anio"].unique().tolist() == [2016] and df["mes"].unique().tolist() == [1]
+    t = dd.geih.serie_tabla(np.int64(2016), meses=np.int64(1), root=geih_root)
+    assert t["total"].item() == pytest.approx(dd.tabla(df)["total"].item())
