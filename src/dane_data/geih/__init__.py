@@ -60,7 +60,8 @@ def download(
         Función sin argumentos; si devuelve True, la descarga se detiene con ``DownloadCancelled``.
     forzar
         Volver a bajar y extraer aunque ya esté en disco, por ejemplo si el DANE corrigió los archivos. Lo
-        extraído antes se reemplaza una vez que el ZIP nuevo se bajó bien.
+        nuevo se extrae aparte y reemplaza los archivos de los ``modules`` pedidos solo si salió completo;
+        los de otros módulos, y todo si algo falló, quedan como estaban.
 
     Devuelve
     --------

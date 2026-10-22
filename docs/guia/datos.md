@@ -59,7 +59,8 @@ los ZIP y extraen los módulos. Las descargas son **incrementales**:
 * Si se interrumpe (se cierra la ventana, se cae la conexión), basta con volver a correrla: sigue donde iba.
 * Si el DANE corrige o vuelve a publicar un mes o un año, `forzar=True` lo baja de nuevo y reemplaza lo que
   había (`dane-data descargar ... --forzar` en la terminal; en la aplicación, «Volver a bajar lo que ya está
-  descargado»). Lo de antes se borra solo cuando el ZIP nuevo ya se bajó bien.
+  descargado»). Lo nuevo se extrae aparte y reemplaza a lo de antes solo si salió completo; si no, lo de
+  antes se conserva. Con `modules`, se reemplazan solo esos módulos y los demás quedan como estaban.
 * Para bajar solo algunos módulos, `modules=["caracteristicas", "ocupados"]`; los nombres están en
   `dd.geih.DEFAULT_MODULES`.
 

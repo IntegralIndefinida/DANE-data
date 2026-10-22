@@ -693,6 +693,36 @@ def test_forzar_vuelve_a_bajar_y_reemplaza(tmp_path, sin_pausas_eam):
     assert zipfile.ZipFile(destino).read("a.csv") == b"nuevo"
 
 
+def test_forzar_con_menos_modulos_conserva_los_demas(tmp_path):
+    """forzar con solo Ocupados reemplaza ese módulo y deja Características, Vivienda... como estaban."""
+    FakeDownloader({"Marzo 2024.zip": _mes_2024()}, base_dir=tmp_path).process_year("2024", "819")
+    mes = tmp_path / "datos_csv" / "2024" / "Marzo 2024"
+    nuevo = MOD.replace(";10\n", ";20\n")
+    dl = FakeDownloader({"Marzo 2024.zip": _mes_2024_con(**{"Ocupados.CSV": nuevo})}, base_dir=tmp_path,
+                        modules=["ocupados"], forzar=True)
+    dl.process_year("2024", "819")
+    assert dl.fallidos == []
+    assert (mes / "Ocupados.CSV").read_text() == nuevo
+    assert faltantes_mes(mes, TODOS) == []
+
+
+def test_forzar_que_falla_conserva_lo_anterior(tmp_path):
+    """Si el ZIP nuevo no trae un módulo, ninguno o está dañado, lo que ya estaba completo no se borra."""
+    dl = FakeDownloader({"Marzo 2024.zip": _mes_2024()}, base_dir=tmp_path)
+    dl.process_year("2024", "819")
+    mes = tmp_path / "datos_csv" / "2024" / "Marzo 2024"
+    antes = sorted(f.name for f in mes.iterdir())
+    dl.forzar = True
+    for paquete in (_mes_2024_con(**{"Ocupados.CSV": None}), _zip({"LEAME.pdf": "x"}), _zip_crc_malo()):
+        dl.paquetes["Marzo 2024.zip"] = paquete
+        dl.fallidos = []
+        dl.process_year("2024", "819")
+        assert len(dl.fallidos) == 1 and dl.fallidos[0].endswith("Se conserva lo extraído antes.")
+        assert sorted(f.name for f in mes.iterdir()) == antes and (mes / "Ocupados.CSV").read_text() == MOD
+        assert mes_completo(mes, TODOS)
+    assert not list((tmp_path / "raw_zips").glob("extraccion-*"))
+
+
 def test_mes_sin_resto_queda_incompleto(geih_root):
     """2007–2021: sin «Resto - Ocupados», los ocupados rurales serían no ocupados y la TD saldría mal."""
     mes = geih_root / "datos_csv" / "2016" / "Enero"

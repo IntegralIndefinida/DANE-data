@@ -219,7 +219,7 @@ class GEIHDownloader(DescargadorANDA):
         self.progress = progress
         self.should_stop = should_stop
         self.forzar = forzar
-        self._vaciadas: set[Path] = set()
+        self._reemplazadas: set[Path] = set()
         self.is_empalme = is_empalme
         # A diferencia del script original, base_dir ya es la raíz de la serie
         # (la serie de empalme no se anida automáticamente en base_dir/empalme).
@@ -628,36 +628,56 @@ class GEIHDownloader(DescargadorANDA):
         Extrae los módulos pedidos de ``zip_dest`` en ``carpeta`` (un mes, o un año del empalme) y anota lo
         que falló. El marcador se escribe solo si no faltó nada: con un mes ilegible o un módulo que el ZIP
         no trae, la próxima descarga lo vuelve a revisar en vez de saltarlo.
+
+        Con ``forzar``, lo nuevo se extrae primero aparte, y solo si salió completo reemplaza en ``carpeta``
+        los archivos de los módulos pedidos: los de otros módulos se conservan, y si algo falla queda lo que
+        había. Los viejos de esos módulos se borran aunque el DANE haya cambiado sus nombres.
         """
-        self._vaciar(carpeta)
         errores: list[str] = []
-        n = self.extract_requested_modules(zip_dest, carpeta, extensiones, errores)
-        falta = self._faltantes(carpeta)
+        aparte = self.forzar and carpeta not in self._reemplazadas   # una vez por descarga
+        if aparte:
+            nueva = Path(tempfile.mkdtemp(prefix="extraccion-", dir=self.raw_dir))
+            try:
+                n = self.extract_requested_modules(zip_dest, nueva, extensiones, errores)
+                falta = self._faltantes(nueva)
+                if n and not errores and not falta:
+                    self._reemplazar(nueva, carpeta)
+                    self._reemplazadas.add(carpeta)
+            finally:
+                shutil.rmtree(nueva, ignore_errors=True)
+        else:
+            n = self.extract_requested_modules(zip_dest, carpeta, extensiones, errores)
+            falta = self._faltantes(carpeta)
+
+        conserva = " Se conserva lo extraído antes." if aparte and carpeta.is_dir() else ""
         if errores:
             self._fallo(f"{etiqueta}: extracción con errores ({'; '.join(errores)}). Se borra el ZIP: la próxima "
-                        "descarga lo vuelve a bajar.")
+                        f"descarga lo vuelve a bajar.{conserva}")
         elif not n:
-            self._fallo(f"El ZIP del DANE para {etiqueta} no trae ninguno de los módulos pedidos.")
+            self._fallo(f"El ZIP del DANE para {etiqueta} no trae ninguno de los módulos pedidos.{conserva}")
         elif falta:
             sep = "; " if self.is_empalme else ", "                 # en el empalme, uno por mes
-            self._fallo(f"El ZIP del DANE para {etiqueta} no trae: {sep.join(falta)}.")
+            self._fallo(f"El ZIP del DANE para {etiqueta} no trae: {sep.join(falta)}.{conserva}")
         else:
             _escribir_marcador(carpeta, nombre_zip, n, self.modules)
         # Con errores también se borra: si se conservara, la próxima vez se reutilizaría el mismo ZIP
         if (errores or not self.keep_zips) and zip_dest.exists():
             zip_dest.unlink()
 
-    def _vaciar(self, carpeta: Path) -> None:
-        """
-        Con ``forzar``, borra lo extraído antes en ``carpeta`` (una vez por descarga), ya con el ZIP nuevo
-        bajado: si el DANE cambió los nombres de los archivos, los viejos no se mezclan con los nuevos.
-        """
-        if not self.forzar or carpeta in self._vaciadas:
-            return
+    def _reemplazar(self, nueva: Path, carpeta: Path) -> None:
+        """Cambia en ``carpeta`` los archivos de los módulos pedidos por los extraídos en ``nueva``."""
         if carpeta.is_dir():
             log.info(f"Se reemplaza lo extraído antes en {carpeta.name}.")
-            shutil.rmtree(carpeta)
-        self._vaciadas.add(carpeta)
+        nuevos = set()
+        for f in sorted(nueva.rglob("*")):
+            if f.is_file():
+                destino = carpeta / f.relative_to(nueva)
+                destino.parent.mkdir(parents=True, exist_ok=True)
+                f.replace(destino)
+                nuevos.add(destino)
+        for f in list(carpeta.rglob("*")):
+            if f.is_file() and f not in nuevos and is_target_csv(f.name, self.modules, tuple(EXTENSIONES)):
+                f.unlink()
 
     def run_pipeline(self, target_years=None, limit_files: int = None) -> list[str]:
         """Descarga todos los años o los seleccionados. Devuelve lo que no se pudo bajar o extraer."""
@@ -674,7 +694,7 @@ class GEIHDownloader(DescargadorANDA):
         series_name = "Empalme" if self.is_empalme else "Principal"
         log.info(f"Iniciando descarga de la serie [{series_name}] para {len(years_to_process)} años: {years_to_process}")
 
-        self.fallidos, self._vaciadas = [], set()
+        self.fallidos, self._reemplazadas = [], set()
         for i, year in enumerate(years_to_process):
             self._check_stop()
             self._emit(i / max(len(years_to_process), 1), f"Procesando año {year}")

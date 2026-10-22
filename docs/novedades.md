@@ -28,7 +28,8 @@
 
 * {dd}`geih.download()` y {dd}`eam.download()` tienen `forzar=True` para volver a bajar lo que ya está en
   disco, por ejemplo si el DANE corrigió los archivos; antes había que borrar a mano las carpetas y los ZIP.
-  En la terminal es `--forzar`, y en la aplicación, «Volver a bajar lo que ya está descargado».
+  En la terminal es `--forzar`, y en la aplicación, «Volver a bajar lo que ya está descargado». Lo nuevo
+  reemplaza a lo de antes solo si se extrajo completo, y con `modules` solo en esos módulos.
 
 **Instalación**
 
