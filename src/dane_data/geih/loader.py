@@ -950,7 +950,7 @@ def load(
     >>> df = dd.geih.load(range(2007, 2026), variables=["fex", "sexo", "ocupado", "ingreso_laboral"])  # doctest: +SKIP
     """
     columns, modules = _lista_columnas(columns), _lista(modules)
-    if isinstance(months, numbers.Integral):
+    if isinstance(months, (numbers.Integral, str)):  # "12" se recorrería letra por letra: enero y febrero
         months = [months]
     conservar = None
     if variables is not None:

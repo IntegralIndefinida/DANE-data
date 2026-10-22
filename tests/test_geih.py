@@ -661,6 +661,10 @@ def test_anios_y_meses_de_numpy(geih_root, tmp_path, monkeypatch):
     assert df["anio"].unique().tolist() == [2016] and df["mes"].unique().tolist() == [1]
     t = dd.geih.serie_tabla(np.int64(2016), meses=np.int64(1), root=geih_root)
     assert t["total"].item() == pytest.approx(dd.tabla(df)["total"].item())
+    # Un mes como texto es ese mes: "12" no es enero y febrero
+    assert dd.geih.load(2016, months="1", root=geih_root, cache=False)["mes"].unique().tolist() == [1]
+    with pytest.raises(FileNotFoundError):
+        dd.geih.load(2025, months="12", root=geih_root, cache=False, incluir_incompletos=True)
 
 
 def test_cache_sin_usar_se_borra_sola(geih_root, tmp_path, monkeypatch):
