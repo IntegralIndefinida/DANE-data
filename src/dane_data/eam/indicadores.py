@@ -305,7 +305,7 @@ def deflactar(df: pd.DataFrame, columnas: Iterable[str], deflactor: pd.DataFrame
     faltan = d["deflactor"].isna().mean()
     if faltan > 0:
         import warnings
-        warnings.warn(f"{faltan:.1%} de las filas no encontraron deflactor.")
+        warnings.warn(f"{faltan:.1%} de las filas no encontraron deflactor.", stacklevel=2)
     return d
 
 

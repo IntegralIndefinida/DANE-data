@@ -132,6 +132,9 @@ def test_eam_deflactar(eam_root):
     defl = pd.Series({1992: 50.0, 2016: 100.0, 2024: 200.0})
     d = dd.eam.deflactar(eam, ["valagri"], defl)
     assert d.loc[d.anio.eq(2024), "valagri_real"].item() == pytest.approx(60)
+    with pytest.warns(UserWarning, match="no encontraron deflactor") as avisos:
+        dd.eam.deflactar(eam, ["valagri"], defl.drop(1992))
+    assert avisos[0].filename == __file__                   # apunta a la línea del usuario, no a la librería
 
 
 def test_texto_que_se_pierde_al_convertir_se_avisa(tmp_path, caplog):

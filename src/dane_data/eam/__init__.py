@@ -6,7 +6,7 @@ import numbers
 from typing import Iterable
 
 from .. import config
-from .downloader import EAM_KNOWN_CATALOGS, EAM_TIC_CATALOGS, EAMDownloader
+from .downloader import EAM_KNOWN_CATALOGS, EAMDownloader
 from .indicadores import GLOSARIO, crecimiento, deflactar, panel, participacion, resumen, supervivencia
 from .loader import (CORE, ETIQUETAS, SECTORES, VARIABLES_COMUNES, available, find_files, harmonize,
                      load)
