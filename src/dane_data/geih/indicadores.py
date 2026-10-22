@@ -16,8 +16,10 @@ GLOSARIO = {
     "TGP": "Tasa global de participación = FT / PET × 100. ¿Qué parte de quienes pueden trabajar participa en el mercado laboral?",
     "TO": "Tasa de ocupación = Ocupados / PET × 100.",
     "TD": "Tasa de desocupación = Desocupados / FT × 100. El 'desempleo'.",
-    "Informalidad": "Ocupados que NO están afiliados a salud y cotizando a pensión, sobre el total de ocupados × 100. "
-                    "Es una definición por seguridad social; la oficial del DANE usa además tamaño de empresa.",
+    "Informalidad": "Ocupados informales sobre el total de ocupados × 100, con la medición del DANE (17.ª CIET), "
+                    "disponible desde 2022. Asalariados, empleados domésticos y jornaleros son informales si "
+                    "no cotizan a salud y a pensión por su trabajo; cuenta propia y patrones, si su negocio no "
+                    "tiene registro mercantil ni contabilidad; los trabajadores sin remuneración, siempre.",
     "Ingreso laboral": "INGLABO: ingresos laborales mensuales (pesos corrientes) imputados por el DANE.",
 }
 _COLUMNAS = ["pet", "fuerza_trabajo", "ocupados", "desocupados", "inactivos", "tgp", "to", "td",
@@ -54,7 +56,7 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, anual:
         * ``pet``, ``fuerza_trabajo``, ``ocupados``, ``desocupados``, ``inactivos``: personas (promedio
           mensual si ``anual=True``).
         * ``tgp``, ``to``, ``td``: tasas global de participación, de ocupación y de desocupación, en %.
-        * ``tasa_informalidad``: % de los ocupados sin afiliación a salud y cotización a pensión.
+        * ``tasa_informalidad``: % de los ocupados que son informales según el DANE (vacía antes de 2022).
         * ``ingreso_medio``, ``ingreso_mediano``: ingreso laboral mensual de los ocupados con ingreso
           positivo, en pesos corrientes.
         * ``n_muestra``: personas encuestadas (sin expandir) en el grupo.
@@ -81,9 +83,9 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, anual:
     desocupados. Las tasas anuales son entonces cocientes de promedios mensuales, como las publica el
     DANE, y no promedios de las tasas mensuales.
 
-    La informalidad es una definición por seguridad social (ver ``formal`` en la guía de variables); la
-    oficial del DANE usa además el tamaño de la empresa. La mediana es la de
-    ``dane_data.weighted_quantile``.
+    La informalidad es la del DANE (ver ``formal`` en la guía de variables): coincide con la que publica
+    cada mes desde 2022. Antes de 2022 el cuestionario no tenía las preguntas y ``tasa_informalidad`` queda
+    vacía. La mediana es la de ``dane_data.weighted_quantile``.
 
     Ejemplos
     --------
@@ -133,6 +135,7 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, anual:
         "desocupados": np.where(es("desocupado"), w, 0.0),
         "inactivos": np.where(es("inactivo"), w, 0.0),
         "informales": np.where(ocupado & (df["formal"].to_numpy("float64", na_value=np.nan) == 0), w, 0.0),
+        "_clasificados": np.where(ocupado & df["formal"].notna().to_numpy(), w, 0.0),
     }, index=df.index)
     g = sumas.groupby([df[k] for k in keys], observed=True, dropna=dropna)
     res = g.sum()
@@ -141,7 +144,8 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, anual:
         res["tgp"] = 100 * res["fuerza_trabajo"] / res["pet"]
         res["to"] = 100 * res["ocupados"] / res["pet"]
         res["td"] = 100 * res["desocupados"] / res["fuerza_trabajo"]
-        res["tasa_informalidad"] = 100 * res["informales"] / res["ocupados"]
+        # Vacía si nadie tiene formal (antes de 2022), no 0 %
+        res["tasa_informalidad"] = (100 * res["informales"] / res["ocupados"]).where(res["_clasificados"] > 0)
 
     ingreso = df["ingreso_laboral"].to_numpy("float64", na_value=np.nan)
     con_ingreso = ocupado & (ingreso > 0)

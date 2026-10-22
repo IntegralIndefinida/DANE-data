@@ -28,8 +28,9 @@ misma cita en APA y BibTeX, tomada de
 }
 ```
 
-Mencione también las decisiones metodológicas que afecten sus resultados, por ejemplo la definición de
-informalidad por seguridad social (vea {doc}`guia/advertencias`).
+Mencione también las decisiones metodológicas que afecten sus resultados, por ejemplo la serie usada
+(principal o de empalme) y que la informalidad sigue la medición del DANE, disponible desde 2022 (vea
+{doc}`guia/advertencias`).
 
 ## Licencia
 

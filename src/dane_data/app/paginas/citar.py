@@ -11,7 +11,8 @@ st.title("📝 Cómo citar")
 st.markdown(
     "Si usó esta aplicación o la librería en una tesis, un trabajo o un artículo, cite **los datos del DANE** "
     "y **dane-data**. Mencione también las decisiones metodológicas que afecten sus resultados, por ejemplo "
-    f"la definición de informalidad por seguridad social (vea las [advertencias]({DOCS}/guia/advertencias.html))."
+    f"la serie usada (principal o de empalme) y que la informalidad sigue la medición del DANE, disponible "
+    f"desde 2022 (vea las [advertencias]({DOCS}/guia/advertencias.html))."
 )
 
 st.subheader("dane-data")

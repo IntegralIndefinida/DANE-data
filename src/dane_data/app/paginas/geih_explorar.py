@@ -25,7 +25,7 @@ CATEGORICAS = {
     "Año": "anio", "Mes": "mes", "Sexo": "sexo", "Zona": "zona", "Grupo de edad": "grupo_edad",
     "Nivel educativo": "nivel_educativo", "Departamento": "departamento",
     "Condición de actividad": "condicion", "Posición ocupacional": "posicion_ocupacional",
-    "Formal (seguridad social)": "formal", "Jefe de hogar": "jefe_hogar",
+    "Formal (DANE, desde 2022)": "formal", "Jefe de hogar": "jefe_hogar",
     "Rama de actividad (2 díg.)": "rama2d",
 }
 NUMERICAS = {

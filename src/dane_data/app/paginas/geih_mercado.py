@@ -49,7 +49,7 @@ prev = total.iloc[-2] if len(total) > 1 else None
 
 
 def delta(col, pct=True):
-    if prev is None or pd.isna(prev[col]):
+    if prev is None or pd.isna(prev[col]) or pd.isna(ult[col]):  # la informalidad no existe antes de 2022
         return None
     d = ult[col] - prev[col]
     return f"{d:+.1f} p.p. vs {int(prev['anio'])}" if pct else f"{100 * d / prev[col]:+.1f} % vs {int(prev['anio'])}"
@@ -82,6 +82,9 @@ frecuencia = c3.radio("Frecuencia", ["Anual", "Mensual"], horizontal=True)
 col, es_pct = INDICADORES[nombre_ind]
 por = DESAGREGAR[nombre_por]
 anual = frecuencia == "Anual"
+if col == "tasa_informalidad" and min(sel["anios"]) < 2022:
+    st.info("ℹ️ La informalidad sigue la medición del DANE, que necesita preguntas del cuestionario de 2022: "
+            "antes de 2022 queda vacía.")
 
 res = calcular(por, anual)
 if por:  # grupos sin dato (p. ej. 0–14 años no está en la PET)

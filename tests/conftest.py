@@ -67,14 +67,18 @@ def geih_root(tmp_path):
 
     # --- Época 2025: archivos únicos, PET/FFT/DSI en 'No ocupados', FEX_C18, latin-1, en subcarpeta
     m = base / "2025" / "Enero 2025"
-    car = "PERIODO;MES;DIRECTORIO;SECUENCIA_P;ORDEN;P3271;P6040;P6050;P6090;P3042;CLASE;DPTO;FEX_C18\n"
+    car = "PERIODO;MES;DIRECTORIO;SECUENCIA_P;ORDEN;P3271;P6040;P6050;P6090;P3042;CLASE;DPTO;FEX_C18;P6100;P6110\n"
     _write(m / "Características generales, seguridad social en salud y educación.CSV",
-           car + "202501;1;10;1;1;2;35;1;1;10;1;76;1000.5\n202501;1;10;1;2;1;20;3;1;6;1;76;1000.5\n"
-                 "202501;1;11;1;1;1;70;1;1;3;2;76;500\n", encoding="latin-1")
+           car + "202501;1;10;1;1;2;35;1;1;10;1;76;1000.5;1;1\n202501;1;10;1;2;1;20;3;1;6;1;76;1000.5;3;\n"
+                 "202501;1;11;1;1;1;70;1;1;3;2;76;500;1;5\n", encoding="latin-1")
     _write(m / "Fuerza de trabajo.CSV", "DIRECTORIO;SECUENCIA_P;ORDEN;PET;FT;FFT;FEX_C18\n"
                                         "10;1;1;1;1;;1000.5\n10;1;2;1;1;;1000.5\n11;1;1;1;;1;500\n")
-    _write(m / "Ocupados.CSV", "DIRECTORIO;SECUENCIA_P;ORDEN;OCI;INGLABO;P6920;P6430;P6800;RAMA2D_R4;FEX_C18\n"
-                               "10;1;1;1;1423500;1;1;48;10;1000.5\n")
+    # Con las preguntas de la medición de informalidad del DANE: asalariada con salud y pensión pagadas por
+    # la empresa (formal)
+    _write(m / "Ocupados.CSV", "DIRECTORIO;SECUENCIA_P;ORDEN;OCI;INGLABO;P6920;P6430;P6800;RAMA2D_R4;FEX_C18;"
+                               "OFICIO_C8;P3045S1;P3046;P3069;P6765;P3065;P3066;P3067;P3067S1;P3067S2;P6775;"
+                               "P3068;P6450;P6930;P6940\n"
+                               "10;1;1;1;1423500;1;1;48;10;1000.5;5223;1;1;3;;;;;;;;;2;1;1\n")
     _write(m / "CSV 13" / "No ocupados.CSV", "DIRECTORIO;SECUENCIA_P;ORDEN;DSI;FFT;FEX_C18\n"
                                              "10;1;2;1;;1000.5\n11;1;1;;1;500\n")
     _write(m / "Datos del hogar y la vivienda.CSV", "DIRECTORIO;SECUENCIA_P;P5000;FEX_C18\n10;1;4;1000.5\n11;1;2;500\n")
@@ -122,7 +126,7 @@ def geih_root(tmp_path):
 
     # --- Mes incompleto (sin desocupados)
     m = base / "2025" / "Febrero 2025"
-    _write(m / "Características generales, seguridad social en salud y educación.CSV", car + "202502;2;10;1;1;2;35;1;1;10;1;76;1000\n")
+    _write(m / "Características generales, seguridad social en salud y educación.CSV", car + "202502;2;10;1;1;2;35;1;1;10;1;76;1000;;\n")
     _write(m / "Fuerza de trabajo.CSV", "DIRECTORIO;SECUENCIA_P;ORDEN;PET;FEX_C18\n10;1;1;1;1000\n")
     _write(m / "Ocupados.CSV", "DIRECTORIO;SECUENCIA_P;ORDEN;OCI;FEX_C18\n10;1;1;1;1000\n")
     return root

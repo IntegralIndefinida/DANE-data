@@ -48,7 +48,7 @@ with st.expander("Variables armonizadas por dane-data (iguales en todos los año
 | `departamento`, `dpto`, `zona` | Departamento y zona urbana/rural (CLASE) |
 | `condicion` | Ocupado / Desocupado / Inactivo / Fuera de la PET |
 | `pet`, `fuerza_trabajo`, `ocupado`, `desocupado`, `inactivo` | Indicadoras 0/1 |
-| `formal` | 1 si el ocupado está afiliado a salud (P6090) y cotiza a pensión (P6920) |
+| `formal` | 1 si el ocupado es formal según la medición del DANE (desde 2022; vacía antes) |
 | `ingreso_laboral`, `ratio_smlv`, `smlv` | INGLABO, su razón frente al salario mínimo y el salario mínimo del año |
 | `horas_semana` | Horas trabajadas normalmente (P6800) |
 | `posicion_ocupacional` | P6430 con etiquetas |

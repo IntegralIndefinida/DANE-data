@@ -2,6 +2,7 @@ import os
 import sys
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -133,8 +134,8 @@ def test_old_era_cabecera_plus_resto(geih_root):
     assert cond[(1, 3)] == "Fuera de la PET"
     assert cond[(3, 1)] == "Inactivo"
     assert df["sexo"].tolist() == ["Hombre", "Mujer", "Mujer", "Hombre", "Mujer"]
-    assert df.loc[df.ORDEN.eq(1) & df.DIRECTORIO.eq(1), "formal"].item() == 1
-    assert df.loc[df.DIRECTORIO.eq(2), "formal"].item() == 0
+    # Antes de 2022 el cuestionario no tiene las preguntas de la medición de informalidad del DANE
+    assert df["formal"].isna().all()
     assert set(df["rama_rev"].dropna()) == {3}
     assert df.loc[df.DIRECTORIO.eq(1) & df.ORDEN.eq(1), "nivel_educativo"].item() == "Superior"
 
@@ -189,6 +190,8 @@ def test_marco_muestral():
 def test_include_incomplete(geih_root):
     df = dd.geih.load(2025, root=geih_root, cache=False, incluir_incompletos=True)
     assert set(df["mes"]) == {1, 2}
+    enero = df[df.mes.eq(1)].set_index(["DIRECTORIO", "ORDEN"])["formal"]
+    assert enero[(10, 1)] == 1 and enero.drop((10, 1)).isna().all()     # solo los ocupados
 
 
 def test_indicadores_weighted(geih_root):
@@ -198,7 +201,8 @@ def test_indicadores_weighted(geih_root):
     assert ind["fuerza_trabajo"] == pytest.approx(401.0)
     assert ind["td"] == pytest.approx(100 * 100.5 / 401.0)
     assert ind["pet"] == pytest.approx(701.25)
-    assert ind["tasa_informalidad"] == pytest.approx(100 * 200 / 300.5)
+    assert pd.isna(ind["tasa_informalidad"])                        # 2016: sin la medición del DANE, vacía y no 0
+    assert dd.geih.indicadores(dd.geih.load(2025, months=1, root=geih_root, cache=False))["tasa_informalidad"].item() == 0
 
 
 def test_tabla_averages_months(geih_root):
@@ -669,3 +673,73 @@ def test_cache_sin_usar_se_borra_sola(geih_root, tmp_path, monkeypatch):
     dd.geih.load(2016, root=geih_root)
     assert time.time() - mes.stat().st_mtime < 60
     assert dd.geih.clear_cache(dias=30) == 1 and not otro.exists() and mes.exists()
+
+
+def _informalidad(**filas):
+    """Ocupados con las preguntas de la medición del DANE; lo que no se indica queda vacío."""
+    from dane_data.geih.loader import COLUMNAS_INFORMALIDAD
+
+    df = pd.DataFrame([{c: np.nan for c in COLUMNAS_INFORMALIDAD} | f for f in filas.values()], index=list(filas))
+    return df.assign(anio=df.get("anio", 2025)).fillna({"anio": 2025})
+
+
+def test_formal_como_el_codigo_del_dane():
+    """Una fila por regla del código SAS del anexo de informalidad del DANE (hoja Código_SAS)."""
+    from dane_data.geih.loader import _formal_dane
+
+    salud_y_pension = dict(P6100=1, P6110=1, P6920=1, P6930=1, P6940=1)
+    casos = {
+        "gobierno": (dict(P6430=2), 1),
+        "familiar sin remuneración": (dict(P6430=6), 0),
+        "familiar sin remuneración en el gobierno": (dict(P6430=6, RAMA2D_R4=84), 0),
+        "otro": (dict(P6430=8), 0),
+        "asalariado con salud y pensión pagadas por la empresa": (dict(P6430=1, **salud_y_pension), 1),
+        "jornalero (7) con salud y pensión": (dict(P6430=7, **salud_y_pension), 1),
+        "asalariado en el régimen subsidiado": (dict(P6430=1, **{**salud_y_pension, "P6100": 3}), 0),
+        "asalariado beneficiario en salud": (dict(P6430=1, **{**salud_y_pension, "P6110": 5}), 0),
+        "asalariado que paga solo su pensión": (dict(P6430=1, **{**salud_y_pension, "P6940": 2}), 0),
+        "asalariado en el fondo subsidiado": (dict(P6430=1, **{**salud_y_pension, "P6930": 4}), 0),
+        "asalariado ya pensionado": (dict(P6430=1, P6100=1, P6110=4, P6920=3), 1),
+        "asalariado que no sabe su régimen, contrato escrito": (dict(P6430=1, P6100=9, P6450=2, P6920=3), 1),
+        "asalariado que no sabe su régimen, contrato verbal": (dict(P6430=1, P6100=9, P6450=1, P6920=3), 0),
+        "asalariado en la administración pública": (dict(P6430=1, RAMA2D_R4=84), 1),
+        "empleada doméstica con salud y pensión": (dict(P6430=3, **salud_y_pension), 1),
+        "empleada doméstica sin pensión": (dict(P6430=3, P6100=1, P6110=1, P6920=2), 0),
+        "cuenta propia sin negocio, registrado": (dict(P6430=4, P6765=1, P3065=1), 1),
+        "cuenta propia sin negocio, con contabilidad": (dict(P6430=4, P6765=3, P3065=2, P3066=1), 1),
+        "cuenta propia sin negocio, sin contabilidad": (dict(P6430=4, P6765=1, P3065=2, P3066=2), 0),
+        "cuenta propia que no sabe, profesional (2310)": (dict(P6430=4, P6765=1, P3065=9, P3066=9, OFICIO_C8=2310), 0),
+        "cuenta propia que no sabe, directivo (1120)": (dict(P6430=4, P6765=1, P3065=9, P3066=9, OFICIO_C8=1120), 1),
+        "cuenta propia que no sabe, oficio 0 (0000)": (dict(P6430=4, P6765=1, P3065=9, P3066=9, OFICIO_C8=0), 1),
+        "patrón que no sabe, 6 o más personas": (dict(P6430=5, P6765=1, P3065=9, P3066=9, P3069=4), 1),
+        "patrón que no sabe, hasta 5 personas": (dict(P6430=5, P6765=1, P3065=9, P3066=9, P3069=3), 0),
+        "negocio registrado y renovado el año pasado": (dict(P6430=4, P6765=7, P3067=1, P3067S1=1, P3067S2=2024), 1),
+        "negocio registrado, renovado hace tres años": (dict(P6430=4, P6765=7, P3067=1, P3067S1=1, P3067S2=2022), 0),
+        "negocio registrado sin renovar, con contabilidad": (dict(P6430=5, P6765=7, P3067=1, P3067S1=2, P6775=1), 1),
+        "negocio sin registro, contabilidad y gastos separados": (dict(P6430=4, P6765=7, P3067=2, P6775=1, P3068=1), 1),
+        "negocio sin registro, contabilidad sin separar gastos": (dict(P6430=4, P6765=7, P3067=2, P6775=1, P3068=2), 0),
+        "negocio sin registro, «no aplica» (3, desde 2023)": (dict(P6430=4, P6765=7, P3067=2, P6775=1, P3068=3), 0),
+        "patrón en un organismo extraterritorial": (dict(P6430=5, P6765=7, P3067=2, P6775=2, RAMA2D_R4=99), 1),
+        "asalariado de 2021 (sin las preguntas)": (dict(P6430=2, anio=2021), None),
+    }
+    df = _informalidad(**{k: v for k, (v, _) in casos.items()})
+    obtenido = _formal_dane(df, df["anio"])
+    esperado = pd.Series({k: e for k, (_, e) in casos.items()}, dtype="float64")
+    pd.testing.assert_series_equal(obtenido, esperado, check_names=False)
+
+
+INFORMALIDAD_PUBLICADA = pd.read_csv(Path(__file__).parent / "datos" / "dane_informalidad.csv", comment="#")
+
+
+def test_real_informalidad_coincide_con_lo_publicado():
+    """Ocupados informales de cada mes desde 2022 = los del anexo de informalidad del DANE."""
+    root, av = _disponibles_reales(empalme=False)
+    anios = sorted(set(av["anio"]) & set(INFORMALIDAD_PUBLICADA["anio"]))
+    if not anios:
+        pytest.skip("ningún año descargado tiene cifras de informalidad publicadas")
+    res = dd.geih.serie_indicadores(anios, anual=False, root=root).merge(
+        INFORMALIDAD_PUBLICADA, on=["anio", "mes"], suffixes=("", "_dane"))
+    assert len(res)
+    informales = res["tasa_informalidad"] * res["ocupados"] / 100
+    malos = res.loc[~((informales / (1000 * res["informales"]) - 1).abs() <= 1e-4), ["anio", "mes"]]
+    assert malos.empty, f"informales distintos de los publicados en {malos.values.tolist()}"

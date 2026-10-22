@@ -51,6 +51,9 @@ CORE_RAW = [
     "OCI", "DSI", "INI", "FFT", "FT", "PET", "PETI",
     "INGLABO", "P6090", "P6920", "P6430", "P6800",
     "RAMA2D", "RAMA2D_R4", "P6210", "P3042",
+    # Informalidad del DANE (cuestionario del marco 2018, desde 2022): ver _formal_dane
+    "OFICIO_C8", "P3045S1", "P3046", "P3069", "P6765", "P3065", "P3066", "P3067", "P3067S1", "P3067S2",
+    "P6775", "P3068", "P6100", "P6110", "P6450", "P6930", "P6940",
 ]
 
 MODULOS = ("caracteristicas", "fuerza", "ocupados", "no_ocupados", "otras", "vivienda")
@@ -64,7 +67,7 @@ _RE_NO_OCU = re.compile(r"\bno ocupados?(?![a-z])")
 _RE_DESOCU = re.compile(r"\bd(?:e|es)ocupados?(?![a-z])")
 _RE_INACT = re.compile(r"\binactivos?(?![a-z])")
 _RE_OCU = re.compile(r"\bocupados?(?![a-z])")
-_HARMONIZE_VERSION = "7"
+_HARMONIZE_VERSION = "8"
 # Formatos de los microdatos. Se baja el CSV salvo donde el del ANDA está dañado (ver
 # CSV_DANADOS en el descargador); dentro de una carpeta se prefiere el formato alterno.
 EXTENSIONES = {".dta": 0, ".txt": 1, ".csv": 2}
@@ -503,6 +506,104 @@ def _num(df: pd.DataFrame, col: str) -> pd.Series:
     return pd.Series(np.nan, index=df.index)
 
 
+# Las preguntas que usa la medición de informalidad del DANE; existen desde 2022
+COLUMNAS_INFORMALIDAD = ("P6430", "RAMA2D_R4", "OFICIO_C8", "P3045S1", "P3046", "P3069", "P6765", "P3065", "P3066",
+                         "P3067", "P3067S1", "P3067S2", "P6775", "P3068", "P6100", "P6110", "P6450", "P6920",
+                         "P6930", "P6940")
+
+
+def _formal_dane(df: pd.DataFrame, anio: pd.Series) -> pd.Series:
+    """
+    Formalidad como la mide el DANE (17.ª CIET, medición publicada desde julio de 2022): 1 formal, 0 informal,
+    vacío antes de 2022, cuando el cuestionario no tenía estas preguntas.
+
+    Traduce regla por regla el código SAS que el DANE publica en el anexo de «Empleo informal y seguridad
+    social» (hoja «Código_SAS»), en el mismo orden: en cada cadena gana la primera regla que se cumple, como
+    en el IF ... ELSE de SAS. Con eso, los formales e informales de cada mes de 2022 a 2026 coinciden con
+    los del anexo (tests/datos/dane_informalidad.csv). Lo que el código no dice y hubo que suponer:
+
+    * ``OFICIO_C8`` viene como número en los archivos del ANDA y pierde el cero inicial (``110`` es el
+      código ``0110``): se completa a 4 dígitos antes de tomar los 2 primeros, como el texto del DANE.
+      Hay independientes con código ``0`` que el DANE cuenta como formales; sin completar, quedarían sin
+      clasificar.
+    * ``PER``, «el año de análisis», es ``anio``.
+    * Un vacío se compara como en SAS, menor que cualquier número (``P3069 <= 3`` se cumple, ``>= 4`` no).
+      En 2022–2026 ningún registro llega a esas reglas con un vacío.
+    """
+    nada = pd.Series(np.nan, index=df.index)
+    if any(c not in df.columns for c in COLUMNAS_INFORMALIDAD):
+        return nada
+    v = {c: _num(df, c) for c in COLUMNAS_INFORMALIDAD}
+    p = v["P6430"]
+    def es(c, *k): return v[c].isin(k)                      # noqa: E301,E704
+    def ge(c, k): return v[c] >= k                          # noqa: E301,E704  vacío: no
+    def le(c, k): return v[c].isna() | (v[c] <= k)          # noqa: E301,E704  vacío: sí, como en SAS
+    oficio = v["OFICIO_C8"].astype("Int64").astype("string").str.zfill(4).str[:2]
+    of_bajo = oficio.between("00", "20").fillna(False).astype(bool)   # directivos y profesionales
+    of_alto = (oficio >= "21").fillna(False).astype(bool)
+    rama = es("RAMA2D_R4", 84, 99)                         # administración pública, organismos extraterritoriales
+    asal, ind, cp, pat = p.isin([1, 7]), p.isin([4, 5]), p == 4, p == 5
+    sin_neg, con_neg = ind & ~es("P6765", 7), ind & es("P6765", 7)
+    s1 = es("P3045S1", 2, 9)
+    sn = sin_neg & es("P3065", 2, 9)
+    reg, no_reg = con_neg & (v["P3067"] == 1), con_neg & (v["P3067"] == 2)
+    renovo, no_renovo = reg & (v["P3067S1"] == 1), reg & (v["P3067S1"] == 2)
+    anterior = anio - 1                                     # ANIOS=(PER-1)
+    renovado = v["P3067S2"] >= anterior
+    # /*SECTOR INFORMAL*/
+    sector = [
+        (p == 3, np.nan), (p == 6, 0), (rama, 1), (p == 8, 0),
+        (p == 2, 1),
+        # /*ASALARIADOS*/
+        (asal & (v["P3045S1"] == 1), 1),
+        (asal & s1 & (v["P3046"] == 1), 1),
+        (asal & s1 & (v["P3046"] == 2), 0),
+        (asal & s1 & (v["P3046"] == 9) & ge("P3069", 4), 1),
+        (asal & s1 & (v["P3046"] == 9) & le("P3069", 3), 0),
+        # /*INDEPENDIENTES*/ /*SIN NEGOCIO*/
+        (sin_neg & (v["P3065"] == 1), 1),
+        (sn & (v["P3066"] == 1), 1),
+        (sn & (v["P3066"] == 2), 0),
+        (sn & pat & (v["P3066"] == 9) & ge("P3069", 4), 1),
+        (sn & pat & (v["P3066"] == 9) & le("P3069", 3), 0),
+        (sn & cp & (v["P3066"] == 9) & of_bajo, 1),
+        (sn & cp & (v["P3066"] == 9) & of_alto, 0),
+        # /*CON NEGOCIO*/ /*CON REGISTRO MERCANTIL*/
+        (renovo & renovado, 1),
+        (renovo & ~renovado, 0),                            # P3067S2 < ANIOS, también vacío
+        (no_renovo & (v["P6775"] == 1), 1),
+        (no_renovo & (v["P6775"] == 3) & of_bajo, 1),
+        (no_renovo & (v["P6775"] == 3) & of_alto, 0),
+        (no_renovo & (v["P6775"] == 2), 0),
+        (no_renovo & cp & (v["P6775"] == 9) & of_bajo, 1),
+        (no_renovo & cp & (v["P6775"] == 9) & of_alto, 0),
+        (no_renovo & pat & (v["P6775"] == 9) & ge("P3069", 4), 1),
+        (no_renovo & pat & (v["P6775"] == 9) & le("P3069", 3), 0),
+        # /*SIN REGISTRO MERCANTIL*/
+        (no_reg & (v["P6775"] == 1) & (v["P3068"] == 1), 1),
+        (no_reg & (v["P6775"] == 1) & (v["P3068"] == 2), 0),
+        (no_reg & (v["P6775"] == 3) & of_bajo, 1),
+        (no_reg & (v["P6775"] == 3) & of_alto, 0),
+        (no_reg & (v["P6775"] == 1) & es("P3068", 3, 9), 0),  # el 3 reemplaza al 9 desde 2023
+        (no_reg & (v["P6775"] == 2), 0),
+        (no_reg & pat & (v["P6775"] == 9) & ge("P3069", 4), 1),
+        (no_reg & pat & (v["P6775"] == 9) & le("P3069", 3), 0),
+        (no_reg & cp & (v["P6775"] == 9) & of_bajo, 1),
+        (no_reg & cp & (v["P6775"] == 9) & of_alto, 0),
+    ]
+    formal_sector = np.select([c.to_numpy(bool) for c, _ in sector], [k for _, k in sector], default=np.nan)
+    # /*OCUPACIÓN INFORMAL*/: asalariados, empleados domésticos y jornaleros, por salud y pensión
+    a137 = p.isin([1, 3, 7])
+    salud = (a137 & es("P6100", 1, 2) & es("P6110", 1, 2, 4)) | (a137 & (v["P6100"] == 9) & (v["P6450"] == 2)) \
+        | (a137 & (v["P6110"] == 9) & (v["P6450"] == 2))
+    pension = (a137 & (v["P6920"] == 3)) | (a137 & (v["P6920"] == 1) & es("P6930", 1, 2, 3) & es("P6940", 1, 3))
+    ei = np.select([(p == 2).to_numpy(bool), p.isin([6, 8]).to_numpy(bool), ind.to_numpy(bool),
+                    (a137 & salud & pension).to_numpy(bool), a137.to_numpy(bool)],
+                   [1, 0, formal_sector, 1, 0], default=np.nan)
+    ei = np.where(rama & ~p.isin([6, 8]), 1, ei)
+    return pd.Series(ei, index=df.index).where(anio >= 2022)
+
+
 def _first(df: pd.DataFrame, cols: list[str]) -> pd.Series:
     out = pd.Series(np.nan, index=df.index)
     for c in cols:
@@ -656,12 +757,9 @@ def harmonize(df: pd.DataFrame, edad_minima_pet: int | None = None) -> pd.DataFr
     df["desocupado"] = desocupado.astype("Int8")
     df["inactivo"] = inactivo.astype("Int8")
 
-    # Formalidad (definición por seguridad social): ocupado afiliado a salud
-    # (P6090 = 1) y cotizando a pensión (P6920 = 1). Solo para ocupados.
+    # Formalidad: la medición del DANE, desde 2022 (_formal_dane). Solo para ocupados.
+    df["formal"] = _formal_dane(df, anio).astype("Int8").where(ocupado)
     cotiza = _num(df, "P6920") == 1
-    salud = _num(df, "P6090") == 1
-    formal = pd.Series(np.where(cotiza & salud, 1, 0), index=df.index).astype("Int8")
-    df["formal"] = formal.where(ocupado)
     df["cotiza_pension"] = cotiza.astype("Int8").where(ocupado)
 
     ing = _num(df, "INGLABO")

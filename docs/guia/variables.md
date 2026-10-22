@@ -67,7 +67,7 @@ Estas variables solo tienen valor para los **ocupados**; para los demás quedan 
 
 | Variable | Definición | Origen |
 |---|---|---|
-| `formal` | 1 si está afiliado a salud **y** cotiza a pensión; 0 si no | `P6090 == 1` y `P6920 == 1` |
+| `formal` | 1 si el DANE lo cuenta como formal; 0 si como informal. Vacía antes de 2022 | El código del DANE (abajo) |
 | `cotiza_pension` | 1 si cotiza a un fondo de pensiones | `P6920 == 1` |
 | `ingreso_laboral` | Ingreso laboral mensual, en pesos corrientes, imputado por el DANE | `INGLABO` |
 | `smlv` | Salario mínimo del año (para todas las personas) | `dd.SMLV` |
@@ -77,12 +77,38 @@ Estas variables solo tienen valor para los **ocupados**; para los demás quedan 
 | `rama2d` | Rama de actividad a 2 dígitos de la CIIU | `RAMA2D_R4` o `RAMA2D` |
 | `rama_rev` | Revisión de la CIIU de `rama2d`: 4 o 3 | La variable de origen |
 
-```{admonition} Informalidad
+### Informalidad
+
+`formal` replica la medición de informalidad del DANE (17.ª CIET y manual del INE de Chile, publicada en
+julio de 2022). Traduce regla por regla el código SAS que el DANE publica en el anexo de *Empleo informal y
+seguridad social* (hoja «Código_SAS»), y los formales e informales de cada mes desde 2022 coinciden con los
+publicados (las pruebas de `dane-data` lo comprueban). Depende de la posición ocupacional (`P6430`):
+
+| Quién | Es formal si | Preguntas |
+|---|---|---|
+| Empleados del gobierno | Siempre | `P6430 = 2` |
+| Asalariados, jornaleros y empleados domésticos | Cotiza a salud en el régimen contributivo o especial y la paga, al menos en parte, el empleador (o se descuenta de su pensión), **y** cotiza a pensión en un fondo que no es el subsidiado con aporte del empleador, o ya es pensionado. Si no sabe su régimen o quién paga la salud, cuenta el contrato escrito | `P6100`, `P6110`, `P6450`, `P6920`, `P6930`, `P6940` |
+| Cuenta propia y patrones | Su negocio tiene registro mercantil renovado el año anterior o después, o lleva contabilidad; sin respuesta, cuentan el tamaño de la empresa (patrones, 6 o más personas) o el oficio (cuenta propia, directivos y profesionales) | `P6765`, `P3065`–`P3068`, `P6775`, `P3069`, `OFICIO_C8` |
+| Trabajadores familiares sin remuneración y «otro» | Nunca | `P6430 = 6` u `8` |
+| Cualquiera en la administración pública u organismos extraterritoriales | Siempre, salvo los de la fila anterior | `RAMA2D_R4 = 84` o `99` |
+
+````{admonition} Solo desde 2022
 :class: warning
 
-`formal` es una definición por **seguridad social**. La tasa de informalidad oficial del DANE usa además
-el tamaño de la empresa, así que las dos cifras no coinciden.
+Las preguntas de la medición llegaron con el cuestionario del marco 2018, en enero de 2022. Antes, `formal`
+y la `tasa_informalidad` de {dd}`geih.indicadores()` quedan vacías. La serie oficial del DANE empieza en
+2021, con la encuesta paralela, que no está en el ANDA. Para series largas, una aproximación por seguridad
+social (no la del DANE) es estar afiliado a salud y cotizar a pensión:
+
+```python
+df["formal_ss"] = ((df["P6090"] == 1) & (df["P6920"] == 1)).astype("Int8").where(df["ocupado"] == 1)
 ```
+````
+
+Tres supuestos, porque el código del DANE no los dice: `OFICIO_C8` se completa a 4 dígitos (el ANDA lo
+publica como número y pierde el cero inicial; hay independientes con código 0 que el DANE cuenta como
+formales), el «año de análisis» `PER` es `anio`, y un vacío se compara como en SAS. Con los datos de 2022
+a 2026, este último no cambia ningún registro.
 
 ```{admonition} Posición ocupacional desde 2022
 :class: note

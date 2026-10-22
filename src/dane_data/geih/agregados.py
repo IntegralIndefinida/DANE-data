@@ -285,7 +285,7 @@ def serie_indicadores(
     >>> import dane_data as dd
     >>> dd.geih.serie_indicadores(2024)[["anio", "tgp", "to", "td", "tasa_informalidad"]].round(1)  # doctest: +SKIP
        anio   tgp    to    td  tasa_informalidad
-    0  2024  63.9  57.4  10.2               57.1
+    0  2024  63.9  57.4  10.2               55.9
 
     Desempleo juvenil (15 a 28 años):
 

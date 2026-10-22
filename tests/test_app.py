@@ -136,6 +136,18 @@ def test_mercado_laboral_precalculado_y_con_filtros(geih_root, tmp_path, monkeyp
     assert "filtros={'sexo': ['Mujer']}" in at.code[0].value
 
 
+def test_informalidad_vacia_antes_de_2022(geih_root, tmp_path, monkeypatch):
+    """2021 no tiene las preguntas de la medición del DANE: la tasa queda vacía y la página lo explica."""
+    monkeypatch.setitem(dd.config._session, "geih", geih_root)
+    monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
+    at = AppTest.from_file(str(PAGINAS / "geih_mercado.py"), default_timeout=60).run()
+    assert at.multiselect(key="geih_anios").value == [2021, 2025]
+    next(s for s in at.selectbox if s.label == "Indicador").set_value("Tasa de informalidad").run()
+    assert not at.exception
+    assert any("antes de 2022 queda vacía" in i.value for i in at.info)
+    assert at.metric[3].value == "0,0 %"                       # 2025: la asalariada del ejemplo es formal
+
+
 def test_aviso_cuando_los_anios_mezclan_marcos(geih_root, tmp_path, monkeypatch):
     monkeypatch.setitem(dd.config._session, "geih", geih_root)
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")

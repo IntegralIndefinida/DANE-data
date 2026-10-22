@@ -4,6 +4,15 @@
 
 **Al actualizar**
 
+* `formal` y `tasa_informalidad` siguen ahora la medición de informalidad del DANE (17.ª CIET), con el
+  código SAS que el DANE publica en el anexo de *Empleo informal y seguridad social*: los ocupados formales e
+  informales de cada mes desde 2022 coinciden con los publicados. Antes `formal` era una aproximación por
+  seguridad social (afiliado a salud y cotizando a pensión), que contaba como cubiertos en salud al régimen
+  subsidiado y a los beneficiarios, y como informales a los pensionados y a todos los independientes sin
+  pensión. La medición necesita preguntas del cuestionario de 2022, así que antes de 2022 `formal` y
+  `tasa_informalidad` quedan vacías; la guía de {doc}`guia/variables` explica cómo armar la aproximación
+  anterior para series largas. `load` lee 17 variables más del DANE, y la caché de cada mes se vuelve a
+  crear una vez.
 * {dd}`geih.serie_indicadores()` ya no devuelve la fila del grupo vacío al desagregar con `por`. Con
   `por="nivel_educativo"` esa fila juntaba a los menores que no responden educación: tenía una muestra
   grande y casi nadie en la PET. Para conservarla, use `dropna=False`. {dd}`geih.indicadores()` tiene el

@@ -24,7 +24,7 @@ Y los indicadores son:
 | Tasa global de participación | `tgp` | $100 \cdot FT / PET$ | Qué parte de quienes pueden trabajar participa en el mercado laboral |
 | Tasa de ocupación | `to` | $100 \cdot O / PET$ | Qué parte de quienes pueden trabajar está trabajando |
 | Tasa de desocupación | `td` | $100 \cdot D / FT$ | El «desempleo»: qué parte de quienes participan no consigue trabajo |
-| Tasa de informalidad | `tasa_informalidad` | $100 \cdot \text{O sin salud y pensión} / O$ | Ocupados sin seguridad social (ver {doc}`variables`) |
+| Tasa de informalidad | `tasa_informalidad` | $100 \cdot \text{O informales} / O$ | La medición del DANE, desde 2022 (ver {doc}`variables`) |
 | Ingreso medio y mediano | `ingreso_medio`, `ingreso_mediano` | Media y mediana ponderadas de `ingreso_laboral` | Entre los ocupados con ingreso positivo, en pesos corrientes |
 
 Cada nivel es la suma de los {doc}`factores de expansión <ponderacion>`; con varios meses, el promedio
@@ -45,7 +45,7 @@ inactivos          14504272.0
 tgp                      63.7
 to                       56.1
 td                       11.9
-tasa_informalidad        57.5
+tasa_informalidad        56.3
 ingreso_medio       1693374.4
 ingreso_mediano     1300000.0
 n_muestra            213515.0
@@ -85,13 +85,13 @@ años en memoria: calcula cada año por separado y lo guarda en disco (vea {doc}
 ```python
 >>> dd.geih.serie_indicadores(range(2019, 2026))[["anio", "tgp", "to", "td", "tasa_informalidad"]].round(1)
    anio   tgp    to    td  tasa_informalidad
-0  2019  63.3  56.6  10.5               62.7
-1  2020  60.4  50.4  16.5               67.5
-2  2021  60.6  52.3  13.7               63.5
-3  2022  63.6  56.5  11.2               58.9
-4  2023  64.1  57.6  10.2               57.6
-5  2024  63.9  57.4  10.2               57.1
-6  2025  64.3  58.6   8.9               56.8
+0  2019  63.3  56.6  10.5                NaN
+1  2020  60.4  50.4  16.5                NaN
+2  2021  60.6  52.3  13.7                NaN
+3  2022  63.6  56.5  11.2               57.9
+4  2023  64.1  57.6  10.2               56.4
+5  2024  63.9  57.4  10.2               55.9
+6  2025  64.3  58.6   8.9               55.7
 ```
 
 `por` puede ser `"sexo"`, `"zona"`, `"grupo_edad"`, `"nivel_educativo"` o `"departamento"`
@@ -100,8 +100,8 @@ años en memoria: calcula cada año por separado y lo guarda en disco (vea {doc}
 ```python
 >>> dd.geih.serie_indicadores(2024, por="zona")[["zona", "tgp", "to", "td", "tasa_informalidad"]].round(1)
                                   zona   tgp    to    td  tasa_informalidad
-0                    Urbano (cabecera)  64.9  57.9  10.8               49.9
-1  Rural (centros poblados y disperso)  60.2  55.7   7.4               84.5
+0                    Urbano (cabecera)  64.9  57.9  10.8               48.6
+1  Rural (centros poblados y disperso)  60.2  55.7   7.4               83.9
 ```
 
 Quien no tiene valor en la variable de `por` queda fuera: por ejemplo, el `nivel_educativo` de los menores
