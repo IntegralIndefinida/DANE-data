@@ -133,6 +133,9 @@ se pudo comparar, porque sus microdatos en el ANDA vienen con las proyecciones d
 las del censo 2005. Queda vacía para quien no tiene tamaño de empresa (`P6870`): cerca de tres cuartos de
 los ocupados de marzo y abril de 2020, por el operativo telefónico, y menos del 1 % en los demás meses de
 2020. En el empalme también para las personas de Putumayo de abril y mayo de 2017, que vienen en blanco.
+`tasa_informalidad_marco2005` queda vacía en un grupo en el que a más del 1 % de los ocupados les falta la
+medición, en vez de contarlos como formales: en marzo y abril de 2020, y por eso también en el total de
+2020.
 
 Para comparar con lo publicado, las ciudades salen de `AREA`:
 

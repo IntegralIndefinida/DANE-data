@@ -27,6 +27,8 @@ GLOSARIO = {
 }
 _COLUMNAS = ["pet", "fuerza_trabajo", "ocupados", "desocupados", "inactivos", "tgp", "to", "td",
              "tasa_informalidad", "tasa_informalidad_marco2005", "ingreso_medio", "ingreso_mediano", "n_muestra"]
+# Fracción máxima de los ocupados de un grupo sin formal (o formal_marco2005) para dar su tasa
+_MAX_SIN_CLASIFICAR = 0.01
 
 
 def _informales(df: pd.DataFrame, col: str, sufijo: str, ocupado: np.ndarray, w: np.ndarray) -> dict:
@@ -70,7 +72,8 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, anual:
           mensual si ``anual=True``).
         * ``tgp``, ``to``, ``td``: tasas global de participación, de ocupación y de desocupación, en %.
         * ``tasa_informalidad``: % de los ocupados que son informales según el DANE (vacía antes de 2022).
-        * ``tasa_informalidad_marco2005``: lo mismo con la medición anterior del DANE (vacía desde 2022).
+        * ``tasa_informalidad_marco2005``: lo mismo con la medición anterior del DANE (vacía desde 2022, y
+          en marzo y abril de 2020 y el total de 2020; ver Notas).
         * ``ingreso_medio``, ``ingreso_mediano``: ingreso laboral mensual de los ocupados con ingreso
           positivo, en pesos corrientes.
         * ``n_muestra``: personas encuestadas (sin expandir) en el grupo.
@@ -100,8 +103,11 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, anual:
     La informalidad es la del DANE (ver ``formal`` en la guía de variables): coincide con la que publica
     cada mes desde 2022. Antes de 2022 el cuestionario no tenía las preguntas y ``tasa_informalidad`` queda
     vacía; para 2007–2021, ``tasa_informalidad_marco2005`` es la medición que el DANE usaba entonces (con
-    ``formal_marco2005``). Si ``df`` no trae ``formal`` o ``formal_marco2005``, su tasa queda vacía. La
-    mediana es la de
+    ``formal_marco2005``). Si ``df`` no trae ``formal`` o ``formal_marco2005``, su tasa queda vacía. También
+    queda vacía en un grupo en el que a más del 1 % de los ocupados les falta la medición, en vez de
+    contarlos como formales: pasa con ``formal_marco2005`` en marzo y abril de 2020, cuando unos tres cuartos
+    de los ocupados no tienen tamaño de empresa (``P6870``) por el operativo telefónico, y por eso también en
+    el total de 2020. En los demás meses de 2020 les falta a menos del 1 %. La mediana es la de
     ``dane_data.weighted_quantile``.
 
     Ejemplos
@@ -161,10 +167,12 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, anual:
         res["tgp"] = 100 * res["fuerza_trabajo"] / res["pet"]
         res["to"] = 100 * res["ocupados"] / res["pet"]
         res["td"] = 100 * res["desocupados"] / res["fuerza_trabajo"]
-        # Vacía si nadie tiene formal (antes de 2022), no 0 %
-        res["tasa_informalidad"] = (100 * res["informales"] / res["ocupados"]).where(res["_clasificados"] > 0)
-        res["tasa_informalidad_marco2005"] = (100 * res["informales_2005"] / res["ocupados"]).where(
-            res["_clasificados_2005"] > 0)
+        # Vacía, no 0 % ni más baja, si a más del 1 % de los ocupados les falta la medición: formal antes
+        # de 2022, y formal_marco2005 sin tamaño de empresa (P6870) en marzo y abril de 2020 (unos tres
+        # cuartos de los ocupados, por el operativo telefónico), donde saldría en 19 % y no cerca de 58 %.
+        for col, sufijo in (("tasa_informalidad", ""), ("tasa_informalidad_marco2005", "_2005")):
+            completa = res[f"_clasificados{sufijo}"] >= (1 - _MAX_SIN_CLASIFICAR) * res["ocupados"]
+            res[col] = (100 * res[f"informales{sufijo}"] / res["ocupados"]).where(completa)
 
     ingreso = df["ingreso_laboral"].to_numpy("float64", na_value=np.nan)
     con_ingreso = ocupado & (ingreso > 0)

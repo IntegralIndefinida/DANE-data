@@ -210,6 +210,18 @@ def test_indicadores_weighted(geih_root):
     assert dd.geih.indicadores(dd.geih.load(2025, months=1, root=geih_root, cache=False))["tasa_informalidad"].item() == 0
 
 
+def test_informalidad_vacia_si_falta_la_medicion():
+    """Marzo de 2020: sin P6870 para la mayoría, la tasa marco 2005 queda vacía en vez de salir muy baja."""
+    df = pd.DataFrame({"anio": 2020, "mes": [2, 2, 2, 3, 3, 3], "fex": [100.0, 100.0, 1.0, 100.0, 100.0, 100.0],
+                       "pet": 1, "fuerza_trabajo": 1, "ocupado": 1, "desocupado": 0, "inactivo": 0,
+                       "formal": np.nan, "formal_marco2005": [0, 1, np.nan, 0, np.nan, np.nan],
+                       "ingreso_laboral": np.nan})
+    mes = dd.geih.indicadores(df, anual=False).set_index("mes")["tasa_informalidad_marco2005"]
+    assert mes[2] == pytest.approx(100 * 100 / 201)          # le falta al 0,5 %: se da
+    assert pd.isna(mes[3])
+    assert pd.isna(dd.geih.indicadores(df)["tasa_informalidad_marco2005"].item())    # y el año tampoco
+
+
 def test_tabla_averages_months(geih_root):
     df = dd.geih.load(2025, root=geih_root, cache=False, incluir_incompletos=True)
     t = dd.tabla(df, por="anio")

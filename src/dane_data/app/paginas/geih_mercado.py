@@ -89,6 +89,9 @@ if col == "tasa_informalidad" and min(sel["anios"]) < 2022:
 if col == "tasa_informalidad_marco2005" and max(sel["anios"]) >= 2022:
     st.info("ℹ️ La medición anterior del DANE (empresas de hasta 5 personas) llega hasta 2021: desde 2022 queda "
             "vacía. El DANE la publicaba para 13 y 23 ciudades; no es comparable con la actual.")
+if col == "tasa_informalidad_marco2005" and 2020 in sel["anios"] and not sel["empalme"]:
+    st.info("ℹ️ En marzo y abril de 2020, por el operativo telefónico, unos tres cuartos de los ocupados no "
+            "tienen tamaño de empresa: la medición anterior queda vacía esos meses y en el total de 2020.")
 
 res = calcular(por, anual)
 if por:  # grupos sin dato (p. ej. 0–14 años no está en la PET)

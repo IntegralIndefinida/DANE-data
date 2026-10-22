@@ -17,6 +17,8 @@
   {dd}`geih.serie_indicadores()`: la medición anterior del DANE (marco 2005, empresas de hasta 5 personas),
   para 2007–2021. Coincide con la que el DANE publicó para 13 y 23 ciudades en cada trimestre móvil de
   2007–2019 y 2021. La aplicación la ofrece como «Tasa de informalidad (medición anterior, hasta 2021)».
+  Queda vacía en marzo y abril de 2020 y en el total de 2020: unos tres cuartos de los ocupados de esos
+  meses no tienen tamaño de empresa, por el operativo telefónico.
 * {dd}`geih.serie_indicadores()` ya no devuelve la fila del grupo vacío al desagregar con `por`. Con
   `por="nivel_educativo"` esa fila juntaba a los menores que no responden educación: tenía una muestra
   grande y casi nadie en la PET. Para conservarla, use `dropna=False`. {dd}`geih.indicadores()` tiene el
