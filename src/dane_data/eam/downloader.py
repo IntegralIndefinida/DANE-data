@@ -33,7 +33,9 @@ Versión: 1.0.0
 import re
 import json
 import time
+import shutil
 import zipfile
+import tempfile
 import logging
 from pathlib import Path
 
@@ -112,6 +114,9 @@ def sanitize_member_name(raw_name: str) -> str:
     except Exception:
         pass
     return clean
+
+
+_CONSERVA = " Se conserva lo extraído antes."
 
 
 def _archivos_datos(carpeta: Path) -> list[Path]:
@@ -263,7 +268,32 @@ class EAMDownloader(DescargadorANDA):
         except Exception as e:
             log.error(f"Error procesando {zip_path.name}: {e}")
 
-        return extracted_files
+        # Con un error a mitad, lo ya extraído no se devuelve ni se deja: el año parecería completo
+        for f in extracted_files:
+            f.unlink(missing_ok=True)
+        return []
+
+    def _extraer(self, zip_path: Path, carpeta: Path) -> bool:
+        """
+        Extrae el formato preferido de ``zip_path`` primero aparte, y solo si salió bien lo mueve a
+        ``carpeta`` y borra los archivos de datos que había (con ``forzar``). Si falla, queda lo de antes.
+        """
+        nueva = Path(tempfile.mkdtemp(prefix="extraccion-", dir=self.raw_dir))
+        try:
+            extraidos = self.extract_preferred_format(zip_path, nueva)
+            if not extraidos:
+                return False
+            carpeta.mkdir(parents=True, exist_ok=True)
+            nuevos = set()
+            for f in extraidos:
+                f.replace(carpeta / f.name)
+                nuevos.add(carpeta / f.name)
+            for viejo in _archivos_datos(carpeta):
+                if viejo not in nuevos:
+                    viejo.unlink()
+            return True
+        finally:
+            shutil.rmtree(nueva, ignore_errors=True)
 
     def process_year(self, year: str, catalog_id: str, zip_filename: str, download_url: str):
         """Descarga y procesa un año específico de la EAM."""
@@ -292,12 +322,10 @@ class EAMDownloader(DescargadorANDA):
             if not success:
                 self._fallo(f"{year}: no se pudo descargar {zip_filename}.")
 
-            # 3. Extraer formato preferido (.csv -> .txt -> .dta convertido)
-            if success and self.extract_data:
-                for viejo in existing_data:  # con forzar: lo de antes, ya con el ZIP nuevo bajado
-                    viejo.unlink()
-                if not self.extract_preferred_format(zip_dest, year_data_dir):
-                    self._fallo(f"{year}: no se pudo extraer un archivo CSV, TXT o Stata de {zip_filename}.")
+            # 3. Extraer formato preferido (.csv -> .txt -> .dta)
+            if success and self.extract_data and not self._extraer(zip_dest, year_data_dir):
+                self._fallo(f"{year}: no se pudo extraer un archivo CSV, TXT o Stata de {zip_filename}."
+                            + _CONSERVA * bool(existing_data))
 
                 if not self.keep_zips and zip_dest.exists():
                     zip_dest.unlink()
@@ -312,12 +340,10 @@ class EAMDownloader(DescargadorANDA):
             tic_ok = self.download_file(tic_url, tic_zip)
             if not tic_ok:
                 self._fallo(f"{year}: no se pudo descargar el módulo TIC ({tic_name}).")
-            if tic_ok and self.extract_data:
-                tic_data_dir = year_data_dir / "TIC"
-                for viejo in _archivos_datos(tic_data_dir):
-                    viejo.unlink()
-                if not self.extract_preferred_format(tic_zip, tic_data_dir):
-                    self._fallo(f"{year}: no se pudo extraer el módulo TIC de {tic_name}.")
+            tic_data_dir = year_data_dir / "TIC"
+            if tic_ok and self.extract_data and not self._extraer(tic_zip, tic_data_dir):
+                self._fallo(f"{year}: no se pudo extraer el módulo TIC de {tic_name}."
+                            + _CONSERVA * bool(_archivos_datos(tic_data_dir)))
                 if not self.keep_zips and tic_zip.exists():
                     tic_zip.unlink()
 

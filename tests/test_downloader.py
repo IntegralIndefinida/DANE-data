@@ -723,6 +723,31 @@ def test_forzar_que_falla_conserva_lo_anterior(tmp_path):
     assert not list((tmp_path / "raw_zips").glob("extraccion-*"))
 
 
+def test_eam_extraccion_que_falla_no_deja_nada_ni_borra_lo_anterior(tmp_path, sin_pausas_eam):
+    """Un CSV que falla a mitad del ZIP no deja el año a medias, y con forzar lo de antes se conserva."""
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_STORED) as z:
+        z.writestr("EAM_2015.csv", "nordest;valagri\n1;10\n")
+        z.writestr("EAM_2015_anexo.csv", MOD)
+    malo = buf.getvalue().replace(MOD.encode(), MOD.replace("1", "2").encode())     # CRC malo en el segundo
+    eam = FakeEAMDownloader({"u": malo}, base_dir=tmp_path)
+    eam.process_year("2015", "491", "EAM_2015.zip", "u")
+    anio = tmp_path / "datos" / "2015"
+    assert eam.fallidos == ["2015: no se pudo extraer un archivo CSV, TXT o Stata de EAM_2015.zip."]
+    assert not list(anio.iterdir())                     # el primero tampoco: el año parecería completo
+
+    bueno = "nordest;valagri\n1;30\n"
+    eam.paquetes["u"] = _zip({"EAM_2015.csv": bueno})
+    eam.process_year("2015", "491", "EAM_2015.zip", "u")
+    eam.forzar, eam.fallidos = True, []
+    for paquete in (malo, _zip({"LEAME.pdf": "sin datos"})):
+        eam.paquetes["u"] = paquete
+        eam.process_year("2015", "491", "EAM_2015.zip", "u")
+        assert len(eam.fallidos) == 1 and eam.fallidos.pop().endswith("Se conserva lo extraído antes.")
+        assert [f.name for f in anio.iterdir()] == ["EAM_2015.csv"] and (anio / "EAM_2015.csv").read_text() == bueno
+    assert not list((tmp_path / "raw_zips").glob("extraccion-*"))
+
+
 def test_mes_sin_resto_queda_incompleto(geih_root):
     """2007–2021: sin «Resto - Ocupados», los ocupados rurales serían no ocupados y la TD saldría mal."""
     mes = geih_root / "datos_csv" / "2016" / "Enero"

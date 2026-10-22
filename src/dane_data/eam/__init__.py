@@ -45,7 +45,7 @@ def download(
         Función sin argumentos; si devuelve True, la descarga se detiene con ``DownloadCancelled``.
     forzar
         Volver a bajar y extraer aunque ya esté en disco, por ejemplo si el DANE corrigió los archivos. Lo
-        extraído antes se reemplaza una vez que el ZIP nuevo se bajó bien.
+        extraído antes se reemplaza solo si el ZIP nuevo se extrajo bien; si no, se conserva.
 
     Devuelve
     --------

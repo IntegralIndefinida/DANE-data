@@ -30,6 +30,9 @@
   disco, por ejemplo si el DANE corrigió los archivos; antes había que borrar a mano las carpetas y los ZIP.
   En la terminal es `--forzar`, y en la aplicación, «Volver a bajar lo que ya está descargado». Lo nuevo
   reemplaza a lo de antes solo si se extrajo completo, y con `modules` solo en esos módulos.
+* {dd}`eam.download()`: si un archivo fallaba a mitad de la extracción (disco lleno, ZIP dañado por dentro),
+  los que ya se habían extraído quedaban y el año se daba por descargado. Ahora el año queda sin datos y en
+  la lista de fallos, y la próxima descarga lo vuelve a intentar.
 
 **Instalación**
 
