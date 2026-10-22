@@ -57,7 +57,8 @@ def faltantes_mes(month_dir: Path, modules) -> list[str]:
     pedidos = {_MODULO_CARGADOR[m] for m in modules} - {None}
     falta = set(mes.faltantes)
     falta |= {m for m in pedidos & {"vivienda", "otras"} if m not in mes.archivos}
-    return sorted(falta & pedidos)
+    partes = {nombre for modulo, nombre in mes.partes_faltantes() if modulo in pedidos}  # "Resto - Ocupados"
+    return sorted((falta & pedidos) | partes)
 
 
 def _marcador_cubre(dest: Path, modules) -> bool:

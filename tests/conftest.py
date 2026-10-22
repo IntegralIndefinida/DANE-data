@@ -59,6 +59,9 @@ def geih_root(tmp_path):
     _write(m / "Resto - Ocupados.csv", oc)
     _write(m / "Cabecera - Desocupados.csv", "Directorio;Secuencia_p;Orden;Dsi;Fex_c_2011\n1;1;2;1;100,5\n")
     _write(m / "Resto - Inactivos.csv", "Directorio;Secuencia_p;Orden;Ini;Fex_c_2011\n3;1;1;1;300,25\n")
+    # Cada módulo trae las dos partes, aunque una esté vacía (sin una, el mes queda incompleto)
+    _write(m / "Resto - Desocupados.csv", "Directorio;Secuencia_p;Orden;Dsi;Fex_c_2011\n")
+    _write(m / "Cabecera - Inactivos.csv", "Directorio;Secuencia_p;Orden;Ini;Fex_c_2011\n")
     # Carpeta que no es un mes (debe ignorarse)
     (base / "2016" / "Total_fact_exp_dto").mkdir(parents=True)
 
@@ -92,6 +95,10 @@ def geih_root(tmp_path):
                + fila(20, 1, 2, 1, fex[0]))
         _write(m / f"Cabecera - Fuerza de trabajo.{ext}", fila("DIRECTORIO", "SECUENCIA_P", "ORDEN", "fex_c_2011")
                + fila(20, 1, 1, fex[0]) + fila(20, 1, 2, fex[0]) + fila(21, 1, 1, fex[1]))
+        for modulo, marca in (("Características generales (Personas)", "P6040"), ("Ocupados", "OCI"),
+                              ("Desocupados", "DSI"), ("Fuerza de trabajo", None)):  # el resto, vacío
+            _write(m / f"Resto - {modulo}.{ext}", fila("DIRECTORIO", "SECUENCIA_P", "ORDEN", *filter(None, [marca]),
+                                                       "fex_c_2011"))
         # Febrero de 2011: "Otras actividades" trae otro factor (FEX_C) que no debe reemplazar al de características
         _write(m / f"Cabecera - Otras actividades y ayudas en la semana.{ext}",
                fila("DIRECTORIO", "SECUENCIA_P", "ORDEN", "FEX_C") + fila(20, 1, 1, 999) + fila(20, 1, 2, 999))
@@ -110,6 +117,8 @@ def geih_root(tmp_path):
     _stata_110(m / "Cabecera - Ocupados.dta", {k: v[:1] for k, v in llaves.items()} | {"OCI": [1], "INGLABO": [3000000]})
     _stata_110(m / "Cabecera - Desocupados.dta", {k: v[1:] for k, v in llaves.items()} | {"DSI": [1]})
     _stata_110(m / "Cabecera - Fuerza de trabajo.dta", llaves)
+    for modulo in ("Características generales (Personas)", "Ocupados", "Desocupados", "Fuerza de trabajo"):
+        _stata_110(m / f"Resto - {modulo}.dta", {k: [] for k in llaves})  # el resto, vacío
 
     # --- Mes incompleto (sin desocupados)
     m = base / "2025" / "Febrero 2025"

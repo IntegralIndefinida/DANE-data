@@ -17,6 +17,10 @@
 
 **Correcciones**
 
+* Un mes de 2007–2021 al que le faltaba una parte de un módulo (por ejemplo `Resto - Ocupados`) se daba por
+  completo: los ocupados rurales quedaban como no ocupados y la desocupación nacional salía mal. Ahora el mes
+  queda incompleto, con la parte que falta en `faltantes`, y la descarga lo vuelve a extraer. Todos los meses
+  de la GEIH que se publican hoy traen las dos partes.
 * Al leer un archivo, una columna numérica con unos pocos valores de texto (hasta el 1 %) se convertía a
   número y esos valores se perdían sin aviso. Ahora se avisa con el archivo, la columna y ejemplos; en los
   archivos del DANE pasa con unos pocos códigos de `RAMA4DP8` como `"0  5"`.

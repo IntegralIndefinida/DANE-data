@@ -149,6 +149,10 @@ def month_from_folder(name: str) -> int | None:
     return None
 
 
+_NOMBRE_PARTE = {"caracteristicas": "Características generales", "fuerza": "Fuerza de trabajo",
+                 "ocupados": "Ocupados", "desocupados": "Desocupados"}
+
+
 @dataclass
 class MesGEIH:
     anio: int
@@ -166,6 +170,10 @@ class MesGEIH:
         Información necesaria para los indicadores laborales que no está en disco.
         En 2020 y en la serie de empalme las marcas OCI/DSI/INI vienen en el
         módulo de características, así que se revisan los encabezados.
+
+        En los meses con los módulos partidos en Cabecera y Resto (2007–2021), cada módulo necesita las dos
+        partes: con una sola, el total nacional sale sin la zona rural o sin la urbana. La parte que falta
+        se nombra como el archivo del DANE (``"Resto - Ocupados"``).
         """
         if "caracteristicas" not in self.archivos:
             return ["caracteristicas"]
@@ -180,7 +188,23 @@ class MesGEIH:
             falta.append("desocupados")
         if "fuerza" not in self.archivos and not cols & {"PET", "PETI", "INI"}:
             falta.append("fuerza")
-        return falta
+        return falta + [nombre for _, nombre in self.partes_faltantes()]
+
+    def partes_faltantes(self) -> list[tuple[str, str]]:
+        """``(módulo, archivo)`` de las partes Cabecera o Resto que faltan, p. ej. ``("ocupados", "Resto - Ocupados")``."""
+        partes: dict[str, set] = {}
+        for modulo in ("caracteristicas", "fuerza", "ocupados", "no_ocupados"):
+            for f in self.archivos.get(modulo, []):
+                # Antes de 2022, Desocupados e Inactivos son archivos aparte. Inactivos no hace falta: la PET
+                # sale de Fuerza de trabajo (y faltantes tampoco lo pide).
+                if modulo == "no_ocupados" and _RE_INACT.search(strip_accents(f.name)):
+                    continue
+                tipo = "desocupados" if modulo == "no_ocupados" else modulo
+                partes.setdefault(tipo, set()).add(classify_file(f.name)[1])
+        if not any(d & {"cabecera", "resto"} for d in partes.values()):
+            return []  # 2022 en adelante y el empalme: un archivo nacional por módulo
+        return [(tipo, f"{dominio.capitalize()} - {_NOMBRE_PARTE[tipo]}")
+                for tipo, dominios in partes.items() for dominio in ("cabecera", "resto") if dominio not in dominios]
 
     @property
     def completo(self) -> bool:

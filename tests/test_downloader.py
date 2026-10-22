@@ -214,14 +214,16 @@ def test_csv_danados_se_bajan_en_otro_formato(tmp_path):
     """2011 (factor sin punto decimal) se baja en TXT; septiembre de 2021 (CSV con espacios), en Stata."""
     mes_txt = _zip({"03_txt/Cabecera - Caracteristicas generales (Personas).txt":
                     "DIRECTORIO\tSECUENCIA_P\tORDEN\tOCI\tDSI\tPETI\tfex_c_2011\n1\t1\t1\t1\t\t1\t84.9491032387525\n",
+                    "03_txt/Resto - Caracteristicas generales (Personas).txt":
+                    "DIRECTORIO\tSECUENCIA_P\tORDEN\tOCI\tDSI\tPETI\tfex_c_2011\n",
                     "03_txt/Cabecera - Otros ingresos.txt": "x\n"})
     dl = FakeANDA({"Marzo_csv.zip": _zip({"Cabecera - Caracteristicas generales (Personas).csv": "roto"}),
                    "Marzo_txt.zip": mes_txt, "Marzo.zip": b"spss", "total_2011_c_txt.zip": b"anual"},
                   base_dir=tmp_path, modules=("caracteristicas",))
     dl.process_year("2011", "182")
     assert dl.descargas == ["Marzo_txt.zip"]
-    assert [f.name for f in (tmp_path / "datos_csv" / "2011" / "Marzo_txt").glob("*.txt")] == [
-        "Cabecera - Caracteristicas generales (Personas).txt"]
+    assert sorted(f.name for f in (tmp_path / "datos_csv" / "2011" / "Marzo_txt").glob("*.txt")) == [
+        "Cabecera - Caracteristicas generales (Personas).txt", "Resto - Caracteristicas generales (Personas).txt"]
     assert dd.geih.load(2011, root=tmp_path, cache=False)["fex"].tolist() == [84.9491032387525]
 
     car = _dta(DIRECTORIO=[1], SECUENCIA_P=[1], ORDEN=[1], OCI=[1], DSI=[0], PETI=[1], fex_c_2011=[250.5])
@@ -652,3 +654,23 @@ def test_forzar_vuelve_a_bajar_y_reemplaza(tmp_path, sin_pausas_eam):
     assert real.download_file("u", destino)
     assert real.session.pedidos == 1
     assert zipfile.ZipFile(destino).read("a.csv") == b"nuevo"
+
+
+def test_mes_sin_resto_queda_incompleto(geih_root):
+    """2007–2021: sin «Resto - Ocupados», los ocupados rurales serían no ocupados y la TD saldría mal."""
+    mes = geih_root / "datos_csv" / "2016" / "Enero"
+    (mes / "Resto - Ocupados.csv").unlink()
+    (m,) = dd.geih.find_months(2016, root=geih_root)
+    assert m.faltantes == ["Resto - Ocupados"] and not m.completo
+    assert faltantes_mes(mes, ["ocupados"]) == ["Resto - Ocupados"]      # el descargador lo vuelve a extraer
+    assert faltantes_mes(mes, ["caracteristicas"]) == []
+    # Inactivos no hace falta: la PET sale de Fuerza de trabajo
+    (mes / "Cabecera - Inactivos.csv").unlink()
+    (m,) = dd.geih.find_months(2016, root=geih_root)
+    assert m.faltantes == ["Resto - Ocupados"]
+    # Solo el archivo de Área (subconjunto de Cabecera) tampoco basta
+    for f in mes.glob("*Fuerza de trabajo.csv"):
+        f.unlink()
+    (mes / "Area - Fuerza de trabajo.csv").write_text("Directorio;Secuencia_p;Orden;Fex_c_2011\n", encoding="utf-8")
+    (m,) = dd.geih.find_months(2016, root=geih_root)
+    assert m.faltantes == ["Cabecera - Fuerza de trabajo", "Resto - Fuerza de trabajo", "Resto - Ocupados"]
