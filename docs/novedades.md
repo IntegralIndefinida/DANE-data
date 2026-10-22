@@ -27,6 +27,10 @@
 
 **Aplicación**
 
+* *Tablas y microdatos*: la tabla con filas y columnas conserva el orden de las categorías (el nivel
+  educativo va de *Ninguno* a *Superior*; antes salía en orden alfabético), y el indicador «Ganan menos de 1
+  SMLV» se llama ahora «Ganan menos de 0,95 SMLV», que es lo que cuenta.
+* EAM: la selección inicial de años son los últimos 10, no 11.
 * Los botones de descarga (CSV, Excel y Stata) arman el archivo al hacer clic. Antes se armaban los tres en
   cada interacción con la página, aunque nadie descargara, y las tablas grandes la volvían lenta. Requiere
   Streamlit 1.52 o más reciente.

@@ -352,7 +352,7 @@ def selector_eam(extra: tuple = (), clave: str = "eam"):
             sin_datos("EAM")
         anios_disp = sorted(av.anio.unique())
         # Los últimos 10 años; el inicio tiene que ser un año descargado (pueden no ser consecutivos)
-        inicio = next(a for a in anios_disp if a >= anios_disp[-1] - 10)
+        inicio = next(a for a in anios_disp if a >= anios_disp[-1] - 9)
         lo, hi = st.select_slider("Años", options=anios_disp, value=(inicio, anios_disp[-1]),
                                   key=f"{clave}_rango")
         anios = [a for a in anios_disp if lo <= a <= hi]

@@ -198,3 +198,29 @@ def test_descargas_se_arman_al_hacer_clic(eam_root, monkeypatch):
     assert pd.read_excel(io.BytesIO(_ui._excel(df)))["sector"].tolist() == ["A", np.nan]
     stata = pd.read_stata(io.BytesIO(_ui._stata(df)))
     assert stata["sector"].tolist() == ["A", ""] and stata["n"].tolist()[0] == 1
+
+
+def test_tabla_pivote_conserva_el_orden_de_las_categorias(geih_root, tmp_path, monkeypatch):
+    """El nivel educativo va de Ninguno a Superior, no en orden alfabético."""
+    monkeypatch.setitem(dd.config._session, "geih", geih_root)
+    monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
+    at = AppTest.from_file(str(PAGINAS / "geih_explorar.py"), default_timeout=60).run()
+    at.radio[0].set_value(at.radio[0].options[0]).run()            # toda la población
+    next(s for s in at.selectbox if s.label == "Filas").set_value("Nivel educativo").run()
+    next(s for s in at.selectbox if s.label == "Columnas / comparar por").set_value("Sexo").run()
+    assert not at.exception
+    filas = [str(v) for v in at.dataframe[0].value.index]
+    orden = [str(v) for v in dd.geih.NIVELES_EDUC if str(v) in filas]
+    assert len(filas) > 2 and filas == orden
+
+
+def test_eam_por_defecto_los_ultimos_10_anios(tmp_path, monkeypatch):
+    for anio in range(2013, 2025):
+        archivo = tmp_path / "datos" / str(anio) / f"EAM_{anio}.csv"
+        archivo.parent.mkdir(parents=True)
+        archivo.write_text("nordemp;nordest;dpto;ciiu4;PRODBR2;CONSIN2;VALAGRI;PERTOTAL;PPERYTEM;SALPEYTE;PRESPYTE\n"
+                           f"1;10;5;1011;200;120;{anio};12;10;20;4\n", encoding="utf-8")
+    monkeypatch.setitem(dd.config._session, "eam", tmp_path)
+    at = AppTest.from_file(str(PAGINAS / "eam_industria.py"), default_timeout=60).run()
+    assert not at.exception
+    assert at.select_slider[0].value == (2015, 2024)              # antes (2014, 2024): 11 años

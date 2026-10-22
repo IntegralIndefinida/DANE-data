@@ -102,17 +102,18 @@ with tab1:
     if t.empty:
         st.info("No hay datos para esta combinación (puede ser una variable que esos años no existe).")
     else:
-        if c:
-            t[c] = t[c].astype(str)
-        t[f] = t[f].astype(str)
-        if c and t[c].nunique() <= MAX_SERIES:
-            fig = barras(t, x=f, y=est, color=c, pct=est == "porcentaje", horizontal=t[f].nunique() > 8)
+        # Texto para el gráfico; la tabla pivote usa las categorías, que conservan su orden (el nivel
+        # educativo de Ninguno a Superior, no alfabético)
+        g = t.astype({k: str for k in filter(None, [f, c])})
+        if c and g[c].nunique() <= MAX_SERIES:
+            fig = barras(g, x=f, y=est, color=c, pct=est == "porcentaje", horizontal=g[f].nunique() > 8)
         else:
-            fig = barras(t, x=f, y=est, pct=est == "porcentaje", horizontal=t[f].nunique() > 8)
+            fig = barras(g, x=f, y=est, pct=est == "porcentaje", horizontal=g[f].nunique() > 8)
         grafico(fig)
 
         if c:
-            pivot = t.pivot(index=f, columns=c, values=est)
+            pivot = t.pivot_table(index=f, columns=c, values=est, observed=True, aggfunc="first")
+            pivot.index, pivot.columns = pivot.index.astype(str), pivot.columns.astype(str)  # ya ordenadas
             st.dataframe(pivot.style.format("{:,.1f}" if est == "porcentaje" else "{:,.0f}"), width="stretch")
         else:
             st.dataframe(t, hide_index=True, width="stretch")
@@ -148,7 +149,8 @@ with tab2:
 
         k = st.columns(3)
         k[0].metric("Ingreso mediano", fmt_pesos(dd.weighted_quantile(oc["ingreso_laboral"], w, 0.5)))
-        k[1].metric("Ganan menos de 1 SMLV", fmt_pct(100 * w[r < 0.95].sum() / w.sum()))
+        k[1].metric("Ganan menos de 0,95 SMLV", fmt_pct(100 * w[r < 0.95].sum() / w.sum()),
+                    help="Por debajo del tramo ≈ 1 SMLV del indicador siguiente, para no contar a nadie dos veces.")
         k[2].metric("Ganan ≈ 1 SMLV (±5 %)", fmt_pct(100 * w[(r >= 0.95) & (r <= 1.05)].sum() / w.sum()),
                     help="La acumulación en el mínimo muestra cuánto 'muerde' el salario mínimo.")
 
