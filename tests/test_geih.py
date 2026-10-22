@@ -407,6 +407,14 @@ def test_serie_promedia_sobre_los_meses_cargados(geih_root, tmp_path, monkeypatc
     # Elegir meses con df[...] (un trimestre, por ejemplo) sí cuenta solo los que quedan
     rural = micro[micro["zona"] == filtros["zona"][0]]
     assert dd.tabla(rural)["total"].item() == pytest.approx(300.25)
+    # También después de filtrar: la anotación no pasa al subconjunto (antes se dividía por 2 meses)
+    mujeres = dd.geih.filtrar(micro, {"sexo": ["Mujer"]})
+    enero = mujeres[mujeres["mes"] == 1]
+    esperado = dd.tabla(micro[(micro["sexo"] == "Mujer") & (micro["mes"] == 1)])["total"].item()
+    assert dd.tabla(enero)["total"].item() == pytest.approx(esperado)
+    assert dd.geih.indicadores(enero)["pet"].item() == pytest.approx(
+        dd.geih.indicadores(micro[(micro["sexo"] == "Mujer") & (micro["mes"] == 1)])["pet"].item())
+    assert dd.geih.filtrar(enero, filtros).attrs["meses_por_anio"] == {2016: 1}
 
 
 def test_serie_cache_distingue_rango_de_lista(geih_root, tmp_path, monkeypatch):

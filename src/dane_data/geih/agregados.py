@@ -23,7 +23,7 @@ import pandas as pd
 
 from .. import config
 from ..referencias import MESES
-from ..stats import _as_list, peso_mensual_promedio, weighted_quantile
+from ..stats import _as_list, _meses_anotados, peso_mensual_promedio, weighted_quantile
 from .indicadores import _COLUMNAS, indicadores
 from .loader import (_HARMONIZE_VERSION, CATEGORIAS, MesGEIH, _firma_archivos, _guardar_parquet, _root, find_months,
                      load)
@@ -67,7 +67,8 @@ def filtrar(df: pd.DataFrame, filtros: dict | None = None, poblacion: str | None
     El resultado anota en ``attrs["meses_por_anio"]`` cuántos meses tenía cada año antes de filtrar (si se
     filtra por ``mes``, solo esos). Así, si el filtro deja un mes sin nadie, ``dd.tabla`` e ``indicadores``
     lo cuentan como 0 en el promedio mensual de los niveles, como el DANE, y dan lo mismo que las
-    funciones ``serie_*``.
+    funciones ``serie_*``. Si después se toma un subconjunto (``df[df.mes <= 3]``), la anotación deja de
+    valer y se cuentan los meses que quedan.
 
     Ejemplos
     --------
@@ -88,8 +89,9 @@ def filtrar(df: pd.DataFrame, filtros: dict | None = None, poblacion: str | None
     res = df[mask]
     if {"anio", "mes"} <= set(df.columns):
         # Los meses de antes de filtrar (o los de un filtrar anterior), para peso_mensual_promedio
-        previos = None if filtros and "mes" in filtros else df.attrs.get("meses_por_anio")
-        res.attrs = {**res.attrs, "meses_por_anio": previos or _meses_cargados(df, filtros)}
+        previos = None if filtros and "mes" in filtros else _meses_anotados(df)
+        res.attrs = {**res.attrs, "meses_por_anio": previos or _meses_cargados(df, filtros),
+                     "meses_por_anio_filas": len(res)}
     return res
 
 

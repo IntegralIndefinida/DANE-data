@@ -42,7 +42,9 @@ def peso_mensual_promedio(df: pd.DataFrame, peso: str = "fex") -> pd.Series:
     Si ``df.attrs["meses_por_anio"]`` existe (``{anio: número de meses}``), se divide por esos meses; si no,
     por los meses que hay en ``df``. ``geih.filtrar`` lo anota con los meses de antes de filtrar: así un
     mes que el filtro deja sin nadie (un grupo pequeño) cuenta como 0 en el promedio, en vez de sacarse
-    del promedio. Con ``df[df.mes <= 3]`` se cuentan los meses que quedan, como debe ser para un trimestre.
+    del promedio. Con ``df[df.mes <= 3]`` se cuentan los meses que quedan, como debe ser para un trimestre,
+    también después de ``filtrar``: la anotación deja de valer si ``df`` ya no tiene las filas que dejó
+    ``filtrar`` (pandas la copia a los subconjuntos).
 
     Ejemplos
     --------
@@ -58,9 +60,21 @@ def peso_mensual_promedio(df: pd.DataFrame, peso: str = "fex") -> pd.Series:
     if "mes" not in df.columns or "anio" not in df.columns:
         return df[peso]
     n_meses = df.groupby("anio", observed=True)["mes"].transform("nunique")
-    if meses := df.attrs.get("meses_por_anio"):
+    if meses := _meses_anotados(df):
         n_meses = df["anio"].astype("int64").map(meses).fillna(n_meses)
     return df[peso] / n_meses
+
+
+def _meses_anotados(df: pd.DataFrame) -> dict | None:
+    """
+    Los meses que anotó ``geih.filtrar``, si ``df`` todavía tiene las filas que dejó. pandas copia
+    ``attrs`` a cualquier subconjunto: sin esta revisión, ``filtrar(...)[lambda d: d.mes <= 3]``
+    dividiría por los 12 meses de antes y no por 3. Una anotación sin el número de filas (puesta a mano)
+    vale siempre.
+    """
+    meses = df.attrs.get("meses_por_anio")
+    filas = df.attrs.get("meses_por_anio_filas")
+    return meses if meses and (filas is None or filas == len(df)) else None
 
 
 def weighted_quantile(values, weights, q: float) -> float:

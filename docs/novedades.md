@@ -9,6 +9,12 @@
   grande y casi nadie en la PET. Para conservarla, use `dropna=False`. {dd}`geih.indicadores()` tiene el
   mismo parámetro, pero por defecto la sigue conservando, para que los grupos sumen el total.
 
+**Correcciones**
+
+* Los niveles de {dd}`tabla()` y {dd}`geih.indicadores()` salían divididos por los meses equivocados si,
+  después de {dd}`geih.filtrar()`, se elegían meses con `df[df.mes <= 3]`: se dividía por los 12 meses
+  cargados y no por los 3 que quedan, así que un trimestre salía 4 veces más bajo. Las tasas no cambiaban.
+
 **EAM**
 
 * Nueva advertencia sobre la composición por sector. Para anonimizar, el ANDA publica muchos
