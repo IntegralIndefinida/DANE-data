@@ -186,13 +186,19 @@ def _excel(df: pd.DataFrame) -> bytes:
 def _stata(df: pd.DataFrame) -> bytes:
     buf = io.BytesIO()
     d = df.copy()
-    for c in d.columns:  # Stata no acepta categorías/nullable ni nombres largos
-        if isinstance(d[c].dtype, pd.CategoricalDtype) or pd.api.types.is_string_dtype(d[c]):
+    largos = []
+    # Stata no acepta categorías/nullable, objetos que no son todos texto ni nombres largos. Se decide por el
+    # tipo de la columna y no por sus valores, para que una muestra (botones_descarga) diga si se puede.
+    for c in d.columns:
+        if isinstance(d[c].dtype, pd.CategoricalDtype) or pd.api.types.is_string_dtype(d[c].dtype) \
+                or pd.api.types.is_object_dtype(d[c].dtype):
             d[c] = d[c].astype(object).where(d[c].notna(), "").astype(str)
+            if d[c].str.len().max() > 2045:  # más largo, solo como strL
+                largos.append(c[:32])
         elif pd.api.types.is_extension_array_dtype(d[c]):
             d[c] = d[c].astype("float64")
     d.columns = [c[:32] for c in d.columns]
-    d.to_stata(buf, write_index=False, version=118)
+    d.to_stata(buf, write_index=False, version=118, convert_strl=largos)
     return buf.getvalue()
 
 
@@ -209,7 +215,7 @@ def botones_descarga(df: pd.DataFrame, nombre: str, key: str) -> None:
     else:
         c2.caption("Excel no admite más de 1 millón de filas.")
     try:
-        _stata(df.head(50))  # basta una muestra para saber si Stata acepta las columnas
+        _stata(df.head(50))  # basta una muestra: _stata decide por el tipo de cada columna, no por sus valores
     except Exception as e:  # noqa: BLE001
         c3.caption(f"Stata no disponible: {e}")
     else:

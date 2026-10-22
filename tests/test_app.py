@@ -224,6 +224,13 @@ def test_descargas_se_arman_al_hacer_clic(eam_root, monkeypatch):
     stata = pd.read_stata(io.BytesIO(_ui._stata(df)))
     assert stata["sector"].tolist() == ["A", ""] and stata["n"].tolist()[0] == 1
 
+    # Lo que pasa después de la muestra de 50 filas con que se decide el botón tampoco falla al exportar
+    raro = pd.DataFrame({"mixta": ["a"] * 60 + [1.5], "vacia": [None] * 50 + ["b"] * 11,
+                         "larga": ["c"] * 60 + ["x" * 3000]})
+    _ui._stata(raro.head(50))                           # la muestra con «vacia» toda en None tampoco
+    stata = pd.read_stata(io.BytesIO(_ui._stata(raro)))
+    assert stata["mixta"].iloc[-1] == "1.5" and stata["vacia"].iloc[0] == "" and len(stata["larga"].iloc[-1]) == 3000
+
 
 def test_tabla_pivote_conserva_el_orden_de_las_categorias(geih_root, tmp_path, monkeypatch):
     """El nivel educativo va de Ninguno a Superior, no en orden alfabético."""
