@@ -17,6 +17,9 @@
 
 **Correcciones**
 
+* Al leer un archivo, una columna numérica con unos pocos valores de texto (hasta el 1 %) se convertía a
+  número y esos valores se perdían sin aviso. Ahora se avisa con el archivo, la columna y ejemplos; en los
+  archivos del DANE pasa con unos pocos códigos de `RAMA4DP8` como `"0  5"`.
 * Un año o mes de numpy (`dd.geih.load(df.anio.max())`, `months=np.int64(1)`) lanzaba
   `TypeError: 'numpy.int64' object is not iterable`. Ahora se acepta en la carga, las funciones `serie_*` y
   las descargas.

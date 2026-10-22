@@ -9,11 +9,14 @@ automáticamente.
 from __future__ import annotations
 
 import io
+import logging
 from pathlib import Path
 from typing import Callable, Iterable
 
 import numpy as np
 import pandas as pd
+
+log = logging.getLogger("dane_data")
 
 
 def sniff(path: Path) -> tuple[str, str]:
@@ -37,10 +40,13 @@ def sniff(path: Path) -> tuple[str, str]:
     return sep, encoding
 
 
-def _coerce_numeric(df: pd.DataFrame) -> pd.DataFrame:
+def _coerce_numeric(df: pd.DataFrame, origen: str | None = None) -> pd.DataFrame:
     """
     Convierte a número las columnas de texto que en realidad son numéricas:
     celdas en blanco escritas como ``" "`` y coma decimal (``"71,22"``).
+
+    Una columna con hasta 1 % de valores de texto se convierte igual; esos valores quedan vacíos y se
+    avisa en el registro (``origen`` es el archivo, para el mensaje).
     """
     for col in df.columns:
         s = df[col]
@@ -60,6 +66,12 @@ def _coerce_numeric(df: pd.DataFrame) -> pd.DataFrame:
         converted = pd.to_numeric(s, errors="coerce").astype("float64")
         # Solo si no se pierden datos (texto genuino se deja como está)
         if converted.notna().sum() >= nonnull * 0.99:
+            # "." es la marca de vacío de Stata y SAS (RAMA4D_D_R4 de 2022+): no es un dato que se pierda
+            perdidos = s.notna() & converted.isna() & s.ne(".")
+            if perdidos.any():
+                ejemplos = ", ".join(repr(v) for v in s[perdidos].unique()[:3])
+                log.warning(f"{origen or 'Archivo'}: {col} es numérica salvo {perdidos.sum()} valor(es) de texto, "
+                            f"que quedan vacíos ({ejemplos}).")
             if converted.notna().all() and (converted % 1 == 0).all():
                 converted = converted.astype("int64")
             df[col] = converted
@@ -176,7 +188,7 @@ def read_table(
             return pd.DataFrame()
         df = pd.read_stata(_stata(path), columns=elegidas, convert_categoricals=False)
         df.columns = normalize_columns(df.columns, case)
-        return _coerce_numeric(df.loc[:, ~df.columns.duplicated()])
+        return _coerce_numeric(df.loc[:, ~df.columns.duplicated()], "/".join(path.parts[-3:]))
 
     sep, encoding = sniff(path)
     kwargs = dict(sep=sep, usecols=usecols, low_memory=False)
@@ -186,4 +198,4 @@ def read_table(
         df = pd.read_csv(path, encoding="latin-1", **kwargs)
     df.columns = normalize_columns(df.columns, case)
     df = df.loc[:, ~df.columns.duplicated()]
-    return _coerce_numeric(df)
+    return _coerce_numeric(df, "/".join(path.parts[-3:]))

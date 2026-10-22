@@ -134,6 +134,21 @@ def test_eam_deflactar(eam_root):
     assert d.loc[d.anio.eq(2024), "valagri_real"].item() == pytest.approx(60)
 
 
+def test_texto_que_se_pierde_al_convertir_se_avisa(tmp_path, caplog):
+    """Hasta 1 % de texto en una columna numérica queda vacío: se avisa, salvo la marca de vacío "."."""
+    from dane_data._io import read_table
+
+    archivo = tmp_path / "2016" / "Enero" / "Ocupados.csv"
+    archivo.parent.mkdir(parents=True)
+    filas = [f"{i};{i}" for i in range(199)]
+    archivo.write_text("CODIGO;OTRO\n" + "\n".join(filas) + "\nA1;.\n", encoding="utf-8")
+    with caplog.at_level("WARNING", logger="dane_data"):
+        df = read_table(archivo)
+    assert df["CODIGO"].isna().sum() == 1 and df["OTRO"].isna().sum() == 1   # las dos quedan numéricas
+    assert len(caplog.records) == 1
+    assert "2016/Enero/Ocupados.csv: CODIGO" in caplog.text and "'A1'" in caplog.text
+
+
 def test_coma_decimal_minoritaria_no_se_pierde(tmp_path):
     """EAM 1998: casi todo entero, pero las plantas anonimizadas por promedio traen coma decimal."""
     filas = [f"{i};{i};5;3111;1998;100;60;40;10;8;10;2" for i in range(1, 301)]
