@@ -11,6 +11,9 @@
 
 **Correcciones**
 
+* Los catálogos del ANDA que encuentra la búsqueda ya no reemplazan a los verificados: solo agregan años que
+  no están en la lista. Antes, un catálogo nuevo del DANE con un título parecido podía cambiar en silencio
+  los datos de un año. En la EAM, además, solo se toman archivos ZIP.
 * Una descarga en la que algo falló (un ZIP que no se pudo bajar, un año sin enlaces en el ANDA) se anunciaba
   como terminada con éxito. Ahora {dd}`geih.download()` y {dd}`eam.download()` devuelven la lista de lo que
   falló, `dane-data descargar` termina con código 1 y la aplicación lo muestra en vez de «Descarga

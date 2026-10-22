@@ -249,8 +249,10 @@ class GEIHDownloader(DescargadorANDA):
 
     def discover_catalogs(self) -> dict:
         """
-        Descubre dinámicamente los catálogos en ANDA mediante búsqueda AJAX.
-        Si la búsqueda falla o está incompleta, usa los catálogos verificados como respaldo.
+        Catálogos de cada año: los verificados (``KNOWN_CATALOGS``, ``EMPALME_CATALOGS``) y, para los años
+        que no están ahí, los que encuentra la búsqueda del ANDA. Lo descubierto nunca reemplaza a lo
+        verificado: la búsqueda elige por el título, y otro catálogo con un título parecido (un módulo o
+        anexo nuevo) cambiaría en silencio los datos de un año que ya se validó contra el DANE.
         """
         if self.is_empalme:
             log.info("Buscando catálogos de la Serie de Empalme GEIH en el portal del DANE...")
@@ -275,8 +277,7 @@ class GEIHDownloader(DescargadorANDA):
                                 discovered[yr_match.group(1)] = cat_id
                 except Exception as e:
                     log.warning(f"Error buscando catálogos de empalme en página {page}: {e}")
-            final_catalogs = dict(EMPALME_CATALOGS)
-            final_catalogs.update(discovered)
+            final_catalogs = {**discovered, **EMPALME_CATALOGS}
             log.info(f"Catálogos de Empalme identificados para {len(final_catalogs)} años: {sorted(final_catalogs.keys())}")
             return final_catalogs
 
@@ -331,9 +332,8 @@ class GEIHDownloader(DescargadorANDA):
                 log.warning(f"No se pudo completar la búsqueda en página {page}: {e}")
                 break
 
-        # Combinar con los catálogos verificados para garantizar cobertura completa
-        final_catalogs = dict(KNOWN_CATALOGS)
-        final_catalogs.update(discovered)
+        # Los verificados ganan; la búsqueda solo agrega años nuevos
+        final_catalogs = {**discovered, **KNOWN_CATALOGS}
 
         log.info(f"Catálogos identificados para {len(final_catalogs)} años: {sorted(final_catalogs.keys())}")
         return final_catalogs

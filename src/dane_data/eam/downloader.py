@@ -150,8 +150,9 @@ class EAMDownloader(DescargadorANDA):
 
     def discover_catalogs(self) -> dict:
         """
-        Descubre dinámicamente los catálogos y archivos de la EAM en ANDA.
-        Retorna un diccionario {año: (catalog_id, filename, download_url)}.
+        Archivos de cada año: los verificados (``EAM_KNOWN_CATALOGS``) y, para los años que no están ahí,
+        los ZIP que aparecen en los catálogos de la EAM en el ANDA. Lo descubierto nunca reemplaza a lo
+        verificado. Retorna un diccionario {año: (catalog_id, filename, download_url)}.
         """
         log.info("Sincronizando catálogos de la EAM con el portal ANDA del DANE...")
         discovered = {}
@@ -169,7 +170,7 @@ class EAMDownloader(DescargadorANDA):
                 res.raise_for_status()
                 matches = re.findall(r"mostrarModal\(\s*'([^']+)'\s*,\s*'([^']+)'\s*\)", res.text)
                 for name, url in matches:
-                    if "tic" in name.lower():
+                    if "tic" in name.lower() or not name.strip().lower().endswith(".zip"):
                         continue
                     if (enlace := url_del_anda(url, self.base_url)) is None:
                         log.warning(f"Enlace de {name.strip()} fuera del ANDA o sin https, se ignora: {url.strip()}")
@@ -182,9 +183,8 @@ class EAMDownloader(DescargadorANDA):
             except Exception as e:
                 log.warning(f"Error consultando microdatos para catálogo {cid}: {e}")
 
-        # Unificar con los catálogos verificados
-        final_catalogs = dict(EAM_KNOWN_CATALOGS)
-        final_catalogs.update(discovered)
+        # Los verificados ganan; la búsqueda solo agrega años nuevos
+        final_catalogs = {**discovered, **EAM_KNOWN_CATALOGS}
 
         log.info(f"Se identificaron archivos de EAM para {len(final_catalogs)} años: {sorted(final_catalogs.keys())}")
         return final_catalogs

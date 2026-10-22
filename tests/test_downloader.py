@@ -408,6 +408,7 @@ def test_descubrir_catalogos_geih(tmp_path):
     dl.session = _ANDA({
         "/index.php/catalog/search?page=1": _busqueda(
             ("999", "Gran Encuesta Integrada de Hogares - GEIH - 2027"),
+            ("993", "GEIH 2023 - Anexo de módulos"),             # no reemplaza al catálogo verificado
             ("998", "GEIH 2024 - San Andrés"),                   # módulo satélite: no cuenta
             ("997", "GEIH Empalme 2015 Marco 2018"),             # empalme: no es la serie principal
             ("996", "Encuesta de Calidad de Vida 2024")),         # otra encuesta
@@ -416,6 +417,7 @@ def test_descubrir_catalogos_geih(tmp_path):
     cat = dl.discover_catalogs()
     assert cat["2027"] == "999"
     assert cat["2024"] == KNOWN_CATALOGS["2024"]
+    assert cat["2023"] == KNOWN_CATALOGS["2023"]
     assert len(dl.session.pedidos) == 2
 
 
@@ -424,8 +426,9 @@ def test_descubrir_catalogos_empalme_y_sin_conexion(tmp_path):
 
     dl = GEIHDownloader(base_dir=tmp_path, is_empalme=True)
     dl.session = _ANDA({"/index.php/catalog/search?page=1": _busqueda(("995", "GEIH Empalme 2019"),
+                                                                      ("992", "GEIH Empalme 2009"),
                                                                       ("994", "GEIH 2019"))})
-    assert dl.discover_catalogs() == {**EMPALME_CATALOGS, "2019": "995"}
+    assert dl.discover_catalogs() == {**EMPALME_CATALOGS, "2009": "992"}   # 2019 sigue con el verificado
 
     dl = GEIHDownloader(base_dir=tmp_path)
     dl.session = _ANDA({}, falla=True)                       # sin internet: los catálogos conocidos
@@ -476,10 +479,12 @@ def test_descubrir_catalogos_eam(tmp_path):
     dl = EAMDownloader(base_dir=tmp_path)
     dl.session = _ANDA({"/index.php/catalog/888/get-microdata": _modal(
         ("EAM_2025.zip", "https://microdatos.dane.gov.co/x/1"), ("EAM_TIC_2025.zip", "u/2"),
+        ("EAM_2024_nueva.zip", "https://microdatos.dane.gov.co/x/3"),   # no reemplaza al verificado
+        ("Ficha metodológica 2027.pdf", "https://microdatos.dane.gov.co/x/4"),   # no es un ZIP
         ("EAM_2026.zip", "https://otro.example/x.zip"))})       # fuera del ANDA: se ignora
     cat = dl.discover_catalogs()                            # los demás catálogos dan 404: se avisa y sigue
     assert cat["2025"] == ("888", "EAM_2025.zip", "https://microdatos.dane.gov.co/x/1")
-    assert "2026" not in cat
+    assert "2026" not in cat and "2027" not in cat
     assert {k: v for k, v in cat.items() if k != "2025"} == EAM_KNOWN_CATALOGS
 
 
