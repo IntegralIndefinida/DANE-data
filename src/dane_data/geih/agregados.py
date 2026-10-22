@@ -26,8 +26,8 @@ from .. import config
 from ..referencias import MESES
 from ..stats import _as_list, _meses_anotados, peso_mensual_promedio, weighted_quantile
 from .indicadores import _COLUMNAS, indicadores
-from .loader import (_HARMONIZE_VERSION, CATEGORIAS, MesGEIH, _firma_archivos, _guardar_parquet, _root, find_months,
-                     load)
+from .loader import (_HARMONIZE_VERSION, CATEGORIAS, MesGEIH, _firma_archivos, _guardar_parquet, _root, _usado,
+                     find_months, load)
 
 log = logging.getLogger("dane_data.geih")
 
@@ -190,6 +190,7 @@ def _por_anio(tipo: str, anios, solicitud: dict, calcular: Callable[[int], pd.Da
         if ruta.exists():
             try:
                 tabla = pd.read_parquet(ruta)
+                _usado(ruta)
             except Exception:  # caché corrupta: se regenera
                 tabla = None
         if tabla is None:

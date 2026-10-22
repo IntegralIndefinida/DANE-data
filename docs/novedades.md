@@ -40,6 +40,9 @@
 
 **Correcciones**
 
+* La caché de la GEIH (`~/.cache/dane_data/geih/`) crecía sin límite: cada combinación de filtros, meses o
+  columnas creaba archivos nuevos y los viejos no se borraban nunca. Ahora lo que no se usa en 90 días se
+  borra solo, y {dd}`geih.clear_cache()` acepta `dias` para borrar solo lo que no se usa hace más de esos días.
 * Un mes de 2007–2021 al que le faltaba una parte de un módulo (por ejemplo `Resto - Ocupados`) se daba por
   completo: los ocupados rurales quedaban como no ocupados y la desocupación nacional salía mal. Ahora el mes
   queda incompleto, con la parte que falta en `faltantes`, y la descarga lo vuelve a extraer. Todos los meses

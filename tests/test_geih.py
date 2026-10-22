@@ -265,10 +265,11 @@ def test_cache_interrumpida_no_deja_parquet_a_medias(geih_root, tmp_path, monkey
     dd.geih.serie_indicadores(2016, root=geih_root)
     dd.geih.serie_indicadores(2016, root=geih_root, filtros={"sexo": ["Mujer"]})
     (tmp_path / "cache" / "geih" / "huerfano.parquet.ab12.tmp").write_bytes(b"x")  # de una versión anterior
-    archivos = [f for f in (tmp_path / "cache").rglob("*") if f.is_file()]
+    # (sin contar el marcador de la limpieza automática)
+    archivos = [f for f in (tmp_path / "cache").rglob("*") if f.is_file() and f.name != ".ultima_limpieza"]
     assert len(archivos) == 4                           # 1 mes (load) + 2 años (serie) + el huérfano
     assert dd.geih.clear_cache() == 4
-    assert not [f for f in (tmp_path / "cache").rglob("*") if f.is_file()]
+    assert not [f for f in (tmp_path / "cache").rglob("*") if f.is_file() and f.name != ".ultima_limpieza"]
 
 
 def test_cache_corrupta_se_regenera(geih_root, tmp_path, monkeypatch):
@@ -639,3 +640,32 @@ def test_anios_y_meses_de_numpy(geih_root, tmp_path, monkeypatch):
     assert df["anio"].unique().tolist() == [2016] and df["mes"].unique().tolist() == [1]
     t = dd.geih.serie_tabla(np.int64(2016), meses=np.int64(1), root=geih_root)
     assert t["total"].item() == pytest.approx(dd.tabla(df)["total"].item())
+
+
+def test_cache_sin_usar_se_borra_sola(geih_root, tmp_path, monkeypatch):
+    """Cada combinación de filtros o columnas crea archivos: lo que no se usa en 90 días se borra solo."""
+    import os
+    import time
+
+    monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
+    carpeta = tmp_path / "cache" / "geih" / "indicadores"
+    carpeta.mkdir(parents=True)
+    viejo, reciente = carpeta / "principal_2016_viejo.parquet", carpeta / "principal_2016_reciente.parquet"
+    for f, dias in ((viejo, 100), (reciente, 10)):
+        f.write_bytes(b"x")
+        os.utime(f, (time.time() - dias * 86400,) * 2)
+
+    dd.geih.load(2016, root=geih_root)                       # escribe la caché del mes: limpia
+    assert not viejo.exists() and reciente.exists()
+    (mes,) = (tmp_path / "cache" / "geih").glob("2016_01_*.parquet")
+
+    otro = carpeta / "principal_2016_otro.parquet"           # la limpieza se hace como mucho una vez al día
+    otro.write_bytes(b"x")
+    os.utime(otro, (time.time() - 100 * 86400,) * 2)
+    dd.geih.load(2016, root=geih_root, variables=["fex", "sexo"])
+    assert otro.exists()
+
+    os.utime(mes, (time.time() - 100 * 86400,) * 2)          # leerla la marca como usada
+    dd.geih.load(2016, root=geih_root)
+    assert time.time() - mes.stat().st_mtime < 60
+    assert dd.geih.clear_cache(dias=30) == 1 and not otro.exists() and mes.exists()

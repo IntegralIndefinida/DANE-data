@@ -45,7 +45,9 @@ El resultado guardado de un año se usa solo si no cambió nada de lo que lo pro
 * el código de `dane-data` (la versión y el contenido de los módulos que calculan).
 
 Así, actualizar `dane-data`, volver a descargar un mes o cambiar un filtro dan resultados correctos sin
-borrar nada a mano. {dd}`geih.clear_cache()` borra todo, por ejemplo para liberar espacio.
+borrar nada a mano. Cada combinación de filtros, meses o columnas guarda sus propios archivos; los que no se
+usan en 90 días se borran solos. {dd}`geih.clear_cache()` borra todo (o, con `dias=30`, lo que no se usó en
+el último mes), por ejemplo para liberar espacio.
 
 ### Medianas de varios años
 

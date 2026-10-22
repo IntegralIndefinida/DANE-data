@@ -22,7 +22,9 @@ from __future__ import annotations
 import hashlib
 import logging
 import numbers
+import os
 import re
+import time
 import uuid
 from dataclasses import dataclass, field
 from functools import lru_cache
@@ -845,6 +847,7 @@ def load(
         if cpath is not None and cpath.exists():
             try:
                 df = pd.read_parquet(cpath)
+                _usado(cpath)
             except Exception:  # caché corrupta: se regenera
                 df = None
         if df is None:
@@ -882,7 +885,7 @@ def load(
     return out
 
 
-def clear_cache() -> int:
+def clear_cache(dias: float | None = None) -> int:
     """
     Borra la caché de la GEIH.
 
@@ -890,23 +893,68 @@ def clear_cache() -> int:
     ``serie_tabla`` y ``serie_frecuencias``. Nunca hace falta para tener resultados correctos (la caché
     se invalida sola cuando cambian los datos o el código); sirve para liberar espacio.
 
+    Parámetros
+    ----------
+    dias
+        Borrar solo lo que no se usa hace más de esos días. Por defecto, todo.
+
     Devuelve
     --------
     int
         Número de archivos borrados.
+
+    Notas
+    -----
+    Lo que no se usa en 90 días se borra solo, revisando como mucho una vez al día:
+    cada combinación de filtros, meses o columnas crea sus propios archivos, y sin esto la caché crecería
+    sin límite.
 
     Ejemplos
     --------
     >>> import dane_data as dd
     >>> dd.geih.clear_cache()  # doctest: +SKIP
     412
+    >>> dd.geih.clear_cache(dias=30)  # lo que no se usó en el último mes  # doctest: +SKIP
+    57
     """
+    limite = None if dias is None else time.time() - dias * 86400
     n = 0
     for f in (config.CACHE_DIR / "geih").rglob("*"):
-        if f.suffix in (".parquet", ".tmp"):  # .tmp: escrituras que se interrumpieron
-            f.unlink(missing_ok=True)
-            n += 1
+        if f.suffix not in (".parquet", ".tmp"):  # .tmp: escrituras que se interrumpieron
+            continue
+        try:
+            if limite is None or f.stat().st_mtime < limite:
+                f.unlink()
+                n += 1
+        except OSError:  # otra sesión lo borró o lo está usando
+            pass
     return n
+
+
+# Días sin usarse tras los cuales un archivo de la caché se borra solo (ver clear_cache)
+_CACHE_DIAS = 90
+
+
+def _usado(ruta: Path) -> None:
+    """Marca un archivo de la caché como recién usado (su fecha es la que mira la limpieza)."""
+    try:
+        os.utime(ruta)
+    except OSError:
+        pass
+
+
+def _limpiar_cache_vieja() -> None:
+    """``clear_cache(_CACHE_DIAS)``, como mucho una vez al día (la fecha del marcador dice cuándo fue la última)."""
+    marcador = config.CACHE_DIR / "geih" / ".ultima_limpieza"
+    try:
+        if marcador.exists() and time.time() - marcador.stat().st_mtime < 86400:
+            return
+        marcador.parent.mkdir(parents=True, exist_ok=True)
+        marcador.touch()
+    except OSError:
+        return
+    if n := clear_cache(_CACHE_DIAS):
+        log.info(f"Caché: se borraron {n} archivos sin usar en {_CACHE_DIAS} días.")
 
 
 def _guardar_parquet(df: pd.DataFrame, ruta: Path) -> None:
@@ -922,3 +970,4 @@ def _guardar_parquet(df: pd.DataFrame, ruta: Path) -> None:
         tmp.replace(ruta)
     finally:
         tmp.unlink(missing_ok=True)
+    _limpiar_cache_vieja()  # al escribir algo nuevo, lo viejo que nadie usa
