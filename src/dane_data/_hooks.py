@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import shutil
 import time
+import uuid
 import zipfile
 from pathlib import Path
 from typing import Callable, Optional
@@ -73,7 +74,7 @@ class DescargadorANDA(ProgressMixin):
             log.warning(f"{dest_path.name} en disco está dañado: se vuelve a descargar.")
             dest_path.unlink()
 
-        temp_dest = dest_path.with_suffix(dest_path.suffix + ".part")
+        temp_dest = _temporal(dest_path)
 
         for attempt in range(1, max_retries + 1):
             try:
@@ -135,6 +136,15 @@ class DescargadorANDA(ProgressMixin):
         return list(self.fallidos)
 
 
+def _temporal(destino: Path) -> Path:
+    """
+    Nombre temporal único junto a ``destino``. Con uno fijo (``<archivo>.part``), dos descargas del mismo
+    año a la vez (dos pestañas, la app en modo aula) escribirían el mismo archivo; en Windows la segunda
+    falla porque está en uso.
+    """
+    return destino.with_name(f"{destino.name}.{uuid.uuid4().hex[:12]}.part")
+
+
 def url_del_anda(url: str, base: str = DescargadorANDA.base_url) -> str | None:
     """
     El enlace de descarga sacado de una página del ANDA, si apunta al ANDA por https (los relativos se
@@ -165,7 +175,7 @@ def extraer_miembro(z: zipfile.ZipFile, member: zipfile.ZipInfo, destino: Path) 
     al terminar: si se interrumpe (Ctrl+C, disco lleno), no queda un archivo a medias con el
     nombre final que la próxima descarga daría por bueno.
     """
-    tmp = destino.with_name(destino.name + ".part")
+    tmp = _temporal(destino)
     try:
         with z.open(member) as src, open(tmp, "wb") as dst:
             shutil.copyfileobj(src, dst, 1 << 20)

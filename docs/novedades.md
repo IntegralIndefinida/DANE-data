@@ -11,6 +11,8 @@
 
 **Correcciones**
 
+* Dos descargas del mismo año a la vez (dos pestañas, o la aplicación compartida en un aula) ya no escriben
+  el mismo archivo temporal; en Windows la segunda fallaba por archivo en uso.
 * Los catálogos del ANDA que encuentra la búsqueda ya no reemplazan a los verificados: solo agregan años que
   no están en la lista. Antes, un catálogo nuevo del DANE con un título parecido podía cambiar en silencio
   los datos de un año. En la EAM, además, solo se toman archivos ZIP.

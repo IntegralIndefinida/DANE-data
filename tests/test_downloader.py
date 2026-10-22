@@ -600,3 +600,15 @@ def test_descarga_fallida_se_informa(tmp_path, sin_pausas_eam, caplog):
     eam = FallaEAM({"vacio": _zip({"LEAME.pdf": "sin datos"})}, base_dir=tmp_path / "eam")
     assert eam.run_pipeline() == ["2015: no se pudo descargar EAM_2015.zip.",
                                   "2016: no se pudo extraer un archivo CSV, TXT o Stata de EAM_2016.zip."]
+
+
+def test_temporales_no_chocan_con_otra_descarga(tmp_path, sin_pausas_eam):
+    """El temporal de otra sesión que baja el mismo archivo no se pisa ni se mueve."""
+    dl = EAMDownloader(base_dir=tmp_path)
+    destino = tmp_path / "Enero.zip"
+    ajeno = tmp_path / "Enero.zip.part"                   # el nombre fijo de antes
+    ajeno.write_bytes(b"otra descarga a medias")
+    dl.session = _Sesion(_Respuesta(_zip({"a.csv": "x"})))
+    assert dl.download_file("u", destino)
+    assert zipfile.is_zipfile(destino) and ajeno.read_bytes() == b"otra descarga a medias"
+    assert list(tmp_path.glob("*.part")) == [ajeno]
