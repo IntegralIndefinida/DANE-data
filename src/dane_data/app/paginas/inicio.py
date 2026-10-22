@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import streamlit as st
 
 import dane_data as dd
@@ -77,14 +79,21 @@ with st.expander("⚙️ Carpetas de datos", expanded=not (len(g) or len(e))):
             # Solo las que cambiaron: así no se fija en el archivo una ruta que viene de una variable de entorno
             cambios = {k: v.strip() for k, v in (("geih", p_geih), ("geih_empalme", p_emp), ("eam", p_eam))
                        if v.strip() != str(dd.get_path(k))}
-            try:
-                dd.set_paths(**cambios, save=True)
-            except ValueError as e:
-                st.error(str(e))
+            # La app corre dentro de la carpeta del paquete: una ruta relativa quedaría ahí (y uv la borra al
+            # reinstalar), lejos de donde la buscaría un notebook.
+            relativas = [v for v in cambios.values() if v and not Path(v).expanduser().is_absolute()]
+            if relativas:
+                st.error(f"Escriba la ruta completa de la carpeta, no solo su nombre ({', '.join(relativas)}). "
+                         r"Por ejemplo `~/datos_dane` o `C:\Users\ana\datos_dane`.")
             else:
-                st.cache_data.clear()
-                st.cache_resource.clear()
-                st.rerun()
+                try:
+                    dd.set_paths(**cambios, save=True)
+                except ValueError as e:
+                    st.error(str(e))
+                else:
+                    st.cache_data.clear()
+                    st.cache_resource.clear()
+                    st.rerun()
 
 st.divider()
 st.caption(

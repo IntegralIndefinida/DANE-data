@@ -68,6 +68,20 @@ def test_inicio_guarda_solo_las_carpetas_cambiadas(tmp_path, monkeypatch):
     assert any("vacía" in e.value for e in at.error)
 
 
+def test_inicio_rechaza_carpetas_relativas(tmp_path, monkeypatch):
+    """La app corre dentro del paquete: "datos" quedaría en site-packages."""
+    archivo = tmp_path / "config.json"
+    monkeypatch.setattr(dd.config, "CONFIG_FILE", archivo)
+    monkeypatch.setattr(dd.config, "_session", {"geih": tmp_path / "g", "geih_empalme": tmp_path / "e",
+                                                "eam": tmp_path / "eam"})
+    at = AppTest.from_file(str(PAGINAS / "inicio.py"), default_timeout=60).run()
+    next(t for t in at.text_input if t.label == "EAM").set_value("datos")
+    next(b for b in at.button if b.label == "Guardar").click().run()
+    assert not at.exception
+    assert any("ruta completa" in e.value for e in at.error)
+    assert not archivo.exists()
+
+
 def test_descargar_geih_sin_modulos(tmp_path, monkeypatch):
     """Sin módulos elegidos el botón queda desactivado (antes se bajaban todos)."""
     for clave in ("geih", "geih_empalme", "eam"):

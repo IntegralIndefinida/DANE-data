@@ -17,6 +17,9 @@
 
 **Correcciones**
 
+* {dd}`set_paths()` guarda las carpetas relativas (`"datos"`) completas. Antes quedaban relativas en el
+  archivo de configuración y cada proceso las buscaba en su propia carpeta; la aplicación, que corre dentro
+  del paquete instalado, descargaba en `site-packages`. La página de inicio ahora pide la ruta completa.
 * Dos descargas del mismo año a la vez (dos pestañas, o la aplicación compartida en un aula) ya no escriben
   el mismo archivo temporal; en Windows la segunda fallaba por archivo en uso.
 * Los catálogos del ANDA que encuentra la búsqueda ya no reemplazan a los verificados: solo agregan años que

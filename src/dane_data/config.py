@@ -113,6 +113,11 @@ def set_paths(geih=None, geih_empalme=None, eam=None, save: bool = False) -> Non
     ValueError
         Si alguna carpeta es un texto vacío (sería la carpeta desde donde se ejecuta Python).
 
+    Notas
+    -----
+    Una carpeta relativa (``"datos"``) se completa con la carpeta desde donde se ejecuta Python y se guarda
+    completa: así la línea de comandos, la aplicación y otro notebook la encuentran en el mismo lugar.
+
     Véase también
     -------------
     get_path : Carpeta efectiva de una encuesta.
@@ -127,7 +132,9 @@ def set_paths(geih=None, geih_empalme=None, eam=None, save: bool = False) -> Non
     if vacias := [k for k, v in nuevas.items() if not str(v).strip()]:
         raise ValueError(f"Carpeta vacía para {', '.join(vacias)}: indique una ruta.")
     for key, val in nuevas.items():
-        _session[key] = Path(val).expanduser()
+        # Completa: guardada como "datos", cada proceso la buscaría en su propia carpeta (la app corre
+        # dentro del paquete instalado)
+        _session[key] = Path(os.path.abspath(Path(val).expanduser()))
     if save:
         # Solo las de esta llamada: las fijadas antes solo para la sesión no se vuelven permanentes
         data = _read_file()
