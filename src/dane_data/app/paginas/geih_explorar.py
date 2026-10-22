@@ -180,7 +180,7 @@ f = dd.geih.serie_frecuencias({list(anios)!r}, "ingreso_laboral", poblacion="ocu
 f = f[f.ingreso_laboral > 0]
 ratio = f.ingreso_laboral / f.anio.map(dd.SMLV)
 dd.weighted_quantile(f.ingreso_laboral, f.peso, 0.5)    # ingreso mediano
-100 * f.peso[ratio < 0.95].sum() / f.peso.sum()         # % que gana menos de 1 SMLV
+100 * f.peso[ratio < 0.95].sum() / f.peso.sum()         # % que gana menos de 0,95 SMLV
 ''')
 
 # ---------------------------------------------------------------- Microdatos
