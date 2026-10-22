@@ -95,15 +95,18 @@ def resumen(df: pd.DataFrame, por: str | Iterable[str] | None = ("anio",)) -> pd
     """
     por = _as_list(por)
     d = df.copy()
-    num = lambda c: pd.to_numeric(d[c], errors="coerce") if c in d.columns else np.nan  # noqa: E731
-    d["_rem"] = num("salpeyte") + num("prespyte")
+    # Un vacío en las prestaciones no borra los salarios de la planta (NaN + 30 daría NaN y la suma del
+    # grupo la saltaría entera); sin ninguna de las dos, la planta queda vacía.
+    rem = [pd.to_numeric(d[c], errors="coerce") for c in ("salpeyte", "prespyte") if c in d.columns]
+    d["_rem"] = pd.concat(rem, axis=1).sum(axis=1, min_count=1) if len(rem) == 2 else np.nan
     sums = {
         "produccion_bruta": "prodbr2", "consumo_intermedio": "consin2", "valor_agregado": "valagri",
         "ventas": "valorven", "personal_total": "pertotal", "empleados_perm_temp": "pperytem",
         "remuneraciones": "_rem", "activos_fijos": "activfi", "inversion_bruta": "invebrta",
         "energia_kwh": "eelec",
     }
-    agg = {k: (v, "sum") for k, v in sums.items() if v in d.columns}
+    sumas = {k: v for k, v in sums.items() if v in d.columns}
+    agg = {}
     agg["establecimientos"] = ("nordest", "nunique") if "nordest" in d.columns else ("anio", "size")
     if "nordemp" in d.columns:
         agg["empresas"] = ("nordemp", "nunique")
@@ -111,10 +114,12 @@ def resumen(df: pd.DataFrame, por: str | Iterable[str] | None = ("anio",)) -> pd
         if v in d.columns:
             d[v] = pd.to_numeric(d[v], errors="coerce")
 
-    if por:
-        res = d.groupby(por, observed=True, dropna=False).agg(**agg)
-    else:  # un solo grupo con todos los establecimientos
-        res = d.groupby(np.zeros(len(d), dtype=int)).agg(**agg).reset_index(drop=True)
+    # min_count=1: un grupo sin ningún dato queda vacío, no en 0 (pandas suma NaN como 0)
+    g = d.groupby(por, observed=True, dropna=False) if por else d.groupby(np.zeros(len(d), dtype=int))
+    res = g[list(sumas.values())].sum(min_count=1).set_axis(list(sumas), axis=1).join(g.agg(**agg))
+    res = res[[*sumas, *agg]]
+    if not por:  # un solo grupo con todos los establecimientos
+        res = res.reset_index(drop=True)
     with np.errstate(divide="ignore", invalid="ignore"):
         if {"valor_agregado", "personal_total"} <= set(res.columns):
             res["productividad_laboral"] = res["valor_agregado"] / res["personal_total"]

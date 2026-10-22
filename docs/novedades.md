@@ -40,6 +40,9 @@
 
 **EAM**
 
+* {dd}`eam.resumen()`: una planta con las prestaciones vacías perdía también sus salarios en
+  `remuneraciones`, y un grupo o una variable sin ningún dato salía en 0 en vez de vacío. Con los archivos
+  del DANE de 1992–2024 no cambia nada (no tienen esos vacíos), pero sí con datos propios o filtrados.
 * Nueva advertencia sobre la composición por sector. Para anonimizar, el ANDA publica muchos
   establecimientos grandes con el código residual «otras industrias manufactureras» (3909, 3699 o 3290) o
   con el código truncado a 2–3 dígitos. Los totales coinciden con el DANE, pero la composición por división

@@ -104,6 +104,21 @@ def test_eam_resumen_sin_por(eam_root):
     assert r["productividad_laboral"].item() == pytest.approx(300 / 48)
 
 
+def test_eam_resumen_con_vacios():
+    """Prestaciones vacías no borran los salarios; un grupo o una variable sin datos queda vacío, no en 0."""
+    eam = pd.DataFrame({"anio": [2024, 2024, 2024], "nordest": [1, 2, 3], "sector": ["A", "A", "B"],
+                        "valagri": [100.0, 100.0, np.nan], "salpeyte": [30.0, 30.0, np.nan],
+                        "prespyte": [10.0, np.nan, np.nan]})
+    r = dd.eam.resumen(eam, por="sector").set_index("sector")
+    assert r.loc["A", "remuneraciones"] == 70                  # antes 40: se perdían los 30 de la planta 2
+    assert r.loc["A", "participacion_laboral"] == pytest.approx(35)
+    assert pd.isna(r.loc["B", "remuneraciones"]) and pd.isna(r.loc["B", "valor_agregado"])
+    assert r.loc["B", "establecimientos"] == 1
+    sin_prestaciones = dd.eam.resumen(eam.drop(columns="prespyte"), por="sector")
+    assert sin_prestaciones["remuneraciones"].isna().all()     # antes 0
+    assert sin_prestaciones["participacion_laboral"].isna().all()
+
+
 def test_eam_panel_and_survival(eam_root):
     eam = dd.eam.load(root=eam_root)
     bal = dd.eam.panel(eam, balanceado=True)
