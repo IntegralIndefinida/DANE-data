@@ -1,8 +1,10 @@
 """Páginas de la app con el probador de Streamlit (se salta si no está instalado el extra `app`)."""
 
+import io
 import json
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -180,3 +182,19 @@ def _solo_un_mes(load):
         assert months is not None and len([months] if isinstance(months, int) else months) == 1
         return load(years, months=months, **kw)
     return envoltura
+
+
+def test_descargas_se_arman_al_hacer_clic(eam_root, monkeypatch):
+    """Sin clic no se arma el Excel: antes se armaban CSV, Excel y Stata en cada interacción."""
+    from dane_data.app import _ui
+
+    monkeypatch.setitem(dd.config._session, "eam", eam_root)
+    monkeypatch.setattr(pd.DataFrame, "to_excel", lambda *a, **k: pytest.fail("Excel armado sin clic"))
+    at = AppTest.from_file(str(PAGINAS / "eam_industria.py"), default_timeout=60).run()
+    assert not at.exception
+    monkeypatch.undo()
+    df = pd.DataFrame({"anio": [2023, 2024], "sector": pd.Categorical(["A", None]),
+                       "n": pd.array([1, None], dtype="Int64")})
+    assert pd.read_excel(io.BytesIO(_ui._excel(df)))["sector"].tolist() == ["A", np.nan]
+    stata = pd.read_stata(io.BytesIO(_ui._stata(df)))
+    assert stata["sector"].tolist() == ["A", ""] and stata["n"].tolist()[0] == 1

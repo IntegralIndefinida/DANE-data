@@ -25,6 +25,12 @@
   posteriores, que quitaron el atajo de clic derecho → *Abrir*: ahora es *Configuración del Sistema* →
   *Privacidad y seguridad* → *Abrir de todos modos*.
 
+**Aplicación**
+
+* Los botones de descarga (CSV, Excel y Stata) arman el archivo al hacer clic. Antes se armaban los tres en
+  cada interacción con la página, aunque nadie descargara, y las tablas grandes la volvían lenta. Requiere
+  Streamlit 1.52 o más reciente.
+
 **Correcciones**
 
 * Un mes de 2007–2021 al que le faltaba una parte de un módulo (por ejemplo `Resto - Ocupados`) se daba por

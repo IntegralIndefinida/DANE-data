@@ -34,7 +34,7 @@ Issues = "https://github.com/IntegralIndefinida/DANE-data/issues"
 Changelog = "https://github.com/IntegralIndefinida/DANE-data/releases"
 
 [project.optional-dependencies]
-app = ["streamlit>=1.51", "plotly>=5.18", "openpyxl>=3.1"]
+app = ["streamlit>=1.52", "plotly>=5.18", "openpyxl>=3.1"]
 dev = ["pytest>=7"]
 docs = [
     "sphinx>=8",

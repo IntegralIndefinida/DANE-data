@@ -177,29 +177,44 @@ def disponibles_eam(rutas: tuple) -> pd.DataFrame:
 # --------------------------------------------------------------------------- #
 # Exportar
 # --------------------------------------------------------------------------- #
+def _excel(df: pd.DataFrame) -> bytes:
+    buf = io.BytesIO()
+    df.to_excel(buf, index=False)
+    return buf.getvalue()
+
+
+def _stata(df: pd.DataFrame) -> bytes:
+    buf = io.BytesIO()
+    d = df.copy()
+    for c in d.columns:  # Stata no acepta categorías/nullable ni nombres largos
+        if isinstance(d[c].dtype, pd.CategoricalDtype) or pd.api.types.is_string_dtype(d[c]):
+            d[c] = d[c].astype(object).where(d[c].notna(), "").astype(str)
+        elif pd.api.types.is_extension_array_dtype(d[c]):
+            d[c] = d[c].astype("float64")
+    d.columns = [c[:32] for c in d.columns]
+    d.to_stata(buf, write_index=False, version=118)
+    return buf.getvalue()
+
+
 def botones_descarga(df: pd.DataFrame, nombre: str, key: str) -> None:
+    # Cada archivo se arma al hacer clic (data como función): armar los tres formatos en cada interacción
+    # hacía lenta la página aunque nadie descargara.
     c1, c2, c3 = st.columns(3)
-    c1.download_button("⬇️ CSV", df.to_csv(index=False).encode("utf-8-sig"), f"{nombre}.csv",
+    c1.download_button("⬇️ CSV", lambda: df.to_csv(index=False).encode("utf-8-sig"), f"{nombre}.csv",
                        "text/csv", key=f"{key}_csv", width="stretch")
     if len(df) < 1_000_000:
-        buf = io.BytesIO()
-        df.to_excel(buf, index=False)
-        c2.download_button("⬇️ Excel", buf.getvalue(), f"{nombre}.xlsx", key=f"{key}_xlsx", width="stretch")
+        c2.download_button("⬇️ Excel", lambda: _excel(df), f"{nombre}.xlsx",
+                           "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                           key=f"{key}_xlsx", width="stretch")
     else:
         c2.caption("Excel no admite más de 1 millón de filas.")
     try:
-        buf = io.BytesIO()
-        d = df.copy()
-        for c in d.columns:  # Stata no acepta categorías/nullable ni nombres largos
-            if isinstance(d[c].dtype, pd.CategoricalDtype) or pd.api.types.is_string_dtype(d[c]):
-                d[c] = d[c].astype(object).where(d[c].notna(), "").astype(str)
-            elif pd.api.types.is_extension_array_dtype(d[c]):
-                d[c] = d[c].astype("float64")
-        d.columns = [c[:32] for c in d.columns]
-        d.to_stata(buf, write_index=False, version=118)
-        c3.download_button("⬇️ Stata (.dta)", buf.getvalue(), f"{nombre}.dta", key=f"{key}_dta", width="stretch")
+        _stata(df.head(50))  # basta una muestra para saber si Stata acepta las columnas
     except Exception as e:  # noqa: BLE001
         c3.caption(f"Stata no disponible: {e}")
+    else:
+        c3.download_button("⬇️ Stata (.dta)", lambda: _stata(df), f"{nombre}.dta", "application/x-stata-dta",
+                           key=f"{key}_dta", width="stretch")
 
 
 def codigo(texto: str) -> None:
