@@ -34,7 +34,7 @@ jobs:
       - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884  # v10.3.0
 
       - name: Pruebas
-        run: uv run --extra dev --extra app pytest -q
+        run: uv run --locked --extra dev --extra app pytest -q
 
       - name: Compilar el lanzador de Windows
         run: lanzador/compilar.sh "build/Abrir dane-data.exe"
