@@ -288,10 +288,13 @@ class EAMDownloader(DescargadorANDA):
             zip_dest = year_raw_dir / safe_name
 
             success = self.download_file(download_url, zip_dest)
+            if not success:
+                self._fallo(f"{year}: no se pudo descargar {zip_filename}.")
 
             # 3. Extraer formato preferido (.csv -> .txt -> .dta convertido)
             if success and self.extract_data:
-                self.extract_preferred_format(zip_dest, year_data_dir)
+                if not self.extract_preferred_format(zip_dest, year_data_dir):
+                    self._fallo(f"{year}: no se pudo extraer un archivo CSV, TXT o Stata de {zip_filename}.")
 
                 if not self.keep_zips and zip_dest.exists():
                     zip_dest.unlink()
@@ -304,17 +307,20 @@ class EAMDownloader(DescargadorANDA):
             tic_zip = year_raw_dir / tic_name
             log.info(f"Descargando módulo TIC para {year}...")
             tic_ok = self.download_file(tic_url, tic_zip)
+            if not tic_ok:
+                self._fallo(f"{year}: no se pudo descargar el módulo TIC ({tic_name}).")
             if tic_ok and self.extract_data:
                 tic_data_dir = year_data_dir / "TIC"
-                self.extract_preferred_format(tic_zip, tic_data_dir)
+                if not self.extract_preferred_format(tic_zip, tic_data_dir):
+                    self._fallo(f"{year}: no se pudo extraer el módulo TIC de {tic_name}.")
                 if not self.keep_zips and tic_zip.exists():
                     tic_zip.unlink()
 
         if not existing_data or tic_pendiente:  # pausa entre descargas, no entre años saltados
             time.sleep(1)
 
-    def run_pipeline(self, target_years=None):
-        """Ejecuta el pipeline de descarga de la EAM para todos o los años seleccionados."""
+    def run_pipeline(self, target_years=None) -> list[str]:
+        """Descarga todos los años o los seleccionados. Devuelve lo que no se pudo bajar o extraer."""
         catalogs = self.discover_catalogs()
 
         years_to_process = sorted(catalogs.keys(), key=lambda y: int(y))
@@ -327,12 +333,10 @@ class EAMDownloader(DescargadorANDA):
 
         log.info(f"Iniciando descarga de la EAM para {len(years_to_process)} años: {years_to_process}")
 
+        self.fallidos = []
         for i, year in enumerate(years_to_process):
             self._check_stop()
             self._emit(i / max(len(years_to_process), 1), f"Procesando año {year}")
             cid, fn, url = catalogs[year]
             self.process_year(year, cid, fn, url)
-
-        self._emit(1.0, "Descarga terminada")
-        log.info("\n¡Pipeline de la EAM finalizado exitosamente!")
-        log.info(f"Datos organizados en: {self.data_dir.resolve()}")
+        return self._terminar("la EAM", self.data_dir)

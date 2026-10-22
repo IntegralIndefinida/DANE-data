@@ -11,6 +11,10 @@
 
 **Correcciones**
 
+* Una descarga en la que algo falló (un ZIP que no se pudo bajar, un año sin enlaces en el ANDA) se anunciaba
+  como terminada con éxito. Ahora {dd}`geih.download()` y {dd}`eam.download()` devuelven la lista de lo que
+  falló, `dane-data descargar` termina con código 1 y la aplicación lo muestra en vez de «Descarga
+  terminada».
 * Los niveles de {dd}`tabla()` y {dd}`geih.indicadores()` salían divididos por los meses equivocados si,
   después de {dd}`geih.filtrar()`, se elegían meses con `df[df.mes <= 3]`: se dividía por los 12 meses
   cargados y no por los 3 que quedan, así que un trimestre salía 4 veces más bajo. Las tasas no cambiaban.

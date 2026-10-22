@@ -28,6 +28,18 @@ def test_descargar_toda_la_serie_eam(tmp_path, monkeypatch):
     assert pedidos == [dd.eam.ANIOS_DISPONIBLES]
 
 
+def test_descarga_con_fallas_lo_dice(tmp_path, monkeypatch):
+    for clave in ("geih", "geih_empalme", "eam"):
+        monkeypatch.setitem(dd.config._session, clave, tmp_path / clave)
+    monkeypatch.setattr(dd.eam, "download", lambda anios, **kw: ["2024: no se pudo descargar EAM_2024.zip."])
+    at = AppTest.from_file(str(PAGINAS / "descargar.py")).run()
+    at.radio[0].set_value("EAM (industria, anual)").run()
+    next(b for b in at.button if b.label.endswith("Descargar")).click().run()
+    assert not at.exception
+    assert not at.success
+    assert any("EAM_2024.zip" in w.value for w in at.warning)
+
+
 def test_citar_usa_la_version_instalada():
     at = AppTest.from_file(str(PAGINAS / "citar.py")).run()
     assert not at.exception

@@ -562,3 +562,36 @@ def test_eam_tic_en_anio_ya_descargado(tmp_path):
     assert (tmp_path / "datos" / "2015" / "TIC" / "EAM_TIC_2015.csv").exists()
     dl.process_year("2015", "491", "EAM_2015.zip", "principal")   # ya está todo: no descarga
     assert dl.descargas == ["principal", tic_url]
+
+
+def test_descarga_fallida_se_informa(tmp_path, sin_pausas_eam, caplog):
+    """Un ZIP que no se pudo bajar no termina en «exitosamente»: run_pipeline lo devuelve."""
+    class Falla(FakeDownloader):
+        def download_file(self, url, dest_path, max_retries=3):
+            return url != "Abril 2024.zip" and super().download_file(url, dest_path, max_retries)
+
+        def discover_catalogs(self):
+            return {"2024": "819"}
+
+    dl = Falla({"Marzo 2024.zip": _mes_2024(), "Abril 2024.zip": _mes_2024()}, base_dir=tmp_path)
+    with caplog.at_level("INFO", logger="dane_data"):
+        fallidos = dl.run_pipeline([2024])
+    assert fallidos == ["2024: no se pudo descargar Abril 2024.zip."]
+    assert "exitosamente" not in caplog.text and "1 problema(s)" in caplog.text
+    dl.paquetes.pop("Abril 2024.zip")
+    assert dl.run_pipeline([2024]) == []                      # sin errores, la lista vuelve vacía
+
+    sin_enlaces = Falla({}, base_dir=tmp_path / "otra")
+    assert sin_enlaces.run_pipeline([2024]) == ["2024: no se encontraron enlaces de microdatos en el ANDA "
+                                                "(catálogo 819)."]
+
+    class FallaEAM(FakeEAMDownloader):
+        def discover_catalogs(self):
+            return {"2015": ("491", "EAM_2015.zip", "principal"), "2016": ("491", "EAM_2016.zip", "vacio")}
+
+        def download_file(self, url, dest_path, max_retries=3):
+            return url in self.paquetes and super().download_file(url, dest_path, max_retries)
+
+    eam = FallaEAM({"vacio": _zip({"LEAME.pdf": "sin datos"})}, base_dir=tmp_path / "eam")
+    assert eam.run_pipeline() == ["2015: no se pudo descargar EAM_2015.zip.",
+                                  "2016: no se pudo extraer un archivo CSV, TXT o Stata de EAM_2016.zip."]

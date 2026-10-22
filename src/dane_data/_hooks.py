@@ -55,6 +55,7 @@ class DescargadorANDA(ProgressMixin):
     log = logging.getLogger("dane_data")  # cada descargador pone el suyo
 
     def _abrir_sesion(self) -> None:
+        self.fallidos: list[str] = []
         self.session = requests.Session()
         self.session.headers.update({
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
@@ -114,6 +115,24 @@ class DescargadorANDA(ProgressMixin):
 
         temp_dest.unlink(missing_ok=True)
         return False
+
+    def _fallo(self, mensaje: str) -> None:
+        """Anota algo que no se pudo bajar o extraer: ``run_pipeline`` lo resume al final y lo devuelve."""
+        self.log.error(mensaje)
+        self.fallidos.append(mensaje)
+
+    def _terminar(self, serie: str, carpeta: Path) -> list[str]:
+        """Cierre de ``run_pipeline``: éxito solo si nada falló. Devuelve lo que falló."""
+        if self.fallidos:
+            self._emit(1.0, f"Descarga terminada con {len(self.fallidos)} problema(s)")
+            self.log.warning(f"\nLa descarga de {serie} terminó con {len(self.fallidos)} problema(s):\n  - "
+                             + "\n  - ".join(self.fallidos)
+                             + "\nVuelva a descargar los mismos años: lo que ya está completo se salta.")
+        else:
+            self._emit(1.0, "Descarga terminada")
+            self.log.info(f"\n¡Descarga de {serie} finalizada exitosamente!")
+        self.log.info(f"Datos organizados en: {carpeta.resolve()}")
+        return list(self.fallidos)
 
 
 def url_del_anda(url: str, base: str = DescargadorANDA.base_url) -> str | None:

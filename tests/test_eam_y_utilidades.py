@@ -169,6 +169,7 @@ class _DescargadorFalso:
     """Anota cómo lo construyen y qué años le piden, sin red."""
 
     creados = []
+    fallidos = []
 
     def __init__(self, **kw):
         self.kw = kw
@@ -176,6 +177,7 @@ class _DescargadorFalso:
 
     def run_pipeline(self, target_years=None, **kw):
         self.anios, self.extra = target_years, kw
+        return self.fallidos
 
 
 @pytest.fixture
@@ -200,6 +202,12 @@ def test_cli_descargar_geih_y_eam(descargador_falso, tmp_path):
     dl = descargador_falso[-1]
     assert dl.anios is None and dl.kw["include_tic"] and dl.kw["keep_zips"]
     assert dl.kw["base_dir"] == tmp_path / "eam"
+
+
+def test_cli_descarga_con_fallas_sale_con_error(descargador_falso, monkeypatch):
+    monkeypatch.setattr(_DescargadorFalso, "fallidos", ["2024: no se pudo descargar Enero.zip."])
+    assert cli_main(["descargar", "geih", "--anios", "2024"]) == 1
+    assert cli_main(["descargar", "eam", "--anios", "2024"]) == 1
 
 
 @pytest.mark.parametrize("argv", [["descargar", "eam", "--modulos", "ocupados"], ["descargar", "eam", "--empalme"],

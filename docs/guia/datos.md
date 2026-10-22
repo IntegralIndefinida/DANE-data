@@ -58,6 +58,16 @@ los ZIP y extraen los módulos. Las descargas son **incrementales**:
 * Para bajar solo algunos módulos, `modules=["caracteristicas", "ocupados"]`; los nombres están en
   `dd.geih.DEFAULT_MODULES`.
 
+Las dos funciones devuelven lo que no se pudo bajar o extraer (un ZIP que no se descargó tras tres intentos,
+un año sin enlaces en el ANDA, un ZIP que no trae un módulo); la lista vacía quiere decir que todo salió
+bien. `dane-data descargar` termina con código 1 si algo falló, y la aplicación lo muestra al terminar:
+
+```python
+fallidos = dd.geih.download([2024, 2025])
+if fallidos:
+    print("\n".join(fallidos))   # vuelva a correr la misma descarga: lo completo se salta
+```
+
 Las dos funciones aceptan `progress=` (una función que recibe el avance) y `should_stop=` (una función
 que, si devuelve True, detiene la descarga con {dd}`DownloadCancelled`). La aplicación los usa para la
 barra de progreso y el botón de cancelar.

@@ -89,11 +89,17 @@ if st.button("⬇️ Descargar", type="primary", disabled=not anios or sin_modul
 
     try:
         with st.spinner("Descargando… (puede tardar varios minutos; para cancelar use **Stop** arriba a la derecha)"):
-            lanzar(progreso, None)
-        barra.progress(1.0, text="¡Listo!")
-        st.success("Descarga terminada. Ya puede analizar los datos en las demás páginas.")
+            fallidos = lanzar(progreso, None) or []
         st.cache_data.clear()
         st.cache_resource.clear()
+        if fallidos:
+            barra.progress(1.0, text="Terminó con problemas")
+            st.warning(f"⚠️ No se pudo completar todo ({len(fallidos)}):\n\n"
+                       + "\n".join(f"- {f}" for f in fallidos)
+                       + "\n\nRevise su conexión y vuelva a pulsar **Descargar**: lo que ya está completo se salta.")
+        else:
+            barra.progress(1.0, text="¡Listo!")
+            st.success("Descarga terminada. Ya puede analizar los datos en las demás páginas.")
     except Exception as e:  # noqa: BLE001
         st.error(f"La descarga falló: {e}. Revise su conexión e intente de nuevo; lo ya descargado se conserva.")
     finally:

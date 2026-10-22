@@ -551,7 +551,7 @@ class GEIHDownloader(DescargadorANDA):
         # 2. Obtener lista de archivos a descargar (CSV, u otro formato si el CSV está dañado)
         files = self.get_download_links(year, catalog_id)
         if not files:
-            log.warning(f"No se encontraron enlaces válidos de microdatos para {year}")
+            self._fallo(f"{year}: no se encontraron enlaces de microdatos en el ANDA (catálogo {catalog_id}).")
             return
 
         if limit_files and limit_files > 0:
@@ -583,6 +583,8 @@ class GEIHDownloader(DescargadorANDA):
                     continue
 
                 success = self.download_file(item["url"], zip_dest)
+                if not success:
+                    self._fallo(f"Empalme {year}: no se pudo descargar {item['name']}.")
                 if success and self.extract_csv:
                     errores = []
                     n = self.extract_requested_modules(zip_dest, year_csv_dir, errores=errores)
@@ -591,7 +593,7 @@ class GEIHDownloader(DescargadorANDA):
                     if n and not errores:
                         _escribir_marcador(year_csv_dir, item["name"], n, self.modules)
                     elif errores:
-                        log.warning(f"Empalme {year}: extracción con errores ({'; '.join(errores)}). Se borra el "
+                        self._fallo(f"Empalme {year}: extracción con errores ({'; '.join(errores)}). Se borra el "
                                     "ZIP: la próxima descarga lo vuelve a bajar.")
                     # Con errores también se borra: si se conservara, la próxima vez se reutilizaría el mismo ZIP
                     if (errores or not self.keep_zips) and zip_dest.exists():
@@ -611,6 +613,8 @@ class GEIHDownloader(DescargadorANDA):
                     # se reutiliza (download_file lo salta) y se re-extrae con la lógica corregida.
 
                 success = self.download_file(item["url"], zip_dest)
+                if not success:
+                    self._fallo(f"{year}: no se pudo descargar {item['name']}.")
                 if success and self.extract_csv:
                     errores = []
                     n = self.extract_requested_modules(zip_dest, month_csv_dir, (f".{item.get('formato', 'csv')}",),
@@ -619,17 +623,17 @@ class GEIHDownloader(DescargadorANDA):
                         _escribir_marcador(month_csv_dir, item["name"], n, self.modules)
                     falta = faltantes_mes(month_csv_dir, self.modules)
                     if errores:
-                        log.warning(f"Mes {month_stem} ({year}): extracción con errores ({'; '.join(errores)}). Se "
+                        self._fallo(f"Mes {month_stem} ({year}): extracción con errores ({'; '.join(errores)}). Se "
                                     "borra el ZIP: la próxima descarga lo vuelve a bajar.")
                     elif falta:
-                        log.warning(f"El ZIP del DANE para {month_stem} ({year}) no trae: {', '.join(falta)}.")
+                        self._fallo(f"El ZIP del DANE para {month_stem} ({year}) no trae: {', '.join(falta)}.")
                     if (errores or not self.keep_zips) and zip_dest.exists():
                         zip_dest.unlink()
 
             time.sleep(1)
 
-    def run_pipeline(self, target_years=None, limit_files: int = None):
-        """Ejecuta el pipeline de descarga para todos los años o los años seleccionados."""
+    def run_pipeline(self, target_years=None, limit_files: int = None) -> list[str]:
+        """Descarga todos los años o los seleccionados. Devuelve lo que no se pudo bajar o extraer."""
         catalogs = self.discover_catalogs()
 
         years_to_process = sorted(catalogs.keys(), key=lambda y: int(y))
@@ -643,11 +647,9 @@ class GEIHDownloader(DescargadorANDA):
         series_name = "Empalme" if self.is_empalme else "Principal"
         log.info(f"Iniciando descarga de la serie [{series_name}] para {len(years_to_process)} años: {years_to_process}")
 
+        self.fallidos = []
         for i, year in enumerate(years_to_process):
             self._check_stop()
             self._emit(i / max(len(years_to_process), 1), f"Procesando año {year}")
             self.process_year(year, catalogs[year], limit_files=limit_files)
-        self._emit(1.0, "Descarga terminada")
-
-        log.info(f"\n¡Pipeline [{series_name}] finalizado exitosamente!")
-        log.info(f"Datos CSV organizados en: {self.csv_dir.resolve()}")
+        return self._terminar(f"la GEIH [{series_name}]", self.csv_dir)

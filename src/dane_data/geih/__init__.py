@@ -26,7 +26,7 @@ def download(
     limit_files: int | None = None,
     progress=None,
     should_stop=None,
-) -> None:
+) -> list[str]:
     """
     Descarga los microdatos de la GEIH del ANDA del DANE.
 
@@ -57,6 +57,12 @@ def download(
     should_stop
         Función sin argumentos; si devuelve True, la descarga se detiene con ``DownloadCancelled``.
 
+    Devuelve
+    --------
+    list[str]
+        Lo que no se pudo descargar o extraer, con el año y el motivo; vacía si todo salió bien. Al volver
+        a descargar los mismos años, lo que ya está completo se salta y se reintenta lo demás.
+
     Lanza
     -----
     DownloadCancelled
@@ -80,7 +86,9 @@ def download(
     Ejemplos
     --------
     >>> import dane_data as dd
-    >>> dd.geih.download([2024, 2025])  # doctest: +SKIP
+    >>> fallidos = dd.geih.download([2024, 2025])  # doctest: +SKIP
+    >>> fallidos  # doctest: +SKIP
+    []
     >>> dd.geih.download(2016, empalme=True)  # doctest: +SKIP
     >>> dd.geih.download(2025, limit_files=1)  # solo enero, para probar  # doctest: +SKIP
     """
@@ -96,7 +104,7 @@ def download(
         progress=progress,
         should_stop=should_stop,
     )
-    dl.run_pipeline(target_years=years, limit_files=limit_files)
+    return dl.run_pipeline(target_years=years, limit_files=limit_files)
 
 
 __all__ = [
