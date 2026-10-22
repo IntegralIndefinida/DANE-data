@@ -20,10 +20,22 @@ GLOSARIO = {
                     "disponible desde 2022. Asalariados, empleados domésticos y jornaleros son informales si "
                     "no cotizan a salud y a pensión por su trabajo; cuenta propia y patrones, si su negocio no "
                     "tiene registro mercantil ni contabilidad; los trabajadores sin remuneración, siempre.",
+    "Informalidad (marco 2005)": "La medición anterior del DANE, hasta 2021 (15.ª CIET): ocupados en empresas de hasta "
+                                 "5 personas, salvo los del gobierno y los cuenta propia profesionales, sobre el "
+                                 "total de ocupados × 100. El DANE la publicó para 13 y 23 ciudades.",
     "Ingreso laboral": "INGLABO: ingresos laborales mensuales (pesos corrientes) imputados por el DANE.",
 }
 _COLUMNAS = ["pet", "fuerza_trabajo", "ocupados", "desocupados", "inactivos", "tgp", "to", "td",
-             "tasa_informalidad", "ingreso_medio", "ingreso_mediano", "n_muestra"]
+             "tasa_informalidad", "tasa_informalidad_marco2005", "ingreso_medio", "ingreso_mediano", "n_muestra"]
+
+
+def _informales(df: pd.DataFrame, col: str, sufijo: str, ocupado: np.ndarray, w: np.ndarray) -> dict:
+    """Peso de los ocupados informales y de los clasificados según ``col`` (ninguno si no está)."""
+    if col not in df.columns:
+        return {f"informales{sufijo}": np.zeros(len(df)), f"_clasificados{sufijo}": np.zeros(len(df))}
+    formal = df[col].to_numpy("float64", na_value=np.nan)
+    return {f"informales{sufijo}": np.where(ocupado & (formal == 0), w, 0.0),
+            f"_clasificados{sufijo}": np.where(ocupado & ~np.isnan(formal), w, 0.0)}
 
 
 def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, anual: bool = True,
@@ -35,7 +47,8 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, anual:
     ----------
     df
         Microdatos armonizados de ``load``. Necesita ``anio``, ``mes``, ``fex``, ``pet``,
-        ``fuerza_trabajo``, ``ocupado``, ``desocupado``, ``inactivo``, ``formal`` e ``ingreso_laboral``
+        ``fuerza_trabajo``, ``ocupado``, ``desocupado``, ``inactivo``, ``formal``, ``formal_marco2005`` e
+        ``ingreso_laboral``
         (las de ``VARIABLES_INDICADORES``), más las variables de ``por``.
     por
         Variable o lista de variables para desagregar, por ejemplo ``"sexo"`` o
@@ -57,6 +70,7 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, anual:
           mensual si ``anual=True``).
         * ``tgp``, ``to``, ``td``: tasas global de participación, de ocupación y de desocupación, en %.
         * ``tasa_informalidad``: % de los ocupados que son informales según el DANE (vacía antes de 2022).
+        * ``tasa_informalidad_marco2005``: lo mismo con la medición anterior del DANE (vacía desde 2022).
         * ``ingreso_medio``, ``ingreso_mediano``: ingreso laboral mensual de los ocupados con ingreso
           positivo, en pesos corrientes.
         * ``n_muestra``: personas encuestadas (sin expandir) en el grupo.
@@ -85,7 +99,9 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, anual:
 
     La informalidad es la del DANE (ver ``formal`` en la guía de variables): coincide con la que publica
     cada mes desde 2022. Antes de 2022 el cuestionario no tenía las preguntas y ``tasa_informalidad`` queda
-    vacía. La mediana es la de ``dane_data.weighted_quantile``.
+    vacía; para 2007–2021, ``tasa_informalidad_marco2005`` es la medición que el DANE usaba entonces (con
+    ``formal_marco2005``; si ``df`` no la trae, queda vacía). La mediana es la de
+    ``dane_data.weighted_quantile``.
 
     Ejemplos
     --------
@@ -136,6 +152,7 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, anual:
         "inactivos": np.where(es("inactivo"), w, 0.0),
         "informales": np.where(ocupado & (df["formal"].to_numpy("float64", na_value=np.nan) == 0), w, 0.0),
         "_clasificados": np.where(ocupado & df["formal"].notna().to_numpy(), w, 0.0),
+        **_informales(df, "formal_marco2005", "_2005", ocupado, w),
     }, index=df.index)
     g = sumas.groupby([df[k] for k in keys], observed=True, dropna=dropna)
     res = g.sum()
@@ -146,6 +163,8 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, anual:
         res["td"] = 100 * res["desocupados"] / res["fuerza_trabajo"]
         # Vacía si nadie tiene formal (antes de 2022), no 0 %
         res["tasa_informalidad"] = (100 * res["informales"] / res["ocupados"]).where(res["_clasificados"] > 0)
+        res["tasa_informalidad_marco2005"] = (100 * res["informales_2005"] / res["ocupados"]).where(
+            res["_clasificados_2005"] > 0)
 
     ingreso = df["ingreso_laboral"].to_numpy("float64", na_value=np.nan)
     con_ingreso = ocupado & (ingreso > 0)

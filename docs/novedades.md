@@ -13,6 +13,10 @@
   `tasa_informalidad` quedan vacías; la guía de {doc}`guia/variables` explica cómo armar la aproximación
   anterior para series largas. `load` lee 17 variables más del DANE, y la caché de cada mes se vuelve a
   crear una vez.
+* Nueva columna `formal_marco2005` y nueva `tasa_informalidad_marco2005` en {dd}`geih.indicadores()` y
+  {dd}`geih.serie_indicadores()`: la medición anterior del DANE (marco 2005, empresas de hasta 5 personas),
+  para 2007–2021. Coincide con la que el DANE publicó para 13 y 23 ciudades en cada trimestre móvil de
+  2007–2019 y 2021. La aplicación la ofrece como «Tasa de informalidad (medición anterior, hasta 2021)».
 * {dd}`geih.serie_indicadores()` ya no devuelve la fila del grupo vacío al desagregar con `por`. Con
   `por="nivel_educativo"` esa fila juntaba a los menores que no responden educación: tenía una muestra
   grande y casi nadie en la PET. Para conservarla, use `dropna=False`. {dd}`geih.indicadores()` tiene el

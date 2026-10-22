@@ -7,7 +7,7 @@ fila por persona y mes**, los módulos ya unidos y las {doc}`variables armonizad
 >>> import dane_data as dd
 >>> df = dd.geih.load(2024, months=[1, 2, 3])
 >>> df.shape
-(213515, 68)
+(213515, 69)
 >>> df[["anio", "mes", "fex", "sexo", "edad", "condicion", "ingreso_laboral"]].head()
    anio  mes          fex    sexo  edad        condicion  ingreso_laboral
 0  2024    1  2540.569858  Hombre  39.0         Inactivo              NaN

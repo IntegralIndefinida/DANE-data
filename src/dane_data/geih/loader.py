@@ -52,6 +52,8 @@ CORE_RAW = [
     "INGLABO", "P6090", "P6920", "P6430", "P6800",
     "RAMA2D", "RAMA2D_R4", "P6210", "P3042",
     # Informalidad del DANE (cuestionario del marco 2018, desde 2022): ver _formal_dane
+    # y la medición anterior (marco 2005, hasta 2021): ver _formal_marco2005
+    "P6870", "OFICIO",
     "OFICIO_C8", "P3045S1", "P3046", "P3069", "P6765", "P3065", "P3066", "P3067", "P3067S1", "P3067S2",
     "P6775", "P3068", "P6100", "P6110", "P6450", "P6930", "P6940",
 ]
@@ -67,7 +69,7 @@ _RE_NO_OCU = re.compile(r"\bno ocupados?(?![a-z])")
 _RE_DESOCU = re.compile(r"\bd(?:e|es)ocupados?(?![a-z])")
 _RE_INACT = re.compile(r"\binactivos?(?![a-z])")
 _RE_OCU = re.compile(r"\bocupados?(?![a-z])")
-_HARMONIZE_VERSION = "8"
+_HARMONIZE_VERSION = "9"
 # Formatos de los microdatos. Se baja el CSV salvo donde el del ANDA está dañado (ver
 # CSV_DANADOS en el descargador); dentro de una carpeta se prefiere el formato alterno.
 EXTENSIONES = {".dta": 0, ".txt": 1, ".csv": 2}
@@ -604,6 +606,39 @@ def _formal_dane(df: pd.DataFrame, anio: pd.Series) -> pd.Series:
     return pd.Series(ei, index=df.index).where(anio >= 2022)
 
 
+# Las de la medición anterior: posición ocupacional, tamaño de la empresa y oficio (CNO 1970), hasta 2021
+COLUMNAS_INFORMALIDAD_2005 = ("P6430", "P6870", "OFICIO")
+
+
+def _formal_marco2005(df: pd.DataFrame, anio: pd.Series) -> pd.Series:
+    """
+    Formalidad con la medición anterior del DANE (marco 2005, 15.ª CIET, empresas de hasta 5 trabajadores
+    desde diciembre de 2009): 1 formal, 0 informal, vacío desde 2022 o sin el dato que hace falta.
+
+    El DANE no publicó el código de esta medición. La regla sale de la metodología de 2009 y de la
+    presentación de julio de 2022, y se ajustó con lo que publicó: con ella, los informales de cada
+    trimestre móvil de 2007 a 2019 y de 2021 coinciden con el anexo en las 13 ciudades, y en las 23 salvo
+    febrero de 2008 (tests/datos/dane_informalidad_marco2005.csv). Es informal quien trabaja en una empresa
+    de hasta 5 personas (``P6870`` 1 a 3) como empleado particular, empleado doméstico, patrón,
+    trabajador sin remuneración, jornalero o cuenta propia que no es profesional; los demás son formales,
+    también los del gobierno y «otro».
+    """
+    nada = pd.Series(np.nan, index=df.index)
+    if any(c not in df.columns for c in COLUMNAS_INFORMALIDAD_2005):
+        return nada
+    p, tamano, oficio = _num(df, "P6430"), _num(df, "P6870"), _num(df, "OFICIO")
+    hasta5 = tamano <= 3                                    # trabaja solo, 2 a 3 o 4 a 5 personas
+    # Difiere de la metodología de 2009, que cuenta como informales a todos los empleados domésticos,
+    # trabajadores sin remuneración y jornaleros: lo publicado solo cuadra si también están en empresas de
+    # hasta 5 personas, como dice la presentación de 2022. Y «profesionales» son los oficios 1 a 20 de la CNO
+    # (profesionales, técnicos y directivos): el 0 no lo es (ver README).
+    profesional = oficio.between(1, 20)
+    informal = hasta5 & (p.isin([1, 3, 5, 6, 7, 8]) | ((p == 4) & ~profesional))
+    formal = pd.Series(np.where(informal, 0.0, 1.0), index=df.index)
+    sin_dato = p.isna() | (tamano.isna() & ~p.isin([2, 9])) | (hasta5 & (p == 4) & oficio.isna())
+    return formal.mask(sin_dato).where(anio <= 2021)
+
+
 def _first(df: pd.DataFrame, cols: list[str]) -> pd.Series:
     out = pd.Series(np.nan, index=df.index)
     for c in cols:
@@ -700,7 +735,8 @@ def harmonize(df: pd.DataFrame, edad_minima_pet: int | None = None) -> pd.DataFr
     DataFrame
         Una copia de ``df`` con ``fex``, ``sexo``, ``edad``, ``grupo_edad``, ``jefe_hogar``, ``dpto``,
         ``departamento``, ``zona``, ``condicion``, ``pet``, ``fuerza_trabajo``, ``ocupado``,
-        ``desocupado``, ``inactivo``, ``formal``, ``cotiza_pension``, ``ingreso_laboral``, ``smlv``,
+        ``desocupado``, ``inactivo``, ``formal``, ``formal_marco2005``, ``cotiza_pension``,
+        ``ingreso_laboral``, ``smlv``,
         ``ratio_smlv``, ``horas_semana``, ``posicion_ocupacional``, ``rama2d``, ``rama_rev`` y
         ``nivel_educativo``.
 
@@ -759,6 +795,7 @@ def harmonize(df: pd.DataFrame, edad_minima_pet: int | None = None) -> pd.DataFr
 
     # Formalidad: la medición del DANE, desde 2022 (_formal_dane). Solo para ocupados.
     df["formal"] = _formal_dane(df, anio).astype("Int8").where(ocupado)
+    df["formal_marco2005"] = _formal_marco2005(df, anio).astype("Int8").where(ocupado)
     cotiza = _num(df, "P6920") == 1
     df["cotiza_pension"] = cotiza.astype("Int8").where(ocupado)
 

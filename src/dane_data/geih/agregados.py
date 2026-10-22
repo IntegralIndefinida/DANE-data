@@ -33,7 +33,7 @@ log = logging.getLogger("dane_data.geih")
 
 # Lo que lee `indicadores` más las desagregaciones y filtros de la app.
 VARIABLES_INDICADORES = ["anio", "mes", "fex", "pet", "fuerza_trabajo", "ocupado", "desocupado", "inactivo",
-                         "formal", "ingreso_laboral", "sexo", "zona", "edad", "grupo_edad", "nivel_educativo",
+                         "formal", "formal_marco2005", "ingreso_laboral", "sexo", "zona", "edad", "grupo_edad", "nivel_educativo",
                          "departamento"]
 POR_PRECALCULADOS = (None, "sexo", "zona", "grupo_edad", "nivel_educativo", "departamento")
 POBLACIONES = ("pet", "fuerza_trabajo", "ocupado", "desocupado", "inactivo")

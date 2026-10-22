@@ -49,6 +49,7 @@ with st.expander("Variables armonizadas por dane-data (iguales en todos los año
 | `condicion` | Ocupado / Desocupado / Inactivo / Fuera de la PET |
 | `pet`, `fuerza_trabajo`, `ocupado`, `desocupado`, `inactivo` | Indicadoras 0/1 |
 | `formal` | 1 si el ocupado es formal según la medición del DANE (desde 2022; vacía antes) |
+| `formal_marco2005` | Lo mismo con la medición anterior del DANE (2007–2021; empresas de hasta 5 personas) |
 | `ingreso_laboral`, `ratio_smlv`, `smlv` | INGLABO, su razón frente al salario mínimo y el salario mínimo del año |
 | `horas_semana` | Horas trabajadas normalmente (P6800) |
 | `posicion_ocupacional` | P6430 con etiquetas |

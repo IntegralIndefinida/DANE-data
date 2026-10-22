@@ -25,6 +25,7 @@ Y los indicadores son:
 | Tasa de ocupación | `to` | $100 \cdot O / PET$ | Qué parte de quienes pueden trabajar está trabajando |
 | Tasa de desocupación | `td` | $100 \cdot D / FT$ | El «desempleo»: qué parte de quienes participan no consigue trabajo |
 | Tasa de informalidad | `tasa_informalidad` | $100 \cdot \text{O informales} / O$ | La medición del DANE, desde 2022 (ver {doc}`variables`) |
+| Tasa de informalidad, marco 2005 | `tasa_informalidad_marco2005` | $100 \cdot \text{O informales} / O$ | La medición anterior del DANE, 2007–2021 (ver {doc}`variables`) |
 | Ingreso medio y mediano | `ingreso_medio`, `ingreso_mediano` | Media y mediana ponderadas de `ingreso_laboral` | Entre los ocupados con ingreso positivo, en pesos corrientes |
 
 Cada nivel es la suma de los {doc}`factores de expansión <ponderacion>`; con varios meses, el promedio
@@ -35,20 +36,21 @@ mensual. Las definiciones de cada término están también en el {doc}`../glosar
 ```python
 >>> df = dd.geih.load(2024, months=[1, 2, 3])
 >>> dd.geih.indicadores(df).round(1).T
-                            0
-anio                   2024.0
-pet                39906590.7
-fuerza_trabajo     25402318.6
-ocupados           22387536.8
-desocupados         3014781.9
-inactivos          14504272.0
-tgp                      63.7
-to                       56.1
-td                       11.9
-tasa_informalidad        56.3
-ingreso_medio       1693374.4
-ingreso_mediano     1300000.0
-n_muestra            213515.0
+                                      0
+anio                             2024.0
+pet                          39906590.7
+fuerza_trabajo               25402318.6
+ocupados                     22387536.8
+desocupados                   3014781.9
+inactivos                    14504272.0
+tgp                                63.7
+to                                 56.1
+td                                 11.9
+tasa_informalidad                  56.3
+tasa_informalidad_marco2005         NaN
+ingreso_medio                 1693374.4
+ingreso_mediano               1300000.0
+n_muestra                      213515.0
 ```
 
 Los niveles están en personas y las tasas en porcentaje. `n_muestra` es el número de personas encuestadas

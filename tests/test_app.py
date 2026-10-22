@@ -146,6 +146,10 @@ def test_informalidad_vacia_antes_de_2022(geih_root, tmp_path, monkeypatch):
     assert not at.exception
     assert any("antes de 2022 queda vacía" in i.value for i in at.info)
     assert at.metric[3].value == "0,0 %"                       # 2025: la asalariada del ejemplo es formal
+    next(s for s in at.selectbox if s.label == "Indicador").set_value(
+        "Tasa de informalidad (medición anterior, hasta 2021)").run()
+    assert not at.exception
+    assert any("llega hasta 2021" in i.value for i in at.info)
 
 
 def test_aviso_cuando_los_anios_mezclan_marcos(geih_root, tmp_path, monkeypatch):

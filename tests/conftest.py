@@ -54,8 +54,10 @@ def geih_root(tmp_path):
     ft = "Directorio;Secuencia_p;Orden;Fex_c_2011\n"
     _write(m / "Cabecera - Fuerza de trabajo.csv", ft + "1;1;1;100,5\n1;1;2;100,5\n2;1;1;200,0\n")
     _write(m / "Resto - Fuerza de trabajo.csv", ft + "3;1;1;300,25\n")
-    oc = "Directorio;Secuencia_p;Orden;Oci;Inglabo;P6920;P6430;P6800;Rama2d;Fex_c_2011\n"
-    _write(m / "Cabecera - Ocupados.csv", oc + "1;1;1;1;2000000;1;1;48;15;100,5\n2;1;1;1;500000;2;4;30;52;200,0\n")
+    # P6870 y OFICIO: la medición de informalidad del marco 2005 (asalariado en una empresa grande, formal;
+    # cuenta propia solo, que no es profesional, informal)
+    oc = "Directorio;Secuencia_p;Orden;Oci;Inglabo;P6920;P6430;P6800;Rama2d;P6870;Oficio;Fex_c_2011\n"
+    _write(m / "Cabecera - Ocupados.csv", oc + "1;1;1;1;2000000;1;1;48;15;9;13;100,5\n2;1;1;1;500000;2;4;30;52;1;33;200,0\n")
     _write(m / "Resto - Ocupados.csv", oc)
     _write(m / "Cabecera - Desocupados.csv", "Directorio;Secuencia_p;Orden;Dsi;Fex_c_2011\n1;1;2;1;100,5\n")
     _write(m / "Resto - Inactivos.csv", "Directorio;Secuencia_p;Orden;Ini;Fex_c_2011\n3;1;1;1;300,25\n")

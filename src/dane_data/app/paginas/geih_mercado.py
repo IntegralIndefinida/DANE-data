@@ -28,6 +28,7 @@ INDICADORES = {
     "Tasa global de participación (TGP)": ("tgp", True),
     "Tasa de ocupación (TO)": ("to", True),
     "Tasa de informalidad": ("tasa_informalidad", True),
+    "Tasa de informalidad (medición anterior, hasta 2021)": ("tasa_informalidad_marco2005", True),
     "Ingreso laboral mediano": ("ingreso_mediano", False),
     "Ingreso laboral medio": ("ingreso_medio", False),
     "Ocupados (personas)": ("ocupados", False),
@@ -84,7 +85,10 @@ por = DESAGREGAR[nombre_por]
 anual = frecuencia == "Anual"
 if col == "tasa_informalidad" and min(sel["anios"]) < 2022:
     st.info("ℹ️ La informalidad sigue la medición del DANE, que necesita preguntas del cuestionario de 2022: "
-            "antes de 2022 queda vacía.")
+            "antes de 2022 queda vacía. Para 2007–2021, elija «Tasa de informalidad (medición anterior)».")
+if col == "tasa_informalidad_marco2005" and max(sel["anios"]) >= 2022:
+    st.info("ℹ️ La medición anterior del DANE (empresas de hasta 5 personas) llega hasta 2021: desde 2022 queda "
+            "vacía. El DANE la publicaba para 13 y 23 ciudades; no es comparable con la actual.")
 
 res = calcular(por, anual)
 if por:  # grupos sin dato (p. ej. 0–14 años no está en la PET)
@@ -125,6 +129,8 @@ with st.expander("📋 Tabla completa", expanded=False):
             "mes": st.column_config.NumberColumn("Mes", format="%d"),
             **{c: st.column_config.NumberColumn(c.upper(), format="%.1f %%") for c in ("tgp", "to", "td")},
             "tasa_informalidad": st.column_config.NumberColumn("Informalidad", format="%.1f %%"),
+            "tasa_informalidad_marco2005": st.column_config.NumberColumn("Informalidad (marco 2005)",
+                                                                         format="%.1f %%"),
             **{c: st.column_config.NumberColumn(c.replace("_", " ").capitalize(), format="localized")
                for c in ("pet", "fuerza_trabajo", "ocupados", "desocupados", "inactivos", "ingreso_medio",
                          "ingreso_mediano", "n_muestra")},

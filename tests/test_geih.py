@@ -134,8 +134,10 @@ def test_old_era_cabecera_plus_resto(geih_root):
     assert cond[(1, 3)] == "Fuera de la PET"
     assert cond[(3, 1)] == "Inactivo"
     assert df["sexo"].tolist() == ["Hombre", "Mujer", "Mujer", "Hombre", "Mujer"]
-    # Antes de 2022 el cuestionario no tiene las preguntas de la medición de informalidad del DANE
+    # Antes de 2022 el cuestionario no tiene las preguntas de la medición de informalidad del DANE; la del
+    # marco 2005 sí
     assert df["formal"].isna().all()
+    assert df.set_index(["DIRECTORIO", "ORDEN"])["formal_marco2005"].dropna().to_dict() == {(1, 1): 1, (2, 1): 0}
     assert set(df["rama_rev"].dropna()) == {3}
     assert df.loc[df.DIRECTORIO.eq(1) & df.ORDEN.eq(1), "nivel_educativo"].item() == "Superior"
 
@@ -202,6 +204,7 @@ def test_indicadores_weighted(geih_root):
     assert ind["td"] == pytest.approx(100 * 100.5 / 401.0)
     assert ind["pet"] == pytest.approx(701.25)
     assert pd.isna(ind["tasa_informalidad"])                        # 2016: sin la medición del DANE, vacía y no 0
+    assert ind["tasa_informalidad_marco2005"] == pytest.approx(100 * 200 / 300.5)
     assert dd.geih.indicadores(dd.geih.load(2025, months=1, root=geih_root, cache=False))["tasa_informalidad"].item() == 0
 
 
@@ -743,3 +746,63 @@ def test_real_informalidad_coincide_con_lo_publicado():
     informales = res["tasa_informalidad"] * res["ocupados"] / 100
     malos = res.loc[~((informales / (1000 * res["informales"]) - 1).abs() <= 1e-4), ["anio", "mes"]]
     assert malos.empty, f"informales distintos de los publicados en {malos.values.tolist()}"
+
+
+def test_formal_marco2005_como_lo_publicaba_el_dane():
+    """La medición anterior: empresas de hasta 5 personas (P6870 1 a 3), salvo gobierno, «otro» y profesionales."""
+    from dane_data.geih.loader import _formal_marco2005
+
+    casos = {
+        "empleado particular, empresa de 4 a 5": (dict(P6430=1, P6870=3, OFICIO=33), 0),
+        "empleado particular, empresa de 6 a 10": (dict(P6430=1, P6870=4, OFICIO=33), 1),
+        "gobierno": (dict(P6430=2, P6870=1, OFICIO=33), 1),
+        "gobierno sin tamaño": (dict(P6430=2, OFICIO=33), 1),
+        "empleada doméstica, hogar de 2 a 3": (dict(P6430=3, P6870=2, OFICIO=54), 0),
+        "empleada doméstica, empresa grande": (dict(P6430=3, P6870=9, OFICIO=54), 1),
+        "cuenta propia solo, no profesional": (dict(P6430=4, P6870=1, OFICIO=45), 0),
+        "cuenta propia solo, profesional (19)": (dict(P6430=4, P6870=1, OFICIO=19), 1),
+        "cuenta propia solo, directivo (20)": (dict(P6430=4, P6870=1, OFICIO=20), 1),
+        "cuenta propia solo, oficio 0": (dict(P6430=4, P6870=1, OFICIO=0), 0),
+        "cuenta propia en una empresa grande": (dict(P6430=4, P6870=5, OFICIO=45), 1),
+        "patrón de 4 a 5": (dict(P6430=5, P6870=3, OFICIO=21), 0),
+        "familiar sin remuneración, empresa chica": (dict(P6430=6, P6870=1, OFICIO=45), 0),
+        "familiar sin remuneración, empresa grande": (dict(P6430=6, P6870=4, OFICIO=45), 1),
+        "sin remuneración en otro hogar": (dict(P6430=7, P6870=2, OFICIO=45), 0),
+        "jornalero, finca chica": (dict(P6430=8, P6870=3, OFICIO=62), 0),
+        "otro (9), empresa chica": (dict(P6430=9, P6870=1, OFICIO=45), 1),
+        "sin tamaño de empresa (marzo de 2020)": (dict(P6430=1, OFICIO=33), None),
+        "2022 (ya no se publica)": (dict(P6430=1, P6870=1, OFICIO=33, anio=2022), None),
+    }
+    df = pd.DataFrame([{"P6430": np.nan, "P6870": np.nan, "OFICIO": np.nan, "anio": 2016} | v for v, _ in casos.values()],
+                      index=list(casos))
+    esperado = pd.Series({k: e for k, (_, e) in casos.items()}, dtype="float64")
+    pd.testing.assert_series_equal(_formal_marco2005(df, df["anio"]), esperado, check_names=False)
+
+
+INFORMALIDAD_2005 = pd.read_csv(Path(__file__).parent / "datos" / "dane_informalidad_marco2005.csv", comment="#")
+# AREA de cada dominio en que el DANE publicaba la medición anterior
+CIUDADES_2005 = {"13 ciudades": [11, 5, 76, 8, 68, 17, 52, 66, 54, 73, 23, 13, 50]}
+CIUDADES_2005["23 ciudades"] = CIUDADES_2005["13 ciudades"] + [15, 18, 19, 20, 27, 41, 44, 47, 63, 70]
+
+
+def test_real_informalidad_marco2005_coincide_con_lo_publicado():
+    """
+    Informales de cada trimestre móvil de 2007–2019 y 2021 en 13 y 23 ciudades = los del anexo de octubre a
+    diciembre de 2021. 2020 no se compara: sus microdatos en el ANDA vienen con el CNPV 2018 y el anexo usa el
+    censo 2005.
+    """
+    root, av = _disponibles_reales(empalme=False)
+    anios = sorted(set(av["anio"]) & set(range(2007, 2022)) - {2020})
+    if not anios:
+        pytest.skip("ningún año de 2007–2021 descargado")
+    malos = []
+    for dominio, areas in CIUDADES_2005.items():
+        m = dd.geih.serie_indicadores(anios, anual=False, filtros={"AREA": areas}, root=root)
+        m = m.set_index(["anio", "mes"]).reindex(pd.MultiIndex.from_product([range(2007, 2022), range(1, 13)],
+                                                                           names=["anio", "mes"]))
+        informales = (m["tasa_informalidad_marco2005"] * m["ocupados"] / 100).rolling(3).mean() / 1e3
+        pub = INFORMALIDAD_2005[INFORMALIDAD_2005["dominio"] == dominio].set_index(["anio", "mes"])["informales"]
+        d = (informales.reindex(pub.index) / pub - 1).dropna()
+        assert len(d) > 0
+        malos += [f"{dominio} {a}-{mes:02d}: {x:+.2e}" for (a, mes), x in d.items() if abs(x) > 1e-4]
+    assert not malos, malos

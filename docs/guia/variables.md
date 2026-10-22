@@ -68,6 +68,7 @@ Estas variables solo tienen valor para los **ocupados**; para los demás quedan 
 | Variable | Definición | Origen |
 |---|---|---|
 | `formal` | 1 si el DANE lo cuenta como formal; 0 si como informal. Vacía antes de 2022 | El código del DANE (abajo) |
+| `formal_marco2005` | Lo mismo con la medición anterior del DANE, 2007–2021. Vacía desde 2022 | `P6430`, `P6870`, `OFICIO` (abajo) |
 | `cotiza_pension` | 1 si cotiza a un fondo de pensiones | `P6920 == 1` |
 | `ingreso_laboral` | Ingreso laboral mensual, en pesos corrientes, imputado por el DANE | `INGLABO` |
 | `smlv` | Salario mínimo del año (para todas las personas) | `dd.SMLV` |
@@ -109,6 +110,37 @@ Tres supuestos, porque el código del DANE no los dice: `OFICIO_C8` se completa 
 publica como número y pierde el cero inicial; hay independientes con código 0 que el DANE cuenta como
 formales), el «año de análisis» `PER` es `anio`, y un vacío se compara como en SAS. Con los datos de 2022
 a 2026, este último no cambia ningún registro.
+
+### La medición anterior: `formal_marco2005`
+
+Hasta 2021 el DANE medía la informalidad con la GEIH marco 2005 (15.ª CIET y Grupo de Delhi), sobre todo
+por el tamaño de la empresa, y la publicaba solo para 13 y 23 ciudades. `formal_marco2005` la replica para
+2007–2021 (también en la serie de empalme); desde 2022 queda vacía. Es informal quien trabaja en una
+empresa de **hasta 5 personas** (`P6870` de 1 a 3) como:
+
+* empleado particular, empleado doméstico, patrón, jornalero o trabajador sin remuneración (`P6430` 1, 3, 5,
+  6, 7 u 8);
+* trabajador por cuenta propia (`P6430 = 4`), salvo los profesionales: oficios 1 a 20 de la CNO
+  (`OFICIO`; profesionales, técnicos y directivos).
+
+Los demás son formales, también los empleados del gobierno y «otro» (`P6430` 2 y 9).
+
+El DANE no publicó el código de esta medición. La regla se ajustó con sus cifras: los informales de cada
+trimestre móvil de 2007 a 2019 y de 2021 coinciden con el anexo de octubre a diciembre de 2021 en las 13
+ciudades, y en las 23 salvo febrero de 2008 (134 informales de 4,6 millones). Difiere de la metodología de
+2009 en dos puntos que esta deja abiertos o que contradicen lo publicado (vea {doc}`diferencias`). 2020 no
+se pudo comparar, porque sus microdatos en el ANDA vienen con las proyecciones del CNPV 2018 y el anexo con
+las del censo 2005; en marzo y abril de 2020, sin tamaño de empresa por el operativo telefónico, queda
+vacía.
+
+Para comparar con lo publicado, las ciudades salen de `AREA`:
+
+```python
+trece = [11, 5, 76, 8, 68, 17, 52, 66, 54, 73, 23, 13, 50]   # Bogotá, Medellín A.M., Cali A.M., ...
+dd.geih.serie_indicadores(range(2015, 2020), filtros={"AREA": trece})["tasa_informalidad_marco2005"]
+```
+
+Las dos mediciones no son comparables: cambian la definición y el cuestionario.
 
 ```{admonition} Posición ocupacional desde 2022
 :class: note
