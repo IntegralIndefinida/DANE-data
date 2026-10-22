@@ -26,6 +26,7 @@ def download(
     limit_files: int | None = None,
     progress=None,
     should_stop=None,
+    forzar: bool = False,
 ) -> list[str]:
     """
     Descarga los microdatos de la GEIH del ANDA del DANE.
@@ -56,6 +57,9 @@ def download(
         Función ``progress(fraccion, mensaje)`` que recibe el avance (``fraccion`` entre 0 y 1, o None).
     should_stop
         Función sin argumentos; si devuelve True, la descarga se detiene con ``DownloadCancelled``.
+    forzar
+        Volver a bajar y extraer aunque ya esté en disco, por ejemplo si el DANE corrigió los archivos. Lo
+        extraído antes se reemplaza una vez que el ZIP nuevo se bajó bien.
 
     Devuelve
     --------
@@ -91,6 +95,7 @@ def download(
     []
     >>> dd.geih.download(2016, empalme=True)  # doctest: +SKIP
     >>> dd.geih.download(2025, limit_files=1)  # solo enero, para probar  # doctest: +SKIP
+    >>> dd.geih.download(2024, forzar=True)  # el DANE volvió a publicar 2024  # doctest: +SKIP
     """
     if isinstance(years, (int, str)):
         years = [years]
@@ -103,6 +108,7 @@ def download(
         modules=modules,
         progress=progress,
         should_stop=should_stop,
+        forzar=forzar,
     )
     return dl.run_pipeline(target_years=years, limit_files=limit_files)
 

@@ -39,13 +39,15 @@ if encuesta.startswith("GEIH"):
                                       "fuerza de trabajo, ocupados y desocupados.")
         prueba = st.toggle("Solo el primer mes de cada año (para probar)")
         borrar = st.toggle("Borrar los ZIP después de extraer (ahorra ~40 % de espacio)", value=True)
+        forzar = st.toggle("Volver a bajar lo que ya está descargado",
+                           help="Solo si el DANE corrigió o volvió a publicar esos meses: reemplaza lo que hay.")
     st.info(f"📦 Tamaño aproximado: **{0.6 * len(anios) if not prueba else 0.05 * len(anios):.1f} GB** · "
             f"destino: `{dd.get_path('geih_empalme' if empalme else 'geih')}`")
     lanzar = lambda prog, stop: dd.geih.download(  # noqa: E731
         anios, modules=modulos, empalme=empalme, delete_zips=borrar, limit_files=1 if prueba else None,
-        progress=prog, should_stop=stop)
+        progress=prog, should_stop=stop, forzar=forzar)
     codigo_py = (f"dd.geih.download({anios!r}" + (", empalme=True" if empalme else "")
-                 + (", limit_files=1" if prueba else "") + ")")
+                 + (", limit_files=1" if prueba else "") + (", forzar=True" if forzar else "") + ")")
 else:
     ya = disponibles_eam(rutas)
     tiene = set(ya.anio.unique()) if len(ya) else set()
@@ -62,10 +64,12 @@ else:
               on_click=lambda: st.session_state.update(descargar_eam_anios=list(todos)))
     tic = st.toggle("Incluir módulo de TIC (2008–2018)")
     borrar = st.toggle("Borrar los ZIP después de extraer", value=True)
+    forzar = st.toggle("Volver a bajar lo que ya está descargado",
+                       help="Solo si el DANE corrigió o volvió a publicar esos años: reemplaza lo que hay.")
     st.info(f"📦 Tamaño aproximado: **{10 * len(anios)} MB** · destino: `{dd.get_path('eam')}`")
     lanzar = lambda prog, stop: dd.eam.download(anios, include_tic=tic, delete_zips=borrar,  # noqa: E731
-                                                progress=prog, should_stop=stop)
-    codigo_py = f"dd.eam.download({anios!r})"
+                                                progress=prog, should_stop=stop, forzar=forzar)
+    codigo_py = f"dd.eam.download({anios!r}" + (", forzar=True" if forzar else "") + ")"
 
 sin_modulos = encuesta.startswith("GEIH") and not modulos  # sin módulos, la librería no sabe qué bajar
 if sin_modulos:

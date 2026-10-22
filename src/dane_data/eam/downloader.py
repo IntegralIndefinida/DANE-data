@@ -125,9 +125,10 @@ class EAMDownloader(DescargadorANDA):
     log = log
 
     def __init__(self, base_dir="data", keep_zips=True, extract_data=True, include_tic=False,
-                 progress=None, should_stop=None):
+                 progress=None, should_stop=None, forzar=False):
         self.progress = progress
         self.should_stop = should_stop
+        self.forzar = forzar
         self.base_dir = Path(base_dir)
         self.metadata_dir = self.base_dir / "metadata"
         self.raw_dir = self.base_dir / "raw_zips"
@@ -280,7 +281,7 @@ class EAMDownloader(DescargadorANDA):
 
         # Comprobar si ya existe el archivo de datos (.csv o .txt)
         existing_data = _archivos_datos(year_data_dir) if self.extract_data else []
-        if existing_data:
+        if existing_data and not self.forzar:
             log.info(f"Año {year} ya cuenta con datos extraídos ({[f.name for f in existing_data]}). Saltando descarga.")
         else:
             # 2. Descargar paquete ZIP
@@ -293,6 +294,8 @@ class EAMDownloader(DescargadorANDA):
 
             # 3. Extraer formato preferido (.csv -> .txt -> .dta convertido)
             if success and self.extract_data:
+                for viejo in existing_data:  # con forzar: lo de antes, ya con el ZIP nuevo bajado
+                    viejo.unlink()
                 if not self.extract_preferred_format(zip_dest, year_data_dir):
                     self._fallo(f"{year}: no se pudo extraer un archivo CSV, TXT o Stata de {zip_filename}.")
 
@@ -301,7 +304,7 @@ class EAMDownloader(DescargadorANDA):
 
         # 4. Descargar satélite TIC si fue solicitado (también en años ya descargados)
         tic_pendiente = (self.include_tic and year in EAM_TIC_CATALOGS
-                         and not _archivos_datos(year_data_dir / "TIC"))
+                         and (self.forzar or not _archivos_datos(year_data_dir / "TIC")))
         if tic_pendiente:
             tic_cid, tic_name, tic_url = EAM_TIC_CATALOGS[year]
             tic_zip = year_raw_dir / tic_name
@@ -311,12 +314,14 @@ class EAMDownloader(DescargadorANDA):
                 self._fallo(f"{year}: no se pudo descargar el módulo TIC ({tic_name}).")
             if tic_ok and self.extract_data:
                 tic_data_dir = year_data_dir / "TIC"
+                for viejo in _archivos_datos(tic_data_dir):
+                    viejo.unlink()
                 if not self.extract_preferred_format(tic_zip, tic_data_dir):
                     self._fallo(f"{year}: no se pudo extraer el módulo TIC de {tic_name}.")
                 if not self.keep_zips and tic_zip.exists():
                     tic_zip.unlink()
 
-        if not existing_data or tic_pendiente:  # pausa entre descargas, no entre años saltados
+        if not existing_data or self.forzar or tic_pendiente:  # pausa entre descargas, no entre años saltados
             time.sleep(1)
 
     def run_pipeline(self, target_years=None) -> list[str]:

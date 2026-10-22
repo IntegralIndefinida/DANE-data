@@ -200,7 +200,9 @@ def test_cli_descargar_geih_y_eam(descargador_falso, tmp_path):
 
     assert cli_main(["descargar", "eam", "--tic"]) == 0
     dl = descargador_falso[-1]
-    assert dl.anios is None and dl.kw["include_tic"] and dl.kw["keep_zips"]
+    assert dl.anios is None and dl.kw["include_tic"] and dl.kw["keep_zips"] and not dl.kw["forzar"]
+    assert cli_main(["descargar", "eam", "--forzar"]) == 0
+    assert descargador_falso[-1].kw["forzar"]
     assert dl.kw["base_dir"] == tmp_path / "eam"
 
 

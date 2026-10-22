@@ -612,3 +612,43 @@ def test_temporales_no_chocan_con_otra_descarga(tmp_path, sin_pausas_eam):
     assert dl.download_file("u", destino)
     assert zipfile.is_zipfile(destino) and ajeno.read_bytes() == b"otra descarga a medias"
     assert list(tmp_path.glob("*.part")) == [ajeno]
+
+
+def test_forzar_vuelve_a_bajar_y_reemplaza(tmp_path, sin_pausas_eam):
+    """Con forzar se baja de nuevo lo que ya estaba completo, y lo extraído antes no se mezcla."""
+    dl = FakeDownloader({"Marzo 2024.zip": _mes_2024()}, base_dir=tmp_path)
+    dl.process_year("2024", "819")
+    mes = tmp_path / "datos_csv" / "2024" / "Marzo 2024"
+    (mes / "Ocupados (version vieja).CSV").write_text(MOD)
+    nuevo = MOD.replace(";10\n", ";20\n")
+    dl.paquetes["Marzo 2024.zip"] = _zip({"Características generales, seguridad social en salud y educación.CSV": CAR,
+                                           "Ocupados.CSV": nuevo, "No ocupados.CSV": MOD,
+                                           "Fuerza de trabajo.CSV": MOD})
+    dl.process_year("2024", "819")
+    assert dl.descargas == ["Marzo 2024.zip"]               # sin forzar, se salta
+
+    dl.forzar = True
+    dl.process_year("2024", "819")
+    assert dl.descargas == ["Marzo 2024.zip"] * 2
+    assert (mes / "Ocupados.CSV").read_text() == nuevo
+    assert not (mes / "Ocupados (version vieja).CSV").exists()
+    assert (mes / MARCADOR).exists()
+
+    eam = FakeEAMDownloader({"u": _zip({"EAM_2015.csv": "nordest;valagri\n1;10\n"})}, base_dir=tmp_path / "eam")
+    eam.process_year("2015", "491", "EAM_2015.zip", "u")
+    eam.paquetes["u"] = _zip({"EAM_2015.txt": "nordest\tvalagri\n1\t30\n"})
+    eam.process_year("2015", "491", "EAM_2015.zip", "u")
+    assert eam.descargas == ["u"]
+    eam.forzar = True
+    eam.process_year("2015", "491", "EAM_2015.zip", "u")
+    assert eam.descargas == ["u", "u"]
+    assert [f.name for f in (tmp_path / "eam" / "datos" / "2015").iterdir()] == ["EAM_2015.txt"]
+
+    # download_file también vuelve a pedir un ZIP válido que ya está en disco
+    real = EAMDownloader(base_dir=tmp_path / "real", forzar=True)
+    destino = tmp_path / "Enero.zip"
+    destino.write_bytes(_zip({"a.csv": "viejo"}))
+    real.session = _Sesion(_Respuesta(_zip({"a.csv": "nuevo"})))
+    assert real.download_file("u", destino)
+    assert real.session.pedidos == 1
+    assert zipfile.ZipFile(destino).read("a.csv") == b"nuevo"

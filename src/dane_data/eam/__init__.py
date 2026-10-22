@@ -20,6 +20,7 @@ def download(
     delete_zips: bool = False,
     progress=None,
     should_stop=None,
+    forzar: bool = False,
 ) -> list[str]:
     """
     Descarga los microdatos de la EAM del ANDA del DANE.
@@ -41,6 +42,9 @@ def download(
         Función ``progress(fraccion, mensaje)`` que recibe el avance.
     should_stop
         Función sin argumentos; si devuelve True, la descarga se detiene con ``DownloadCancelled``.
+    forzar
+        Volver a bajar y extraer aunque ya esté en disco, por ejemplo si el DANE corrigió los archivos. Lo
+        extraído antes se reemplaza una vez que el ZIP nuevo se bajó bien.
 
     Devuelve
     --------
@@ -77,6 +81,7 @@ def download(
         include_tic=include_tic,
         progress=progress,
         should_stop=should_stop,
+        forzar=forzar,
     )
     return dl.run_pipeline(target_years=years)
 

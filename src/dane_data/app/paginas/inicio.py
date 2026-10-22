@@ -60,7 +60,8 @@ incompletos = g[~g.completo] if len(g) else g
 if len(incompletos):
     with st.expander(f"⚠️ {len(incompletos)} mes(es) de la GEIH están incompletos y se omitirán"):
         st.dataframe(incompletos[["anio", "nombre_mes", "carpeta", "faltantes"]], hide_index=True)
-        st.caption("Vuelva a descargarlos en ⬇️ Descargar datos (borre antes la carpeta de ese mes).")
+        st.caption("Vuelva a descargarlos en ⬇️ Descargar datos. Si siguen incompletos, active «Volver a bajar "
+                   "lo que ya está descargado» en las opciones avanzadas.")
 
 # ---------------------------------------------------------------- Configuración
 with st.expander("⚙️ Carpetas de datos", expanded=not (len(g) or len(e))):

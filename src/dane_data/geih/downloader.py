@@ -213,9 +213,11 @@ class GEIHDownloader(DescargadorANDA):
     log = log
 
     def __init__(self, base_dir="data", keep_zips=True, extract_csv=True, is_empalme=False, modules=None,
-                 progress=None, should_stop=None):
+                 progress=None, should_stop=None, forzar=False):
         self.progress = progress
         self.should_stop = should_stop
+        self.forzar = forzar
+        self._vaciadas: set[Path] = set()
         self.is_empalme = is_empalme
         # A diferencia del script original, base_dir ya es la raíz de la serie
         # (la serie de empalme no se anida automáticamente en base_dir/empalme).
@@ -577,8 +579,8 @@ class GEIHDownloader(DescargadorANDA):
                 # En la serie de empalme, el archivo anual empaqueta los 12 meses adentro
                 meses = [d for d in year_csv_dir.iterdir() if d.is_dir() and month_from_folder(d.name)] \
                     if year_csv_dir.is_dir() else []
-                if _marcador_cubre(year_csv_dir, self.modules) or (
-                        len(meses) >= 12 and all(mes_completo(d, self.modules) for d in meses)):
+                if not self.forzar and (_marcador_cubre(year_csv_dir, self.modules) or (
+                        len(meses) >= 12 and all(mes_completo(d, self.modules) for d in meses))):
                     log.info(f"Año {year} de Empalme ya está completo. Saltando.")
                     continue
 
@@ -586,6 +588,7 @@ class GEIHDownloader(DescargadorANDA):
                 if not success:
                     self._fallo(f"Empalme {year}: no se pudo descargar {item['name']}.")
                 if success and self.extract_csv:
+                    self._vaciar(year_csv_dir)
                     errores = []
                     n = self.extract_requested_modules(zip_dest, year_csv_dir, errores=errores)
                     # Con un mes ilegible el marcador daría el año por completo y ese mes no se
@@ -603,10 +606,10 @@ class GEIHDownloader(DescargadorANDA):
                 # Se salta solo si una extracción anterior de estos mismos módulos terminó
                 # (marcador) o, si no, si ya están todos los módulos pedidos. Contar archivos no
                 # basta: así se colaron meses sin "No ocupados" (p. ej. marzo 2024).
-                if mes_completo(month_csv_dir, self.modules):
+                if not self.forzar and mes_completo(month_csv_dir, self.modules):
                     log.info(f"Mes {month_stem} ({year}) ya está completo. Saltando.")
                     continue
-                if month_csv_dir.is_dir():
+                if not self.forzar and month_csv_dir.is_dir():
                     falta = faltantes_mes(month_csv_dir, self.modules)
                     log.warning(f"Mes {month_stem} ({year}) incompleto (falta: {', '.join(falta)}). Se vuelve a extraer.")
                     # Un ZIP ya en disco puede ser el que produjo la extracción incompleta:
@@ -616,6 +619,7 @@ class GEIHDownloader(DescargadorANDA):
                 if not success:
                     self._fallo(f"{year}: no se pudo descargar {item['name']}.")
                 if success and self.extract_csv:
+                    self._vaciar(month_csv_dir)
                     errores = []
                     n = self.extract_requested_modules(zip_dest, month_csv_dir, (f".{item.get('formato', 'csv')}",),
                                                        errores=errores)
@@ -632,6 +636,18 @@ class GEIHDownloader(DescargadorANDA):
 
             time.sleep(1)
 
+    def _vaciar(self, carpeta: Path) -> None:
+        """
+        Con ``forzar``, borra lo extraído antes en ``carpeta`` (una vez por descarga), ya con el ZIP nuevo
+        bajado: si el DANE cambió los nombres de los archivos, los viejos no se mezclan con los nuevos.
+        """
+        if not self.forzar or carpeta in self._vaciadas:
+            return
+        if carpeta.is_dir():
+            log.info(f"Se reemplaza lo extraído antes en {carpeta.name}.")
+            shutil.rmtree(carpeta)
+        self._vaciadas.add(carpeta)
+
     def run_pipeline(self, target_years=None, limit_files: int = None) -> list[str]:
         """Descarga todos los años o los seleccionados. Devuelve lo que no se pudo bajar o extraer."""
         catalogs = self.discover_catalogs()
@@ -647,7 +663,7 @@ class GEIHDownloader(DescargadorANDA):
         series_name = "Empalme" if self.is_empalme else "Principal"
         log.info(f"Iniciando descarga de la serie [{series_name}] para {len(years_to_process)} años: {years_to_process}")
 
-        self.fallidos = []
+        self.fallidos, self._vaciadas = [], set()
         for i, year in enumerate(years_to_process):
             self._check_stop()
             self._emit(i / max(len(years_to_process), 1), f"Procesando año {year}")

@@ -54,6 +54,7 @@ class DescargadorANDA(ProgressMixin):
 
     base_url = "https://microdatos.dane.gov.co"
     log = logging.getLogger("dane_data")  # cada descargador pone el suyo
+    forzar = False  # volver a bajar y extraer aunque ya esté en disco
 
     def _abrir_sesion(self) -> None:
         self.fallidos: list[str] = []
@@ -67,7 +68,7 @@ class DescargadorANDA(ProgressMixin):
         Descarga un archivo con streaming y verificación de integridad.
         """
         log = self.log
-        if dest_path.exists() and dest_path.stat().st_size > 0:
+        if not self.forzar and dest_path.exists() and dest_path.stat().st_size > 0:
             if zip_valido(dest_path):
                 log.info(f"Archivo ya existente: {dest_path.name} ({dest_path.stat().st_size / 1024 / 1024:.1f} MB). Saltando descarga.")
                 return True

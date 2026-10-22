@@ -120,9 +120,10 @@ def _cmd_descargar(args) -> int:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
     if args.encuesta == "geih":
         fallidos = geih.download(years=args.anios, modules=args.modulos, empalme=args.empalme,
-                                 delete_zips=args.borrar_zips, limit_files=args.limite)
+                                 delete_zips=args.borrar_zips, limit_files=args.limite, forzar=args.forzar)
     else:
-        fallidos = eam.download(years=args.anios, include_tic=args.tic, delete_zips=args.borrar_zips)
+        fallidos = eam.download(years=args.anios, include_tic=args.tic, delete_zips=args.borrar_zips,
+                                forzar=args.forzar)
     return 1 if fallidos else 0  # el resumen de lo que falló ya quedó en el registro
 
 
@@ -156,6 +157,8 @@ def _parser() -> argparse.ArgumentParser:
     d.add_argument("--limite", type=int, help="GEIH: máximo de archivos mensuales por año (pruebas)")
     d.add_argument("--tic", action="store_true", help="EAM: incluir módulo TIC 2008–2018")
     d.add_argument("--borrar-zips", action="store_true", help="Borrar los ZIP tras extraer")
+    d.add_argument("--forzar", action="store_true",
+                   help="Volver a bajar lo que ya está en disco (si el DANE corrigió los archivos)")
     d.set_defaults(fn=_cmd_descargar)
     return p
 
