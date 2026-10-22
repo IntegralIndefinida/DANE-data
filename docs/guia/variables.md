@@ -130,8 +130,9 @@ trimestre móvil de 2007 a 2019 y de 2021 coinciden con el anexo de octubre a di
 ciudades, y en las 23 salvo febrero de 2008 (134 informales de 4,6 millones). Difiere de la metodología de
 2009 en dos puntos que esta deja abiertos o que contradicen lo publicado (vea {doc}`diferencias`). 2020 no
 se pudo comparar, porque sus microdatos en el ANDA vienen con las proyecciones del CNPV 2018 y el anexo con
-las del censo 2005; en marzo y abril de 2020, sin tamaño de empresa por el operativo telefónico, queda
-vacía.
+las del censo 2005. Queda vacía para quien no tiene tamaño de empresa (`P6870`): cerca de tres cuartos de
+los ocupados de marzo y abril de 2020, por el operativo telefónico, y menos del 1 % en los demás meses de
+2020. En el empalme también para las personas de Putumayo de abril y mayo de 2017, que vienen en blanco.
 
 Para comparar con lo publicado, las ciudades salen de `AREA`:
 
