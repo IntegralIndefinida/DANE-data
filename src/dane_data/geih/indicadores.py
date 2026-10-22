@@ -47,9 +47,9 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, anual:
     ----------
     df
         Microdatos armonizados de ``load``. Necesita ``anio``, ``mes``, ``fex``, ``pet``,
-        ``fuerza_trabajo``, ``ocupado``, ``desocupado``, ``inactivo``, ``formal``, ``formal_marco2005`` e
-        ``ingreso_laboral``
-        (las de ``VARIABLES_INDICADORES``), más las variables de ``por``.
+        ``fuerza_trabajo``, ``ocupado``, ``desocupado``, ``inactivo`` e ``ingreso_laboral``, más las variables
+        de ``por``; ``formal`` y ``formal_marco2005`` son para las tasas de informalidad (todas están en
+        ``VARIABLES_INDICADORES``).
     por
         Variable o lista de variables para desagregar, por ejemplo ``"sexo"`` o
         ``["zona", "nivel_educativo"]``.
@@ -100,7 +100,8 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, anual:
     La informalidad es la del DANE (ver ``formal`` en la guía de variables): coincide con la que publica
     cada mes desde 2022. Antes de 2022 el cuestionario no tenía las preguntas y ``tasa_informalidad`` queda
     vacía; para 2007–2021, ``tasa_informalidad_marco2005`` es la medición que el DANE usaba entonces (con
-    ``formal_marco2005``; si ``df`` no la trae, queda vacía). La mediana es la de
+    ``formal_marco2005``). Si ``df`` no trae ``formal`` o ``formal_marco2005``, su tasa queda vacía. La
+    mediana es la de
     ``dane_data.weighted_quantile``.
 
     Ejemplos
@@ -150,8 +151,7 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, anual:
         "ocupados": np.where(ocupado, w, 0.0),
         "desocupados": np.where(es("desocupado"), w, 0.0),
         "inactivos": np.where(es("inactivo"), w, 0.0),
-        "informales": np.where(ocupado & (df["formal"].to_numpy("float64", na_value=np.nan) == 0), w, 0.0),
-        "_clasificados": np.where(ocupado & df["formal"].notna().to_numpy(), w, 0.0),
+        **_informales(df, "formal", "", ocupado, w),
         **_informales(df, "formal_marco2005", "_2005", ocupado, w),
     }, index=df.index)
     g = sumas.groupby([df[k] for k in keys], observed=True, dropna=dropna)

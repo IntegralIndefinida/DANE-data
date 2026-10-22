@@ -205,6 +205,8 @@ def test_indicadores_weighted(geih_root):
     assert ind["pet"] == pytest.approx(701.25)
     assert pd.isna(ind["tasa_informalidad"])                        # 2016: sin la medición del DANE, vacía y no 0
     assert ind["tasa_informalidad_marco2005"] == pytest.approx(100 * 200 / 300.5)
+    sin = dd.geih.indicadores(df.drop(columns=["formal", "formal_marco2005"])).iloc[0]   # vacías, sin KeyError
+    assert pd.isna(sin["tasa_informalidad"]) and pd.isna(sin["tasa_informalidad_marco2005"])
     assert dd.geih.indicadores(dd.geih.load(2025, months=1, root=geih_root, cache=False))["tasa_informalidad"].item() == 0
 
 
