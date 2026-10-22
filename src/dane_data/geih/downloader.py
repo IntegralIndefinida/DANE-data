@@ -63,14 +63,15 @@ def faltantes_mes(month_dir: Path, modules) -> list[str]:
 
 def _marcador_cubre(dest: Path, modules) -> bool:
     """
-    El marcador existe y la extracción que lo escribió incluyó todos los ``modules``.
-    Los marcadores anteriores no registran módulos: no se confía en ellos.
+    El marcador existe y lo escribió una extracción completa de todos los ``modules``. En los anteriores no
+    se confía: hasta 0.3.0 no registraban módulos, y en 0.3.1 se escribían aunque faltara un módulo o una
+    parte ("Resto - Ocupados"). Para esos se revisan los archivos.
     """
     try:
         data = json.loads((dest / MARCADOR).read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return False
-    return set(modules) <= set(data.get("modulos", []))
+    return data.get("completo") is True and set(modules) <= set(data.get("modulos", []))
 
 
 def mes_completo(month_dir: Path, modules) -> bool:
@@ -79,7 +80,7 @@ def mes_completo(month_dir: Path, modules) -> bool:
 
 def _escribir_marcador(dest: Path, zip_name: str, n: int, modules) -> None:
     dest.mkdir(parents=True, exist_ok=True)
-    data = {"zip": zip_name, "csv_extraidos": n, "modulos": sorted(modules)}
+    data = {"zip": zip_name, "csv_extraidos": n, "modulos": sorted(modules), "completo": True}
     (dest / MARCADOR).write_text(json.dumps(data), encoding="utf-8")
 
 __version__ = "1.0.0"
@@ -589,19 +590,7 @@ class GEIHDownloader(DescargadorANDA):
                 if not success:
                     self._fallo(f"Empalme {year}: no se pudo descargar {item['name']}.")
                 if success and self.extract_csv:
-                    self._vaciar(year_csv_dir)
-                    errores = []
-                    n = self.extract_requested_modules(zip_dest, year_csv_dir, errores=errores)
-                    # Con un mes ilegible el marcador daría el año por completo y ese mes no se
-                    # volvería a intentar: sin marcador, la próxima vez se revisa mes a mes.
-                    if n and not errores:
-                        _escribir_marcador(year_csv_dir, item["name"], n, self.modules)
-                    elif errores:
-                        self._fallo(f"Empalme {year}: extracción con errores ({'; '.join(errores)}). Se borra el "
-                                    "ZIP: la próxima descarga lo vuelve a bajar.")
-                    # Con errores también se borra: si se conservara, la próxima vez se reutilizaría el mismo ZIP
-                    if (errores or not self.keep_zips) and zip_dest.exists():
-                        zip_dest.unlink()
+                    self._extraer(zip_dest, year_csv_dir, f"Empalme {year}", item["name"])
             else:
                 month_csv_dir = year_csv_dir / month_stem
                 # Se salta solo si una extracción anterior de estos mismos módulos terminó
@@ -620,22 +609,43 @@ class GEIHDownloader(DescargadorANDA):
                 if not success:
                     self._fallo(f"{year}: no se pudo descargar {item['name']}.")
                 if success and self.extract_csv:
-                    self._vaciar(month_csv_dir)
-                    errores = []
-                    n = self.extract_requested_modules(zip_dest, month_csv_dir, (f".{item.get('formato', 'csv')}",),
-                                                       errores=errores)
-                    if n and not errores:
-                        _escribir_marcador(month_csv_dir, item["name"], n, self.modules)
-                    falta = faltantes_mes(month_csv_dir, self.modules)
-                    if errores:
-                        self._fallo(f"Mes {month_stem} ({year}): extracción con errores ({'; '.join(errores)}). Se "
-                                    "borra el ZIP: la próxima descarga lo vuelve a bajar.")
-                    elif falta:
-                        self._fallo(f"El ZIP del DANE para {month_stem} ({year}) no trae: {', '.join(falta)}.")
-                    if (errores or not self.keep_zips) and zip_dest.exists():
-                        zip_dest.unlink()
+                    self._extraer(zip_dest, month_csv_dir, f"{month_stem} ({year})", item["name"],
+                                  (f".{item.get('formato', 'csv')}",))
 
             time.sleep(1)
+
+    def _faltantes(self, carpeta: Path) -> list[str]:
+        """Lo que falta de los módulos pedidos en un mes, o en el empalme, en cada mes del año."""
+        if not self.is_empalme:
+            return faltantes_mes(carpeta, self.modules)
+        meses = [d for d in carpeta.iterdir() if d.is_dir() and month_from_folder(d.name)] if carpeta.is_dir() else []
+        if not meses:
+            return ["todos"]
+        return [f"{d.name}: {', '.join(f)}" for d in sorted(meses) if (f := faltantes_mes(d, self.modules))]
+
+    def _extraer(self, zip_dest: Path, carpeta: Path, etiqueta: str, nombre_zip: str, extensiones=(".csv",)) -> None:
+        """
+        Extrae los módulos pedidos de ``zip_dest`` en ``carpeta`` (un mes, o un año del empalme) y anota lo
+        que falló. El marcador se escribe solo si no faltó nada: con un mes ilegible o un módulo que el ZIP
+        no trae, la próxima descarga lo vuelve a revisar en vez de saltarlo.
+        """
+        self._vaciar(carpeta)
+        errores: list[str] = []
+        n = self.extract_requested_modules(zip_dest, carpeta, extensiones, errores)
+        falta = self._faltantes(carpeta)
+        if errores:
+            self._fallo(f"{etiqueta}: extracción con errores ({'; '.join(errores)}). Se borra el ZIP: la próxima "
+                        "descarga lo vuelve a bajar.")
+        elif not n:
+            self._fallo(f"El ZIP del DANE para {etiqueta} no trae ninguno de los módulos pedidos.")
+        elif falta:
+            sep = "; " if self.is_empalme else ", "                 # en el empalme, uno por mes
+            self._fallo(f"El ZIP del DANE para {etiqueta} no trae: {sep.join(falta)}.")
+        else:
+            _escribir_marcador(carpeta, nombre_zip, n, self.modules)
+        # Con errores también se borra: si se conservara, la próxima vez se reutilizaría el mismo ZIP
+        if (errores or not self.keep_zips) and zip_dest.exists():
+            zip_dest.unlink()
 
     def _vaciar(self, carpeta: Path) -> None:
         """

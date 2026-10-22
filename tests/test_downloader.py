@@ -15,6 +15,8 @@ CAR = "DIRECTORIO;SECUENCIA_P;ORDEN;P6040;FEX_C18\n1;1;1;30;10\n"
 MOD = "DIRECTORIO;SECUENCIA_P;ORDEN;FEX_C18\n1;1;1;10\n"
 TODOS = ("vivienda", "caracteristicas", "fuerza_trabajo", "ocupados", "desocupados", "inactivos",
          "otras_formas_trabajo")
+NOMBRES_MESES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre",
+                 "Octubre", "Noviembre", "Diciembre"]
 
 
 def _zip(files: dict) -> bytes:
@@ -33,6 +35,14 @@ def _mes_2024(nested_name="CSV 13.zip"):
         "Ocupados.CSV": MOD, "Datos del hogar y la vivienda.CSV": MOD, "Otras formas de trabajo.CSV": MOD,
         nested_name: nested, "DTA.zip": _zip({"x.dta": "no"}),
     })
+
+
+def _mes_2024_con(**archivos):
+    """Paquete mensual 2022+ completo, sin ZIP anidado, con ``archivos`` cambiados (None: no lo trae)."""
+    base = {"Características generales, seguridad social en salud y educación.CSV": CAR, "Ocupados.CSV": MOD,
+            "Datos del hogar y la vivienda.CSV": MOD, "Otras formas de trabajo.CSV": MOD,
+            "Fuerza de trabajo.CSV": MOD, "No ocupados.CSV": MOD}
+    return _zip({k: v for k, v in {**base, **archivos}.items() if v is not None})
 
 
 class FakeDownloader(GEIHDownloader):
@@ -125,10 +135,8 @@ def test_empalme_con_un_mes_ilegible_no_escribe_marcador(tmp_path):
     """Un ZIP mensual dañado dentro del paquete anual: el año no queda como completo."""
     mes = _zip({"Características generales (personas).CSV": CAR, "Ocupados.CSV": MOD,
                 "Fuerza de trabajo.CSV": MOD, "Desocupados.CSV": MOD})
-    nombres = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre",
-               "Octubre", "Noviembre", "Diciembre"]
     danado = _zip({f"{i}. {m}.zip": (b"no es un zip" if m == "Marzo" else mes)
-                   for i, m in enumerate(nombres, start=1)})
+                   for i, m in enumerate(NOMBRES_MESES, start=1)})
     modulos = ("caracteristicas", "ocupados", "fuerza_trabajo", "desocupados")
     dl = FakeDownloader({"GEIH_Empalme_2016.zip": danado}, base_dir=tmp_path, is_empalme=True, modules=modulos)
     dl.process_year("2016", "757")
@@ -138,7 +146,7 @@ def test_empalme_con_un_mes_ilegible_no_escribe_marcador(tmp_path):
 
     # El ZIP con el mes dañado se borró (keep_zips=True por defecto): si no, se reutilizaría para siempre
     assert not (tmp_path / "raw_zips" / "2016" / "GEIH_Empalme_2016.zip").exists()
-    dl.paquetes["GEIH_Empalme_2016.zip"] = _zip({f"{i}. {m}.zip": mes for i, m in enumerate(nombres, start=1)})
+    dl.paquetes["GEIH_Empalme_2016.zip"] = _zip({f"{i}. {m}.zip": mes for i, m in enumerate(NOMBRES_MESES, start=1)})
     dl.process_year("2016", "757")                      # se vuelve a intentar
     assert len(dl.descargas) == 2
     assert (anio / "3. Marzo" / "Ocupados.CSV").exists() and (anio / MARCADOR).exists()
@@ -157,6 +165,37 @@ def test_marcador_registra_modulos(tmp_path):
     assert faltantes_mes(mes, TODOS) == []
     dl.process_year("2024", "819")                      # ahora sí se salta
     assert dl.descargas == ["Marzo 2024.zip"]
+
+
+def test_marcador_solo_si_el_mes_quedo_completo(tmp_path):
+    """Un ZIP al que le falta un módulo no deja marcador: la próxima descarga lo vuelve a revisar y avisar."""
+    dl = FakeDownloader({"Marzo 2024.zip": _mes_2024_con(**{"No ocupados.CSV": None})}, base_dir=tmp_path)
+    dl.process_year("2024", "819")
+    mes = tmp_path / "datos_csv" / "2024" / "Marzo 2024"
+    assert dl.fallidos == ["El ZIP del DANE para Marzo 2024 (2024) no trae: desocupados."]
+    assert not (mes / MARCADOR).exists()
+    dl.fallidos = []
+    dl.process_year("2024", "819")
+    assert len(dl.fallidos) == 1                        # no se salta como si estuviera completo
+
+    # Los marcadores de 0.3.1 se escribían aunque faltara algo: no cuentan
+    viejo = {"zip": "Marzo 2024.zip", "csv_extraidos": 5, "modulos": sorted(TODOS)}
+    (mes / MARCADOR).write_text(json.dumps(viejo), encoding="utf-8")
+    assert not mes_completo(mes, TODOS)
+
+
+def test_empalme_sin_un_modulo_se_informa(tmp_path):
+    """Como en la serie principal, un mes del empalme sin un módulo pedido queda en la lista de fallos."""
+    archivos = {"Características generales (personas).CSV": CAR, "Ocupados.CSV": MOD,
+                "Fuerza de trabajo.CSV": MOD, "Desocupados.CSV": MOD}
+    sin_ocupados = _zip({k: v for k, v in archivos.items() if k != "Ocupados.CSV"})
+    paquete = _zip({f"{i}. {m}.zip": (sin_ocupados if m == "Marzo" else _zip(archivos))
+                    for i, m in enumerate(NOMBRES_MESES, start=1)})
+    modulos = ("caracteristicas", "ocupados", "fuerza_trabajo", "desocupados")
+    dl = FakeDownloader({"GEIH_Empalme_2016.zip": paquete}, base_dir=tmp_path, is_empalme=True, modules=modulos)
+    dl.process_year("2016", "757")
+    assert dl.fallidos == ["El ZIP del DANE para Empalme 2016 no trae: 3. Marzo: ocupados."]
+    assert not (tmp_path / "datos_csv" / "2016" / MARCADOR).exists()
 
 
 def test_marcador_antiguo_sin_modulos_no_cuenta(tmp_path):
@@ -623,9 +662,7 @@ def test_forzar_vuelve_a_bajar_y_reemplaza(tmp_path, sin_pausas_eam):
     mes = tmp_path / "datos_csv" / "2024" / "Marzo 2024"
     (mes / "Ocupados (version vieja).CSV").write_text(MOD)
     nuevo = MOD.replace(";10\n", ";20\n")
-    dl.paquetes["Marzo 2024.zip"] = _zip({"Características generales, seguridad social en salud y educación.CSV": CAR,
-                                           "Ocupados.CSV": nuevo, "No ocupados.CSV": MOD,
-                                           "Fuerza de trabajo.CSV": MOD})
+    dl.paquetes["Marzo 2024.zip"] = _mes_2024_con(**{"Ocupados.CSV": nuevo})
     dl.process_year("2024", "819")
     assert dl.descargas == ["Marzo 2024.zip"]               # sin forzar, se salta
 

@@ -53,7 +53,9 @@ dd.eam.download()                       # toda la EAM, 1992–2024
 los ZIP y extraen los módulos. Las descargas son **incrementales**:
 
 * Al terminar un mes se escribe un marcador (`.dane_data_ok`) que registra qué módulos se extrajeron. Una
-  descarga posterior salta los meses que ya tienen esos módulos.
+  descarga posterior salta los meses que ya tienen esos módulos. Si al mes le falta algo (el ZIP del DANE no
+  trae un módulo, o una parte como `Resto - Ocupados`), no se escribe: la próxima descarga lo vuelve a
+  revisar y lo sigue reportando.
 * Si se interrumpe (se cierra la ventana, se cae la conexión), basta con volver a correrla: sigue donde iba.
 * Si el DANE corrige o vuelve a publicar un mes o un año, `forzar=True` lo baja de nuevo y reemplaza lo que
   había (`dane-data descargar ... --forzar` en la terminal; en la aplicación, «Volver a bajar lo que ya está

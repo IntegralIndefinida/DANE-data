@@ -62,6 +62,10 @@
   completo: los ocupados rurales quedaban como no ocupados y la desocupación nacional salía mal. Ahora el mes
   queda incompleto, con la parte que falta en `faltantes`, y la descarga lo vuelve a extraer. Todos los meses
   de la GEIH que se publican hoy traen las dos partes.
+* Un mes de la GEIH al que el ZIP del DANE no le traía un módulo quedaba marcado como descargado: la
+  siguiente descarga lo saltaba y terminaba sin errores. Ahora se revisa y se reporta cada vez hasta que esté
+  completo; los marcadores escritos por 0.3.1 ya no cuentan, así que esos meses se revisan una vez. En la
+  serie de empalme, además, un mes sin un módulo pedido no se reportaba.
 * Al leer un archivo, una columna numérica con unos pocos valores de texto (hasta el 1 %) se convertía a
   número y esos valores se perdían sin aviso. Ahora se avisa con el archivo, la columna y ejemplos; en los
   archivos del DANE pasa con unos pocos códigos de `RAMA4DP8` como `"0  5"`.
