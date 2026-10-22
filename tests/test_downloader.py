@@ -546,6 +546,19 @@ def test_descarga_cancelada_no_deja_nada(tmp_path, sin_pausas_eam, clase):
 
 
 @pytest.mark.parametrize("clase", [GEIHDownloader, EAMDownloader])
+def test_interrupcion_no_deja_temporales(tmp_path, sin_pausas_eam, clase):
+    """El botón Detener de la app (StopException de Streamlit) o Ctrl+C no dejan el .part en disco."""
+    def detener():
+        raise KeyboardInterrupt
+
+    dl = clase(base_dir=tmp_path, should_stop=detener)
+    dl.session = _Sesion(_Respuesta(_zip({"a.csv": "x" * 100})))
+    with pytest.raises(KeyboardInterrupt):
+        dl.download_file("u", tmp_path / "Enero.zip")
+    assert not list(tmp_path.glob("Enero.zip*"))
+
+
+@pytest.mark.parametrize("clase", [GEIHDownloader, EAMDownloader])
 def test_descarga_mas_corta_que_content_length_se_reintenta(tmp_path, sin_pausas_eam, clase):
     cuerpo = _zip({"a.csv": "x"})
     corta = _Respuesta(cuerpo[:-5])

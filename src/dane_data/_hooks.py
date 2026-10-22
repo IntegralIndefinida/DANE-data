@@ -76,47 +76,48 @@ class DescargadorANDA(ProgressMixin):
             dest_path.unlink()
 
         temp_dest = _temporal(dest_path)
+        # finally y no solo except: el botón Detener de Streamlit (StopException) y Ctrl+C no son Exception,
+        # y como el nombre es único, ninguna descarga posterior pisaría el temporal que quedara.
+        try:
+            for attempt in range(1, max_retries + 1):
+                try:
+                    log.info(f"Descargando {dest_path.name} (intento {attempt}/{max_retries})...")
+                    with self.session.get(url, stream=True, timeout=45) as r:
+                        r.raise_for_status()
+                        total_size = int(r.headers.get("content-length", 0))
+                        downloaded = 0
 
-        for attempt in range(1, max_retries + 1):
-            try:
-                log.info(f"Descargando {dest_path.name} (intento {attempt}/{max_retries})...")
-                with self.session.get(url, stream=True, timeout=45) as r:
-                    r.raise_for_status()
-                    total_size = int(r.headers.get("content-length", 0))
-                    downloaded = 0
+                        with open(temp_dest, "wb") as f:
+                            for chunk in r.iter_content(chunk_size=65536):
+                                self._check_stop()
+                                if chunk:
+                                    f.write(chunk)
+                                    downloaded += len(chunk)
+                                    if total_size:
+                                        self._emit(None, f"{dest_path.name}: {downloaded / 1e6:.1f} / {total_size / 1e6:.1f} MB")
 
-                    with open(temp_dest, "wb") as f:
-                        for chunk in r.iter_content(chunk_size=65536):
-                            self._check_stop()
-                            if chunk:
-                                f.write(chunk)
-                                downloaded += len(chunk)
-                                if total_size:
-                                    self._emit(None, f"{dest_path.name}: {downloaded / 1e6:.1f} / {total_size / 1e6:.1f} MB")
+                        if total_size > 0 and downloaded < total_size:
+                            log.warning(f"Descarga incompleta ({downloaded}/{total_size} bytes). Reintentando...")
+                            continue
+                        # Sin content-length, un corte o una página de error del ANDA no se notan arriba
+                        if not zip_valido(temp_dest, dest_path):
+                            log.warning(f"{dest_path.name}: lo descargado no es un ZIP válido. Reintentando...")
+                            continue
 
-                    if total_size > 0 and downloaded < total_size:
-                        log.warning(f"Descarga incompleta ({downloaded}/{total_size} bytes). Reintentando...")
-                        continue
-                    # Sin content-length, un corte o una página de error del ANDA no se notan arriba
-                    if not zip_valido(temp_dest, dest_path):
-                        log.warning(f"{dest_path.name}: lo descargado no es un ZIP válido. Reintentando...")
-                        continue
+                    temp_dest.replace(dest_path)
+                    size_mb = dest_path.stat().st_size / 1024 / 1024
+                    log.info(f"✓ Descarga completada: {dest_path.name} ({size_mb:.2f} MB)")
+                    return True
 
-                temp_dest.replace(dest_path)
-                size_mb = dest_path.stat().st_size / 1024 / 1024
-                log.info(f"✓ Descarga completada: {dest_path.name} ({size_mb:.2f} MB)")
-                return True
-
-            except DownloadCancelled:
-                temp_dest.unlink(missing_ok=True)
-                raise
-            except Exception as e:
-                log.error(f"Error descargando {dest_path.name} (intento {attempt}): {e}")
-                temp_dest.unlink(missing_ok=True)
-                time.sleep(2 * attempt)
-
-        temp_dest.unlink(missing_ok=True)
-        return False
+                except DownloadCancelled:
+                    raise
+                except Exception as e:
+                    log.error(f"Error descargando {dest_path.name} (intento {attempt}): {e}")
+                    temp_dest.unlink(missing_ok=True)
+                    time.sleep(2 * attempt)
+            return False
+        finally:
+            temp_dest.unlink(missing_ok=True)
 
     def _fallo(self, mensaje: str) -> None:
         """Anota algo que no se pudo bajar o extraer: ``run_pipeline`` lo resume al final y lo devuelve."""
