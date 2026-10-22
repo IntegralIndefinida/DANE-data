@@ -34,7 +34,9 @@ el navegador se abre solo. No hace falta tener Python instalado.
 
 **Avisos de seguridad la primera vez**
 - *Windows* puede mostrar "Windows protegió su PC": clic en **Más información → Ejecutar de todas formas**.
-- *Mac* puede decir que el archivo es de un desarrollador no identificado: **clic derecho → Abrir → Abrir**.
+- *Mac* puede decir que no se puede verificar el desarrollador: cierre el aviso y abra **Configuración del
+  Sistema → Privacidad y seguridad → Abrir de todos modos** (hasta macOS 14 bastaba con clic derecho → Abrir →
+  Abrir).
 
 El `.exe` de Windows se firma según la [Code signing policy (política de firma de código)](https://github.com/IntegralIndefinida/DANE-data#política-de-firma-de-código-code-signing-policy).
 

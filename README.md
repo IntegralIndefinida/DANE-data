@@ -36,7 +36,9 @@ resto del sistema. Las siguientes veces abre en segundos. **El navegador se abre
 app basta cerrar la ventana de la terminal.
 
 > Primera vez en **Windows**: si aparece "Windows protegió su PC" → *Más información* → *Ejecutar de todas
-> formas*. En **Mac**: si dice "desarrollador no identificado" → clic derecho → *Abrir* → *Abrir*.
+> formas*. En **Mac**: si dice que no se puede verificar el desarrollador, cierre el aviso y abra
+> *Configuración del Sistema* → *Privacidad y seguridad* → *Abrir de todos modos* (hasta macOS 14 bastaba
+> con clic derecho → *Abrir* → *Abrir*).
 
 El `.exe` de Windows se firma según la [política de firma de código](#política-de-firma-de-código-code-signing-policy).
 

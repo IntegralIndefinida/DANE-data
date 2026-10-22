@@ -14,8 +14,11 @@ COMO ABRIR LA APLICACION
 AVISOS LA PRIMERA VEZ
   Windows: si aparece "Windows protegio su PC", haga clic en
            "Mas informacion" y luego en "Ejecutar de todas formas".
-  Mac:     si dice "desarrollador no identificado", haga clic derecho
-           sobre el archivo > Abrir > Abrir.
+  Mac:     si dice que no se puede abrir porque no se verifico el
+           desarrollador, cierre el aviso, vaya a Configuracion del Sistema >
+           Privacidad y seguridad y, abajo, haga clic en "Abrir de todos
+           modos". En macOS 14 o anterior basta con clic derecho sobre el
+           archivo > Abrir > Abrir.
 
 DONDE QUEDAN LOS DATOS
   Por defecto en la carpeta "dane_data_datos" dentro de su carpeta de

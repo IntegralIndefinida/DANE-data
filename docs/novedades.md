@@ -15,6 +15,12 @@
   disco, por ejemplo si el DANE corrigió los archivos; antes había que borrar a mano las carpetas y los ZIP.
   En la terminal es `--forzar`, y en la aplicación, «Volver a bajar lo que ya está descargado».
 
+**Instalación**
+
+* Las instrucciones para abrir el lanzador en Mac la primera vez se actualizaron para macOS 15 (Sequoia) y
+  posteriores, que quitaron el atajo de clic derecho → *Abrir*: ahora es *Configuración del Sistema* →
+  *Privacidad y seguridad* → *Abrir de todos modos*.
+
 **Correcciones**
 
 * Un mes de 2007–2021 al que le faltaba una parte de un módulo (por ejemplo `Resto - Ocupados`) se daba por
