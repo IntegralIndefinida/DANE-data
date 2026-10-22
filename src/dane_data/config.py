@@ -21,8 +21,19 @@ import json
 import os
 from pathlib import Path
 
-CONFIG_FILE = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "dane_data" / "config.json"
-CACHE_DIR = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "dane_data"
+
+def _carpeta_xdg(variable: str, defecto: str) -> Path:
+    """
+    La carpeta de una variable XDG (``XDG_CONFIG_HOME``, ``XDG_CACHE_HOME``), o ``~/<defecto>`` si no está
+    definida, está vacía o es relativa: la norma XDG pide ignorar esos valores. Vacía, el archivo de
+    configuración quedaba relativo a la carpeta actual.
+    """
+    valor = os.environ.get(variable, "")
+    return Path(valor) if valor and Path(valor).is_absolute() else Path.home() / defecto
+
+
+CONFIG_FILE = _carpeta_xdg("XDG_CONFIG_HOME", ".config") / "dane_data" / "config.json"
+CACHE_DIR = _carpeta_xdg("XDG_CACHE_HOME", ".cache") / "dane_data"
 DEFAULT_HOME = Path.home() / "dane_data_datos"
 
 _KEYS = {

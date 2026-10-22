@@ -17,6 +17,8 @@
 
 **Correcciones**
 
+* Con `XDG_CONFIG_HOME` o `XDG_CACHE_HOME` definidas pero vacías (o relativas), la configuración y la caché
+  quedaban en la carpeta actual. Ahora se ignoran, como pide la norma XDG.
 * {dd}`set_paths()` guarda las carpetas relativas (`"datos"`) completas. Antes quedaban relativas en el
   archivo de configuración y cada proceso las buscaba en su propia carpeta; la aplicación, que corre dentro
   del paquete instalado, descargaba en `site-packages`. La página de inicio ahora pide la ruta completa.

@@ -225,6 +225,14 @@ def test_cli_config_carpeta_vacia(config_aislada, capsys):
     assert "vacía" in capsys.readouterr().err and not config_aislada.exists()
 
 
+@pytest.mark.parametrize("valor, esperado", [("", None), ("relativa/conf", None), ("/srv/conf", "/srv/conf")])
+def test_variables_xdg_vacias_o_relativas_se_ignoran(monkeypatch, valor, esperado):
+    monkeypatch.setenv("XDG_CONFIG_HOME", valor)
+    assert dd.config._carpeta_xdg("XDG_CONFIG_HOME", ".config") == Path(esperado or Path.home() / ".config")
+    monkeypatch.delenv("XDG_CONFIG_HOME")
+    assert dd.config._carpeta_xdg("XDG_CONFIG_HOME", ".config") == Path.home() / ".config"
+
+
 def test_carpeta_relativa_se_guarda_completa(config_aislada, monkeypatch, tmp_path):
     """Guardada como "misdatos", cada proceso la buscaría en su propia carpeta actual."""
     monkeypatch.chdir(tmp_path)
