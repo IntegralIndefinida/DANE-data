@@ -201,8 +201,13 @@ with tab3:
 
     st.markdown("**Exportar todos los meses elegidos**")
     nombre = f"microdatos_geih_{anios[0]}" + (f"_{anios[-1]}" if len(anios) > 1 else "")
+    para_excel = st.toggle("Para abrir en Excel en español (columnas separadas por «;» y coma decimal)",
+                           key="exp_excel", help="Con la configuración regional de Colombia, Excel abre en una "
+                                                 "sola columna un CSV separado por comas.")
+    formato = dict(sep=";", decimal=",") if para_excel else {}
     # Una huella de la selección en el nombre: dos exportaciones distintas no se pisan
-    seleccion = json.dumps([poblacion, sel["filtros"], sel["meses"], sorted(columnas), elegidas], default=str)
+    seleccion = json.dumps([poblacion, sel["filtros"], sel["meses"], sorted(columnas), elegidas, formato],
+                           default=str)
     huella = hashlib.sha1(seleccion.encode()).hexdigest()[:6]
     destino = (dd.get_path("geih_empalme" if sel["empalme"] else "geih") / "exportaciones"
                / f"{nombre}{'_empalme' if sel['empalme'] else ''}{f'_{poblacion}' if poblacion else ''}_{huella}.csv")
@@ -212,7 +217,7 @@ with tab3:
         barra, progreso = _barra("Exportando…")
         filas = dd.geih.exportar(list(anios), destino, variables=elegidas, poblacion=poblacion,
                                  filtros=sel["filtros"] or None, meses=sel["meses"], columns=list(columnas) or "core",
-                                 empalme=sel["empalme"], progress=progreso)
+                                 empalme=sel["empalme"], progress=progreso, **formato)
         barra.empty()
         st.success(f"Listo: {fmt_num(filas)} filas en `{destino}`.")
         if destino.stat().st_size < 100e6:
@@ -221,7 +226,8 @@ with tab3:
 import dane_data as dd
 
 # Escribe los microdatos armonizados mes a mes, sin juntarlos en memoria
-dd.geih.exportar({list(anios)!r}, "{destino.name}", variables={elegidas!r}{args_py(poblacion=poblacion)}{args_comunes})
+dd.geih.exportar({list(anios)!r}, "{destino.name}", variables={elegidas!r}{args_py(poblacion=poblacion)}{args_comunes}\
+{args_py(**formato)})
 ''')
     st.caption("💡 `fex` es el factor de expansión **mensual**: si junta varios meses, divida por el número "
                "de meses (o use `dd.geih.serie_tabla`, que lo hace solo).")

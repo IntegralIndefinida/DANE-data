@@ -69,6 +69,10 @@ filas = dd.geih.exportar(range(2007, 2027), "geih_ocupados.csv", poblacion="ocup
 
 El archivo se escribe primero con otro nombre y se renombra al terminar: nunca queda un CSV a medias.
 
+Un Excel con la configuración regional de Colombia usa la coma como separador decimal y abre en una sola
+columna un CSV separado por comas. Para abrirlo con doble clic, use `sep=";", decimal=","`; en la
+aplicación es la opción «Para abrir en Excel en español».
+
 ## ¿Cuál usar?
 
 | Necesito… | Use |

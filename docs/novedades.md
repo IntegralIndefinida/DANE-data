@@ -27,6 +27,9 @@
 
 **Aplicación**
 
+* *Tablas y microdatos* puede exportar los microdatos para Excel en español (columnas separadas por `;` y
+  coma decimal): con la configuración regional de Colombia, Excel abría todo en una sola columna.
+  {dd}`geih.exportar()` tiene para eso `sep` y `decimal`.
 * *Tablas y microdatos*: la tabla con filas y columnas conserva el orden de las categorías (el nivel
   educativo va de *Ninguno* a *Superior*; antes salía en orden alfabético), y el indicador «Ganan menos de 1
   SMLV» se llama ahora «Ganan menos de 0,95 SMLV», que es lo que cuenta.

@@ -175,6 +175,15 @@ def test_tablas_y_microdatos_sin_cargar_todos_los_anios(geih_root, tmp_path, mon
     assert not at.exception
     assert len(list((geih_root / "exportaciones").glob("*.csv"))) == 2
 
+    # Para Excel en español: otro archivo, con «;» y coma decimal
+    at.toggle(key="exp_excel").set_value(True).run()
+    next(b for b in at.button if b.label == "Exportar a CSV").click().run()
+    assert not at.exception
+    assert 'sep=\';\', decimal=\',\'' in at.code[-1].value
+    excel = [f for f in (geih_root / "exportaciones").glob("*.csv")
+             if f.read_text(encoding="utf-8-sig").startswith("anio;mes;fex")]
+    assert len(excel) == 1 and len(list((geih_root / "exportaciones").glob("*.csv"))) == 3
+
 
 def _solo_un_mes(load):
     """La app nunca debe pedir más de un mes de microdatos a la vez."""

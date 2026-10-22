@@ -607,6 +607,8 @@ def exportar(
     empalme: bool = False,
     root=None,
     progress=None,
+    sep: str = ",",
+    decimal: str = ".",
 ) -> int:
     """
     Exporta los microdatos armonizados a un CSV, un mes a la vez.
@@ -638,6 +640,12 @@ def exportar(
         Carpeta raíz. Por defecto, la configurada.
     progress
         Función ``progress(fraccion, mensaje)`` que recibe el avance.
+    sep
+        Separador de columnas. Un Excel con la configuración regional de Colombia (coma decimal) abre todo
+        en una sola columna un CSV separado por comas: para abrirlo con doble clic use ``sep=";"`` y
+        ``decimal=","``.
+    decimal
+        Separador decimal.
 
     Devuelve
     --------
@@ -655,6 +663,7 @@ def exportar(
     >>> dd.geih.exportar(range(2015, 2026), "ocupados.csv", poblacion="ocupado")  # doctest: +SKIP
     >>> dd.geih.exportar(2024, "salarios.csv", variables=["fex", "sexo", "ingreso_laboral", "P6500"],
     ...                  columns=["P6500"], poblacion="ocupado")  # doctest: +SKIP
+    >>> dd.geih.exportar(2024, "para_excel.csv", sep=";", decimal=",")  # doctest: +SKIP
     """
     ruta = Path(ruta)
     por_anio = _meses_por_anio(anios, meses, empalme, root)
@@ -675,7 +684,8 @@ def exportar(
             if necesarias is None:  # las armonizadas (minúscula), iguales en todos los meses
                 necesarias = [c for c in df.columns if c == c.lower()]
             df.reindex(columns=necesarias).to_csv(tmp, mode="w" if i == 0 else "a", header=i == 0, index=False,
-                                                  encoding="utf-8-sig" if i == 0 else "utf-8")
+                                                  encoding="utf-8-sig" if i == 0 else "utf-8", sep=sep,
+                                                  decimal=decimal)
             filas += len(df)
         tmp.replace(ruta)
     finally:

@@ -238,6 +238,9 @@ def test_exportar_una_sola_variable(geih_root, tmp_path, monkeypatch):
     ruta = tmp_path / "fex.csv"
     dd.geih.exportar(2016, ruta, variables="fex", root=geih_root)
     assert list(pd.read_csv(ruta, encoding="utf-8-sig").columns) == ["anio", "mes", "fex"]
+    # Para un Excel con coma decimal (configuración regional de Colombia)
+    dd.geih.exportar(2016, ruta, variables="fex", root=geih_root, sep=";", decimal=",")
+    assert ruta.read_text(encoding="utf-8-sig").splitlines()[:2] == ["anio;mes;fex", "2016;1;100,5"]
 
 
 def test_cache_interrumpida_no_deja_parquet_a_medias(geih_root, tmp_path, monkeypatch):
