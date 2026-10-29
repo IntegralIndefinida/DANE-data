@@ -7,6 +7,12 @@ cuando necesite el detalle.
 ::::{grid} 1 1 2 2
 :gutter: 3
 
+:::{grid-item-card} {octicon}`browser` La aplicación
+Indicadores, tablas y gráficas en el navegador, sin escribir código.
+
+* {doc}`app`
+:::
+
 :::{grid-item-card} {octicon}`database` Datos
 Las dos encuestas, dónde quedan los archivos y cómo descargarlos.
 
@@ -36,13 +42,6 @@ La Encuesta Anual Manufacturera: agregados por sector y panel de establecimiento
 * {doc}`eam`
 :::
 
-:::{grid-item-card} {octicon}`browser` Sin escribir código
-La aplicación en el navegador y la línea de comandos.
-
-* {doc}`app`
-* {doc}`cli`
-:::
-
 :::{grid-item-card} {octicon}`shield-check` Confiabilidad
 Cómo se comprueban las cifras y qué tener en cuenta al interpretarlas.
 
@@ -50,7 +49,20 @@ Cómo se comprueban las cifras y qué tener en cuenta al interpretarlas.
 * {doc}`advertencias`
 * {doc}`diferencias`
 :::
+
+:::{grid-item-card} {octicon}`terminal` Línea de comandos
+Descargar los datos, ver el estado y abrir la aplicación desde la terminal.
+
+* {doc}`cli`
+:::
 ::::
+
+```{toctree}
+:hidden:
+:caption: La aplicación
+
+app
+```
 
 ```{toctree}
 :hidden:
@@ -87,17 +99,16 @@ eam
 
 ```{toctree}
 :hidden:
-:caption: Sin escribir código
-
-app
-cli
-```
-
-```{toctree}
-:hidden:
 :caption: Confiabilidad
 
 validacion
 advertencias
 diferencias
+```
+
+```{toctree}
+:hidden:
+:caption: Línea de comandos
+
+cli
 ```
