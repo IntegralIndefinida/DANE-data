@@ -4,10 +4,8 @@
 
 ::::{tab-set}
 :::{tab-item} Instalación automática
-1. Descargue [dane-data.zip](https://github.com/IntegralIndefinida/DANE-data/releases/latest/download/dane-data.zip) (siempre la última versión).
-2. Descomprímalo (en Windows: clic derecho → *Extraer todo…*; abrirlo con doble clic no basta) en una
-   carpeta fuera de OneDrive, por ejemplo `C:\dane-data`: la primera vez se crean miles de archivos
-   (`.venv/`) que OneDrive se pondría a sincronizar.
+1. Descargue la última version de [dane-data.zip](https://github.com/IntegralIndefinida/DANE-data/releases/latest/download/dane-data.zip).
+2. Descomprímalo (en Windows: clic derecho → *Extraer todo…*; abrirlo con doble clic no basta).
 3. Haga doble clic en el lanzador de su sistema:
 
    | Sistema | Archivo |
@@ -18,14 +16,12 @@
 
 La primera vez necesita internet y tarda de 1 a 3 minutos: el lanzador instala
 [uv](https://docs.astral.sh/uv/), que descarga Python 3.12, dane-data y las versiones exactas de las
-librerías dentro de la carpeta, sin tocar el resto del sistema. Las siguientes veces abre en segundos y el navegador
-se abre solo.
+librerías dentro de la carpeta. Las siguientes veces abre en segundos y el navegador se abre solo.
 
 En **Windows**, si aparece «Windows protegió su PC»: *Más información* → *Ejecutar de todas formas*. En
 **Mac**, si dice que no se puede verificar el desarrollador, cierre el aviso y abra *Configuración del
 Sistema* → *Privacidad y seguridad* → *Abrir de todos modos* (el botón aparece abajo, durante una hora
-después del intento). Hasta macOS 14 bastaba con clic derecho → *Abrir* → *Abrir*. El `.exe` de Windows
-se firma según la [política de firma de código](https://github.com/IntegralIndefinida/DANE-data#política-de-firma-de-código-code-signing-policy).
+después del intento).
 :::
 
 :::{tab-item} Con pip
