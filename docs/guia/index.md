@@ -42,18 +42,18 @@ La Encuesta Anual Manufacturera: agregados por sector y panel de establecimiento
 * {doc}`eam`
 :::
 
+:::{grid-item-card} {octicon}`terminal` Línea de comandos
+Descargar los datos, ver el estado y abrir la aplicación desde la terminal.
+
+* {doc}`cli`
+:::
+
 :::{grid-item-card} {octicon}`shield-check` Confiabilidad
 Cómo se comprueban las cifras y qué tener en cuenta al interpretarlas.
 
 * {doc}`validacion`
 * {doc}`advertencias`
 * {doc}`diferencias`
-:::
-
-:::{grid-item-card} {octicon}`terminal` Línea de comandos
-Descargar los datos, ver el estado y abrir la aplicación desde la terminal.
-
-* {doc}`cli`
 :::
 ::::
 
@@ -99,16 +99,16 @@ eam
 
 ```{toctree}
 :hidden:
+:caption: Línea de comandos
+
+cli
+```
+
+```{toctree}
+:hidden:
 :caption: Confiabilidad
 
 validacion
 advertencias
 diferencias
-```
-
-```{toctree}
-:hidden:
-:caption: Línea de comandos
-
-cli
 ```
