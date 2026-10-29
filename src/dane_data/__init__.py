@@ -17,7 +17,7 @@ from .config import get_path, set_paths, show_paths
 from .referencias import DEPARTAMENTOS, MESES, SMLV, buscar_variable, describir, diccionario
 from .stats import tabla, weighted_mean, weighted_quantile
 
-__version__ = "0.3.1"
+__version__ = "0.3.2"
 
 __all__ = [
     "geih", "eam", "set_paths", "get_path", "show_paths", "tabla", "weighted_mean",

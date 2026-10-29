@@ -1,21 +1,40 @@
-## Novedades de la versión 0.3.1
+## Novedades de la versión 0.3.2
 
-Una versión pequeña: un lanzador `.exe` para Windows y una forma fácil de citar `dane-data`. La librería y las
-cifras no cambian. La lista completa está en
+La informalidad sigue ahora la medición del DANE, las descargas avisan cuando algo falla y la aplicación se
+actualiza sola desde el zip para estudiantes. La lista completa está en
 [Novedades](https://integralindefinida.github.io/DANE-data/novedades.html).
 
-**Windows**
-- El zip trae `Abrir dane-data.exe`, que hace lo mismo que el `.bat` (que sigue en el zip). Va sin firmar.
-- Los lanzadores instalan uv sin cambiar el `PATH` del usuario.
+**Al actualizar**
+- `formal` y `tasa_informalidad` siguen la medición de informalidad del DANE (17.ª CIET): los ocupados
+  formales e informales de cada mes desde 2022 coinciden con los publicados. Antes de 2022 quedan vacías,
+  porque la medición necesita preguntas del cuestionario de 2022.
+- Nuevas `formal_marco2005` y `tasa_informalidad_marco2005`: la medición anterior del DANE, para 2007–2021.
+- La caché de cada mes de la GEIH se vuelve a crear una vez.
+- `serie_indicadores` ya no devuelve la fila del grupo vacío al desagregar con `por` (`dropna=False` la
+  conserva).
 
-**Cómo citar**
-- Nueva página **📝 Cómo citar** en la aplicación (en *Herramientas*): la cita de `dane-data` en APA y BibTeX,
-  con la versión instalada, y la de los datos del DANE.
-- En GitHub, el botón *Cite this repository* da la cita (sale del nuevo `CITATION.cff`).
+**Estudiantes**
+- El zip se llama ahora `dane-data.zip` y ya no trae el código: el lanzador instala dane-data desde PyPI. Si
+  su zip es de una versión anterior, baje este una última vez.
+- Cuando sale una versión nueva, la página de inicio lo avisa y el botón «Actualizar» la instala.
 
-**Documentación**
-- Nueva sección [Desinstalar](https://integralindefinida.github.io/DANE-data/instalacion.html#desinstalar) en
-  la instalación.
+**Descargas**
+- `forzar=True` (en la terminal `--forzar`; en la aplicación, «Volver a bajar lo que ya está descargado»)
+  vuelve a bajar lo que el DANE corrigió.
+- Una descarga en la que algo falló ya no se anuncia como terminada: se devuelve la lista de fallos.
+- Un mes al que le falta un módulo, o una parte de un módulo (por ejemplo `Resto - Ocupados`), ya no se da
+  por completo.
+
+**Correcciones**
+- Los niveles salían divididos por los meses equivocados al elegir meses después de `filtrar`: un trimestre
+  salía 4 veces más bajo. Las tasas no cambiaban.
+- La caché de la GEIH ya no crece sin límite: lo que no se usa en 90 días se borra solo.
+- *Tablas y microdatos* exporta los microdatos para Excel en español (`;` y coma decimal).
+
+**EAM**
+- Nuevas columnas `microagregado` y `grupo_microagregacion`, y `panel(excluir_microagregados=True)`.
+- Nueva advertencia: el ANDA publica la actividad de muchas plantas grandes con el código residual, así que
+  la composición por sector no coincide con la del DANE, aunque los totales sí.
 
 ---
 
