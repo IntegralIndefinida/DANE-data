@@ -37,6 +37,12 @@ def _stata_110(path: Path, columnas: dict):
         + bytes(33 * nvar) + bytes(81 * nvar) + bytes(5) + filas.tobytes())
 
 
+@pytest.fixture(autouse=True)
+def sin_buscar_versiones(monkeypatch):
+    """Las pruebas no consultan internet: el aviso de versión nueva se prueba con respuestas falsas."""
+    monkeypatch.setenv("DANE_DATA_SIN_ACTUALIZACIONES", "1")
+
+
 @pytest.fixture
 def geih_root(tmp_path):
     root = tmp_path / "geih"

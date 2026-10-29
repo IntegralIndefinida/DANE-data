@@ -3,9 +3,11 @@ from pathlib import Path
 import streamlit as st
 
 import dane_data as dd
-from dane_data.app._ui import disponibles_eam, disponibles_geih, rutas_actuales
+from dane_data.app._ui import aviso_version_nueva, disponibles_eam, disponibles_geih, rutas_actuales
 
 st.title("📊 DANE-data")
+# El aviso va arriba pero se llena al final: sin internet, la consulta no demora el resto de la página
+hueco_version = st.empty()
 st.markdown(
     "#### Microdatos del DANE listos para analizar\n"
     "Esta aplicación descarga, organiza y resume dos encuestas oficiales de Colombia publicadas por el DANE:"
@@ -100,3 +102,6 @@ st.caption(
     "Fuente: DANE — Archivo Nacional de Datos (ANDA), microdatos anonimizados de uso público. "
     "Cite: *DANE, Gran Encuesta Integrada de Hogares (GEIH)* / *Encuesta Anual Manufacturera (EAM)*."
 )
+
+with hueco_version.container():
+    aviso_version_nueva()

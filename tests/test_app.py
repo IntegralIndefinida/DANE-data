@@ -2,6 +2,7 @@
 
 import io
 import json
+import subprocess
 from pathlib import Path
 
 import numpy as np
@@ -256,3 +257,143 @@ def test_eam_por_defecto_los_ultimos_10_anios(tmp_path, monkeypatch):
     at = AppTest.from_file(str(PAGINAS / "eam_industria.py"), default_timeout=60).run()
     assert not at.exception
     assert at.select_slider[0].value == (2015, 2024)              # antes (2014, 2024): 11 años
+
+
+# --------------------------------------------------------------------------- #
+# Aviso de versión nueva (sin red: respuestas falsas de PyPI y GitHub)
+# --------------------------------------------------------------------------- #
+NOVEDADES = """# Novedades
+
+## Sin publicar
+
+* Algo que todavía no salió.
+
+## 0.5.0 (1 de diciembre de 2026)
+
+* Nueva {dd}`geih.serie_indicadores()`; vea {doc}`guia/variables` y {doc}`la guía <guia/datos>`.
+
+## 0.4.0 (1 de noviembre de 2026)
+
+* Vea [Microagregación](guia/eam.md#microagregación) y [el DANE](https://www.dane.gov.co).
+
+## 0.3.1 (19 de octubre de 2026)
+
+* Ya instalada.
+"""
+
+
+def test_novedades_desde_la_version_instalada():
+    from dane_data.app import _actualizacion as act
+
+    texto = act.extraer_novedades(NOVEDADES, "0.3.1", "0.5.0")
+    assert "#### 0.5.0" in texto and "#### 0.4.0" in texto
+    assert "0.3.1" not in texto and "todavía no salió" not in texto
+    docs = act.URL_DOCS
+    assert "`dd.geih.serie_indicadores()`" in texto
+    assert f"[variables]({docs}guia/variables.html)" in texto and f"[la guía]({docs}guia/datos.html)" in texto
+    assert f"({docs}guia/eam.html#microagregación)" in texto and "(https://www.dane.gov.co)" in texto
+    assert act.extraer_novedades(NOVEDADES, "0.5.0", "0.5.0") == ""
+    assert act._numeros("0.10.0") > act._numeros("0.9.1")
+
+
+class _Respuesta:
+    def __init__(self, datos=None, texto=""):
+        self.datos, self.text = datos, texto
+
+    def raise_for_status(self):
+        pass
+
+    def json(self):
+        return self.datos
+
+
+def test_revisar_consulta_una_vez_al_dia(tmp_path, monkeypatch):
+    from dane_data.app import _actualizacion as act
+
+    monkeypatch.delenv(act.DESACTIVAR)
+    monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(dd, "__version__", "0.3.1")
+    pedidos = []
+
+    def get(url, timeout):
+        pedidos.append(url)
+        return _Respuesta({"info": {"version": "0.5.0"}}) if "pypi" in url else _Respuesta(texto=NOVEDADES)
+
+    monkeypatch.setattr(act.requests, "get", get)
+    version, novedades = act.revisar()
+    assert version == "0.5.0" and "#### 0.4.0" in novedades
+    assert pedidos == [act.URL_PYPI, act.URL_NOVEDADES.format(version="0.5.0")]
+    assert act.revisar()[0] == "0.5.0" and len(pedidos) == 2       # el mismo día, de la caché
+
+    monkeypatch.setattr(dd, "__version__", "0.5.0")                  # ya actualizada
+    assert act.revisar() is None
+
+    datos = json.loads((tmp_path / "version.json").read_text(encoding="utf-8"))
+    (tmp_path / "version.json").write_text(json.dumps({**datos, "fecha": datos["fecha"] - 2 * 86400}))
+    monkeypatch.setattr(act.requests, "get", lambda url, timeout: (_ for _ in ()).throw(act.requests.ConnectionError()))
+    assert act.revisar() is None                                    # sin internet: nada, y sin error
+
+    monkeypatch.setenv(act.DESACTIVAR, "1")
+    monkeypatch.setattr(act.requests, "get", lambda *a, **k: pytest.fail("consultó internet desactivado"))
+    assert act.revisar() is None
+
+
+def test_carpeta_del_zip_para_estudiantes(tmp_path, monkeypatch):
+    from dane_data.app import _actualizacion as act
+
+    monkeypatch.setattr(act.sys, "prefix", str(tmp_path / ".venv"))
+    assert act.carpeta_zip() is None
+    (tmp_path / "pyproject.toml").write_text('[project]\nname = "dane-data"\n')
+    assert act.carpeta_zip() is None                                # el repositorio, no el zip
+    (tmp_path / "pyproject.toml").write_text('[project]\nname = "dane-data-estudiantes"\n')
+    assert act.carpeta_zip() == tmp_path
+
+
+def test_actualizar_zip_deja_el_lock_si_falla(tmp_path, monkeypatch):
+    from dane_data.app import _actualizacion as act
+
+    (tmp_path / "uv.lock").write_text("viejo")
+    monkeypatch.setenv("UV", "uv-falso")
+    monkeypatch.setenv("VIRTUAL_ENV", str(tmp_path / ".venv"))
+    llamadas = []
+
+    def run(comando, cwd, env, **kw):
+        llamadas.append((comando, env))
+        if comando[1] == "lock":
+            (tmp_path / "uv.lock").write_text("nuevo")
+        return subprocess.CompletedProcess(comando, 1 if fallar and comando[1] == "sync" else 0, "", "sin red")
+
+    monkeypatch.setattr(act.subprocess, "run", run)
+    fallar = True
+    assert act.actualizar_zip(tmp_path, "0.5.0") == "sin red"
+    assert (tmp_path / "uv.lock").read_text() == "viejo"
+    lock, sync = llamadas
+    assert lock[0] == ["uv-falso", "lock", "--upgrade-package", "dane-data==0.5.0"]
+    assert sync[0][1:] == ["sync", "--frozen", "--extra", "app"]
+    assert "VIRTUAL_ENV" not in sync[1] and sync[1]["UV_PROJECT_ENVIRONMENT"] != str(tmp_path / ".venv")
+
+    fallar = False
+    assert act.actualizar_zip(tmp_path, "0.5.0") is None
+    assert (tmp_path / "uv.lock").read_text() == "nuevo"
+    assert not list(tmp_path.glob(".venv-actualizacion-*"))         # el entorno de prueba se borra
+
+
+def test_inicio_avisa_la_version_nueva(tmp_path, monkeypatch):
+    from dane_data.app import _actualizacion as act
+
+    monkeypatch.setattr(dd.config, "_session", {"geih": tmp_path / "g", "geih_empalme": tmp_path / "e",
+                                                "eam": tmp_path / "eam"})
+    monkeypatch.setattr(act, "revisar", lambda: ("9.9.9", "#### 9.9.9\n\n* Algo nuevo."))
+    at = AppTest.from_file(str(PAGINAS / "inicio.py"), default_timeout=60).run()
+    assert not at.exception
+    assert any("9.9.9" in m.value for m in at.markdown)
+    assert any("pip install --upgrade" in c.value for c in at.code)   # instalado con pip: el comando
+
+    pedidas = []
+    monkeypatch.setattr(act, "carpeta_zip", lambda: tmp_path)
+    monkeypatch.setattr(act, "actualizar_zip", lambda carpeta, version: pedidas.append(version))
+    at = AppTest.from_file(str(PAGINAS / "inicio.py"), default_timeout=60).run()
+    next(b for b in at.button if b.label == "Actualizar a la 9.9.9").click().run()
+    assert not at.exception
+    assert pedidas == ["9.9.9"] and any("vuelva a abrir" in s.value for s in at.success)
+

@@ -280,7 +280,8 @@ firma.
 | Aprobadores (aprueban cada firma) | [IntegralIndefinida](https://github.com/IntegralIndefinida) |
 
 **Privacidad.** This program will not transfer any information to other networked systems unless
-specifically requested by the user or the person installing or operating it. En concreto, solo se conecta
+specifically requested by the user or the person installing or operating it, except for the check for new
+versions described below, which sends no user data. En concreto, solo se conecta
 a internet para lo siguiente:
 
 - El lanzador, la primera vez, instala [uv](https://docs.astral.sh/uv/) desde `astral.sh` en
@@ -289,6 +290,10 @@ a internet para lo siguiente:
   en `.venv/`, dentro de la carpeta del zip.
 - La app y la librería descargan los microdatos del ANDA del DANE (`microdatos.dane.gov.co`) solo cuando
   usted lo pide.
+- La app, al abrir la página de inicio y como mucho una vez al día, consulta en `pypi.org` cuál es la última
+  versión de dane-data y, si hay una nueva, lee qué cambia en `raw.githubusercontent.com`. No envía ningún
+  dato suyo; se desactiva con la variable de entorno `DANE_DATA_SIN_ACTUALIZACIONES=1`. La versión nueva
+  solo se instala si usted lo pide con el botón «Actualizar»: entonces uv la descarga de PyPI.
 - La app usa [Streamlit](https://streamlit.io) con las estadísticas de uso desactivadas
   (`gatherUsageStats = false`) y, salvo que se pida `--address`, solo abre su servidor en este computador.
 

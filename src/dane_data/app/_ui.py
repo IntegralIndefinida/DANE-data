@@ -12,6 +12,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 import dane_data as dd
+from dane_data.app import _actualizacion
 
 # Paleta categórica validada (orden fijo; nunca se recicla). Ver skill dataviz.
 PALETA = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#4a3aa7", "#e34948"]
@@ -221,6 +222,40 @@ def botones_descarga(df: pd.DataFrame, nombre: str, key: str) -> None:
     else:
         c3.download_button("⬇️ Stata (.dta)", lambda: _stata(df), f"{nombre}.dta", "application/x-stata-dta",
                            key=f"{key}_dta", width="stretch")
+
+
+def aviso_version_nueva() -> None:
+    """
+    Si hay una versión nueva en PyPI: sus novedades y cómo instalarla, con un botón en el zip para
+    estudiantes. Se revisa una vez por sesión (y como mucho una vez al día en internet); nada se actualiza
+    sin el clic.
+    """
+    if "version_nueva" not in st.session_state:
+        st.session_state["version_nueva"] = _actualizacion.revisar()
+    if st.session_state["version_nueva"] is None:
+        return
+    version, novedades = st.session_state["version_nueva"]
+    with st.container(border=True):
+        st.markdown(f"#### 🆕 Hay una versión nueva de dane-data: {version}\n"
+                    f"Usted tiene la {dd.__version__}. Actualizar no borra sus datos descargados.")
+        with st.expander("Qué cambia en la versión nueva"):
+            st.markdown(novedades or f"Vea las [novedades]({_actualizacion.URL_DOCS}novedades.html).")
+        carpeta = _actualizacion.carpeta_zip()
+        if carpeta is None:
+            st.markdown("Para actualizar, en la terminal:")
+            st.code('pip install --upgrade "dane-data[app]"', language="bash")
+        elif st.session_state.get("actualizado") == version:
+            st.success("Listo. Cierre esta pestaña y la ventana negra de dane-data, y vuelva a abrir el lanzador: "
+                       "abrirá con la versión nueva.")
+        elif st.button(f"Actualizar a la {version}", type="primary"):
+            with st.spinner("Descargando la versión nueva… puede tardar unos minutos."):
+                error = _actualizacion.actualizar_zip(carpeta, version)
+            if error:
+                st.error("No se pudo actualizar. Revise su conexión a internet e intente de nuevo; se sigue usando "
+                         f"la versión {dd.__version__}.\n\nDetalle: {error}")
+            else:
+                st.session_state["actualizado"] = version
+                st.rerun()
 
 
 def codigo(texto: str) -> None:

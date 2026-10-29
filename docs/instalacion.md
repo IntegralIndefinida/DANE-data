@@ -81,9 +81,23 @@ Un año de la GEIH ocupa unos 500 MB y toda la EAM unos 330 MB. Los detalles est
 
 ## Actualizar
 
-```bash
-pip install --upgrade "dane-data[app]"
-```
+Cuando sale una versión nueva, la página de inicio de la aplicación lo avisa y muestra qué cambia. Nada se
+actualiza solo:
+
+* Con el zip para estudiantes, el aviso trae un botón **Actualizar**: descarga la versión nueva, y al cerrar
+  y volver a abrir el lanzador la aplicación abre con ella. Los datos descargados se conservan. Si su zip es
+  anterior a este botón, baje el nuevo una última vez.
+* Con pip:
+
+  ```bash
+  pip install --upgrade "dane-data[app]"
+  ```
+
+* Con uv, dentro de un proyecto: `uv sync --upgrade-package dane-data`. Con uvx:
+  `uvx --upgrade --from "dane-data[app]" dane-data app`.
+
+Para saber si hay una versión nueva, la aplicación consulta PyPI y GitHub como mucho una vez al día, sin
+enviar ningún dato suyo. Para desactivarlo, defina la variable de entorno `DANE_DATA_SIN_ACTUALIZACIONES=1`.
 
 Los cambios de cada versión están en {doc}`novedades`. Los resultados guardados en caché se recalculan solos
 con la versión nueva.

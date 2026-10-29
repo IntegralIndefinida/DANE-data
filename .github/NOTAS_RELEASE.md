@@ -32,7 +32,8 @@ cifras no cambian. La lista completa está en
    - **Linux:** `abrir-dane-data.sh`
 
 La primera vez necesita internet y tarda 1–3 minutos (instala lo necesario). Después abre en segundos y
-el navegador se abre solo. No hace falta tener Python instalado.
+el navegador se abre solo. No hace falta tener Python instalado. Cuando salga una versión nueva, la página de
+inicio de la aplicación lo avisa y la instala con un clic.
 
 **Avisos de seguridad la primera vez**
 - *Windows* puede mostrar "Windows protegió su PC": clic en **Más información → Ejecutar de todas formas**.

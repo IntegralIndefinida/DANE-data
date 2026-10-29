@@ -41,6 +41,11 @@
   baja siempre la última versión, sin pasar por la página de versiones de GitHub. Ya no trae el código de
   dane-data: el lanzador lo instala desde PyPI la primera vez, con las versiones exactas de las librerías,
   como antes.
+* Cuando sale una versión nueva, la página de inicio de la aplicación lo avisa y muestra qué cambia. Con el
+  zip para estudiantes, el botón «Actualizar» la instala sin bajar otro zip; nada se actualiza solo. Si su
+  zip es de una versión anterior, baje el nuevo una última vez. La consulta se hace como mucho una vez al
+  día, sin enviar datos suyos, y se desactiva con `DANE_DATA_SIN_ACTUALIZACIONES=1` (vea
+  [Actualizar](instalacion.md#actualizar)).
 * `dane-data app` sin el extra `[app]` decía «No module named streamlit»; ahora explica cómo instalarlo.
 * Los lanzadores de Windows (`.exe` y `.bat`) abiertos desde dentro del zip, sin descomprimirlo, ahora
   explican que hay que extraerlo primero, en vez de «La aplicación se cerró con un error». La instalación
