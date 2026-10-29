@@ -96,7 +96,12 @@ html_context = {
     "default_mode": "light",
 }
 html_theme_options = {
-    "logo": {"text": "dane-data", "alt_text": "dane-data"},
+    "logo": {
+        "text": "dane-data",
+        "alt_text": "dane-data",
+        "image_light": "_static/logo.svg",
+        "image_dark": "_static/logo_oscuro.svg",
+    },
     "navbar_align": "left",
     "header_links_before_dropdown": 6,
     "header_dropdown_text": "Más",

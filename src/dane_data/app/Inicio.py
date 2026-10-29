@@ -1,8 +1,12 @@
 """Punto de entrada de la app: `dane-data app` o `streamlit run src/dane-data/app/Inicio.py`."""
 
+from pathlib import Path
+
 import streamlit as st
 
-st.set_page_config(page_title="dane-data · Microdatos DANE", page_icon="📊", layout="wide")
+st.set_page_config(
+    page_title="dane-data · Microdatos DANE", page_icon=str(Path(__file__).with_name("logo.svg")), layout="wide"
+)
 
 paginas = {
     "": [st.Page("paginas/inicio.py", title="Inicio", icon="🏠", default=True)],

@@ -52,7 +52,7 @@ dane-data = "dane_data.cli:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-dane_data = ["data/*.json", "app/*.py", "app/paginas/*.py", "app/.streamlit/*.toml"]
+dane_data = ["data/*.json", "app/*.py", "app/*.svg", "app/paginas/*.py", "app/.streamlit/*.toml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
