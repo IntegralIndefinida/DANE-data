@@ -14,6 +14,18 @@ def _as_list(x) -> list:
     return [x] if isinstance(x, str) else list(x)
 
 
+def _con_categorias(res: pd.DataFrame, df: pd.DataFrame, por: list[str]) -> pd.DataFrame:
+    """
+    Devuelve a las columnas de ``por`` el tipo categórico que tienen en ``df``. Con varias llaves, dropna=False
+    y un grupo vacío, el groupby de pandas 2 las deja sin orden (``ordered=False``), y el nivel educativo ya no
+    va de Ninguno a Superior; pandas 3 lo conserva.
+    """
+    for k in por:
+        if k in res.columns and isinstance(df[k].dtype, pd.CategoricalDtype) and res[k].dtype != df[k].dtype:
+            res[k] = res[k].astype(df[k].dtype)
+    return res
+
+
 def peso_mensual_promedio(df: pd.DataFrame, peso: str = "fex") -> pd.Series:
     """
     Peso que convierte totales de varios meses en un *promedio mensual*.
@@ -262,7 +274,7 @@ def tabla(
         if g is None:
             res = pd.DataFrame({"total": [d["_w"].sum()], "n_muestra": [len(d)]})
         else:
-            res = g.agg(total=("_w", "sum"), n_muestra=("_w", "size")).reset_index()
+            res = _con_categorias(g.agg(total=("_w", "sum"), n_muestra=("_w", "size")).reset_index(), d, por)
         if estadistico == "porcentaje":
             outer = por[:-1]
             # dropna=False como en la agregación: un grupo exterior vacío (NaN) también suma 100 %
@@ -283,4 +295,4 @@ def tabla(
         return pd.DataFrame({estadistico: [fn(d)], "n_muestra": [len(d)]})
     stat = g[[variable, "_w"]].apply(fn).rename(estadistico)
     n = g.size().rename("n_muestra")
-    return pd.concat([stat, n], axis=1).reset_index()
+    return _con_categorias(pd.concat([stat, n], axis=1).reset_index(), d, por)

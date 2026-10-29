@@ -165,6 +165,15 @@ def test_coma_decimal_minoritaria_no_se_pierde(tmp_path):
     assert eam["valagri"].sum() == pytest.approx(300 * 40 + 40981953.3333333 - 2746.5)
 
 
+def test_tabla_conserva_las_categorias_ordenadas():
+    """Con varias llaves y un grupo vacío, el groupby de pandas 2 dejaba el nivel educativo sin orden."""
+    orden = pd.CategoricalDtype(["Ninguno", "Primaria", "Superior"], ordered=True)
+    df = pd.DataFrame({"anio": 2016, "mes": 1, "fex": 1.0, "y": [1.0, 2.0, 3.0],
+                       "nivel": pd.Series(["Primaria", None, "Ninguno"], dtype=orden)})
+    for kw in ({}, {"variable": "y", "estadistico": "media"}):
+        assert dd.tabla(df, por=["anio", "nivel"], **kw)["nivel"].dtype == orden
+
+
 def test_weighted_quantile():
     assert dd.weighted_quantile([1, 2, 3], [1, 1, 1], 0.5) == pytest.approx(2)
     assert dd.weighted_quantile([1, 10], [9, 1], 0.5) == pytest.approx(1)

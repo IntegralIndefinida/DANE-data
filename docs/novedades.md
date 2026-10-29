@@ -86,6 +86,10 @@
 * Un año o mes de numpy (`dd.geih.load(df.anio.max())`, `months=np.int64(1)`) lanzaba
   `TypeError: 'numpy.int64' object is not iterable`. Ahora se acepta en la carga, las funciones `serie_*` y
   las descargas.
+* Con pandas 2 (el que se instala con Python 3.10), {dd}`tabla()` y {dd}`geih.indicadores()` desagregados por
+  varias variables, con algún grupo vacío (por ejemplo `por=["anio", "nivel_educativo"]`, donde los menores
+  no responden educación), devolvían las categorías sin orden: el nivel educativo ya no iba de *Ninguno* a
+  *Superior*. Ahora conservan el orden, como con pandas 3.
 * `dd.geih.load(2024, months="12")` cargaba enero y febrero: el texto se recorría letra por letra. Ahora un
   mes como texto es ese mes, como en las funciones `serie_*`.
 * Con `XDG_CONFIG_HOME` o `XDG_CACHE_HOME` definidas pero vacías (o relativas), la configuración y la caché

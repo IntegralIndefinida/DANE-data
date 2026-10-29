@@ -7,7 +7,7 @@ from typing import Iterable
 import numpy as np
 import pandas as pd
 
-from ..stats import _as_list, peso_mensual_promedio, weighted_mean, weighted_quantile
+from ..stats import _as_list, _con_categorias, peso_mensual_promedio, weighted_mean, weighted_quantile
 
 GLOSARIO = {
     "PET": "Población en edad de trabajar. Desde 2022 (marco 2018): 15 años o más. "
@@ -186,5 +186,5 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, anual:
         res["ingreso_medio"] = np.nan
         res["ingreso_mediano"] = np.nan
 
-    res = res.replace([np.inf, -np.inf], np.nan).reset_index()
+    res = _con_categorias(res.replace([np.inf, -np.inf], np.nan).reset_index(), df, por)
     return res[keys + _COLUMNAS]
