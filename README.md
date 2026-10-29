@@ -40,8 +40,6 @@ app basta cerrar la ventana de la terminal.
 > *Configuración del Sistema* → *Privacidad y seguridad* → *Abrir de todos modos* (hasta macOS 14 bastaba
 > con clic derecho → *Abrir* → *Abrir*).
 
-El `.exe` de Windows se firma según la [política de firma de código](#política-de-firma-de-código-code-signing-policy).
-
 ## Instalación con pip
 
 ```bash
@@ -260,27 +258,11 @@ src/dane_data/
 Los descargadores provienen de los repositorios `GEIH` y `EAM` originales; se adaptaron para reportar
 progreso y permitir cancelar.
 
-## Política de firma de código (Code signing policy)
+## Privacidad
 
-Free code signing provided by [SignPath.io](https://about.signpath.io), certificate by
-[SignPath Foundation](https://signpath.org).
-
-El lanzador de Windows `Abrir dane-data.exe` se compila en GitHub Actions desde el código de este
-repositorio ([`lanzador/`](lanzador/), con [`release.yml`](.github/workflows/release.yml)) y se firma con
-el certificado de SignPath Foundation, que aparece como editor. Solo se firma lo que se compila aquí, y
-cada firma se aprueba a mano. Mientras SignPath Foundation revisa el proyecto, el `.exe` se publica sin
-firma.
-
-| Rol | Quién |
-|---|---|
-| Autores (cambian el código sin otra revisión) | [IntegralIndefinida](https://github.com/IntegralIndefinida) |
-| Revisores (revisan los *pull requests* de otras personas) | [IntegralIndefinida](https://github.com/IntegralIndefinida) |
-| Aprobadores (aprueban cada firma) | [IntegralIndefinida](https://github.com/IntegralIndefinida) |
-
-**Privacidad.** This program will not transfer any information to other networked systems unless
-specifically requested by the user or the person installing or operating it, except for the check for new
-versions described below, which sends no user data. En concreto, solo se conecta
-a internet para lo siguiente:
+`dane-data` no envía información a otros sistemas a menos que usted, o quien lo instala o lo usa, lo pida.
+La única excepción es la consulta de versiones nuevas que se describe abajo, que no envía ningún dato suyo.
+Solo se conecta a internet para lo siguiente:
 
 - El lanzador, la primera vez, instala [uv](https://docs.astral.sh/uv/) desde `astral.sh` en
   `%USERPROFILE%\.local\bin`, sin cambiar el `PATH` del usuario. uv descarga Python y las librerías de

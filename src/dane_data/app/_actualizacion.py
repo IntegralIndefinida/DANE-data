@@ -4,7 +4,7 @@ instalación cuando el usuario la pide. Nada se actualiza solo.
 
 La consulta (pypi.org y raw.githubusercontent.com, sin enviar datos del usuario) se hace como mucho una vez
 al día y se desactiva con la variable de entorno ``DANE_DATA_SIN_ACTUALIZACIONES=1``. Está declarada en la
-política de privacidad del README, que exige SignPath: si cambia lo que se consulta, hay que actualizarla.
+sección «Privacidad» del README: si cambia lo que se consulta, hay que actualizarla.
 """
 
 from __future__ import annotations

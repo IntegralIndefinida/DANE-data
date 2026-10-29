@@ -131,8 +131,7 @@
 ## 0.3.1 (19 de octubre de 2026)
 
 * Windows: el zip para estudiantes trae `Abrir dane-data.exe`, un lanzador que hace lo mismo que el `.bat`
-  (que sigue en el zip) y que se puede firmar; Windows no firma archivos `.bat`. Vea la
-  [política de firma de código](https://github.com/IntegralIndefinida/DANE-data#política-de-firma-de-código-code-signing-policy).
+  (que sigue en el zip) y que se puede firmar; Windows no firma archivos `.bat`.
 * Los lanzadores de Windows instalan uv sin cambiar el `PATH` del usuario.
 * Nueva sección [Desinstalar](instalacion.md#desinstalar) en la instalación.
 * El repositorio trae `CITATION.cff`: en GitHub, *Cite this repository* da la cita de `dane-data` en APA y

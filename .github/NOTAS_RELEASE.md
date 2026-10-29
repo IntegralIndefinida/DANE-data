@@ -5,8 +5,7 @@ cifras no cambian. La lista completa está en
 [Novedades](https://integralindefinida.github.io/DANE-data/novedades.html).
 
 **Windows**
-- El zip trae `Abrir dane-data.exe`, que hace lo mismo que el `.bat` (que sigue en el zip). En esta versión
-  todavía va sin firmar (vea la política de firma de código abajo).
+- El zip trae `Abrir dane-data.exe`, que hace lo mismo que el `.bat` (que sigue en el zip). Va sin firmar.
 - Los lanzadores instalan uv sin cambiar el `PATH` del usuario.
 
 **Cómo citar**
@@ -40,7 +39,5 @@ inicio de la aplicación lo avisa y la instala con un clic.
 - *Mac* puede decir que no se puede verificar el desarrollador: cierre el aviso y abra **Configuración del
   Sistema → Privacidad y seguridad → Abrir de todos modos** (hasta macOS 14 bastaba con clic derecho → Abrir →
   Abrir).
-
-El `.exe` de Windows se firma según la [Code signing policy (política de firma de código)](https://github.com/IntegralIndefinida/DANE-data#política-de-firma-de-código-code-signing-policy).
 
 **Si ya tiene Python:** `pip install "dane-data[app]"` y luego `dane-data app`.
