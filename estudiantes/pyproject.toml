@@ -1,0 +1,15 @@
+# Proyecto del zip para estudiantes. No trae el código de dane-data: lo instala desde PyPI con las versiones
+# exactas de uv.lock, que .github/workflows/release.yml arma al publicar cada versión. Así la app puede
+# ofrecer la versión nueva sin bajar otro zip (Inicio, app/_actualizacion.py).
+[project]
+name = "dane-data-estudiantes"
+version = "1"
+requires-python = ">=3.10"
+dependencies = []
+
+# Los lanzadores corren `uv run --frozen --extra app dane-data app`, igual que en el repositorio
+[project.optional-dependencies]
+app = ["dane-data[app]"]
+
+[tool.uv]
+package = false

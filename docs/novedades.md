@@ -36,6 +36,11 @@
 
 **Instalación**
 
+* El zip para estudiantes se llama ahora `dane-data.zip`, y el enlace
+  [dane-data.zip](https://github.com/IntegralIndefinida/DANE-data/releases/latest/download/dane-data.zip)
+  baja siempre la última versión, sin pasar por la página de versiones de GitHub. Ya no trae el código de
+  dane-data: el lanzador lo instala desde PyPI la primera vez, con las versiones exactas de las librerías,
+  como antes.
 * `dane-data app` sin el extra `[app]` decía «No module named streamlit»; ahora explica cómo instalarlo.
 * Los lanzadores de Windows (`.exe` y `.bat`) abiertos desde dentro del zip, sin descomprimirlo, ahora
   explican que hay que extraerlo primero, en vez de «La aplicación se cerró con un error». La instalación

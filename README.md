@@ -20,7 +20,7 @@ indicadores ponderados como lo hace el DANE.
 
 ## Instalación de la app
 
-1. En la página de **[Releases](https://github.com/IntegralIndefinida/DANE-data/releases)** descargue `dane-data-<versión>.zip` (en *Assets*).
+1. Descargue **[dane-data.zip](https://github.com/IntegralIndefinida/DANE-data/releases/latest/download/dane-data.zip)** (siempre la última versión).
 2. Descomprímalo (en Windows: clic derecho → *Extraer todo…*; abrirlo con doble clic no basta) en una
    carpeta fuera de OneDrive, por ejemplo `C:\dane-data`: la primera vez se crean miles de archivos
    (`.venv/`) que OneDrive se pondría a sincronizar.

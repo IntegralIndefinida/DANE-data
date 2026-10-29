@@ -51,8 +51,8 @@ pip install "dane-data[app]"
 dane-data app      # se abre en el navegador: indicadores, tablas, gráficas y descargas
 ```
 
-Para estudiantes sin Python: descargue el zip de la página de
-[versiones](https://github.com/IntegralIndefinida/DANE-data/releases) y haga doble clic en el lanzador.
+Para estudiantes sin Python: descargue [dane-data.zip](https://github.com/IntegralIndefinida/DANE-data/releases/latest/download/dane-data.zip), descomprímalo y haga doble clic en el
+lanzador (vea {doc}`instalacion`).
 :::
 
 :::{tab-item} Terminal

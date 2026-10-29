@@ -21,8 +21,7 @@ uvx --from "dane-data[app]" dane-data app    # o abrir la aplicación sin instal
 :::
 
 :::{tab-item} Sin Python (estudiantes)
-1. En la página de [versiones](https://github.com/IntegralIndefinida/DANE-data/releases) descargue
-   `dane-data-<versión>.zip` (en *Assets*, no el «Source code»).
+1. Descargue [dane-data.zip](https://github.com/IntegralIndefinida/DANE-data/releases/latest/download/dane-data.zip) (siempre la última versión).
 2. Descomprímalo (en Windows: clic derecho → *Extraer todo…*; abrirlo con doble clic no basta) en una
    carpeta fuera de OneDrive, por ejemplo `C:\dane-data`: la primera vez se crean miles de archivos
    (`.venv/`) que OneDrive se pondría a sincronizar.
@@ -35,8 +34,8 @@ uvx --from "dane-data[app]" dane-data app    # o abrir la aplicación sin instal
    | Linux | `abrir-dane-data.sh` |
 
 La primera vez necesita internet y tarda de 1 a 3 minutos: el lanzador instala
-[uv](https://docs.astral.sh/uv/), que descarga Python 3.12 y las versiones exactas de las librerías
-dentro de la carpeta, sin tocar el resto del sistema. Las siguientes veces abre en segundos y el navegador
+[uv](https://docs.astral.sh/uv/), que descarga Python 3.12, dane-data y las versiones exactas de las
+librerías dentro de la carpeta, sin tocar el resto del sistema. Las siguientes veces abre en segundos y el navegador
 se abre solo.
 
 En **Windows**, si aparece «Windows protegió su PC»: *Más información* → *Ejecutar de todas formas*. En

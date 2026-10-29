@@ -85,8 +85,11 @@ Cuando los datos contradicen lo que publica el DANE (diccionarios, etiquetas, no
 2. Escriba las notas en `.github/NOTAS_RELEASE.md` y en {doc}`novedades`.
 3. `git tag vX.Y.Z && git push origin vX.Y.Z`.
 
-El flujo de GitHub Actions corre las pruebas, compila el lanzador de Windows, crea la versión en GitHub con
-el zip para estudiantes y publica el paquete en PyPI.
+El flujo de GitHub Actions corre las pruebas, compila el lanzador de Windows, publica el paquete en PyPI
+y crea la versión en GitHub con el zip para estudiantes, `dane-data.zip`. El zip no trae el código: lleva
+los lanzadores y `estudiantes/pyproject.toml`, con un `uv.lock` que instala desde PyPI la versión recién
+publicada (por eso se arma después). El nombre es fijo para que
+`https://github.com/IntegralIndefinida/DANE-data/releases/latest/download/dane-data.zip` sea siempre la última.
 
 ### El lanzador de Windows
 

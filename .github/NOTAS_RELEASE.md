@@ -22,7 +22,7 @@ cifras no cambian. La lista completa está en
 
 ## Cómo instalar (estudiantes)
 
-1. Descargue **`dane-data-….zip`** (abajo, en *Assets*) — no el "Source code".
+1. Descargue **`dane-data.zip`** (abajo, en *Assets*) — no el "Source code".
 2. Descomprímalo (en Windows: clic derecho → *Extraer todo…*; abrirlo con doble clic no basta) en una
    carpeta fuera de OneDrive, por ejemplo `C:\dane-data`: la primera vez se crean miles de archivos
    (`.venv/`) que OneDrive se pondría a sincronizar.

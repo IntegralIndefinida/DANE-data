@@ -2,9 +2,12 @@
 #   1. verifica que la etiqueta coincida con la versión de pyproject.toml, __init__.py y CITATION.cff,
 #   2. corre las pruebas,
 #   3. compila el lanzador de Windows (lanzador/compilar.sh) y lo firma con SignPath si está configurado,
-#   4. arma dane-data-<versión>.zip con la app y los lanzadores (sin tests/ ni .github/),
-#   5. crea el Release en GitHub con ese zip adjunto,
-#   6. publica el paquete en PyPI (Trusted Publishing, entorno `pypi`; sin token guardado).
+#   4. publica el paquete en PyPI (Trusted Publishing, entorno `pypi`; sin token guardado),
+#   5. arma dane-data.zip para estudiantes: los lanzadores y estudiantes/pyproject.toml, con un uv.lock que
+#      instala desde PyPI la versión recién publicada (por eso va después de 4). No trae el código: así la
+#      app puede ofrecer la versión nueva sin bajar otro zip. El nombre es fijo para que
+#      releases/latest/download/dane-data.zip sea siempre la última,
+#   6. crea el Release en GitHub con ese zip adjunto.
 name: Release
 
 on:
@@ -71,21 +74,12 @@ jobs:
         if: vars.SIGNPATH_ORGANIZATION_ID != ''
         run: mv "build/firmado/Abrir dane-data.exe" "build/Abrir dane-data.exe"
 
-      - name: Armar zip
-        run: |
-          NOMBRE="dane-data-${VERSION}"
-          git archive --format=zip --prefix="${NOMBRE}/" --add-file="build/Abrir dane-data.exe" \
-            -o "${NOMBRE}.zip" "${GITHUB_REF_NAME}"
-          unzip -l "${NOMBRE}.zip"
-          echo "ZIP=${NOMBRE}.zip" >> "$GITHUB_ENV"
-
-      - name: Crear release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release create "${GITHUB_REF_NAME}" "${ZIP}" \
-            --title "dane-data ${GITHUB_REF_NAME}" \
-            --notes-file .github/NOTAS_RELEASE.md
+      - name: Guardar el lanzador para el zip
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+        with:
+          name: lanzador
+          path: build/Abrir dane-data.exe
+          if-no-files-found: error
 
   pypi:
     needs: release
@@ -104,3 +98,41 @@ jobs:
 
       - name: Publicar en PyPI
         run: uv publish
+
+  zip:
+    needs: [release, pypi]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884  # v10.3.0
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
+        with:
+          name: lanzador
+          path: build
+
+      - name: Armar zip
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          CARPETA="zip/dane-data"
+          mkdir -p "${CARPETA}"
+          # Los lanzadores salen del checkout con sus finales de línea (.gitattributes) y permisos (+x)
+          cp estudiantes/pyproject.toml .python-version LICENSE README.md abrir-dane-data.sh \
+            "Abrir dane-data (Mac).command" "Abrir dane-data (Windows).bat" "build/Abrir dane-data.exe" "${CARPETA}/"
+          # PyPI puede tardar unos minutos en mostrar la versión recién publicada
+          for intento in $(seq 1 20); do
+            if (cd "${CARPETA}" && uv lock --refresh --upgrade-package "dane-data==${VERSION}"); then break; fi
+            sleep 30
+          done
+          grep -A1 '^name = "dane-data"$' "${CARPETA}/uv.lock" | grep -qx "version = \"${VERSION}\""
+          (cd zip && zip -r ../dane-data.zip dane-data)
+          unzip -l dane-data.zip
+
+      - name: Crear release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" dane-data.zip \
+            --title "dane-data ${GITHUB_REF_NAME}" \
+            --notes-file .github/NOTAS_RELEASE.md

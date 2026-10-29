@@ -3,7 +3,8 @@
 *.sh       text eol=lf
 *.command  text eol=lf
 
-# Lo que NO va en el zip para estudiantes (git archive)
+# Lo que NO va en el «Source code» de cada versión en GitHub (git archive). El zip para estudiantes no
+# sale de aquí: release.yml lo arma con los lanzadores y estudiantes/pyproject.toml.
 tests/           export-ignore
 docs/            export-ignore
 .github/         export-ignore
