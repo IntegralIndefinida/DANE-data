@@ -3,24 +3,7 @@
 `dane-data` funciona en Windows, macOS y Linux, con Python 3.10 o más reciente.
 
 ::::{tab-set}
-:::{tab-item} Con pip
-```bash
-pip install "dane-data[app]"    # librería + aplicación
-pip install dane-data           # solo la librería
-```
-
-El extra `app` instala lo que necesita la aplicación (Streamlit, Plotly y openpyxl). Se recomienda un
-entorno virtual (`python -m venv`) o de conda para no mezclar versiones con otros proyectos.
-:::
-
-:::{tab-item} Con uv
-```bash
-uv add "dane-data[app]"         # dentro de un proyecto de uv
-uvx --from "dane-data[app]" dane-data app    # o abrir la aplicación sin instalar nada
-```
-:::
-
-:::{tab-item} Sin Python (estudiantes)
+:::{tab-item} Instalación automática
 1. Descargue [dane-data.zip](https://github.com/IntegralIndefinida/DANE-data/releases/latest/download/dane-data.zip) (siempre la última versión).
 2. Descomprímalo (en Windows: clic derecho → *Extraer todo…*; abrirlo con doble clic no basta) en una
    carpeta fuera de OneDrive, por ejemplo `C:\dane-data`: la primera vez se crean miles de archivos
@@ -43,6 +26,23 @@ En **Windows**, si aparece «Windows protegió su PC»: *Más información* → 
 Sistema* → *Privacidad y seguridad* → *Abrir de todos modos* (el botón aparece abajo, durante una hora
 después del intento). Hasta macOS 14 bastaba con clic derecho → *Abrir* → *Abrir*. El `.exe` de Windows
 se firma según la [política de firma de código](https://github.com/IntegralIndefinida/DANE-data#política-de-firma-de-código-code-signing-policy).
+:::
+
+:::{tab-item} Con pip
+```bash
+pip install "dane-data[app]"    # librería + aplicación
+pip install dane-data           # solo la librería
+```
+
+El extra `app` instala lo que necesita la aplicación (Streamlit, Plotly y openpyxl). Se recomienda un
+entorno virtual (`python -m venv`) o de conda para no mezclar versiones con otros proyectos.
+:::
+
+:::{tab-item} Con uv
+```bash
+uv add "dane-data[app]"         # dentro de un proyecto de uv
+uvx --from "dane-data[app]" dane-data app    # o abrir la aplicación sin instalar nada
+```
 :::
 
 :::{tab-item} Para desarrollo
