@@ -1,30 +1,28 @@
-# DANE-data 📊🇨🇴
+# DANE-data
 
-📖 [Documentación](https://integralindefinida.github.io/DANE-data/) · 📦 [PyPI](https://pypi.org/project/dane-data/)
+[Documentación](https://integralindefinida.github.io/DANE-data/) · [PyPI](https://pypi.org/project/dane-data/)
 
-**Microdatos del DANE listos para analizar** — Gran Encuesta Integrada de Hogares (**GEIH**, 2007–2026) y
-Encuesta Anual Manufacturera (**EAM**, 1992–2024).
+Microdatos del DANE listos para analizar: la Gran Encuesta Integrada de Hogares (GEIH, 2007–2026) y la
+Encuesta Anual Manufacturera (EAM, 1992–2024).
 
 Dos formas de usarlo:
 
 | | Para quién | Cómo |
 |---|---|---|
-| 🖱️ **Aplicación** | Estudiantes que empiezan, clases, consultas rápidas | `dane-data app` → se abre en el navegador |
-| 🐍 **Librería Python** | Automatización, investigación, estudiantes avanzados | `import dane_data as dd` |
+| Aplicación | Estudiantes que empiezan, clases, consultas rápidas | `dane-data app`, que se abre en el navegador |
+| Librería de Python | Automatización, investigación, estudiantes avanzados | `import dane_data as dd` |
 
-Ambas usan el mismo motor: descargan del ANDA del DANE, unen los módulos, **armonizan las variables
-entre épocas** (nombres, separadores, coma decimal, factores de expansión, revisiones CIIU) y calculan
+Ambas usan el mismo motor: descargan del ANDA del DANE, unen los módulos, armonizan las variables
+entre épocas (nombres, separadores, coma decimal, factores de expansión, revisiones CIIU) y calculan
 indicadores ponderados como lo hace el DANE.
-
----
 
 ## Instalación de la app
 
-1. Descargue **[dane-data.zip](https://github.com/IntegralIndefinida/DANE-data/releases/latest/download/dane-data.zip)** (siempre la última versión).
+1. Descargue [dane-data.zip](https://github.com/IntegralIndefinida/DANE-data/releases/latest/download/dane-data.zip) (siempre la última versión).
 2. Descomprímalo (en Windows: clic derecho → *Extraer todo…*; abrirlo con doble clic no basta) en una
    carpeta fuera de OneDrive, por ejemplo `C:\dane-data`: la primera vez se crean miles de archivos
    (`.venv/`) que OneDrive se pondría a sincronizar.
-3. Doble clic en el lanzador de su sistema:
+3. Haga doble clic en el lanzador de su sistema:
 
    | Sistema | Archivo |
    |---|---|
@@ -34,11 +32,11 @@ indicadores ponderados como lo hace el DANE.
 
 La primera vez necesita internet y tarda 1–3 minutos: el lanzador instala [uv](https://docs.astral.sh/uv/),
 que descarga Python 3.12 y las librerías exactas de `uv.lock` dentro de la carpeta (`.venv/`), sin tocar el
-resto del sistema. Las siguientes veces abre en segundos. **El navegador se abre solo**; para cerrar la
+resto del sistema. Las siguientes veces abre en segundos. El navegador se abre solo; para cerrar la
 app basta cerrar la ventana de la terminal.
 
-> Primera vez en **Windows**: si aparece "Windows protegió su PC" → *Más información* → *Ejecutar de todas
-> formas*. En **Mac**: si dice que no se puede verificar el desarrollador, cierre el aviso y abra
+> Primera vez en **Windows**: si aparece "Windows protegió su PC", haga clic en *Más información* → *Ejecutar de
+> todas formas*. En **Mac**: si dice que no se puede verificar el desarrollador, cierre el aviso y abra
 > *Configuración del Sistema* → *Privacidad y seguridad* → *Abrir de todos modos* (hasta macOS 14 bastaba
 > con clic derecho → *Abrir* → *Abrir*).
 
@@ -64,7 +62,7 @@ pip install -e ".[app]"        # librería + aplicación
 
 Requiere Python ≥ 3.10.
 
-## 🖱️ La aplicación
+## La aplicación
 
 ```bash
 dane-data app          # o doble clic en el lanzador; el navegador se abre solo
@@ -80,15 +78,15 @@ dane-data app          # o doble clic en el lanzador; el navegador se abre solo
 | 🧱 Panel y microdatos EAM | Panel de establecimientos (balanceado o no), supervivencia, exportación |
 | 📚 Diccionario | Buscador de variables con las etiquetas y categorías oficiales del DANE |
 
-Cada tabla se descarga en **CSV, Excel o Stata**, y cada página muestra el **código Python equivalente**:
-así se pasa de la aplicación al notebook sin empezar de cero.
+Cada tabla se descarga en CSV, Excel o Stata, y cada página muestra el código Python equivalente, que se
+puede copiar a un notebook para seguir desde ahí.
 
 Para usarla en un aula (el profesor la sirve y los estudiantes entran desde la red local):
 `dane-data app --address 0.0.0.0`. La aplicación no tiene usuarios ni contraseña: cualquiera en esa red
 puede cambiar las carpetas de datos, descargar y exportar en el computador del profesor. Úsela solo en
 una red de confianza.
 
-## 🐍 La librería
+## La librería
 
 ```python
 import dane_data as dd
@@ -149,8 +147,8 @@ para un recorrido completo.
 
 ### Variables armonizadas
 
-Las variables en **minúscula** las crea `dane-data` y significan lo mismo en todos los años. Las de
-**MAYÚSCULA** (GEIH) son las originales del DANE.
+Las variables en minúscula las crea `dane-data` y significan lo mismo en todos los años. Las de
+MAYÚSCULA (GEIH) son las originales del DANE.
 
 **GEIH**: `anio`, `mes`, `fex`, `sexo`, `edad`, `grupo_edad`, `dpto`, `departamento`, `zona`,
 `condicion` (Ocupado / Desocupado / Inactivo / Fuera de la PET), `pet`, `fuerza_trabajo`, `ocupado`,
@@ -192,7 +190,7 @@ ejemplo, la desocupación promedio fue 10,5 % en 2019 y 10,2 % en 2023. Las prue
 sintéticos con las rarezas de cada época. Si encuentran los datos reales, también los comparan mes a mes con
 las cifras publicadas (`tests/datos/dane_publicado.csv`) y buscan huecos o saltos bruscos en la serie.
 
-## ⚠️ Advertencias metodológicas
+## Advertencias metodológicas
 
 - **Informalidad**: `formal` replica la medición oficial del DANE (17.ª CIET) con el código que el DANE
   publica en el anexo de *Empleo informal y seguridad social*: los formales e informales de cada mes desde
@@ -204,7 +202,7 @@ las cifras publicadas (`tests/datos/dane_publicado.csv`) y buscan huecos o salto
 - **Serie principal vs. empalme**: para series largas 2010–2020 comparables con 2021+, use `empalme=True`.
 - **PET**: desde 2022 son las personas de 15 años o más; antes, 12+ (urbano) y 10+ (rural).
 - **Ingresos**: `INGLABO` en pesos corrientes; la GEIH 2007 no lo trae.
-- **EAM**: los montos vienen en **miles de pesos corrientes**. Según los propios archivos, la CIIU es
+- **EAM**: los montos vienen en miles de pesos corrientes. Según los propios archivos, la CIIU es
   Rev. 2 hasta 2000, Rev. 3 en 2001–2011 y Rev. 4 desde 2012 (la documentación del ANDA dice otra
   cosa; vea las diferencias con la documentación del DANE); los sectores no se comparan entre revisiones sin una
   correlativa.
@@ -220,19 +218,19 @@ las cifras publicadas (`tests/datos/dane_publicado.csv`) y buscan huecos o salto
 - **Muestras pequeñas**: con menos de ~100 observaciones (`n_muestra`) las cifras no son confiables.
 - El salario mínimo histórico (`dd.SMLV`) está tomado de los decretos; verifíquelo antes de publicar.
 
-## 📋 Diferencias con la documentación del DANE (ANDA)
+## Diferencias con la documentación del DANE (ANDA)
 
 Cuando los datos contradicen la documentación oficial del ANDA (diccionarios DDI, etiquetas de
 categorías), `dane-data` sigue los datos y lo anota aquí. El buscador de variables
-(`dd.buscar_variable`, `dd.describir` y la página 📚 Diccionario) muestra el DDI **tal como lo publica
-el DANE**, así que en estos casos no coincide con las variables armonizadas.
+(`dd.buscar_variable`, `dd.describir` y la página 📚 Diccionario) muestra el DDI tal como lo publica
+el DANE, así que en estos casos no coincide con las variables armonizadas.
 
 | Variable | Qué dice el ANDA | Qué muestran los datos y qué hace `dane-data` |
 |---|---|---|
 | `P6430`, `P6870`, `OFICIO` → `formal_marco2005` (GEIH 2007–2021) | La metodología de informalidad de 2009 cuenta como informales a todos los empleados domésticos, trabajadores sin remuneración y jornaleros, y a los cuenta propia de empresas de hasta 5 personas «excepto los independientes profesionales», sin decir cómo se identifican. | Lo publicado por el DANE (anexo de octubre a diciembre de 2021, trimestres móviles de 2007–2019 y 2021) solo coincide si domésticos, trabajadores sin remuneración y jornaleros son informales cuando también están en empresas de hasta 5 personas, como dice la presentación de la nueva medición (julio de 2022), y si los profesionales son los oficios 1 a 20 de la CNO (profesionales, técnicos y directivos; el 0 no). `dane-data` sigue lo publicado: coincide en todos los trimestres en las 13 ciudades y en las 23 salvo febrero de 2008, con 134 informales menos de unos 4,6 millones (Tunja, Quibdó, Riohacha y Armenia; no se encontró el registro). |
 | `P3068` → `formal` (GEIH, desde 2023) | El DDI da tres categorías: 1 = sí, 2 = no y 9 = no sabe, no informa. | En 2022 los datos usan el 9. Desde enero de 2023 el 9 no aparece y viene en su lugar un 3, que el DDI no trae (de 1 a 8 personas encuestadas en casi todos los meses). El código SAS del anexo de informalidad del DANE trata el 3 como el 9 («se agrega la opción 3 ya que esta reemplaza al 9 desde 2023»), y `dane-data` también: en esa regla los dos cuentan como informales. |
 | `OFICIO_C8` → `formal` (GEIH, desde 2022) | El código SAS del anexo de informalidad toma los dos primeros caracteres del código de oficio, de 4 dígitos (`SUBSTR(OFICIO_C8,1,2)`), y cuenta como formales a los independientes de los grupos 00 a 20. El DDI no describe la variable. | Los archivos del ANDA lo traen como número, sin el cero inicial: `110` es el código `0110`, y `0` es `0000` (en junio de 2024, 34 de unos 30 000 ocupados encuestados). Sin completarlo, los dos primeros caracteres de `110` serían `11` y el `0` no quedaría en ningún grupo. `dane-data` lo completa a 4 dígitos antes de tomar los dos primeros; así los formales e informales de cada mes de 2022 a 2026 coinciden con el anexo. Deducido de los datos; el DANE no lo dice. |
-| `P6430` → `posicion_ocupacional` (GEIH, desde 2022) | El DDI de 2022 (catálogo 771) y el de 2025 (catálogo 853) repiten las 9 categorías del cuestionario anterior: 7 = trabajador sin remuneración en negocios de otros hogares, 8 = jornalero o peón, 9 = otro. | Desde enero de 2022 el código 7 es **jornalero o peón** (100 % agropecuario y casi todos con ingreso), el 8 es **otro** y el 9 ya no aparece. Hasta 2021, y en el empalme, se usan las etiquetas anteriores, que sí coinciden con los datos. El código 6 se sigue llamando "familiar sin remuneración"; desde 2022 podría incluir también el trabajo sin remuneración en negocios de otros hogares (sin confirmar). El código de informalidad que publica el DANE también trata el 7 como asalariado, junto al 1. |
+| `P6430` → `posicion_ocupacional` (GEIH, desde 2022) | El DDI de 2022 (catálogo 771) y el de 2025 (catálogo 853) repiten las 9 categorías del cuestionario anterior: 7 = trabajador sin remuneración en negocios de otros hogares, 8 = jornalero o peón, 9 = otro. | Desde enero de 2022 el código 7 es "jornalero o peón" (100 % agropecuario y casi todos con ingreso), el 8 es "otro" y el 9 ya no aparece. Hasta 2021, y en el empalme, se usan las etiquetas anteriores, que sí coinciden con los datos. El código 6 se sigue llamando "familiar sin remuneración"; desde 2022 podría incluir también el trabajo sin remuneración en negocios de otros hogares (sin confirmar). El código de informalidad que publica el DANE también trata el 7 como asalariado, junto al 1. |
 | `ciiu` → `ciiu_rev`, `sector` (EAM 2000 y 2012) | La descripción del estudio (catálogos 491 a 888) dice que "en el año 2000 se incorpora en la EAM la CIIU Rev.3" y que la Rev. 4 se oficializó "con la difusión de las cifras referentes al año 2013". En otro pasaje del mismo texto los cambios de la Rev. 4 se ubican "a partir del año 2012". | El archivo de 2000 trae la variable `ciiu2` con códigos Rev. 2 (solo divisiones 31–39, igual que 1992–1999); la Rev. 3 aparece en 2001. El archivo de 2012 ya trae `ciiu4` con códigos Rev. 4 (divisiones 10–14, que no existen en la Rev. 3). `dane-data` asigna la revisión según la variable de cada año: Rev. 2 hasta 2000, Rev. 3 en 2001–2011 y Rev. 4 desde 2012. |
 | Cobertura por división (EAM, archivos de 1995 en adelante) | La descripción de cada archivo dice que comprende "desde la división 11 a la 33 de la CIIU REV.4", también en los de 1995–2011. | Los archivos de 1995–2000 están en Rev. 2 (divisiones 31–39) y los de 2001–2011 en Rev. 3 (15–37). Los años en Rev. 4 incluyen la división 10, alimentos, que es el 18 % de los establecimientos en 2012–2024; el de 2012 incluye además las divisiones 58, 59 y 73. `dane-data` conserva todas las divisiones de cada archivo. |
 | `ciiu`, `division`, `sector` (EAM, todos los años) | Los catálogos solo dicen que son "microdatos anonimizados de uso público", sin describir el método. El DDI de `CIIU4` describe 3290 como una clase más ("Otras industrias manufactureras n.c.p.") y no tiene códigos de 2 o 3 dígitos. | Para anonimizar, el ANDA publica muchos establecimientos, sobre todo grandes, con el código residual de la revisión: 3909 en 1995–2000 (Rev. 2), 3699 en 2001–2011 (Rev. 3) y 3290 en 2012–2015 y 2018–2024 (Rev. 4). En 1992–1994 y 2016–2017, en cambio, trunca el código a 2 o 3 dígitos, que conservan la división. Los totales nacionales y por departamento coinciden con los anexos del DANE, pero la composición por división no. En 2024 el anexo trae 224 establecimientos en el grupo 329 (1,6 % del valor agregado) y los microdatos, 530 con 3290 (10,5 %). Bebidas baja de 9,7 % a 5,3 %, y la división 32 sube de 2,2 % a 11,0 %. En 1998 el anexo trae 69 establecimientos en la clase 3909 y 8 refinerías (grupo 353); los microdatos, 532 en 3909 y ninguna refinería. En 2008–2011 el anexo trae 131–141 en la 3699 (0,4–0,6 % de la producción bruta) y 4 o 5 refinerías (2321, 10–13 %); los microdatos, 566–600 en la 3699 (20–23 %) y ninguna refinería. `dane-data` deja `ciiu` como lo publica el ANDA y solo lo advierte (aquí, en la guía de la EAM y en la aplicación al desagregar por sector): no marca esos registros ni intenta deducir su actividad, para no deshacer la anonimización. Comparado con los anexos de 1998, 2008–2011 y 2024; para los demás años se deduce de la participación del código residual en los microdatos (9–32 % del valor agregado, frente a 1,4–3,6 % en los años que truncan). |
