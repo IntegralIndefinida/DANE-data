@@ -31,7 +31,12 @@ jobs:
           INIT=$(grep -m1 '^__version__ = ' src/dane_data/__init__.py | cut -d'"' -f2)
           CFF=$(grep -m1 '^version: ' CITATION.cff | cut -d' ' -f2)
           echo "etiqueta=${VERSION} pyproject=${PYPROJECT} __init__=${INIT} CITATION.cff=${CFF}"
-          test "${VERSION}" = "${PYPROJECT}" && test "${VERSION}" = "${INIT}" && test "${VERSION}" = "${CFF}"
+          # Con `bash -e`, un `test` que falla antes del último de `a && b && c` no detiene el paso: hay que
+          # salir a mano. Así pasó v0.3.2 con los archivos aún en 0.3.1, y falló después, al subir a PyPI.
+          if [ "${VERSION}" != "${PYPROJECT}" ] || [ "${VERSION}" != "${INIT}" ] || [ "${VERSION}" != "${CFF}" ]; then
+            echo "::error::La etiqueta v${VERSION} no coincide con la versión de pyproject.toml, __init__.py o CITATION.cff"
+            exit 1
+          fi
           echo "VERSION=${VERSION}" >> "$GITHUB_ENV"
 
       - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884  # v10.3.0
