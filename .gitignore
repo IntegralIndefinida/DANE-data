@@ -20,3 +20,4 @@ docs/api/generated/
 *.parquet
 CLAUDE.md
 .claude/
+graphify-out/
