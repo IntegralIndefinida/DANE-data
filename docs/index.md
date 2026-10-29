@@ -92,7 +92,7 @@ La desocupación, la participación, la ocupación y los ocupados coinciden con 
 :::
 
 :::{grid-item-card} {octicon}`stack` Series largas en un portátil
-Calcula año por año y guarda los resultados: veinte años de microdatos sin agotar la memoria.
+Calcula y guarda los resultados año por año, así que veinte años de microdatos no agotan la memoria.
 :::
 
 :::{grid-item-card} {octicon}`browser` Una aplicación para clase

@@ -1,7 +1,7 @@
 # Cargar la GEIH
 
-{dd}`geih.load()` es la puerta de entrada a los microdatos: devuelve un `DataFrame` de pandas con **una
-fila por persona y mes**, los módulos ya unidos y las {doc}`variables armonizadas <variables>`.
+{dd}`geih.load()` carga los microdatos: devuelve un `DataFrame` de pandas con **una fila por persona y
+mes**, los módulos ya unidos y las {doc}`variables armonizadas <variables>`.
 
 ```python
 >>> import dane_data as dd
