@@ -5,14 +5,13 @@ from __future__ import annotations
 import numbers
 from typing import Iterable
 
-from .. import config
 from .downloader import (DEFAULT_MODULES, EMPALME_CATALOGS, KNOWN_CATALOGS, MODULE_PATTERNS,
                          GEIHDownloader)
 from .agregados import (POBLACIONES, POR_PRECALCULADOS, VARIABLES_INDICADORES, exportar, filtrar, serie_frecuencias,
                         serie_indicadores, serie_tabla, tabla_de_frecuencias)
 from .indicadores import GLOSARIO, indicadores
 from .loader import (CATEGORIAS, CONDICIONES, CORE_RAW, GRUPOS_EDAD, MARCOS, MODULOS, NIVELES_EDUC, available,
-                     clear_cache, find_months, harmonize, load, load_month, marco_muestral)
+                     _root, clear_cache, find_months, harmonize, load, load_month, marco_muestral)
 
 ANIOS_DISPONIBLES = sorted(int(y) for y in KNOWN_CATALOGS)
 ANIOS_EMPALME = sorted(int(y) for y in EMPALME_CATALOGS)
@@ -101,9 +100,8 @@ def download(
     """
     if isinstance(years, (numbers.Integral, str)):
         years = [years]
-    root = root or config.get_path("geih_empalme" if empalme else "geih")
     dl = GEIHDownloader(
-        base_dir=root,
+        base_dir=_root(empalme, root),
         keep_zips=not delete_zips,
         extract_csv=True,
         is_empalme=empalme,

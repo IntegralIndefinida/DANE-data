@@ -248,6 +248,17 @@ def test_cli_descargar_geih_y_eam(descargador_falso, tmp_path):
     assert dl.kw["base_dir"] == tmp_path / "eam"
 
 
+def test_download_expande_la_carpeta_personal(descargador_falso, monkeypatch, tmp_path):
+    """root="~/..." se descarga donde load lo busca, no en una carpeta llamada "~" dentro de la actual."""
+    monkeypatch.setattr(dd.eevv, "EEVVDownloader", _DescargadorFalso)
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setenv("USERPROFILE", str(tmp_path))       # Windows
+    dd.geih.download(2024, root="~/geih")
+    dd.eam.download(2024, root="~/eam")
+    dd.eevv.download(2024, root="~/eevv")
+    assert [dl.kw["base_dir"] for dl in descargador_falso] == [tmp_path / "geih", tmp_path / "eam", tmp_path / "eevv"]
+
+
 def test_cli_descarga_con_fallas_sale_con_error(descargador_falso, monkeypatch):
     monkeypatch.setattr(_DescargadorFalso, "fallidos", ["2024: no se pudo descargar Enero.zip."])
     assert cli_main(["descargar", "geih", "--anios", "2024"]) == 1

@@ -5,11 +5,10 @@ from __future__ import annotations
 import numbers
 from typing import Iterable
 
-from .. import config
 from .downloader import EAM_KNOWN_CATALOGS, EAMDownloader
 from .indicadores import GLOSARIO, crecimiento, deflactar, panel, participacion, resumen, supervivencia
 from .loader import (CORE, ETIQUETAS, SECTORES, VARIABLES_COMUNES, available, find_files, harmonize,
-                     load)
+                     load, _root)
 
 ANIOS_DISPONIBLES = sorted(int(y) for y in EAM_KNOWN_CATALOGS)
 
@@ -76,7 +75,7 @@ def download(
     if isinstance(years, (numbers.Integral, str)):
         years = [years]
     dl = EAMDownloader(
-        base_dir=root or config.get_path("eam"),
+        base_dir=_root(root),
         keep_zips=not delete_zips,
         extract_data=True,
         include_tic=include_tic,

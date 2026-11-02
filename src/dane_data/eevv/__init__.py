@@ -5,12 +5,11 @@ from __future__ import annotations
 import numbers
 from typing import Iterable
 
-from .. import config
 from .agregados import clear_cache, serie_conteos, serie_indicadores, tasas, tasas_especificas
 from .downloader import EEVV_KNOWN_FILES, EEVVDownloader
 from .indicadores import GLOSARIO, indicadores
-from .loader import (CATEGORIAS, CORE, ETIQUETAS, GRANDES_CAUSAS, GRUPOS_EDAD, GRUPOS_EDAD_AMPLIOS, TIPOS, _tipo_valido,
-                     available, causas, find_files, harmonize, load)
+from .loader import (CATEGORIAS, CORE, ETIQUETAS, GRANDES_CAUSAS, GRUPOS_EDAD, GRUPOS_EDAD_AMPLIOS, TIPOS,
+                     _root, _tipo_valido, available, causas, find_files, harmonize, load)
 
 ANIOS_DISPONIBLES = {tipo: sorted(a for a, t in EEVV_KNOWN_FILES if t == tipo) for tipo in TIPOS}
 
@@ -85,7 +84,7 @@ def download(
         tipos = (tipos,)
     tipos = tuple(_tipo_valido(t) for t in tipos)
     dl = EEVVDownloader(
-        base_dir=root or config.get_path("eevv"),
+        base_dir=_root(root),
         keep_zips=not delete_zips,
         progress=progress,
         should_stop=should_stop,

@@ -19,6 +19,9 @@
 
 * {dd}`eam.download()` con `delete_zips=True` (`dane-data descargar eam --borrar-zips`) ya borra los ZIP de los años que
   se extraen bien. En la 0.3.2 solo borraba los de los años que fallaban.
+* {dd}`geih.download()`, {dd}`eam.download()` y {dd}`eevv.download()` entienden `root="~/..."` como la carpeta personal,
+  igual que `load`. Antes descargaban en una carpeta llamada `~` dentro de la carpeta actual, y `load` no encontraba los
+  datos. Si le pasó, mueva esa carpeta adonde quería; no la borre con `rm -rf ~`, que borra su carpeta personal.
 
 ## 0.3.2 (29 de octubre de 2026)
 
