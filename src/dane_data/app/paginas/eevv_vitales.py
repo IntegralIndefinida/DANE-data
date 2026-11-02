@@ -3,13 +3,14 @@ import streamlit as st
 
 import dane_data as dd
 from dane_data.app._ui import (MAX_SERIES, args_py, barras, botones_descarga, codigo, conteos_eevv, fmt_grande, fmt_num,
-                               fmt_pct, grafico, indicadores_eevv, linea, seleccion_eevv, tasas_eevv)
+                               fmt_pct, grafico, indicadores_eevv, linea, rutas_actuales, seleccion_eevv, tasas_eevv)
 
 st.title("👶 Nacimientos y defunciones")
 st.caption("**Estadísticas Vitales del DANE.** Es el registro de los certificados, no una encuesta: no hay factor de "
            "expansión y cada fila es un hecho registrado.")
 sel = seleccion_eevv()
 tipo, anios, filtros = sel["tipo"], sel["anios"], sel["filtros"]
+rutas = rutas_actuales()
 st.caption(f"**Datos:** {sel['descripcion']}")
 
 VARIABLES = {
@@ -81,7 +82,7 @@ vista = st.radio("Vista", vistas, horizontal=True)
 
 # ---------------------------------------------------------------- Indicadores
 if vista == "Indicadores":
-    total = indicadores_eevv(anios, tipo, None, filtros)
+    total = indicadores_eevv(anios, tipo, None, filtros, rutas)
     if total.empty:  # p. ej. un departamento sin registros en los años elegidos
         st.warning("Ningún certificado cumple los filtros elegidos.")
         st.stop()
@@ -111,7 +112,7 @@ if vista == "Indicadores":
     nombre_por = c2.selectbox("Desagregar por", list(DESAGREGAR[tipo]))
     columna, tipo_valor = VARIABLES[tipo][nombre]
     por = DESAGREGAR[tipo][nombre_por]
-    res = indicadores_eevv(anios, tipo, por, filtros) if por else total
+    res = indicadores_eevv(anios, tipo, por, filtros, rutas) if por else total
     serie(res, columna, por, tipo_valor, nombre)
     if tipo != "defunciones" and columna == "pct_prematuro":
         st.caption("💡 " + dd.eevv.GLOSARIO["Prematuro"])
@@ -141,7 +142,7 @@ elif vista == "Tasas sobre la población":
                               help=None if "Sexo" in opciones_por else "Esta tasa no se puede partir por sexo: los nacimientos "
                                                                        "se cuentan por el sexo del nacido.")
     por = POR_TASAS[nombre_por]
-    res = tasas_eevv(anios, por)
+    res = tasas_eevv(anios, por, rutas)
     if por == "departamento" and min(anios) < 1985:
         st.warning("Las proyecciones por departamento empiezan en 1985: los años anteriores quedan sin tasa.")
     serie(res, columna, por, "numero", nombre)
@@ -164,7 +165,7 @@ res
 else:
     anio = st.select_slider("Año", anios, value=anios[-1]) if len(anios) > 1 else anios[0]
     n = st.slider("Cuántas causas mostrar", 5, 30, 10)
-    res = conteos_eevv(anio, tipo, "causa_105_nombre", filtros)
+    res = conteos_eevv(anio, tipo, "causa_105_nombre", filtros, rutas)
     if res.empty:
         st.warning("Ningún certificado cumple los filtros elegidos.")
         st.stop()

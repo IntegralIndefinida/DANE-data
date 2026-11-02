@@ -2,6 +2,7 @@
 
 import io
 import json
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -435,6 +436,20 @@ def test_eevv_indicadores_por_certificado(app_eevv):
     _seleccionar(at, "Variable", "Prematuros (%)")
     _seleccionar(at, "Certificado", "Defunciones fetales")
     assert at.metric[0].label == "Defunciones fetales"
+
+
+def test_eevv_otra_carpeta_sin_reiniciar(app_eevv, eevv_root, tmp_path, monkeypatch):
+    """Si la carpeta cambia por fuera de la app (dane-data config, un notebook), no quedan los datos de la anterior."""
+    at = app_eevv.run()
+    assert at.metric[0].value == "3"
+    otra = tmp_path / "otra"
+    shutil.copytree(eevv_root, otra)
+    archivo = otra / "datos" / "defunciones" / "2025" / "BD-EEVV-Defuncionesnofetales-2025.csv"
+    archivo.write_bytes(b"".join(archivo.read_bytes().splitlines(keepends=True)[:2]))  # encabezado y una defunción
+    monkeypatch.setitem(dd.config._session, "eevv", otra)
+    at.run()
+    assert not at.exception
+    assert at.metric[0].value == "1"
 
 
 def test_eevv_filtros_en_el_codigo_equivalente(app_eevv):

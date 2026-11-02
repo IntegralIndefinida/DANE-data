@@ -162,9 +162,10 @@ def cargar_eam(anios: tuple, extra: tuple, rutas: tuple) -> pd.DataFrame:
 
 
 # Como en la GEIH: las Estadísticas Vitales salen de dd.eevv.serie_* y tasas, año por año, y quedan en disco. Sus avisos
-# de cobertura se muestran en la barra lateral (seleccion_eevv): aquí solo llegarían a la terminal.
+# de cobertura se muestran en la barra lateral (seleccion_eevv): aquí solo llegarían a la terminal. ``rutas``
+# (rutas_actuales()) es parte de la llave: si la carpeta cambia por fuera de la app, se recalcula.
 @st.cache_data(max_entries=50, show_spinner=False)
-def indicadores_eevv(anios, tipo: str, por: str | None, filtros: dict) -> pd.DataFrame:
+def indicadores_eevv(anios, tipo: str, por: str | None, filtros: dict, rutas: tuple) -> pd.DataFrame:
     barra, progreso = _barra("Preparando indicadores…")
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", UserWarning)
@@ -174,7 +175,7 @@ def indicadores_eevv(anios, tipo: str, por: str | None, filtros: dict) -> pd.Dat
 
 
 @st.cache_data(max_entries=50, show_spinner=False)
-def conteos_eevv(anios, tipo: str, por: str | None, filtros: dict) -> pd.DataFrame:
+def conteos_eevv(anios, tipo: str, por: str | None, filtros: dict, rutas: tuple) -> pd.DataFrame:
     barra, progreso = _barra("Preparando la tabla…")
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", UserWarning)
@@ -184,7 +185,7 @@ def conteos_eevv(anios, tipo: str, por: str | None, filtros: dict) -> pd.DataFra
 
 
 @st.cache_data(max_entries=20, show_spinner=False)
-def tasas_eevv(anios, por: str | None) -> pd.DataFrame:
+def tasas_eevv(anios, por: str | None, rutas: tuple) -> pd.DataFrame:
     barra, progreso = _barra("Calculando las tasas…")
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", UserWarning)
