@@ -36,7 +36,8 @@ GLOSARIO = {
     "Tasa bruta de mortalidad": "Defunciones por cada 1.000 habitantes.",
     "Tasa global de fecundidad": "Hijos que tendría una mujer si viviera sus años fértiles (15 a 49) con las tasas por edad "
                                  "del año: 5 por la suma de los nacimientos por mujer de cada grupo quinquenal.",
-    "Tasa específica": "Hechos de un grupo de edad por cada 1.000 personas de ese grupo.",
+    "Tasa específica": "Hechos de un grupo de edad por cada 1.000 personas de ese grupo en la fecundidad, y por cada 100.000 "
+                       "en la mortalidad, como en las fichas técnicas del DANE.",
     "Mortalidad infantil registrada": "Defunciones de menores de un año por cada 1.000 nacidos vivos del mismo año, tal "
                                       "como se registraron, sin ajustar por subregistro.",
     "Muerte materna": "Muerte de una mujer durante el embarazo o hasta 42 días después, por una causa relacionada con el "

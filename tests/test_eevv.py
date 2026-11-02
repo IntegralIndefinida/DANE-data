@@ -526,6 +526,8 @@ def test_tasas_especificas_mortalidad(eevv_root, cache):
     assert r.loc["Menor de 1 año", "poblacion"] == _poblacion(2025, edades=0)
     assert r.loc["De 85 años y más", "poblacion"] == _poblacion(2025, edades=(85, 100))
     assert r.loc["De 85 años y más", "defunciones"] == 1
+    # Por 100.000, como la ficha técnica de la tasa específica de mortalidad del DANE
+    assert r.loc["De 85 años y más", "tasa"] == pytest.approx(100_000 / _poblacion(2025, edades=(85, 100)))
     r = dd.eevv.tasas_especificas(2025, "defunciones", por="sexo", root=eevv_root).set_index(["sexo", "grupo_edad"])
     assert r.loc[("Mujer", "De 30 a 34 años"), "poblacion"] == _poblacion(2025, sexo="Mujer", edades=(30, 34))
 

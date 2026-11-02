@@ -560,7 +560,7 @@ def tasas_especificas(
         ``anio``, las columnas de ``por`` y, según el tipo:
 
         * Nacimientos: ``edad_madre``, ``nacimientos``, ``mujeres`` y ``tasa``, por 1.000 mujeres.
-        * Defunciones: ``grupo_edad``, ``defunciones``, ``poblacion`` y ``tasa``, por 1.000 personas. En 1991 los grupos
+        * Defunciones: ``grupo_edad``, ``defunciones``, ``poblacion`` y ``tasa``, por 100.000 personas. En 1991 los grupos
           de menores de 10 años quedan vacíos.
 
     Lanza
@@ -626,7 +626,8 @@ def tasas_especificas(
     faltantes = res[numerador].isna() & ~res["anio"].isin(conteo.loc[conteo[numerador].isna(), "anio"])
     res[numerador] = res[numerador].astype("float64").mask(faltantes, 0.0)
     _avisar_sin_poblacion(conteo, por)
-    res["tasa"] = _MIL * res[numerador] / res[denominador]
+    # Fichas técnicas del DANE: la fecundidad específica va por 1.000 mujeres y la mortalidad específica por 100.000
+    res["tasa"] = (_MIL if tipo == "nacimientos" else 100_000) * res[numerador] / res[denominador]
     orden = list(bandas)
     res[edad] = pd.Categorical(res[edad], categories=orden, ordered=True)
     return res[[*llaves, edad, numerador, denominador, "tasa"]].sort_values([*llaves, edad], ignore_index=True)
