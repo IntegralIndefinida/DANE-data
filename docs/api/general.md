@@ -46,6 +46,18 @@ Los diccionarios oficiales (DDI) del ANDA, tal como los publica el DANE. Vea {do
    diccionario
 ```
 
+## Proyecciones de población
+
+Vienen con la librería: no hay que descargar nada. Vea {doc}`../guia/eevv`.
+
+```{eval-rst}
+.. autosummary::
+   :toctree: generated
+   :nosignatures:
+
+   poblacion
+```
+
 ## Datos de referencia
 
 | Nombre | Contenido |

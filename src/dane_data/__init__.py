@@ -14,6 +14,7 @@ dane-data — microdatos del DANE (GEIH y EAM) listos para analizar.
 from . import eam, eevv, geih
 from ._hooks import DownloadCancelled
 from .config import get_path, set_paths, show_paths
+from .proyecciones import poblacion
 from .referencias import DEPARTAMENTOS, MESES, SMLV, buscar_variable, describir, diccionario
 from .stats import tabla, weighted_mean, weighted_quantile
 
@@ -22,5 +23,5 @@ __version__ = "0.3.2"
 __all__ = [
     "geih", "eam", "eevv", "set_paths", "get_path", "show_paths", "tabla", "weighted_mean",
     "weighted_quantile", "buscar_variable", "describir", "diccionario", "SMLV",
-    "DEPARTAMENTOS", "MESES", "DownloadCancelled",
+    "DEPARTAMENTOS", "MESES", "DownloadCancelled", "poblacion",
 ]

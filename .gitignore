@@ -21,3 +21,6 @@ docs/api/generated/
 CLAUDE.md
 .claude/
 graphify-out/
+
+# Parquet que se publica con la librería: las proyecciones de población
+!src/dane_data/data/*.parquet

@@ -38,7 +38,7 @@ def test_referencia_cubre_all(modulo, pagina, prefijo):
 
 # Los ejemplos que necesitan los microdatos llevan `# doctest: +SKIP`; los demás se ejecutan aquí.
 @pytest.mark.parametrize("modulo", [
-    "dane_data.config", "dane_data.stats", "dane_data.referencias", "dane_data._hooks",
+    "dane_data.config", "dane_data.stats", "dane_data.referencias", "dane_data._hooks", "dane_data.proyecciones",
     "dane_data.geih", "dane_data.geih.loader", "dane_data.geih.indicadores", "dane_data.geih.agregados",
     "dane_data.eam", "dane_data.eam.loader", "dane_data.eam.indicadores",
 ])
