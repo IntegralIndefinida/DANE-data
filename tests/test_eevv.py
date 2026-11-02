@@ -599,3 +599,21 @@ def test_real_materna_coincide_con_el_cuadro_7():
     r = dd.eevv.indicadores(dd.eevv.load(2025, root=REAL)).iloc[0]
     assert r["maternas"] == 355
     assert r["menores_un_anio"] == 4526
+
+
+# ---------------------------------------------------------------------------------------------------- #
+# Diccionarios
+# ---------------------------------------------------------------------------------------------------- #
+@pytest.mark.parametrize("tipo, variable, etiqueta", [("nacimientos", "SEXO", "Sexo del nacido vivo"),
+                                                      ("defunciones", "SEXO", "Sexo del fallecido"),
+                                                      ("fetales", "TIPO_DEFUN", "Tipo de defunción")])
+def test_diccionarios_por_certificado(tipo, variable, etiqueta):
+    d = dd.diccionario(f"eevv_{tipo}")
+    assert d[variable]["etiqueta"] == etiqueta
+    assert dd.describir(variable, encuesta=f"eevv_{tipo}") == etiqueta
+
+
+def test_diccionario_categorias_y_busqueda():
+    assert dd.diccionario("eevv_nacimientos")["TIPO_PARTO"]["categorias"]["2"] == "Cesárea"
+    assert "TIPO_PARTO" in dd.buscar_variable("parto", "eevv_nacimientos")["variable"].tolist()
+    assert "P_PMAN_IRIS" in dd.buscar_variable("manera de muerte", "eevv_defunciones")["variable"].tolist()

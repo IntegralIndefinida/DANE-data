@@ -6,14 +6,18 @@ import dane_data as dd
 st.title("📚 Diccionario de variables")
 st.markdown(
     "Busque variables por código o por palabras de la pregunta. Fuente: metadatos oficiales del DANE "
-    "(GEIH 2025 y EAM 2024). Los nombres pueden variar en años antiguos."
+    "(GEIH 2025, EAM 2024 y Estadísticas Vitales 2025). Los nombres pueden variar en años antiguos."
 )
 
-c1, c2 = st.columns([1, 3])
-encuesta = c1.radio("Encuesta", ["GEIH", "EAM"], horizontal=True)
+# Una variable de las Estadísticas Vitales cambia de etiqueta según el certificado: un diccionario para cada uno
+ENCUESTAS = {"GEIH": "geih", "EAM": "eam", "Defunciones": "eevv_defunciones", "Nacimientos": "eevv_nacimientos",
+             "Defunciones fetales": "eevv_fetales"}
+c1, c2 = st.columns([2, 3])
+encuesta = c1.radio("Encuesta", list(ENCUESTAS), horizontal=True)
+clave = ENCUESTAS[encuesta]
 texto = c2.text_input("Buscar", placeholder="p. ej. pensión, arriendo, horas, salarios, P6920")
 
-res = dd.buscar_variable(texto or "", encuesta.lower())
+res = dd.buscar_variable(texto or "", clave)
 st.caption(f"{len(res)} variables")
 evento = st.dataframe(res, hide_index=True, width="stretch", on_select="rerun", selection_mode="single-row",
                       column_config={"pregunta": st.column_config.TextColumn(width="large")})
@@ -21,7 +25,7 @@ evento = st.dataframe(res, hide_index=True, width="stretch", on_select="rerun", 
 filas = evento.selection.rows if evento and evento.selection else []
 if filas:
     var = res.iloc[filas[0]]["variable"]
-    info = dd.diccionario(encuesta.lower())[var]
+    info = dd.diccionario(clave)[var]
     st.subheader(var)
     st.markdown(f"**{info['etiqueta']}**")
     if info["pregunta"] and info["pregunta"] != info["etiqueta"]:
@@ -32,13 +36,16 @@ if filas:
         st.markdown("**Categorías**")
         st.dataframe(pd.DataFrame(list(info["categorias"].items()), columns=["código", "significado"]),
                      hide_index=True)
-    st.code(f'df = dd.{encuesta.lower()}.load(2024, columns=["{var if encuesta == "GEIH" else var.lower()}"])',
-            language="python")
+    if clave.startswith("eevv_"):
+        carga = f'df = dd.eevv.load(2025, tipo="{clave.removeprefix("eevv_")}", columns=["{var}"])'
+    else:
+        carga = f'df = dd.{clave}.load(2024, columns=["{var if clave == "geih" else var.lower()}"])'
+    st.code(carga, language="python")
 else:
     st.caption("👆 Seleccione una fila para ver sus categorías.")
 
 with st.expander("Variables armonizadas por dane-data (iguales en todos los años)"):
-    if encuesta == "GEIH":
+    if clave == "geih":
         st.markdown("""
 | Variable | Descripción |
 |---|---|
@@ -56,6 +63,9 @@ with st.expander("Variables armonizadas por dane-data (iguales en todos los año
 | `nivel_educativo` | Ninguno / Primaria / Secundaria / Media / Superior (P3042 o P6210) |
 | `rama2d`, `rama_rev` | Rama de actividad a 2 dígitos y su revisión CIIU (3 o 4) |
 """)
+    elif clave.startswith("eevv_"):
+        st.dataframe([{"variable": k, "descripción": v} for k, v in dd.eevv.ETIQUETAS[clave.removeprefix("eevv_")].items()],
+                     hide_index=True)
     else:
         st.dataframe([{"variable": k, "descripción": v} for k, v in dd.eam.ETIQUETAS.items()]
                      + [{"variable": "ciiu / ciiu_rev", "descripción": "Código CIIU y su revisión (2, 3 o 4)"},
