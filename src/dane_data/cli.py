@@ -7,6 +7,7 @@ Línea de comandos de dane_data.
     dane-data descargar geih --anios 2024 2025
     dane-data descargar geih --anios 2016 --empalme
     dane-data descargar eam --anios 2022 2023 2024
+    dane-data descargar eevv --anios 2025 --tipos nacimientos defunciones
 """
 
 from __future__ import annotations
@@ -24,7 +25,7 @@ import urllib.request
 import webbrowser
 from pathlib import Path
 
-from . import config, eam, geih
+from . import config, eam, eevv, geih
 
 
 def _puerto_libre(preferido: int) -> int:
@@ -83,7 +84,8 @@ def _cmd_app(args) -> int:
 
 
 def _cmd_estado(args) -> int:
-    for key, label in (("geih", "GEIH principal"), ("geih_empalme", "GEIH empalme"), ("eam", "EAM")):
+    for key, label in (("geih", "GEIH principal"), ("geih_empalme", "GEIH empalme"), ("eam", "EAM"),
+                       ("eevv", "Est. Vitales")):
         print(f"{label:15s} {config.get_path(key)}")
     for emp in (False, True):
         av = geih.available(empalme=emp)
@@ -96,19 +98,23 @@ def _cmd_estado(args) -> int:
         print(resumen.to_string())
     av = eam.available()
     print("\nEAM:", "sin datos" if av.empty else f"{len(av)} años ({av.anio.min()}–{av.anio.max()})")
+    av = eevv.available()
+    print("\nEstadísticas Vitales:", "sin datos" if av.empty else "")
+    for tipo, d in av.groupby("tipo", sort=False):
+        print(f"  {tipo}: {len(d)} años ({d.anio.min()}–{d.anio.max()})")
     return 0
 
 
 def _cmd_config(args) -> int:
     try:
-        config.set_paths(geih=args.geih, geih_empalme=args.empalme, eam=args.eam, save=True)
+        config.set_paths(geih=args.geih, geih_empalme=args.empalme, eam=args.eam, eevv=args.eevv, save=True)
     except ValueError as e:  # una carpeta vacía
         print(f"dane-data config: {e}", file=sys.stderr)
         return 2
     print(f"Guardado en {config.CONFIG_FILE}")
     for k, v in config.show_paths().items():
         print(f"  {k:13s} {v}")
-    for clave, valor in (("geih", args.geih), ("geih_empalme", args.empalme), ("eam", args.eam)):
+    for clave, valor in (("geih", args.geih), ("geih_empalme", args.empalme), ("eam", args.eam), ("eevv", args.eevv)):
         env = config._KEYS[clave][0]
         if valor is not None and os.environ.get(env):
             print(f"  Aviso: la variable de entorno {env} ({os.environ[env]}) tiene prioridad sobre el archivo "
@@ -117,8 +123,10 @@ def _cmd_config(args) -> int:
 
 
 def _cmd_descargar(args) -> int:
-    otras = {"geih": [("--tic", args.tic)],
-             "eam": [("--modulos", args.modulos), ("--empalme", args.empalme), ("--limite", args.limite)]}
+    solo_geih = [("--modulos", args.modulos), ("--empalme", args.empalme), ("--limite", args.limite)]
+    otras = {"geih": [("--tic", args.tic), ("--tipos", args.tipos)],
+             "eam": [*solo_geih, ("--tipos", args.tipos)],
+             "eevv": [*solo_geih, ("--tic", args.tic)]}
     if sobran := [nombre for nombre, valor in otras[args.encuesta] if valor]:
         print(f"dane-data descargar {args.encuesta}: {', '.join(sobran)} no aplica a esta encuesta.", file=sys.stderr)
         return 2
@@ -126,15 +134,17 @@ def _cmd_descargar(args) -> int:
     if args.encuesta == "geih":
         fallidos = geih.download(years=args.anios, modules=args.modulos, empalme=args.empalme,
                                  delete_zips=args.borrar_zips, limit_files=args.limite, forzar=args.forzar)
-    else:
+    elif args.encuesta == "eam":
         fallidos = eam.download(years=args.anios, include_tic=args.tic, delete_zips=args.borrar_zips,
                                 forzar=args.forzar)
+    else:
+        fallidos = eevv.download(years=args.anios, tipos=args.tipos, delete_zips=args.borrar_zips, forzar=args.forzar)
     return 1 if fallidos else 0  # el resumen de lo que falló ya quedó en el registro
 
 
 def _parser() -> argparse.ArgumentParser:
     """Argumentos del comando (también los documenta ``docs/guia/cli.md`` con sphinx-argparse)."""
-    p = argparse.ArgumentParser(prog="dane-data", description="Microdatos DANE (GEIH y EAM) para economistas.")
+    p = argparse.ArgumentParser(prog="dane-data", description="Microdatos DANE (GEIH, EAM y Estadísticas Vitales) para economistas.")
     sub = p.add_subparsers(dest="cmd", required=True)
 
     a = sub.add_parser("app", help="Abrir la aplicación gráfica en el navegador")
@@ -152,15 +162,17 @@ def _parser() -> argparse.ArgumentParser:
     c.add_argument("--geih", help="Carpeta de la GEIH principal (la que contiene datos_csv/)")
     c.add_argument("--empalme", help="Carpeta de la GEIH empalme (la que contiene datos_csv/)")
     c.add_argument("--eam", help="Carpeta de la EAM (la que contiene datos/)")
+    c.add_argument("--eevv", help="Carpeta de las Estadísticas Vitales (la que contiene datos/)")
     c.set_defaults(fn=_cmd_config)
 
     d = sub.add_parser("descargar", help="Descargar microdatos del DANE")
-    d.add_argument("encuesta", choices=["geih", "eam"])
+    d.add_argument("encuesta", choices=["geih", "eam", "eevv"])
     d.add_argument("--anios", nargs="+", type=int, help="Años (por defecto todos)")
     d.add_argument("--modulos", nargs="+", choices=list(geih.MODULE_PATTERNS), help="Solo GEIH")
     d.add_argument("--empalme", action="store_true", help="GEIH: serie de empalme 2010–2020")
     d.add_argument("--limite", type=int, help="GEIH: máximo de archivos mensuales por año (pruebas)")
     d.add_argument("--tic", action="store_true", help="EAM: incluir módulo TIC 2008–2018")
+    d.add_argument("--tipos", nargs="+", choices=list(eevv.TIPOS), help="Estadísticas Vitales (por defecto los tres)")
     d.add_argument("--borrar-zips", action="store_true", help="Borrar los ZIP tras extraer")
     d.add_argument("--forzar", action="store_true",
                    help="Volver a bajar lo que ya está en disco (si el DANE corrigió los archivos)")

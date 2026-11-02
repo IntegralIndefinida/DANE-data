@@ -7,6 +7,7 @@ import pandas as pd
 import pytest
 
 import dane_data as dd
+from dane_data import cli
 
 
 def test_carpeta_eevv(tmp_path, monkeypatch):
@@ -480,3 +481,44 @@ def test_tasas_especificas_1991_menores_vacios(eevv_root, cache):
         r = dd.eevv.tasas_especificas(1991, "defunciones", root=eevv_root).set_index("grupo_edad")
     assert r.loc[["Menor de 1 año", "De 1 a 4 años", "De 5 a 9 años"], "tasa"].isna().all()
     assert r.loc["De 85 años y más", "defunciones"] == 1
+
+
+# ---------------------------------------------------------------------------------------------------- #
+# Línea de comandos
+# ---------------------------------------------------------------------------------------------------- #
+def test_cli_estado(eevv_root, monkeypatch, capsys):
+    monkeypatch.setitem(dd.config._session, "eevv", eevv_root)
+    assert cli.main(["estado"]) == 0
+    salida = capsys.readouterr().out
+    assert "Estadísticas Vitales:" in salida
+    assert "defunciones: 4 años (1979–2025)" in salida and "fetales: 3 años (1998–2025)" in salida
+
+
+def test_cli_estado_sin_datos(tmp_path, monkeypatch, capsys):
+    monkeypatch.setitem(dd.config._session, "eevv", tmp_path / "nada")
+    assert cli.main(["estado"]) == 0
+    assert "Estadísticas Vitales: sin datos" in capsys.readouterr().out
+
+
+def test_cli_descargar(monkeypatch):
+    llamada = {}
+    monkeypatch.setattr(dd.eevv, "download", lambda **kw: llamada.update(kw) or [])
+    assert cli.main(["descargar", "eevv", "--anios", "2024", "2025", "--tipos", "fetales", "--borrar-zips"]) == 0
+    assert llamada == {"years": [2024, 2025], "tipos": ["fetales"], "delete_zips": True, "forzar": False}
+    monkeypatch.setattr(dd.eevv, "download", lambda **kw: ["fetales 2025: no se pudo descargar"])
+    assert cli.main(["descargar", "eevv", "--anios", "2025"]) == 1
+
+
+@pytest.mark.parametrize("argumentos", [["descargar", "eevv", "--tic"], ["descargar", "eevv", "--empalme"],
+                                        ["descargar", "eam", "--tipos", "fetales"], ["descargar", "geih", "--tipos", "fetales"]])
+def test_cli_opciones_de_otra_encuesta(argumentos, capsys):
+    assert cli.main(argumentos) == 2
+    assert "no aplica" in capsys.readouterr().err
+
+
+def test_cli_config(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(dd.config, "CONFIG_FILE", tmp_path / "c.json")
+    monkeypatch.setattr(dd.config, "_session", {})
+    monkeypatch.delenv("DANE_DATA_EEVV", raising=False)
+    assert cli.main(["config", "--eevv", str(tmp_path / "x")]) == 0
+    assert json.loads((tmp_path / "c.json").read_text())["eevv"] == str(tmp_path / "x")
