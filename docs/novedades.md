@@ -15,6 +15,10 @@
   ajustar por subregistro.
 * {dd}`set_paths()` acepta `eevv=` y `dane-data config` acepta `--eevv`.
 
+**Instalación**
+
+* dane-data ya no depende de `beautifulsoup4`.
+
 **Correcciones**
 
 * {dd}`eam.download()` con `delete_zips=True` (`dane-data descargar eam --borrar-zips`) ya borra los ZIP de los años que

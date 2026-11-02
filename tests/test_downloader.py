@@ -453,11 +453,13 @@ def test_descubrir_catalogos_geih(tmp_path):
             ("993", "GEIH 2023 - Anexo de módulos"),             # no reemplaza al catálogo verificado
             ("998", "GEIH 2024 - San Andrés"),                   # módulo satélite: no cuenta
             ("997", "GEIH Empalme 2015 Marco 2018"),             # empalme: no es la serie principal
-            ("996", "Encuesta de Calidad de Vida 2024")),         # otra encuesta
+            ("996", "Encuesta de Calidad de Vida 2024"),          # otra encuesta
+            ("991", "<span>GEIH</span> - 2028"),                  # etiquetas dentro del enlace
+            ("990", "GEIH - M&oacute;dulo de Formaci&oacute;n - 2029")),   # entidades HTML: satélite
         "/index.php/catalog/search?page=2": _busqueda(),          # sin más resultados: para
     })
     cat = dl.discover_catalogs()
-    assert cat["2027"] == "999"
+    assert cat["2027"] == "999" and cat["2028"] == "991" and "2029" not in cat
     assert cat["2024"] == KNOWN_CATALOGS["2024"]
     assert cat["2023"] == KNOWN_CATALOGS["2023"]
     assert len(dl.session.pedidos) == 2

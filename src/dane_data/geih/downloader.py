@@ -18,6 +18,7 @@ License: MIT
 """
 
 import re
+import html
 import json
 import time
 import shutil
@@ -25,7 +26,6 @@ import zipfile
 import tempfile
 import logging
 from pathlib import Path
-from bs4 import BeautifulSoup
 
 from .._hooks import DescargadorANDA, extraer_miembro, sanitize_member_name as _sanitize_comun, url_del_anda, ya_extraido
 from ..referencias import strip_accents
@@ -146,6 +146,19 @@ CSV_DANADOS = {
 }
 EXCLUDE_MODULE_PATTERNS = ("otros ingresos", "migracion", "tipo de investigacion")
 
+# Enlaces a un catálogo en las páginas de búsqueda del ANDA: (id, título, que puede traer etiquetas adentro)
+_RE_CATALOGO = re.compile(r"""<a\b[^>]*\bhref=["'][^"']*/catalog/(\d+)["'][^>]*>(.*?)</a>""", re.S | re.I)
+# Títulos de la búsqueda "GEIH" que no son la serie principal: módulos satélite, submuestras territoriales, el empalme...
+_SATELITES = ("san andres", "amazon", "orinoqu", "ciudades intermedias", "infantil", "mti", "mfpt", "formacion",
+              "migracion", "tic", "mtic", "etnia", "empalme", "factores de expansion", "ciiu")
+
+
+def _de_la_serie(titulo: str, empalme: bool) -> bool:
+    """El título de un catálogo (sin tildes y en minúscula) es de la serie de empalme, o de la principal sin satélites."""
+    if empalme:
+        return "geih" in titulo and "empalme" in titulo
+    return ("geih" in titulo or "gran encuesta" in titulo) and not any(s in titulo for s in _SATELITES)
+
 
 def _formato(nombre: str) -> str | None:
     """Formato de un ZIP del ANDA según su nombre ("Marzo_txt.zip" -> "txt"); None si no lo dice."""
@@ -237,89 +250,32 @@ class GEIHDownloader(DescargadorANDA):
         verificado: la búsqueda elige por el título, y otro catálogo con un título parecido (un módulo o
         anexo nuevo) cambiaría en silencio los datos de un año que ya se validó contra el DANE.
         """
-        if self.is_empalme:
-            log.info("Buscando catálogos de la Serie de Empalme GEIH en el portal del DANE...")
-            discovered = {}
-            for page in [1, 2]:
-                search_url = f"{self.base_url}/index.php/catalog/search"
-                params = {"sk": "Empalme", "ps": 100, "page": page}
-                headers = {"X-Requested-With": "XMLHttpRequest"}
-                try:
-                    res = self.session.get(search_url, params=params, headers=headers, timeout=20)
-                    res.raise_for_status()
-                    soup = BeautifulSoup(res.text, "html.parser")
-                    for a in soup.find_all("a", href=True):
-                        m = re.search(r"/catalog/(\d+)$", a["href"])
-                        if not m:
-                            continue
-                        cat_id = m.group(1)
-                        title = a.get_text(strip=True)
-                        if "GEIH" in title.upper() and "EMPALME" in title.upper():
-                            yr_match = re.search(r"\b(20\d\d)\b", title)
-                            if yr_match:
-                                discovered[yr_match.group(1)] = cat_id
-                except Exception as e:
-                    log.warning(f"Error buscando catálogos de empalme en página {page}: {e}")
-            final_catalogs = {**discovered, **EMPALME_CATALOGS}
-            log.info(f"Catálogos de Empalme identificados para {len(final_catalogs)} años: {sorted(final_catalogs.keys())}")
-            return final_catalogs
-
-        log.info("Buscando catálogos de la GEIH Nacional en el portal del DANE...")
-        discovered = {}
-        page = 1
-        max_pages = 5
-
-        while page <= max_pages:
-            search_url = f"{self.base_url}/index.php/catalog/search"
-            params = {"sk": "GEIH", "ps": 100, "page": page}
-            headers = {"X-Requested-With": "XMLHttpRequest"}
-
+        palabra, verificados = ("Empalme", EMPALME_CATALOGS) if self.is_empalme else ("GEIH", KNOWN_CATALOGS)
+        log.info(f"Buscando catálogos de la serie {palabra} en el portal del DANE...")
+        descubiertos = {}
+        for pagina in range(1, 6):
             try:
-                res = self.session.get(search_url, params=params, headers=headers, timeout=20)
+                res = self.session.get(f"{self.base_url}/index.php/catalog/search",
+                                       params={"sk": palabra, "ps": 100, "page": pagina},
+                                       headers={"X-Requested-With": "XMLHttpRequest"}, timeout=20)
                 res.raise_for_status()
-                soup = BeautifulSoup(res.text, "html.parser")
-
-                found_on_page = 0
-                for a in soup.find_all("a", href=True):
-                    href = a["href"]
-                    m = re.search(r"/catalog/(\d+)$", href)
-                    if not m:
-                        continue
-                    cat_id = m.group(1)
-                    title = a.get_text(strip=True)
-
-                    if not title or not ("GEIH" in title.upper() or "GRAN ENCUESTA" in title.upper()):
-                        continue
-
-                    # Filtrar módulos satélite y submuestras territoriales
-                    norm_title = strip_accents(title)
-                    is_satellite = any(w in norm_title for w in [
-                        "san andres", "amazon", "orinoqu", "ciudades intermedias",
-                        "infantil", "mti", "mfpt", "formacion", "migracion",
-                        "tic", "mtic", "etnia", "empalme", "factores de expansion", "ciiu"
-                    ])
-
-                    if not is_satellite:
-                        year_match = re.search(r"\b(200[6-9]|20[1-3][0-9])\b", title)
-                        if year_match:
-                            year = year_match.group(1)
-                            if year not in discovered:
-                                discovered[year] = cat_id
-                                found_on_page += 1
-
-                if found_on_page == 0:
-                    break
-                page += 1
-
             except Exception as e:
-                log.warning(f"No se pudo completar la búsqueda en página {page}: {e}")
+                log.warning(f"No se pudo completar la búsqueda en la página {pagina}: {e}")
+                break
+            nuevos = 0
+            for cat_id, titulo in _RE_CATALOGO.findall(res.text):
+                titulo = strip_accents(html.unescape(re.sub(r"<[^>]+>", "", titulo)))
+                anio = re.search(r"\b(200[6-9]|20[1-3]\d)\b", titulo)
+                if anio and _de_la_serie(titulo, self.is_empalme) and anio.group(1) not in descubiertos:
+                    descubiertos[anio.group(1)] = cat_id
+                    nuevos += 1
+            if not nuevos:
                 break
 
         # Los verificados ganan; la búsqueda solo agrega años nuevos
-        final_catalogs = {**discovered, **KNOWN_CATALOGS}
-
-        log.info(f"Catálogos identificados para {len(final_catalogs)} años: {sorted(final_catalogs.keys())}")
-        return final_catalogs
+        catalogos = {**descubiertos, **verificados}
+        log.info(f"Catálogos identificados para {len(catalogos)} años: {sorted(catalogos)}")
+        return catalogos
 
     def fetch_metadata(self, year: str, catalog_id: str) -> dict:
         """Obtiene y almacena el JSON metodológico de ANDA."""
