@@ -25,6 +25,8 @@
 * La caché de cada mes de la GEIH se rehace sola cuando cambia el código de dane-data que lee los archivos. Antes dependía
   de un número de versión que había que cambiar a mano, y si se olvidaba, `load` y las funciones `serie_*` seguían usando
   lo leído con el código anterior. Al actualizar, la caché de cada mes se vuelve a crear una vez.
+* {dd}`tabla()` con un `estadistico` mal escrito (por ejemplo `"totales"`) dice cuáles son los válidos. Antes pedía
+  `variable` para la media o la mediana.
 
 ## 0.3.2 (29 de octubre de 2026)
 

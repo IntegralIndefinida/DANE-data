@@ -260,6 +260,8 @@ def tabla(
     >>> dd.tabla(df, por=["anio", "nivel_educativo"], estadistico="porcentaje")  # doctest: +SKIP
     >>> dd.tabla(df[df.ocupado == 1], por="sexo", variable="ingreso_laboral", estadistico="mediana")  # doctest: +SKIP
     """
+    if estadistico not in ("total", "porcentaje", "media", "mediana"):
+        raise ValueError("estadistico debe ser 'total', 'porcentaje', 'media' o 'mediana'.")
     por = _as_list(por)
     d = df.copy()
     if peso is None:
@@ -287,10 +289,8 @@ def tabla(
         raise ValueError("Indique `variable` para media/mediana.")
     if estadistico == "media":
         fn = lambda x: weighted_mean(x[variable], x["_w"])  # noqa: E731
-    elif estadistico == "mediana":
-        fn = lambda x: weighted_quantile(x[variable], x["_w"], 0.5)  # noqa: E731
     else:
-        raise ValueError("estadistico debe ser 'total', 'porcentaje', 'media' o 'mediana'.")
+        fn = lambda x: weighted_quantile(x[variable], x["_w"], 0.5)  # noqa: E731
     if g is None:
         return pd.DataFrame({estadistico: [fn(d)], "n_muestra": [len(d)]})
     stat = g[[variable, "_w"]].apply(fn).rename(estadistico)

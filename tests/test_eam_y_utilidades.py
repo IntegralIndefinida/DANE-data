@@ -174,6 +174,15 @@ def test_tabla_conserva_las_categorias_ordenadas():
         assert dd.tabla(df, por=["anio", "nivel"], **kw)["nivel"].dtype == orden
 
 
+def test_tabla_avisa_un_estadistico_mal_escrito():
+    """Un estadístico mal escrito se nombra en el error, en vez de pedir una variable para media o mediana."""
+    df = pd.DataFrame({"anio": 2024, "mes": 1, "sexo": ["Mujer", "Hombre"], "fex": [1.0, 2.0]})
+    with pytest.raises(ValueError, match="estadistico debe ser"):
+        dd.tabla(df, por="sexo", estadistico="totales")
+    with pytest.raises(ValueError, match="variable"):
+        dd.tabla(df, por="sexo", estadistico="media")
+
+
 def test_weighted_quantile():
     assert dd.weighted_quantile([1, 2, 3], [1, 1, 1], 0.5) == pytest.approx(2)
     assert dd.weighted_quantile([1, 10], [9, 1], 0.5) == pytest.approx(1)
