@@ -246,6 +246,27 @@ def test_cache_roundtrip(geih_root, tmp_path, monkeypatch):
     pd.testing.assert_frame_equal(a, b, check_dtype=False, check_categorical=False)
 
 
+def test_cache_del_mes_cambia_con_el_codigo_que_lee(geih_root, monkeypatch, request):
+    """Si cambia la lectura (_io, load_month, CORE_RAW...), la caché de cada mes no se reutiliza: no hay que acordarse
+    de subir una versión a mano."""
+    from dane_data.geih import loader
+
+    request.addfinalizer(loader._firma_lectura.cache_clear)   # no dejar la firma alterada para otras pruebas
+    mes = dd.geih.find_months(2016, root=geih_root)[0]
+    loader._firma_lectura.cache_clear()
+    antes = loader._cache_path(mes, "core", None)
+
+    original = loader.inspect.getsource
+    monkeypatch.setattr(loader.inspect, "getsource", lambda o: original(o) + ("# cambio" if o is loader._io else ""))
+    loader._firma_lectura.cache_clear()
+    assert loader._cache_path(mes, "core", None) != antes
+
+    monkeypatch.undo()
+    monkeypatch.setattr(loader, "CORE_RAW", [*loader.CORE_RAW, "P9999"])
+    loader._firma_lectura.cache_clear()
+    assert loader._cache_path(mes, "core", None) != antes
+
+
 def test_un_solo_nombre_sin_lista(geih_root, eam_root):
     """Un solo valor o nombre en vez de una lista no se parte en letras."""
     df = dd.geih.load(2016, root=geih_root, cache=False)

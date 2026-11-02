@@ -20,6 +20,7 @@ del DANE se conservan en MAYÚSCULA.
 from __future__ import annotations
 
 import hashlib
+import inspect
 import logging
 import numbers
 import os
@@ -34,7 +35,7 @@ from typing import Iterable
 import numpy as np
 import pandas as pd
 
-from .. import config
+from .. import _io, config
 from .._io import columnas, normalize_columns, read_table, sniff
 from ..referencias import DEPARTAMENTOS, MESES, SMLV, strip_accents
 
@@ -74,7 +75,6 @@ _RE_NO_OCU = re.compile(r"\bno ocupados?(?![a-z])")
 _RE_DESOCU = re.compile(r"\bd(?:e|es)ocupados?(?![a-z])")
 _RE_INACT = re.compile(r"\binactivos?(?![a-z])")
 _RE_OCU = re.compile(r"\bocupados?(?![a-z])")
-_HARMONIZE_VERSION = "10"
 # Formatos de los microdatos. Se baja el CSV salvo donde el del ANDA está dañado (ver
 # CSV_DANADOS en el descargador); dentro de una carpeta se prefiere el formato alterno.
 EXTENSIONES = {".dta": 0, ".txt": 1, ".csv": 2}
@@ -864,9 +864,27 @@ def _lista_columnas(columns):
     return columns if columns in ("core", "all") else _lista(columns)
 
 
+@lru_cache(maxsize=1)
+def _firma_lectura() -> str:
+    """
+    Hash del código que arma lo que guarda la caché de cada mes (la salida de ``load_month``): si cambia, esa caché
+    se rehace sola. ``harmonize`` no entra porque se aplica después de leer la caché.
+    """
+    from .. import __version__
+
+    partes = [repr((CORE_RAW, _COMPACTAS, KEYS_PERSONA, KEYS_HOGAR, MODULOS, EXTENSIONES,
+                    _RE_NO_OCU, _RE_DESOCU, _RE_INACT, _RE_OCU))]
+    for codigo in (_io, classify_file, _pick_files, _markers, _read_module, _merge_new_columns, load_month):
+        try:
+            partes.append(inspect.getsource(codigo))
+        except (OSError, TypeError):  # instalado sin los .py: al menos cambia con cada versión
+            partes.append(__version__)
+    return hashlib.sha1("|".join(partes).encode()).hexdigest()[:16]
+
+
 def _cache_path(mes: MesGEIH, columns, modules) -> Path:
     cols = "all" if columns == "all" else ",".join(sorted({c.upper() for c in (columns if columns not in (None, "core") else [])}))
-    key = "|".join([_HARMONIZE_VERSION, *_firma_archivos(mes), cols, ",".join(sorted(modules or MODULOS))])
+    key = "|".join([_firma_lectura(), *_firma_archivos(mes), cols, ",".join(sorted(modules or MODULOS))])
     digest = hashlib.sha1(key.encode()).hexdigest()[:16]
     return config.CACHE_DIR / "geih" / f"{mes.anio}_{mes.mes:02d}_{digest}.parquet"
 
@@ -946,7 +964,7 @@ def load(
     que se conservan, porque cada mes se recorta antes de juntarlos.
 
     La primera lectura de un mes tarda unos segundos; las siguientes salen de la caché
-    (``~/.cache/dane_data/geih``). La caché se invalida sola si cambian los archivos del mes.
+    (``~/.cache/dane_data/geih``). La caché se invalida sola si cambian los archivos del mes o el código de dane-data que los lee.
 
     Ejemplos
     --------

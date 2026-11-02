@@ -22,6 +22,9 @@
 * {dd}`geih.download()`, {dd}`eam.download()` y {dd}`eevv.download()` entienden `root="~/..."` como la carpeta personal,
   igual que `load`. Antes descargaban en una carpeta llamada `~` dentro de la carpeta actual, y `load` no encontraba los
   datos. Si le pasó, mueva esa carpeta adonde quería; no la borre con `rm -rf ~`, que borra su carpeta personal.
+* La caché de cada mes de la GEIH se rehace sola cuando cambia el código de dane-data que lee los archivos. Antes dependía
+  de un número de versión que había que cambiar a mano, y si se olvidaba, `load` y las funciones `serie_*` seguían usando
+  lo leído con el código anterior. Al actualizar, la caché de cada mes se vuelve a crear una vez.
 
 ## 0.3.2 (29 de octubre de 2026)
 

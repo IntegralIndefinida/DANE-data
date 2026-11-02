@@ -26,7 +26,7 @@ from .. import config
 from ..referencias import MESES
 from ..stats import _as_list, _meses_anotados, peso_mensual_promedio, weighted_quantile
 from .indicadores import _COLUMNAS, indicadores
-from .loader import (_HARMONIZE_VERSION, CATEGORIAS, MesGEIH, _firma_archivos, _guardar_parquet, _root, _usado,
+from .loader import (CATEGORIAS, MesGEIH, _firma_archivos, _guardar_parquet, _root, _usado,
                      find_months, load)
 
 log = logging.getLogger("dane_data.geih")
@@ -183,7 +183,7 @@ def _por_anio(tipo: str, anios, solicitud: dict, calcular: Callable[[int], pd.Da
     serie = "empalme" if empalme else "principal"
     partes = []
     for i, (anio, ms) in enumerate(sorted(por_anio.items())):
-        firma = [_HARMONIZE_VERSION, _firma_codigo(), texto, *(s for m in ms for s in _firma_archivos(m))]
+        firma = [_firma_codigo(), texto, *(s for m in ms for s in _firma_archivos(m))]
         digest = hashlib.sha1("|".join(firma).encode()).hexdigest()[:16]
         ruta = config.CACHE_DIR / "geih" / tipo / f"{serie}_{anio}_{digest}.parquet"
         tabla = None
