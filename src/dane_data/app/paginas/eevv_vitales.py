@@ -80,6 +80,9 @@ vista = st.radio("Vista", vistas, horizontal=True)
 # ---------------------------------------------------------------- Indicadores
 if vista == "Indicadores":
     total = indicadores_eevv(anios, tipo, None, filtros)
+    if total.empty:  # p. ej. un departamento sin registros en los años elegidos
+        st.warning("Ningún certificado cumple los filtros elegidos.")
+        st.stop()
     u = total.iloc[-1]
     st.markdown(f"##### Resumen {int(u['anio'])}")
     if tipo == "defunciones":
@@ -156,6 +159,9 @@ else:
     anio = st.select_slider("Año", anios, value=anios[-1]) if len(anios) > 1 else anios[0]
     n = st.slider("Cuántas causas mostrar", 5, 30, 10)
     res = conteos_eevv(anio, tipo, "causa_105_nombre", filtros)
+    if res.empty:
+        st.warning("Ningún certificado cumple los filtros elegidos.")
+        st.stop()
     primeras = res.nlargest(n, "n").assign(causa=lambda d: d["causa_105_nombre"].astype(str))
     grafico(barras(primeras, x="causa", y="n", titulo_y=f"{TITULO[tipo]} en {anio}", horizontal=True))
     st.caption(f"Lista Colombia 105, disponible en toda la serie. Las {n} primeras suman el "

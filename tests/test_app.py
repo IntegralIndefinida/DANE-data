@@ -445,6 +445,16 @@ def test_eevv_filtros_en_el_codigo_equivalente(app_eevv):
     assert any("{'sexo': ['Mujer']}" in c.value for c in at.code)
 
 
+@pytest.mark.parametrize("vista", ["Indicadores", "Causas de muerte"])
+def test_eevv_filtro_sin_certificados(app_eevv, vista):
+    """Un departamento sin registros en los años elegidos: aviso, no un IndexError."""
+    at = app_eevv.run()
+    _seleccionar(at, "Vista", vista)
+    at.multiselect(key="eevv_dpto").set_value(["Vichada"]).run()
+    assert not at.exception
+    assert any("Ningún certificado" in w.value for w in at.warning)
+
+
 def test_eevv_tasas(app_eevv):
     at = app_eevv.run()
     _seleccionar(at, "Vista", "Tasas sobre la población")
