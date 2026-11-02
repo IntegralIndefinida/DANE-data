@@ -472,7 +472,8 @@ def tasas(
         )
     llaves = ["anio", *por]
     disponibles = _anios_descargados(anios, tipos, root)
-    _avisar_cobertura("defunciones", [a for a in disponibles if a in find_files(tipo="defunciones", root=root)])
+    con_defunciones = find_files(tipo="defunciones", root=root)
+    _avisar_cobertura("defunciones", [a for a in disponibles if a in con_defunciones])
 
     res = None
     for i, tipo in enumerate(tipos):
