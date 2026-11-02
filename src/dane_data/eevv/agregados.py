@@ -49,8 +49,9 @@ def _firma_codigo() -> str:
 
     base = Path(__file__).resolve().parent.parent
     h = hashlib.sha1(__version__.encode())
+    # stats.py (_con_categorias) y geih/agregados.py (_mascara, _clave_json) también dan forma a lo que se guarda
     for rel in ("eevv/loader.py", "eevv/indicadores.py", "eevv/agregados.py", "proyecciones.py", "referencias.py", "_io.py",
-                "data/eevv_causas.json", "data/proyecciones_poblacion.parquet"):
+                "stats.py", "geih/agregados.py", "data/eevv_causas.json", "data/proyecciones_poblacion.parquet"):
         try:
             h.update((base / rel).read_bytes())
         except OSError:
