@@ -32,8 +32,8 @@ VARIABLES = {
         "Consultas prenatales (promedio)": ("consultas_promedio", "numero"), "Hombres por cada 100 mujeres": ("razon_sexo", "numero"),
     },
     "fetales": {
-        "Defunciones fetales": ("fetales", "conteo"), "Mortinatos (22 semanas o más)": ("mortinatos", "conteo"), "Bajo peso (%)": ("pct_bajo_peso", "pct"),
-        "Prematuros (%)": ("pct_prematuro", "pct"), "Madres adolescentes (%)": ("pct_madre_adolescente", "pct"),
+        "Defunciones fetales": ("fetales", "conteo"), "Mortinatos (22 semanas o más)": ("mortinatos", "conteo"),
+        "Madres adolescentes (%)": ("pct_madre_adolescente", "pct"),
     },
 }
 DESAGREGAR = {
@@ -107,7 +107,7 @@ if vista == "Indicadores":
     else:
         k = st.columns(3)
         k[0].metric("Defunciones fetales", fmt_num(u.fetales))
-        k[1].metric("Bajo peso", fmt_pct(u.pct_bajo_peso))
+        k[1].metric("Mortinatos", fmt_num(u.mortinatos), help=dd.eevv.GLOSARIO["Mortinato"])
         k[2].metric("Madres adolescentes", fmt_pct(u.pct_madre_adolescente))
     st.divider()
 

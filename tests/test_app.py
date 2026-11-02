@@ -435,7 +435,9 @@ def test_eevv_indicadores_por_certificado(app_eevv):
     assert at.metric[0].label == "Nacimientos" and at.metric[0].value == "3"
     _seleccionar(at, "Variable", "Prematuros (%)")
     _seleccionar(at, "Certificado", "Defunciones fetales")
-    assert at.metric[0].label == "Defunciones fetales"
+    assert at.metric[0].label == "Defunciones fetales" and at.metric[1].label == "Mortinatos"
+    variables = next(s for s in at.selectbox if s.label == "Variable").options
+    assert not any("Bajo peso" in v or "Prematuros" in v for v in variables)
 
 
 def test_eevv_otra_carpeta_sin_reiniciar(app_eevv, eevv_root, tmp_path, monkeypatch):

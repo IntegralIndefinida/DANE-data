@@ -335,7 +335,9 @@ def test_indicadores_vacios_sin_el_dato(eevv_root):
 def test_indicadores_fetales(eevv_root):
     r = dd.eevv.indicadores(dd.eevv.load(1998, tipo="fetales", root=eevv_root)).iloc[0]
     assert r["fetales"] == 2 and "hombres" not in r.index
-    assert r["pct_bajo_peso"] == 100 and r["pct_madre_adolescente"] == 100
+    assert r["pct_madre_adolescente"] == 100
+    # Bajo peso y prematuros son de nacidos vivos: en fetales, casi todos abortos, pasarían de 95 % y no medirían nada
+    assert "pct_bajo_peso" not in r.index and "pct_prematuro" not in r.index
 
 
 def test_indicadores_dropna(eevv_root):

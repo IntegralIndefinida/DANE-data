@@ -104,8 +104,9 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, dropna
         * Nacimientos: ``nacimientos``, ``razon_sexo``, ``pct_bajo_peso``, ``pct_prematuro``, ``pct_cesarea``,
           ``pct_parto_multiple``, ``pct_madre_adolescente``, ``pct_parto_institucional``, ``pct_cuatro_consultas``,
           ``consultas_promedio``.
-        * Fetales: ``fetales``, ``mortinatos`` (22 semanas o 1.000 gramos o más), ``pct_bajo_peso``, ``pct_prematuro``,
-          ``pct_madre_adolescente``.
+        * Fetales: ``fetales``, ``mortinatos`` (22 semanas o 1.000 gramos o más) y ``pct_madre_adolescente``. No hay
+          bajo peso ni prematuros: son indicadores de nacidos vivos, y en las defunciones fetales, casi todas abortos de
+          menos de 22 semanas, pasarían de 95 %.
 
         Los porcentajes se calculan sobre quienes tienen el dato, salvo los tres de la ficha metodológica del DANE, que
         van sobre el total como en ella: ``pct_parto_institucional`` y ``pct_cuatro_consultas`` sobre todos los nacidos
@@ -197,7 +198,9 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, dropna
             res["razon_sexo"] = 100 * res["hombres"] / res["mujeres"].where(lambda v: v > 0)
     if tipo == "fetales" and tiene("mortinato"):
         res["mortinatos"] = verdaderos("mortinato")
-    if tipo in ("nacimientos", "fetales"):
+    # Solo en nacidos vivos, como la ficha metodológica del DANE. En las defunciones fetales casi todo es aborto de menos de
+    # 22 semanas: saldría más de 95 % de bajo peso y de prematuros, y no mediría nada.
+    if tipo == "nacimientos":
         for columna, nombre in (("bajo_peso", "pct_bajo_peso"), ("prematuro", "pct_prematuro")):
             if tiene(columna):
                 res[nombre] = pct(columna)
