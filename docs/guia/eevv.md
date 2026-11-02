@@ -142,7 +142,9 @@ las da por departamento (1985–2050) y en total nacional (1950–2070), por sex
 6  2025            8.32             5.36                    1.02                10.25                     80.40
 ```
 
-Se puede desagregar por `"departamento"`, `"sexo"` o `"area"`, y {dd}`eevv.tasas_especificas()` da las tasas por edad:
+Se puede desagregar por `"departamento"`, `"sexo"` o `"area"`. Por sexo solo quedan la mortalidad general y la infantil: los
+nacimientos se cuentan por el sexo del nacido, así que la natalidad, la fecundidad y la mortalidad materna no se pueden partir así.
+{dd}`eevv.tasas_especificas()` da las tasas por edad:
 
 ```text
 >>> r = dd.eevv.tasas_especificas(2025, "nacimientos").round(2)

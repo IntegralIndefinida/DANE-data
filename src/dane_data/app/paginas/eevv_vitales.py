@@ -51,6 +51,8 @@ TASAS = {
     "Razón de mortalidad fetal (por 1.000 nacidos vivos y defunciones fetales)": "razon_mortalidad_fetal",
 }
 POR_TASAS = {"Total nacional": None, "Departamento de residencia": "departamento", "Sexo": "sexo", "Área de residencia": "area"}
+# dd.eevv.tasas las deja vacías por sexo: los nacimientos son del sexo del nacido, no de quien los tiene
+SOLO_POR_SEXO = {"tasa_mortalidad", "mortalidad_infantil"}
 TITULO = {"defunciones": "Defunciones", "nacimientos": "Nacimientos", "fetales": "Defunciones fetales"}
 
 
@@ -133,8 +135,12 @@ elif vista == "Tasas sobre la población":
             "no aplican aquí.")
     c1, c2 = st.columns(2)
     nombre = c1.selectbox("Tasa", list(TASAS))
-    nombre_por = c2.selectbox("Desagregar por", list(POR_TASAS))
-    columna, por = TASAS[nombre], POR_TASAS[nombre_por]
+    columna = TASAS[nombre]
+    opciones_por = [k for k, v in POR_TASAS.items() if v != "sexo" or columna in SOLO_POR_SEXO]
+    nombre_por = c2.selectbox("Desagregar por", opciones_por,
+                              help=None if "Sexo" in opciones_por else "Esta tasa no se puede partir por sexo: los nacimientos "
+                                                                       "se cuentan por el sexo del nacido.")
+    por = POR_TASAS[nombre_por]
     res = tasas_eevv(anios, por)
     if por == "departamento" and min(anios) < 1985:
         st.warning("Las proyecciones por departamento empiezan en 1985: los años anteriores quedan sin tasa.")

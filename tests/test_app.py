@@ -462,6 +462,13 @@ def test_eevv_tasas(app_eevv):
     _seleccionar(at, "Tasa", "Mortalidad infantil (por 1.000 nacidos vivos)")
     _seleccionar(at, "Desagregar por", "Departamento de residencia")
     assert any("dd.eevv.tasas" in c.value and "por='departamento'" in c.value for c in at.code)
+    # Por sexo solo la mortalidad general y la infantil; la materna se dividiría por las nacidas mujeres
+    def opciones_por():
+        return next(s for s in at.selectbox if s.label == "Desagregar por").options
+
+    assert "Sexo" in opciones_por()
+    _seleccionar(at, "Tasa", "Razón de mortalidad materna (por 100.000 nacidos vivos)")
+    assert not at.exception and "Sexo" not in opciones_por()
 
 
 def test_eevv_causas_solo_con_defunciones(app_eevv):

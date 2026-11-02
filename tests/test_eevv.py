@@ -417,7 +417,12 @@ def test_tasas_por_sexo_y_area(eevv_root, cache):
     assert r.loc["Hombre", "poblacion"] == _poblacion(2025, sexo="Hombre")
     assert r.loc["Hombre", "defunciones"] == 2 and r.loc["Mujer", "defunciones"] == 1
     assert r.loc["Mujer", "tasa_mortalidad"] == pytest.approx(1000 / _poblacion(2025, sexo="Mujer"))
-    assert r["tasa_global_fecundidad"].isna().all() and r["fetales"].isna().all()  # no aplican por sexo
+    # No aplican por sexo: los nacimientos son del sexo del nacido, y las muertes maternas son todas de mujeres
+    for columna in ("tasa_natalidad", "tasa_global_fecundidad", "razon_mortalidad_materna", "razon_mortalidad_fetal", "fetales"):
+        assert r[columna].isna().all(), columna
+    assert r.loc["Mujer", "defunciones_maternas"] == 1
+    # La mortalidad infantil sí: el menor de un año es un niño, y nació un niño
+    assert r.loc["Hombre", "mortalidad_infantil"] == pytest.approx(1000 * 1 / 1)
     r = dd.eevv.tasas(2025, por="area", root=eevv_root).set_index("area")
     resto = "Centros poblados y rural disperso"
     assert r.loc[resto, "poblacion"] == _poblacion(2025, area=resto)

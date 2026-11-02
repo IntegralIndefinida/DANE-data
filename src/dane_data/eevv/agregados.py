@@ -415,6 +415,8 @@ def tasas(
         * ``razon_mortalidad_materna``, por 100.000 nacidos vivos.
         * ``razon_mortalidad_fetal``, por 1.000 nacidos vivos más defunciones fetales.
 
+        Por sexo solo hay ``tasa_mortalidad`` y ``mortalidad_infantil``: las demás quedan vacías.
+
     Lanza
     -----
     FileNotFoundError
@@ -442,6 +444,10 @@ def tasas(
     Por departamento se usa la residencia, y quedan por fuera los registros sin departamento o de residentes en el
     extranjero; por eso la suma es menor que el total nacional, que sí los incluye para coincidir con lo publicado.
     Los certificados de nacimiento y las defunciones de menores de un año se atribuyen a la residencia de la madre.
+
+    Por sexo, los nacimientos se cuentan por el sexo del nacido, no de quien los tiene: la natalidad y la fecundidad no
+    se pueden partir así, y las muertes maternas, todas de mujeres, no se pueden dividir por las nacidas mujeres. Las
+    defunciones fetales casi siempre traen sexo indeterminado.
 
     Los nacimientos sin edad de la madre no entran en la fecundidad, lo que la subestima un poco: son como mucho 1,5 % de
     los nacimientos de cada año.
@@ -483,10 +489,13 @@ def tasas(
     res = res.merge(pob, how="left", on=llaves)
     _avisar_sin_poblacion(res, por)
 
-    res["tasa_natalidad"] = _MIL * res["nacimientos"] / res["poblacion"]
+    # Por sexo, los nacimientos son los del sexo del nacido: dividirlos por la población de ese sexo, o dividir por las
+    # nacidas mujeres las muertes maternas (todas de mujeres), no mide nada. La mortalidad infantil sí: niños sobre niños.
+    por_sexo = "sexo" in por
+    res["tasa_natalidad"] = np.nan if por_sexo else _MIL * res["nacimientos"] / res["poblacion"]
     res["tasa_mortalidad"] = _MIL * res["defunciones"] / res["poblacion"]
     res["mortalidad_infantil"] = _MIL * res["defunciones_menores_1"] / res["nacimientos"]
-    res["razon_mortalidad_materna"] = 100_000 * res["defunciones_maternas"] / res["nacimientos"]
+    res["razon_mortalidad_materna"] = np.nan if por_sexo else 100_000 * res["defunciones_maternas"] / res["nacimientos"]
     res["razon_mortalidad_fetal"] = _MIL * res["fetales"] / (res["nacimientos"] + res["fetales"])
     res["tasa_global_fecundidad"] = np.nan
     if "sexo" not in por and find_files(anios, tipo="nacimientos", root=root):
