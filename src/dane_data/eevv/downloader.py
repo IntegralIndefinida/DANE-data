@@ -29,8 +29,8 @@ import time
 import zipfile
 from pathlib import Path
 
-from .._hooks import DescargadorANDA, extraer_miembro, sanitize_member_name
-from .loader import EXTENSIONES, TIPOS, _archivos_datos
+from .._hooks import DescargadorANDA, archivos_datos, extraer_aparte, extraer_miembro, sanitize_member_name
+from .loader import EXTENSIONES, TIPOS
 
 log = logging.getLogger("dane_data.eevv")
 
@@ -157,26 +157,15 @@ class EEVVDownloader(DescargadorANDA):
         Extrae primero aparte y solo si salió bien mueve a ``carpeta`` y borra lo que había (con ``forzar``).
         Si falla, queda lo de antes.
         """
-        nueva = Path(tempfile.mkdtemp(prefix="extraccion-", dir=self.raw_dir))
-        try:
+        def extraer(nueva: Path) -> list[Path]:
             with zipfile.ZipFile(zip_path) as z:
-                extraidos = self._extraer_datos(z, anio, nueva)
-            if not extraidos:
-                return False
-            carpeta.mkdir(parents=True, exist_ok=True)
-            nuevos = set()
-            for f in extraidos:
-                f.replace(carpeta / f.name)
-                nuevos.add(carpeta / f.name)
-            for viejo in _archivos_datos(carpeta):
-                if viejo not in nuevos:
-                    viejo.unlink()
-            return True
+                return self._extraer_datos(z, anio, nueva)
+
+        try:
+            return extraer_aparte(extraer, carpeta, self.raw_dir, EXTENSIONES)
         except (zipfile.BadZipFile, OSError) as e:
             log.error(f"Error extrayendo {anio} de {zip_path.name}: {e}")
             return False
-        finally:
-            shutil.rmtree(nueva, ignore_errors=True)
 
     def run_pipeline(self, target_years=None, tipos=TIPOS) -> list[str]:
         """Descarga los años y tipos pedidos. Devuelve lo que no se pudo bajar o extraer."""
@@ -189,7 +178,7 @@ class EEVVDownloader(DescargadorANDA):
             pedidos = [k for k in pedidos if k[0] in anios]
 
         self.fallidos = []
-        faltantes = [k for k in pedidos if self.forzar or not _archivos_datos(self.data_dir / k[1] / str(k[0]))]
+        faltantes = [k for k in pedidos if self.forzar or not archivos_datos(self.data_dir / k[1] / str(k[0]), EXTENSIONES)]
         for anio, tipo in pedidos:
             if (anio, tipo) not in faltantes:
                 log.info(f"{tipo} {anio} ya está extraído. Se salta.")
@@ -216,7 +205,7 @@ class EEVVDownloader(DescargadorANDA):
             if not bajados[url]:
                 self._fallo(f"{tipo} {anio}: no se pudo descargar {nombre}.")
             elif not self._extraer(destino, anio, carpeta):
-                conserva = " Se conserva lo extraído antes." if _archivos_datos(carpeta) else ""
+                conserva = " Se conserva lo extraído antes." if archivos_datos(carpeta, EXTENSIONES) else ""
                 self._fallo(f"{tipo} {anio}: no se encontró un archivo CSV, TXT o Stata de ese año en {nombre}.{conserva}")
             if not self.keep_zips and pendientes[url] == 0:
                 destino.unlink(missing_ok=True)

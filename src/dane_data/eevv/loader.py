@@ -30,6 +30,7 @@ import numpy as np
 import pandas as pd
 
 from .. import config
+from .._hooks import archivos_datos
 from .._io import read_table
 from ..referencias import DEPARTAMENTOS
 
@@ -256,13 +257,6 @@ def _root(root) -> Path:
     return Path(root).expanduser() if root is not None else config.get_path("eevv")
 
 
-def _archivos_datos(carpeta: Path) -> list[Path]:
-    """Archivos de datos ya extraídos en ``carpeta``."""
-    if not carpeta.is_dir():
-        return []
-    return sorted(f for f in carpeta.iterdir() if f.is_file() and f.suffix.lower() in EXTENSIONES)
-
-
 def _tipo_valido(tipo: str) -> str:
     if tipo not in TIPOS:
         raise ValueError(f"Tipo desconocido {tipo!r}. Opciones: {list(TIPOS)}")
@@ -307,7 +301,7 @@ def find_files(years: Iterable[int] | int | None = None, tipo: str = "defuncione
     out = {}
     for carpeta in sorted(p for p in base.iterdir() if p.is_dir() and p.name.isdigit()):
         anio = int(carpeta.name)
-        if (years is None or anio in years) and (archivos := _archivos_datos(carpeta)):
+        if (years is None or anio in years) and (archivos := archivos_datos(carpeta, EXTENSIONES)):
             out[anio] = max(archivos, key=lambda f: (f.suffix.lower() != ".dta", f.stat().st_size))
     return out
 

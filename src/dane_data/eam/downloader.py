@@ -33,13 +33,11 @@ Versión: 1.0.0
 import re
 import json
 import time
-import shutil
 import zipfile
-import tempfile
 import logging
 from pathlib import Path
 
-from .._hooks import DescargadorANDA, extraer_miembro, sanitize_member_name, url_del_anda
+from .._hooks import DescargadorANDA, archivos_datos, extraer_aparte, extraer_miembro, sanitize_member_name, url_del_anda
 from .loader import EXTENSIONES
 
 __version__ = "1.0.0"
@@ -107,13 +105,6 @@ EAM_TIC_CATALOGS = {
 
 
 _CONSERVA = " Se conserva lo extraído antes."
-
-
-def _archivos_datos(carpeta: Path) -> list[Path]:
-    """Archivos de datos ya extraídos en ``carpeta`` (sin entrar en subcarpetas como TIC/)."""
-    if not carpeta.is_dir():
-        return []
-    return sorted(f for f in carpeta.iterdir() if f.is_file() and f.suffix.lower() in EXTENSIONES)
 
 
 class EAMDownloader(DescargadorANDA):
@@ -268,22 +259,8 @@ class EAMDownloader(DescargadorANDA):
         Extrae el formato preferido de ``zip_path`` primero aparte, y solo si salió bien lo mueve a
         ``carpeta`` y borra los archivos de datos que había (con ``forzar``). Si falla, queda lo de antes.
         """
-        nueva = Path(tempfile.mkdtemp(prefix="extraccion-", dir=self.raw_dir))
-        try:
-            extraidos = self.extract_preferred_format(zip_path, nueva)
-            if not extraidos:
-                return False
-            carpeta.mkdir(parents=True, exist_ok=True)
-            nuevos = set()
-            for f in extraidos:
-                f.replace(carpeta / f.name)
-                nuevos.add(carpeta / f.name)
-            for viejo in _archivos_datos(carpeta):
-                if viejo not in nuevos:
-                    viejo.unlink()
-            return True
-        finally:
-            shutil.rmtree(nueva, ignore_errors=True)
+        return extraer_aparte(lambda nueva: self.extract_preferred_format(zip_path, nueva), carpeta, self.raw_dir,
+                              EXTENSIONES)
 
     def process_year(self, year: str, catalog_id: str, zip_filename: str, download_url: str):
         """Descarga y procesa un año específico de la EAM."""
@@ -300,7 +277,7 @@ class EAMDownloader(DescargadorANDA):
             year_data_dir.mkdir(parents=True, exist_ok=True)
 
         # Comprobar si ya existe el archivo de datos (.csv o .txt)
-        existing_data = _archivos_datos(year_data_dir) if self.extract_data else []
+        existing_data = archivos_datos(year_data_dir, EXTENSIONES) if self.extract_data else []
         if existing_data and not self.forzar:
             log.info(f"Año {year} ya cuenta con datos extraídos ({[f.name for f in existing_data]}). Saltando descarga.")
         else:
@@ -321,7 +298,7 @@ class EAMDownloader(DescargadorANDA):
 
         # 4. Descargar satélite TIC si fue solicitado (también en años ya descargados)
         tic_pendiente = (self.include_tic and year in EAM_TIC_CATALOGS
-                         and (self.forzar or not _archivos_datos(year_data_dir / "TIC")))
+                         and (self.forzar or not archivos_datos(year_data_dir / "TIC", EXTENSIONES)))
         if tic_pendiente:
             tic_cid, tic_name, tic_url = EAM_TIC_CATALOGS[year]
             tic_zip = year_raw_dir / tic_name
@@ -332,7 +309,7 @@ class EAMDownloader(DescargadorANDA):
             tic_data_dir = year_data_dir / "TIC"
             if tic_ok and self.extract_data and not self._extraer(tic_zip, tic_data_dir):
                 self._fallo(f"{year}: no se pudo extraer el módulo TIC de {tic_name}."
-                            + _CONSERVA * bool(_archivos_datos(tic_data_dir)))
+                            + _CONSERVA * bool(archivos_datos(tic_data_dir, EXTENSIONES)))
             if not self.keep_zips and tic_zip.exists():
                 tic_zip.unlink()
 

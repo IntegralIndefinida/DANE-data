@@ -32,6 +32,7 @@ from typing import Iterable
 import pandas as pd
 
 from .. import config
+from .._hooks import archivos_datos
 from .._io import read_table
 from ..referencias import DEPARTAMENTOS
 
@@ -157,7 +158,7 @@ def find_files(years: Iterable[int] | int | None = None, root=None) -> dict[int,
         anio = int(ydir.name)
         if years is not None and anio not in years:
             continue
-        files = sorted(f for f in ydir.iterdir() if f.is_file() and f.suffix.lower() in EXTENSIONES)
+        files = archivos_datos(ydir, EXTENSIONES)
         if files:
             # El texto primero (un .txt convertido por una versión anterior, junto al .dta); entre
             # archivos del mismo tipo, el más grande.

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import shutil
+import tempfile
 import time
 import uuid
 import zipfile
@@ -179,6 +180,37 @@ def sanitize_member_name(raw_name: str) -> str:
 def ya_extraido(member: zipfile.ZipInfo, destino: Path) -> bool:
     """``destino`` ya tiene el archivo completo (mismo tamaño que dentro del ZIP)."""
     return destino.is_file() and destino.stat().st_size == member.file_size
+
+
+def archivos_datos(carpeta: Path, extensiones) -> list[Path]:
+    """Archivos de datos (con alguna de ``extensiones``) ya extraídos en ``carpeta``, sin entrar en subcarpetas como ``TIC/``."""
+    if not carpeta.is_dir():
+        return []
+    return sorted(f for f in carpeta.iterdir() if f.is_file() and f.suffix.lower() in extensiones)
+
+
+def extraer_aparte(extraer: Callable[[Path], list[Path]], carpeta: Path, temporal: Path, extensiones) -> bool:
+    """
+    Corre ``extraer(nueva)`` en una carpeta nueva dentro de ``temporal`` y, solo si sacó archivos, los pasa a ``carpeta`` y
+    borra los archivos de datos que había y no se reemplazaron (los de antes, con ``forzar``). Si no sacó nada o falla,
+    queda lo de antes. Devuelve si sacó algo.
+    """
+    nueva = Path(tempfile.mkdtemp(prefix="extraccion-", dir=temporal))
+    try:
+        extraidos = extraer(nueva)
+        if not extraidos:
+            return False
+        carpeta.mkdir(parents=True, exist_ok=True)
+        nuevos = set()
+        for f in extraidos:
+            f.replace(carpeta / f.name)
+            nuevos.add(carpeta / f.name)
+        for viejo in archivos_datos(carpeta, extensiones):
+            if viejo not in nuevos:
+                viejo.unlink()
+        return True
+    finally:
+        shutil.rmtree(nueva, ignore_errors=True)
 
 
 def extraer_miembro(z: zipfile.ZipFile, member: zipfile.ZipInfo, destino: Path) -> None:
