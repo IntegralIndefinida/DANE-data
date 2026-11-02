@@ -27,6 +27,7 @@ VARIABLES = {
         "Nacimientos": ("nacimientos", "conteo"), "Bajo peso al nacer (%)": ("pct_bajo_peso", "pct"),
         "Prematuros (%)": ("pct_prematuro", "pct"), "Cesáreas (%)": ("pct_cesarea", "pct"),
         "Madres adolescentes (%)": ("pct_madre_adolescente", "pct"), "Partos múltiples (%)": ("pct_parto_multiple", "pct"),
+        "Partos en institución de salud (%)": ("pct_parto_institucional", "pct"),
         "Cuatro o más consultas prenatales (%)": ("pct_cuatro_consultas", "pct"),
         "Consultas prenatales (promedio)": ("consultas_promedio", "numero"), "Hombres por cada 100 mujeres": ("razon_sexo", "numero"),
     },

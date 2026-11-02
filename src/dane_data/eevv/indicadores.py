@@ -24,6 +24,13 @@ GLOSARIO = {
     "Prematuro": "Menos de 37 semanas de gestación. Solo se puede saber con T_GES_AGRU_CIE, que no está en 2012, 2013, "
                  "2020 ni antes de 2008: T_GES agrupa «de 28 a 37» semanas.",
     "Madre adolescente": "Madre de menos de 20 años al momento del parto.",
+    "Atención institucional del parto": "Nacidos vivos en una institución de salud, sobre el total de nacidos vivos (ficha "
+                                        "metodológica del DANE).",
+    "Cuatro o más controles prenatales": "Nacidos vivos cuya madre tuvo cuatro o más consultas prenatales, sobre el total "
+                                         "de nacidos vivos, también los que no tienen el dato (ficha metodológica del DANE).",
+    "Causas mal definidas": "Defunciones con causa básica del grupo de signos, síntomas y afecciones mal definidas de la "
+                            "lista 6/67, sobre el total de defunciones: el indicador de calidad del registro de la ficha "
+                            "metodológica del DANE.",
     "Razón de sexo al nacer": "Nacidos hombres por cada 100 nacidas mujeres.",
     "Tasa bruta de natalidad": "Nacimientos por cada 1.000 habitantes.",
     "Tasa bruta de mortalidad": "Defunciones por cada 1.000 habitantes.",
@@ -94,12 +101,16 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, dropna
           (0 a 6 días), ``pct_menores_un_anio``, ``maternas`` (hasta 42 días), ``maternas_tardias``, ``homicidios``,
           ``suicidios``, ``accidentes``, ``pct_mal_definidas``.
         * Nacimientos: ``nacimientos``, ``razon_sexo``, ``pct_bajo_peso``, ``pct_prematuro``, ``pct_cesarea``,
-          ``pct_parto_multiple``, ``pct_madre_adolescente``, ``pct_cuatro_consultas``, ``consultas_promedio``.
+          ``pct_parto_multiple``, ``pct_madre_adolescente``, ``pct_parto_institucional``, ``pct_cuatro_consultas``,
+          ``consultas_promedio``.
         * Fetales: ``fetales``, ``mortinatos`` (22 semanas o 1.000 gramos o más), ``pct_bajo_peso``, ``pct_prematuro``,
           ``pct_madre_adolescente``.
 
-        Los porcentajes se calculan sobre quienes tienen el dato. Un valor queda vacío si el dato no existe en esos
-        años; por ejemplo, ``pct_prematuro`` en 2012.
+        Los porcentajes se calculan sobre quienes tienen el dato, salvo los tres de la ficha metodológica del DANE, que
+        van sobre el total como en ella: ``pct_parto_institucional`` y ``pct_cuatro_consultas`` sobre todos los nacidos
+        vivos, y ``pct_mal_definidas`` sobre todas las defunciones. ``pct_bajo_peso`` también es de la ficha, y ella
+        misma lo calcula sobre los nacidos con peso. Un valor queda vacío si el dato no existe en esos años; por
+        ejemplo, ``pct_prematuro`` en 2012.
 
     Lanza
     -----
@@ -177,9 +188,9 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, dropna
             for nombre, valor in (("homicidios", "Homicidio"), ("suicidios", "Suicidio"), ("accidentes", "Accidente")):
                 res[nombre] = contar(base["manera_muerte"].eq(valor).fillna(False).astype(bool)).where(con_manera.notna())
         if tiene("gran_causa"):
-            con_causa = valido("gran_causa").where(lambda v: v > 0)
+            # Indicador de calidad de la ficha metodológica del DANE: mal definidas sobre el total de defunciones
             mal = contar(base["gran_causa"].eq("Signos y síntomas mal definidos").fillna(False).astype(bool))
-            res["pct_mal_definidas"] = 100 * mal / con_causa
+            res["pct_mal_definidas"] = (100 * mal / total).where(valido("gran_causa") > 0)
     elif tipo == "nacimientos":
         if "hombres" in res.columns:
             res["razon_sexo"] = 100 * res["hombres"] / res["mujeres"].where(lambda v: v > 0)
@@ -195,9 +206,15 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, dropna
                 res[nombre] = pct(columna)
     if tipo in ("nacimientos", "fetales") and tiene("madre_adolescente"):
         res["pct_madre_adolescente"] = pct("madre_adolescente")
+    # Ficha metodológica del DANE: atención institucional del parto (AIP) y cuatro o más controles prenatales (CP), sobre
+    # el total de nacidos vivos. Desde 2022 entran registros de la Registraduría sin estos datos (TIPOFORMULARIO).
+    if tipo == "nacimientos" and tiene("sitio_parto"):
+        institucional = contar(base["sitio_parto"].eq("Institución de salud").fillna(False).astype(bool))
+        res["pct_parto_institucional"] = (100 * institucional / total).where(valido("sitio_parto") > 0)
     if tipo == "nacimientos" and tiene("consultas"):
         con_consultas = valido("consultas").where(lambda v: v > 0)
-        res["pct_cuatro_consultas"] = 100 * contar(base["consultas"].ge(4).fillna(False).astype(bool)) / con_consultas
+        cuatro = contar(base["consultas"].ge(4).fillna(False).astype(bool))
+        res["pct_cuatro_consultas"] = (100 * cuatro / total).where(con_consultas.notna())
         res["consultas_promedio"] = contar(base["consultas"].fillna(0).astype("float64")) / con_consultas
 
     res = res.replace([np.inf, -np.inf], np.nan)

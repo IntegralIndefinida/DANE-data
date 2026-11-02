@@ -321,7 +321,9 @@ def test_indicadores_nacimientos(eevv_root):
     # Sobre quienes tienen el dato: 2 de los 3 nacimientos
     assert r["pct_cesarea"] == 50 and r["pct_prematuro"] == 50 and r["pct_bajo_peso"] == 50
     assert r["pct_parto_multiple"] == 50 and r["pct_madre_adolescente"] == 50
-    assert r["pct_cuatro_consultas"] == 50 and r["consultas_promedio"] == 3
+    # Los de la ficha metodológica del DANE van sobre todos los nacidos vivos, también el que no tiene el dato
+    assert r["pct_cuatro_consultas"] == pytest.approx(100 / 3) and r["consultas_promedio"] == 3
+    assert r["pct_parto_institucional"] == 100
 
 
 def test_indicadores_vacios_sin_el_dato(eevv_root):
