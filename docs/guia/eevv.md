@@ -58,7 +58,9 @@ puede buscar en {dd}`buscar_variable()` con `encuesta="eevv_defunciones"`, `"eev
 
 ## Indicadores
 
-{dd}`eevv.indicadores()` da conteos y porcentajes por grupo. Los porcentajes se calculan sobre quienes tienen el dato.
+{dd}`eevv.indicadores()` da conteos y porcentajes por grupo. Los porcentajes se calculan sobre quienes tienen el dato, salvo
+los de la ficha metodológica del DANE, que van sobre el total como en ella: partos en institución de salud y cuatro o más
+consultas prenatales sobre todos los nacidos vivos, y causas mal definidas sobre todas las defunciones.
 
 ```text
 >>> dd.eevv.indicadores(nac, por="edad_madre")[["edad_madre", "nacimientos", "pct_bajo_peso", "pct_prematuro", "pct_cesarea"]].round(1)
@@ -79,16 +81,20 @@ puede buscar en {dd}`buscar_variable()` con `encuesta="eevv_defunciones"`, `"eev
 
 ```text
 >>> r = dd.eevv.serie_indicadores(range(2019, 2026))
->>> r[["anio", "defunciones", "menores_un_anio", "maternas", "homicidios", "suicidios"]]
-   anio  defunciones  menores_un_anio  maternas  homicidios  suicidios
-0  2019       244355           7291.0     521.0     13077.0     2930.0
-1  2020       300853           6368.0     645.0     12415.0     2749.0
-2  2021       363089           6751.0     729.0     14457.0     3049.0
-3  2022       287251           6689.0     464.0     14490.0     3118.0
-4  2023       268411           5610.0     415.0     14323.0     3301.0
-5  2024       275778           4759.0     355.0     14155.0     3066.0
-6  2025       284254           4526.0     355.0     15003.0     2855.0
+>>> r[["anio", "defunciones", "menores_un_anio", "neonatales", "maternas", "maternas_tardias", "homicidios"]]
+   anio  defunciones  menores_un_anio  neonatales  maternas  maternas_tardias  homicidios
+0  2019       244355           7291.0      4452.0     326.0             193.0     13077.0
+1  2020       300853           6368.0      4196.0     414.0             224.0     12415.0
+2  2021       363089           6751.0      4361.0     513.0             214.0     14457.0
+3  2022       287251           6689.0      4177.0     280.0             181.0     14490.0
+4  2023       268411           5610.0      3461.0     242.0             171.0     14323.0
+5  2024       275778           4759.0      2983.0     207.0             147.0     14155.0
+6  2025       284254           4526.0      2988.0     200.0             151.0     15003.0
 ```
+
+`maternas` son las muertes maternas de la razón de mortalidad materna del DANE: causa básica del capítulo O de la CIE-10, salvo
+O96 (tardías, de 43 días a un año) y O97 (secuelas). Los cuadros 7 y 8 de defunciones maternas del DANE sí cuentan todo el
+capítulo: en 2025 son 355, de las que 200 entran en la razón, 151 son tardías (`maternas_tardias`) y 4 son secuelas.
 
 ## Causas de muerte
 
@@ -131,19 +137,41 @@ las da por departamento (1985–2050) y en total nacional (1950–2070), por sex
 
 ```text
 >>> r = dd.eevv.tasas(range(2019, 2026))
->>> r[["anio", "tasa_natalidad", "tasa_mortalidad", "tasa_global_fecundidad", "mortalidad_infantil", "razon_mortalidad_materna"]].round(2)
-   anio  tasa_natalidad  tasa_mortalidad  tasa_global_fecundidad  mortalidad_infantil  razon_mortalidad_materna
-0  2019           13.04             4.96                    1.60                11.35                     81.07
-1  2020           12.49             5.97                    1.52                10.12                    102.48
-2  2021           12.07             7.10                    1.47                10.94                    118.17
-3  2022           11.11             5.56                    1.36                11.66                     80.89
-4  2023            9.89             5.15                    1.21                10.88                     80.50
-5  2024            8.63             5.24                    1.06                10.48                     78.21
-6  2025            8.32             5.36                    1.02                10.25                     80.40
+>>> r[["anio", "tasa_natalidad", "tasa_mortalidad", "tasa_global_fecundidad"]].round(2)
+   anio  tasa_natalidad  tasa_mortalidad  tasa_global_fecundidad
+0  2019           13.04             4.96                    1.60
+1  2020           12.49             5.97                    1.52
+2  2021           12.07             7.10                    1.47
+3  2022           11.11             5.56                    1.36
+4  2023            9.89             5.15                    1.21
+5  2024            8.63             5.24                    1.06
+6  2025            8.32             5.36                    1.02
+>>> r[["anio", "mortalidad_infantil", "mortalidad_neonatal", "mortalidad_perinatal", "razon_mortalidad_materna"]].round(2)
+   anio  mortalidad_infantil  mortalidad_neonatal  mortalidad_perinatal  razon_mortalidad_materna
+0  2019                11.35                 6.93                 14.48                     50.73
+1  2020                10.12                 6.67                 14.77                     65.78
+2  2021                10.94                 7.07                 15.00                     83.16
+3  2022                11.66                 7.28                 15.33                     48.81
+4  2023                10.88                 6.71                 13.83                     46.94
+5  2024                10.48                 6.57                 13.40                     45.60
+6  2025                10.25                 6.77                 13.49                     45.30
 ```
 
-Se puede desagregar por `"departamento"`, `"sexo"` o `"area"`. Por sexo solo quedan la mortalidad general y la infantil: los
-nacimientos se cuentan por el sexo del nacido, así que la natalidad, la fecundidad y la mortalidad materna no se pueden partir así.
+Cada tasa sigue su ficha técnica del DANE (*Fichas técnicas de indicadores EEVV*, 2026):
+
+* **Mortalidad infantil y neonatal**: defunciones de menores de un año, y de 0 a 27 días, por 1.000 nacidos vivos. Antes de
+  1998 la neonatal queda vacía, porque los grupos de edad juntan de 7 a 29 días.
+* **Mortalidad perinatal**: mortinatos y defunciones de 0 a 6 días, por 1.000 nacidos vivos más mortinatos. Un mortinato
+  es una defunción fetal de 22 semanas o más, o de 500 gramos o más. Los microdatos agrupan el peso desde «menos de 1.000
+  gramos», así que `mortinato` solo confirma el peso desde 1.000 y queda vacío sin gestación y con menos de 1.000 gramos
+  (2 309 de las 19 620 defunciones fetales de 2025): la tasa puede quedar algo por debajo de la del DANE. Las demás
+  defunciones fetales, la mayoría de menos de 22 semanas, son abortos y no entran.
+* **Razón de mortalidad materna**: muertes maternas de hasta 42 días por 100.000 nacidos vivos.
+* **Tasas específicas**: la fecundidad por 1.000 mujeres del grupo de edad, la mortalidad por 100.000 personas.
+
+Se puede desagregar por `"departamento"`, `"sexo"` o `"area"`. Por sexo solo quedan la mortalidad general, la infantil y la
+neonatal: los nacimientos se cuentan por el sexo del nacido, así que la natalidad, la fecundidad y la mortalidad materna no se
+pueden partir así, y las defunciones fetales casi siempre tienen sexo indeterminado.
 {dd}`eevv.tasas_especificas()` da las tasas por edad:
 
 ```text
@@ -176,7 +204,7 @@ Reglas del cálculo:
   los departamentos es menor que el total nacional, que sí los incluye para coincidir con lo publicado.
 * Por área se comparan «Cabecera» y «Centros poblados y rural disperso», como en las proyecciones.
 * La tasa global de fecundidad suma las mujeres de 15 a 49 años. Los nacimientos sin edad de la madre no entran.
-* Por sexo no hay fecundidad ni defunciones fetales, que casi siempre tienen sexo indeterminado.
+* Por sexo solo hay mortalidad general, infantil y neonatal.
 * Antes de 1985 no hay población por departamento: esos años quedan sin tasa, con un aviso.
 
 ## Lo que cambia con los años
@@ -191,6 +219,8 @@ Reglas del cálculo:
 | Estado civil | Tres esquemas: 1979–1997, 1998–2007 y desde 2008 | | `estado_civil`. Hasta 1997, «unión libre» incluye divorciados |
 | Régimen de salud | Vinculado y particular hasta 2007 | Excepción, especial y no asegurado | `regimen_salud`, desde 1998. No son las mismas categorías |
 | Prematuridad | Sin dato antes de 2008, ni en 2012, 2013 y 2020 | `T_GES_AGRU_CIE` | `prematuro`. `T_GES` no sirve, porque agrupa «de 28 a 37» semanas |
+| Período neonatal | Hasta 1997, `GRU_ED1` junta de 7 a 29 días | Desde 1998 separa de 7 a 27 días | `neonatal` queda vacía antes de 1998; `neonatal_precoz` (0 a 6 días) está en toda la serie |
+| Fuentes | Hasta 2021, solo certificados del sector salud (RUAF-ND) | Desde 2022 también registros de la Registraduría sin contacto con el sector salud y formatos de notificación étnica (`TIPOFORMULARIO` 3 y 2) | Entran en los conteos, como en los cuadros del DANE. Los de la Registraduría no traen consultas, peso, sitio del parto ni departamento de residencia: en 2025 son 7 413 nacimientos, 1,7 % del total |
 
 ## Problemas conocidos de los archivos
 
@@ -203,6 +233,15 @@ Reglas del cálculo:
   son cambios de la mortalidad.
 
 Los detalles están en {doc}`diferencias`. `load`, `tasas` y las funciones `serie_*` avisan de los dos primeros.
+
+## Documentos del DANE
+
+* *Metodología General Estadísticas Vitales*, DSO-EEVV-MET-001, versión 3 (1 de septiembre de 2022). El archivo de la página
+  del DANE se llama `EEVV-MET-001-V2.pdf`, pero es la versión 3.
+* *Ficha metodológica Estadísticas Vitales*, DSO-EEVV-FME-001, versión 10 (2022): de ella salen los indicadores de partos en
+  institución de salud, consultas prenatales, bajo peso y causas mal definidas.
+* *Fichas técnicas de indicadores EEVV* (versión 1, 24 de septiembre de 2026): de ellas salen las fórmulas de {dd}`eevv.tasas()`.
+* *Normas y recomendaciones para la codificación de la mortalidad materna* y *de la mortalidad fetal y neonatal* (2017).
 
 ```{seealso}
 El ejemplo {doc}`../ejemplos/vitales` grafica la caída de la natalidad, la mortalidad infantil por departamento y los homicidios

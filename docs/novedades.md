@@ -10,8 +10,9 @@
   `dane-data descargar eevv`.
 * {dd}`poblacion()`: las proyecciones de población del DANE, por departamento (1985–2050) y en total nacional (1950–2070), por
   sexo, edad simple y área. Vienen con la librería, sin descargar nada.
-* {dd}`eevv.tasas()` y {dd}`eevv.tasas_especificas()`: natalidad, mortalidad, fecundidad, mortalidad infantil y materna. Son de
-  hechos registrados, sin ajustar por subregistro.
+* {dd}`eevv.tasas()` y {dd}`eevv.tasas_especificas()`: natalidad, mortalidad, fecundidad, mortalidad infantil, neonatal,
+  perinatal y materna, con las fórmulas de las fichas técnicas de indicadores del DANE (2026). Son de hechos registrados, sin
+  ajustar por subregistro.
 * {dd}`set_paths()` acepta `eevv=` y `dane-data config` acepta `--eevv`.
 
 ## 0.3.2 (29 de octubre de 2026)

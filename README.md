@@ -234,7 +234,12 @@ comparar.
 - **Estadísticas Vitales, tasas**: `dd.eevv.tasas` usa hechos registrados, sin ajustar por subregistro, así que no tiene por
   qué coincidir con los indicadores demográficos del DANE, que salen de un modelo. Los años antiguos salen más bajos que los
   reales. Por departamento y área se usa la residencia, y quedan por fuera los residentes en el extranjero y quienes no
-  tienen el dato.
+  tienen el dato. Cada tasa sigue la fórmula de su ficha técnica del DANE (2026): la razón de mortalidad materna cuenta solo
+  las muertes de hasta 42 días (sin O96 ni O97), y la mortalidad perinatal, los mortinatos y no todas las defunciones fetales.
+- **Estadísticas Vitales, fuentes desde 2022**: además de los certificados del sector salud entran registros de la
+  Registraduría y formatos de notificación étnica (`TIPOFORMULARIO`). Están en los conteos, como en los cuadros del DANE, pero
+  los de la Registraduría no traen consultas, peso, sitio del parto ni departamento de residencia (1,7 % de los nacimientos
+  de 2025).
 - **Estadísticas Vitales, comparación en el tiempo**: las causas básicas pasan de CIE-9 a CIE-10 en 1997 (use `causa_105`
   para series largas), los archivos de 1979 y 1980 están incompletos, y enero–junio de 1991 no separa las edades de los
   menores de 10 años. El registro fue mejorando: parte de los cambios, sobre todo en defunciones fetales hasta 2012, es mejor
@@ -277,6 +282,7 @@ el DANE, así que en estos casos no coincide con las variables armonizadas.
 | `MUL_PARTO` → `parto_multiple` (nacimientos 2008–2011 y 2014–2019) | «Sin información» es el 5. | En los datos siempre es el 9, como en los demás años, y el 5 no aparece. `parto_multiple` deja vacíos los dos. |
 | `CAUSA_667`, `CAU_HOMOL` → `causa_667_nombre`, `causa_105_nombre` (toda la serie) | El DDI trae los códigos sin nombre. | Los nombres salen de los cuadros de defunciones del DANE. `CAUSA_666` (hasta 2018) es otra lista, aunque se parezca: el 407 de una es el 406 de la otra, así que `causa_667` queda vacía donde solo está `CAUSA_666` y `gran_causa` usa su primer dígito, que sí coincide (el 7 de la 6/66 es el 0 de la 6/67). |
 | `PESO_NAC` → `mortinato`, `mortalidad_perinatal` (fetales, toda la serie) | La ficha técnica de la tasa de mortalidad perinatal del DANE (2026) cuenta como mortinato la defunción fetal de 22 semanas o más **o** de 500 gramos o más. | Los microdatos agrupan el peso desde «menos de 1.000 gramos» (los cuadros del DANE sí separan de 300 a 999), así que con menos de 22 semanas, o sin gestación, no se puede saber si pesaba 500 gramos. `mortinato` es True con 22 semanas o más o con 1.000 gramos o más, False con menos de 22 semanas y de 1.000 gramos (el DANE contaría las de 500 a 999), y vacío sin gestación y con menos de 1.000 gramos: 2 309 de las 19 620 defunciones fetales de 2025. Por eso `mortalidad_perinatal` puede quedar algo por debajo de la del DANE. |
+| Defunciones fetales antes de 1998 | La ficha metodológica V10 (DSO-EEVV-FME-001) dice que hay microdatos anonimizados de defunciones fetales desde 1992. | En el ANDA, los catálogos de 1992–1996 (397) y 1997 (398) solo traen `Defun1992.zip` a `Defun1997.zip`, y esos archivos no tienen `TIPO_DEFUN` ni grupos de edad fetales: son solo defunciones no fetales. `dane-data` ofrece las fetales desde 1998, el primer año que hay en el ANDA. |
 
 ## Estructura
 
