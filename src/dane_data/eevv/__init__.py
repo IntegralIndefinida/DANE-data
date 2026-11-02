@@ -6,7 +6,9 @@ import numbers
 from typing import Iterable
 
 from .. import config
+from .agregados import clear_cache, serie_conteos, serie_indicadores, tasas, tasas_especificas
 from .downloader import EEVV_KNOWN_FILES, EEVVDownloader
+from .indicadores import GLOSARIO, indicadores
 from .loader import (CATEGORIAS, CORE, ETIQUETAS, GRANDES_CAUSAS, GRUPOS_EDAD, GRUPOS_EDAD_AMPLIOS, TIPOS, _tipo_valido,
                      available, causas, find_files, harmonize, load)
 
@@ -93,6 +95,7 @@ def download(
 
 
 __all__ = [
-    "download", "available", "find_files", "load", "harmonize", "causas", "TIPOS", "ANIOS_DISPONIBLES", "CORE",
-    "ETIQUETAS", "CATEGORIAS", "GRANDES_CAUSAS", "GRUPOS_EDAD", "GRUPOS_EDAD_AMPLIOS",
+    "download", "available", "find_files", "load", "harmonize", "causas", "indicadores", "serie_indicadores",
+    "serie_conteos", "tasas", "tasas_especificas", "clear_cache", "TIPOS", "ANIOS_DISPONIBLES", "CORE", "ETIQUETAS",
+    "CATEGORIAS", "GRANDES_CAUSAS", "GRUPOS_EDAD", "GRUPOS_EDAD_AMPLIOS", "GLOSARIO",
 ]
