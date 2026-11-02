@@ -421,6 +421,20 @@ def test_clear_cache(eevv_root, cache):
     assert not list(cache.rglob("*.parquet"))
 
 
+def test_cache_sin_usar_se_borra_sola(eevv_root, cache):
+    """Como en la GEIH: al escribir en la caché se borra lo que no se usa hace 90 días, solo de las Estadísticas Vitales."""
+    import os
+    import time
+
+    viejo, de_la_geih = cache / "eevv" / "defunciones" / "conteos" / "1990_viejo.parquet", cache / "geih" / "2016_01_viejo.parquet"
+    for f in (viejo, de_la_geih):
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_bytes(b"x")
+        os.utime(f, (time.time() - 100 * 86400,) * 2)
+    dd.eevv.serie_indicadores(2025, root=eevv_root)
+    assert not viejo.exists() and de_la_geih.exists()
+
+
 # ---------------------------------------------------------------------------------------------------- #
 # Tasas
 # ---------------------------------------------------------------------------------------------------- #

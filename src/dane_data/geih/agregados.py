@@ -114,15 +114,19 @@ def _mascara(df: pd.DataFrame, filtros: dict | None, poblacion: str | None = Non
 # --------------------------------------------------------------------------- #
 # Caché por año
 # --------------------------------------------------------------------------- #
-@lru_cache(maxsize=1)
-def _firma_codigo() -> str:
-    """Hash del código que produce los resultados: si cambia, la caché se recalcula sola."""
+# El código que produce los resultados de la GEIH
+_CODIGO = ("geih/loader.py", "geih/indicadores.py", "geih/agregados.py", "stats.py", "referencias.py", "_io.py")
+
+
+@lru_cache(maxsize=None)
+def _firma_codigo(archivos: tuple[str, ...] = _CODIGO) -> str:
+    """Hash de la versión y de ``archivos`` (rutas dentro del paquete): si cambia el código que produce los
+    resultados, su caché se recalcula sola. Las Estadísticas Vitales la usan con sus propios archivos."""
     from .. import __version__
 
     base = Path(__file__).resolve().parent.parent
     h = hashlib.sha1(__version__.encode())
-    for rel in ("geih/loader.py", "geih/indicadores.py", "geih/agregados.py", "stats.py", "referencias.py",
-                "_io.py"):
+    for rel in archivos:
         try:
             h.update((base / rel).read_bytes())
         except OSError:

@@ -11,9 +11,7 @@ import hashlib
 import json
 import logging
 import numbers
-import time
 import warnings
-from functools import lru_cache
 from pathlib import Path
 from typing import Callable, Iterable
 
@@ -21,15 +19,14 @@ import numpy as np
 import pandas as pd
 
 from .. import config
-from ..geih.agregados import _clave_json, _mascara
-from ..geih.loader import _guardar_parquet, _usado
+from ..geih.agregados import _clave_json, _firma_codigo, _mascara
+from ..geih.loader import _borrar_cache, _guardar_parquet, _usado
 from ..proyecciones import poblacion
 from .indicadores import _lista, indicadores
 from .loader import _SIN_DETALLE, _avisar_cobertura, _root, _tipo_valido, _unir, find_files, load
 
 log = logging.getLogger("dane_data.eevv")
 
-_CACHE_DIAS = 90  # Días sin usarse tras los cuales un archivo de la caché se borra solo
 _MIL = 1000
 
 # Cómo se llama cada desagregación de las tasas en los certificados
@@ -42,21 +39,10 @@ _EDADES_DEFUNCION = {"Menor de 1 año": (0, 0), "De 1 a 4 años": (1, 4),
                      **{f"De {a} a {a + 4} años": (a, a + 4) for a in range(5, 85, 5)}, "De 85 años y más": (85, 100)}
 
 
-@lru_cache(maxsize=1)
-def _firma_codigo() -> str:
-    """Hash de lo que produce los resultados: si cambia, la caché se recalcula sola."""
-    from .. import __version__
-
-    base = Path(__file__).resolve().parent.parent
-    h = hashlib.sha1(__version__.encode())
-    # stats.py (_con_categorias) y geih/agregados.py (_mascara, _clave_json) también dan forma a lo que se guarda
-    for rel in ("eevv/loader.py", "eevv/indicadores.py", "eevv/agregados.py", "proyecciones.py", "referencias.py", "_io.py",
-                "stats.py", "geih/agregados.py", "data/eevv_causas.json", "data/proyecciones_poblacion.parquet"):
-        try:
-            h.update((base / rel).read_bytes())
-        except OSError:
-            pass
-    return h.hexdigest()[:16]
+# Lo que produce los resultados (para _firma_codigo). stats.py (_con_categorias) y geih/agregados.py (_mascara,
+# _clave_json) también dan forma a lo que se guarda.
+_CODIGO = ("eevv/loader.py", "eevv/indicadores.py", "eevv/agregados.py", "proyecciones.py", "referencias.py", "_io.py",
+           "stats.py", "geih/agregados.py", "data/eevv_causas.json", "data/proyecciones_poblacion.parquet")
 
 
 def _firma_archivo(ruta: Path) -> str:
@@ -91,32 +77,7 @@ def clear_cache(dias: float | None = None) -> int:
     >>> dd.eevv.clear_cache()  # doctest: +SKIP
     57
     """
-    limite = None if dias is None else time.time() - dias * 86400
-    n = 0
-    for f in (config.CACHE_DIR / "eevv").rglob("*"):
-        if f.suffix not in (".parquet", ".tmp"):  # .tmp: escrituras que se interrumpieron
-            continue
-        try:
-            if limite is None or f.stat().st_mtime < limite:
-                f.unlink()
-                n += 1
-        except OSError:  # otra sesión lo borró o lo está usando
-            pass
-    return n
-
-
-def _limpiar_cache_vieja() -> None:
-    """``clear_cache(_CACHE_DIAS)``, como mucho una vez al día (la fecha del marcador dice cuándo fue la última)."""
-    marcador = config.CACHE_DIR / "eevv" / ".ultima_limpieza"
-    try:
-        if marcador.exists() and time.time() - marcador.stat().st_mtime < 86400:
-            return
-        marcador.parent.mkdir(parents=True, exist_ok=True)
-        marcador.touch()
-    except OSError:
-        return
-    if n := clear_cache(_CACHE_DIAS):
-        log.info(f"Caché: se borraron {n} archivos sin usar en {_CACHE_DIAS} días.")
+    return _borrar_cache("eevv", dias)
 
 
 def _desde_cache(ruta: Path, calcular: Callable[[], pd.DataFrame]) -> pd.DataFrame:
@@ -129,8 +90,7 @@ def _desde_cache(ruta: Path, calcular: Callable[[], pd.DataFrame]) -> pd.DataFra
             pass
     tabla = calcular()
     try:
-        _guardar_parquet(tabla, ruta)
-        _limpiar_cache_vieja()
+        _guardar_parquet(tabla, ruta, "eevv")
     except Exception as e:  # disco lleno, sin permisos, etc.
         log.debug(f"No se pudo guardar caché {ruta}: {e}")
     return tabla
@@ -138,7 +98,7 @@ def _desde_cache(ruta: Path, calcular: Callable[[], pd.DataFrame]) -> pd.DataFra
 
 def _armonizado(tipo: str, anio: int, ruta: Path) -> pd.DataFrame:
     """Un año ya armonizado. Leerlo de la caché es unas diez veces más rápido que del archivo del DANE."""
-    digest = hashlib.sha1("|".join([_firma_codigo(), _firma_archivo(ruta)]).encode()).hexdigest()[:16]
+    digest = hashlib.sha1("|".join([_firma_codigo(_CODIGO), _firma_archivo(ruta)]).encode()).hexdigest()[:16]
 
     def leer() -> pd.DataFrame:
         with warnings.catch_warnings():
@@ -162,7 +122,7 @@ def _por_anio(tabla: str, anios, tipo: str, solicitud: dict, calcular: Callable[
     for i, (anio, ruta) in enumerate(sorted(archivos.items())):
         if progress:
             progress(i / len(archivos), f"Calculando {tipo} {anio} (solo la primera vez)")
-        digest = hashlib.sha1("|".join([_firma_codigo(), _firma_archivo(ruta), texto]).encode()).hexdigest()[:16]
+        digest = hashlib.sha1("|".join([_firma_codigo(_CODIGO), _firma_archivo(ruta), texto]).encode()).hexdigest()[:16]
         destino = config.CACHE_DIR / "eevv" / tipo / tabla / f"{anio}_{digest}.parquet"
         partes.append(_desde_cache(destino, lambda a=anio, r=ruta: calcular(_armonizado(tipo, a, r))))
     if progress:

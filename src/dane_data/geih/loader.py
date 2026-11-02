@@ -1083,9 +1083,14 @@ def clear_cache(dias: float | None = None) -> int:
     >>> dd.geih.clear_cache(dias=30)  # lo que no se usó en el último mes  # doctest: +SKIP
     57
     """
+    return _borrar_cache("geih", dias)
+
+
+def _borrar_cache(carpeta: str, dias: float | None) -> int:
+    """``clear_cache`` de una carpeta de la caché (``"geih"`` o ``"eevv"``)."""
     limite = None if dias is None else time.time() - dias * 86400
     n = 0
-    for f in (config.CACHE_DIR / "geih").rglob("*"):
+    for f in (config.CACHE_DIR / carpeta).rglob("*"):
         if f.suffix not in (".parquet", ".tmp"):  # .tmp: escrituras que se interrumpieron
             continue
         try:
@@ -1109,9 +1114,9 @@ def _usado(ruta: Path) -> None:
         pass
 
 
-def _limpiar_cache_vieja() -> None:
-    """``clear_cache(_CACHE_DIAS)``, como mucho una vez al día (la fecha del marcador dice cuándo fue la última)."""
-    marcador = config.CACHE_DIR / "geih" / ".ultima_limpieza"
+def _limpiar_cache_vieja(carpeta: str) -> None:
+    """``_borrar_cache(carpeta, _CACHE_DIAS)``, como mucho una vez al día (la fecha del marcador dice cuándo fue la última)."""
+    marcador = config.CACHE_DIR / carpeta / ".ultima_limpieza"
     try:
         if marcador.exists() and time.time() - marcador.stat().st_mtime < 86400:
             return
@@ -1119,15 +1124,15 @@ def _limpiar_cache_vieja() -> None:
         marcador.touch()
     except OSError:
         return
-    if n := clear_cache(_CACHE_DIAS):
-        log.info(f"Caché: se borraron {n} archivos sin usar en {_CACHE_DIAS} días.")
+    if n := _borrar_cache(carpeta, _CACHE_DIAS):
+        logging.getLogger(f"dane_data.{carpeta}").info(f"Caché: se borraron {n} archivos sin usar en {_CACHE_DIAS} días.")
 
 
-def _guardar_parquet(df: pd.DataFrame, ruta: Path) -> None:
+def _guardar_parquet(df: pd.DataFrame, ruta: Path, carpeta: str = "geih") -> None:
     """
     Escribe la caché con otro nombre y la renombra al terminar, así nunca se lee un parquet a medias.
     El nombre temporal es único: las sesiones de la app son hilos del mismo proceso y pueden calcular
-    lo mismo a la vez.
+    lo mismo a la vez. ``carpeta`` es la de la caché que se limpia después (``"geih"`` o ``"eevv"``).
     """
     ruta.parent.mkdir(parents=True, exist_ok=True)
     tmp = ruta.with_name(f"{ruta.name}.{uuid.uuid4().hex}.tmp")
@@ -1136,4 +1141,4 @@ def _guardar_parquet(df: pd.DataFrame, ruta: Path) -> None:
         tmp.replace(ruta)
     finally:
         tmp.unlink(missing_ok=True)
-    _limpiar_cache_vieja()  # al escribir algo nuevo, lo viejo que nadie usa
+    _limpiar_cache_vieja(carpeta)  # al escribir algo nuevo, lo viejo que nadie usa
