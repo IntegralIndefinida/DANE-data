@@ -436,7 +436,8 @@ def test_tasas_avisos_de_cobertura_y_anios_sin_poblacion(eevv_root, cache):
         r = dd.eevv.tasas(1979, root=eevv_root).iloc[0]
     assert r["poblacion"] == _poblacion(1979) and r["tasa_mortalidad"] > 0
     assert pd.isna(r["tasa_natalidad"]) and pd.isna(r["mortalidad_infantil"])
-    with pytest.warns(UserWarning, match="1985"):
+    # Los dos avisos: pytest.warns vuelve a lanzar los que no coinciden
+    with pytest.warns(UserWarning, match="1985"), pytest.warns(UserWarning, match="incompletos"):
         r = dd.eevv.tasas(1979, por="departamento", root=eevv_root)
     assert r["defunciones"].sum() == 2 and r["tasa_mortalidad"].isna().all()
 
