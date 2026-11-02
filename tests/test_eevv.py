@@ -1,7 +1,9 @@
 """Estadísticas Vitales: carpetas, carga, armonización, indicadores y tasas."""
 
 import json
+import os
 import warnings
+from pathlib import Path
 
 import pandas as pd
 import pytest
@@ -522,3 +524,78 @@ def test_cli_config(tmp_path, monkeypatch, capsys):
     monkeypatch.delenv("DANE_DATA_EEVV", raising=False)
     assert cli.main(["config", "--eevv", str(tmp_path / "x")]) == 0
     assert json.loads((tmp_path / "c.json").read_text())["eevv"] == str(tmp_path / "x")
+
+
+# ---------------------------------------------------------------------------------------------------- #
+# Datos reales (se saltan si no están)
+# ---------------------------------------------------------------------------------------------------- #
+REAL = Path(os.environ.get("DANE_DATA_TEST_EEVV", dd.get_path("eevv")))
+hay_datos_reales = pytest.mark.skipif(not (REAL / "datos").is_dir(), reason="sin datos reales de las Estadísticas Vitales")
+DATOS = Path(__file__).parent / "datos"
+
+
+@hay_datos_reales
+@pytest.mark.parametrize("tipo", dd.eevv.TIPOS)
+def test_real_coincide_con_lo_publicado(tipo):
+    """El total y el sexo de cada año, contra los cuadros definitivos del DANE (2008–2025)."""
+    publicado = pd.read_csv(DATOS / "dane_eevv_publicado.csv")
+    publicado = publicado[publicado["tipo"] == tipo].set_index("anio")
+    assert len(publicado) == 18
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+        conteo = dd.eevv.serie_conteos(publicado.index.tolist(), tipo, por="sexo", dropna=False, root=REAL)
+    total = conteo.groupby("anio")["n"].sum()
+    pd.testing.assert_series_equal(total, publicado["total"], check_names=False, check_index_type=False)
+    for sexo, columna in (("Hombre", "hombres"), ("Mujer", "mujeres")):
+        d = conteo[conteo["sexo"] == sexo].set_index("anio")["n"]
+        pd.testing.assert_series_equal(d, publicado[columna], check_names=False, check_index_type=False)
+
+
+@hay_datos_reales
+@pytest.mark.parametrize("tipo", dd.eevv.TIPOS)
+def test_real_coincide_por_departamento(tipo):
+    """Los 33 departamentos de 2019–2025, contra los cuadros del DANE."""
+    publicado = pd.read_csv(DATOS / "dane_eevv_departamentos.csv")
+    publicado = publicado[publicado["tipo"] == tipo]
+    columna = f"dpto_{publicado['base'].iloc[0]}"
+    conteo = dd.eevv.serie_conteos(sorted(publicado["anio"].unique()), tipo, por=columna, root=REAL)
+    res = conteo.rename(columns={columna: "dpto"}).astype({"dpto": "int64", "anio": "int64"})
+    res = res[res["dpto"].isin(publicado["dpto"])].set_index(["anio", "dpto"])["n"].sort_index()
+    pd.testing.assert_series_equal(res, publicado.set_index(["anio", "dpto"])["total"].sort_index(), check_names=False)
+
+
+@hay_datos_reales
+def test_real_grupos_de_edad_coinciden_con_gru_ed2():
+    """El DANE agrupa GRU_ED2 aparte desde 1992: el grupo amplio armonizado debe dar lo mismo, salvo errores sueltos."""
+    amplios = dict(enumerate(dd.eevv.GRUPOS_EDAD_AMPLIOS[:7], start=1))
+    for anio in (1992, 1997, 1998, 2007, 2008, 2025):
+        d = dd.eevv.load(anio, columns=["GRU_ED2"], root=REAL)
+        esperado = pd.to_numeric(d["GRU_ED2"]).map(amplios)
+        assert (d["grupo_edad_amplio"].astype("object") == esperado).mean() > 0.9995, anio
+
+
+@hay_datos_reales
+def test_real_serie_sin_saltos():
+    """Cambios anuales grandes fuera de lo conocido: archivos cortados o mal leídos."""
+    conocidos = {
+        # 1980–1981 completan departamentos que faltan en 1979; 1985 sube en todo el país, sin explicación documentada;
+        # 2020–2022 es la pandemia
+        "defunciones": {1980, 1981, 1985, 2020, 2021, 2022},
+        "nacimientos": {2023, 2024},  # la caída de la natalidad
+        "fetales": {2000, 2001, 2002, 2003, 2005, 2007, 2011, 2012, 2020, 2023, 2024},  # muy variable: el registro va mejorando
+    }
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+        for tipo in dd.eevv.TIPOS:
+            t = dd.eevv.serie_conteos(tipo=tipo, root=REAL).set_index("anio")["n"]
+            assert list(t.index) == list(range(t.index.min(), 2026)), tipo
+            variacion = t.pct_change().abs().dropna()
+            saltos = {int(a) for a in variacion[variacion > 0.10].index} - conocidos[tipo]
+            assert not saltos, (tipo, saltos)
+
+
+@hay_datos_reales
+def test_real_materna_coincide_con_el_cuadro_7():
+    r = dd.eevv.indicadores(dd.eevv.load(2025, root=REAL)).iloc[0]
+    assert r["maternas"] == 355
+    assert r["menores_un_anio"] == 4526
