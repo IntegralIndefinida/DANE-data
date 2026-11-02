@@ -5,7 +5,7 @@ hacen dos tipos de comprobaciones.
 
 ## Con datos sintéticos
 
-`tests/conftest.py` construye carpetas de la GEIH y la EAM con las rarezas de cada época: archivos partidos
+`tests/conftest.py` construye carpetas de la GEIH, la EAM y las Estadísticas Vitales con las rarezas de cada época: archivos partidos
 en Área, Cabecera y Resto; separadores `;` con coma decimal; codificación Latin-1; módulos en subcarpetas;
 meses incompletos; archivos de texto tabulados. Las pruebas revisan que la carga, la armonización y los
 cálculos den lo esperado en cada caso, que las funciones `serie_*` den exactamente lo mismo que el cálculo
@@ -34,6 +34,26 @@ por un defecto de los archivos del ANDA que no tiene arreglo (vea {doc}`diferenc
 Además, una prueba recorre toda la serie mes a mes buscando huecos y saltos bruscos: cambios de la PET de
 más de 1 % fuera de los cambios de metodología conocidos, y cambios de las tasas de más de 5 puntos fuera de
 la pandemia (abril de 2020).
+
+## Estadísticas Vitales
+
+Con los datos reales, las pruebas comparan los tres certificados con los cuadros definitivos del DANE, y coinciden
+**exactamente**, sin ninguna diferencia:
+
+| Qué | Años |
+|---|---|
+| Total nacional, hombres y mujeres | 2008–2025 |
+| Total de cada uno de los 33 departamentos (de residencia en nacimientos y defunciones, de ocurrencia en fetales) | 2019–2025 |
+| Defunciones maternas y de menores de un año | 2025 |
+
+También comprueban que los grupos de edad armonizados den lo mismo que los que el DANE agrupa aparte (`GRU_ED2`), y buscan
+años faltantes y saltos anuales de más de 10 % fuera de los conocidos.
+
+**Antes de 2008 no hay contraste externo:** el DANE no publica esos cuadros en su página. Esos años solo tienen la revisión de
+conteos y saltos, además de las rarezas que están en {doc}`diferencias`.
+
+Las proyecciones de población se comprueban al generarlas: las áreas suman el total del archivo, los departamentos suman el
+total nacional en cada año y la serie no salta entre los archivos del DANE.
 
 ```{seealso}
 El ejemplo {doc}`../ejemplos/validacion` grafica la tasa de desocupación de `dane-data` sobre la publicada

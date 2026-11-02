@@ -73,7 +73,7 @@ _CAUSA_ETIQUETAS = {
     "cie_rev": "Revisión de la CIE de causa_cie: 9 hasta 1996, 10 desde 1997",
     "causa_105": "Código de la lista Colombia 105 (CAU_HOMOL), toda la serie",
     "causa_105_nombre": "Nombre de la causa en la lista 105",
-    "causa_667": "Código de la lista 6/67 de la OPS (CAUSA_667); vacío en 1998–2007 y 2012–2013",
+    "causa_667": "Código de la lista 6/67 de la OPS (CAUSA_667), solo en 2008–2011 y 2014–2025",
     "causa_667_nombre": "Nombre de la causa en la lista 6/67",
     "gran_causa": "Gran grupo de la lista de la OPS, desde 1998",
 }
@@ -638,8 +638,8 @@ def load(
     >>> nac = dd.eevv.load(2025, tipo="nacimientos")  # doctest: +SKIP
     >>> len(nac)  # doctest: +SKIP
     441537
-    >>> nac["cesarea"].mean()  # doctest: +SKIP
-    0.5393
+    >>> round(float(nac["cesarea"].mean()), 4)  # doctest: +SKIP
+    0.5384
     """
     archivos = find_files(years, tipo=_tipo_valido(tipo), root=root)
     if not archivos:

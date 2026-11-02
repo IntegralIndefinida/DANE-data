@@ -15,8 +15,8 @@ import dane_data as dd
 :link: general
 :link-type: doc
 
-Carpetas de datos, tablas y estadísticas ponderadas, diccionario de variables y datos de referencia
-(salario mínimo, departamentos).
+Carpetas de datos, tablas y estadísticas ponderadas, diccionario de variables, proyecciones de población y
+datos de referencia (salario mínimo, departamentos).
 :::
 
 :::{grid-item-card} `dd.geih`
@@ -34,6 +34,13 @@ largas y exportación.
 Encuesta Anual Manufacturera: descarga, carga armonizada, agregados industriales y panel de
 establecimientos.
 :::
+
+:::{grid-item-card} `dd.eevv`
+:link: eevv
+:link-type: doc
+
+Estadísticas Vitales: descarga, carga armonizada, indicadores y tasas de natalidad, mortalidad y fecundidad.
+:::
 ::::
 
 ```{toctree}
@@ -42,4 +49,5 @@ establecimientos.
 general
 geih
 eam
+eevv
 ```

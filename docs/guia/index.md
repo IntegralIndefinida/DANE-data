@@ -42,6 +42,12 @@ La Encuesta Anual Manufacturera: agregados por sector y panel de establecimiento
 * {doc}`eam`
 :::
 
+:::{grid-item-card} {octicon}`heart` Estadísticas Vitales
+Nacimientos, defunciones y causas de muerte, con tasas sobre la población.
+
+* {doc}`eevv`
+:::
+
 :::{grid-item-card} {octicon}`terminal` Línea de comandos
 Descargar los datos, ver el estado y abrir la aplicación desde la terminal.
 
@@ -95,6 +101,13 @@ series_largas
 :caption: Industria
 
 eam
+```
+
+```{toctree}
+:hidden:
+:caption: Estadísticas Vitales
+
+eevv
 ```
 
 ```{toctree}

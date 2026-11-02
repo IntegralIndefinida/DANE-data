@@ -14,6 +14,13 @@ Los agregados de {dd}`eam.resumen()` (vienen de `dd.eam.GLOSARIO`).
 ```{include} _generado/glosario_eam.md
 ```
 
+## Estadísticas Vitales
+
+Los indicadores de {dd}`eevv.indicadores()` y las tasas de {dd}`eevv.tasas()` (vienen de `dd.eevv.GLOSARIO`).
+
+```{include} _generado/glosario_eevv.md
+```
+
 ## Términos de las encuestas
 
 ```{glossary}

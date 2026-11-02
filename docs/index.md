@@ -5,9 +5,9 @@ html_theme.sidebar_secondary.remove: true
 # dane-data
 
 :::{div} lema
-**Microdatos del DANE listos para analizar.** La Gran Encuesta Integrada de Hogares (GEIH, 2007–2026) y
-la Encuesta Anual Manufacturera (EAM, 1992–2024), descargadas, unidas y armonizadas, en Python o en una
-aplicación en el navegador.
+**Microdatos del DANE listos para analizar.** La Gran Encuesta Integrada de Hogares (GEIH, 2007–2026), la
+Encuesta Anual Manufacturera (EAM, 1992–2024) y las Estadísticas Vitales (nacimientos y defunciones, 1979–2025),
+descargadas, unidas y armonizadas, en Python o en una aplicación en el navegador.
 :::
 
 ::::{grid} auto
@@ -59,6 +59,7 @@ lanzador (vea {doc}`instalacion`).
 ```bash
 dane-data descargar geih --anios 2024 2025
 dane-data descargar eam --anios 2022 2023 2024
+dane-data descargar eevv --anios 2025
 dane-data estado
 ```
 :::

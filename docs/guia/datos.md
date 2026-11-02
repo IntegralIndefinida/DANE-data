@@ -8,6 +8,7 @@ Cada encuesta tiene su carpeta raíz, con esta estructura:
 <raíz GEIH>/datos_csv/<año>/<mes>/*.csv     serie principal
 <raíz empalme>/datos_csv/<año>/<mes>/*.csv  serie de empalme
 <raíz EAM>/datos/<año>/*.csv|*.txt
+<raíz EEVV>/datos/<tipo>/<año>/*.csv|*.txt  estadísticas vitales
 ```
 
 Las carpetas de los meses conservan el nombre que trae el ZIP del DANE (`Enero 2024`, `ENE_2021`…);
@@ -20,20 +21,20 @@ Por defecto todo queda en `~/dane_data_datos/`. Para usar otras carpetas (por ej
 ```python
 import dane_data as dd
 
-dd.set_paths(geih="D:/datos/GEIH", geih_empalme="D:/datos/GEIH_empalme", eam="D:/datos/EAM", save=True)
+dd.set_paths(geih="D:/datos/GEIH", geih_empalme="D:/datos/GEIH_empalme", eam="D:/datos/EAM", eevv="D:/datos/EEVV", save=True)
 ```
 
 Con `save=True` quedan guardadas en `~/.config/dane_data/config.json` para las próximas sesiones, para la
 línea de comandos y para la aplicación; sin él, valen solo para la sesión actual. Lo mismo se hace desde la
-terminal con `dane-data config --geih RUTA --empalme RUTA --eam RUTA` o desde la página de inicio de la
+terminal con `dane-data config --geih RUTA --empalme RUTA --eam RUTA --eevv RUTA` o desde la página de inicio de la
 aplicación.
 
 Cada carpeta se resuelve en este orden:
 
 1. {dd}`set_paths()` en la sesión actual.
-2. Las variables de entorno `DANE_DATA_GEIH`, `DANE_DATA_GEIH_EMPALME` y `DANE_DATA_EAM`.
+2. Las variables de entorno `DANE_DATA_GEIH`, `DANE_DATA_GEIH_EMPALME`, `DANE_DATA_EAM` y `DANE_DATA_EEVV`.
 3. El archivo `~/.config/dane_data/config.json`.
-4. `~/dane_data_datos/geih`, `~/dane_data_datos/geih/empalme` y `~/dane_data_datos/eam`.
+4. `~/dane_data_datos/geih`, `~/dane_data_datos/geih/empalme`, `~/dane_data_datos/eam` y `~/dane_data_datos/eevv`.
 
 {dd}`show_paths()` muestra las carpetas que se están usando, y {dd}`get_path()` una sola.
 
@@ -47,6 +48,8 @@ dd.geih.download(2016, empalme=True)    # serie de empalme
 dd.geih.download(2025, limit_files=1)   # solo enero, para probar
 dd.eam.download(range(2014, 2025))      # EAM
 dd.eam.download()                       # toda la EAM, 1992–2024
+dd.eevv.download(2025)                  # los tres certificados de las Estadísticas Vitales
+dd.eevv.download(tipos="defunciones")   # todas las defunciones, 1979–2025
 ```
 
 {dd}`geih.download()` y {dd}`eam.download()` buscan los archivos en el catálogo del ANDA de cada año, bajan
@@ -64,7 +67,7 @@ los ZIP y extraen los módulos. Las descargas son **incrementales**:
 * Para bajar solo algunos módulos, `modules=["caracteristicas", "ocupados"]`; los nombres están en
   `dd.geih.DEFAULT_MODULES`.
 
-Las dos funciones devuelven lo que no se pudo bajar o extraer (un ZIP que no se descargó tras tres intentos,
+Las tres funciones devuelven lo que no se pudo bajar o extraer (un ZIP que no se descargó tras tres intentos,
 un año sin enlaces en el ANDA, un ZIP que no trae un módulo); la lista vacía quiere decir que todo salió
 bien. `dane-data descargar` termina con código 1 si algo falló, y la aplicación lo muestra al terminar:
 
@@ -74,7 +77,7 @@ if fallidos:
     print("\n".join(fallidos))   # vuelva a correr la misma descarga: lo completo se salta
 ```
 
-Las dos funciones aceptan `progress=` (una función que recibe el avance) y `should_stop=` (una función
+Las tres funciones aceptan `progress=` (una función que recibe el avance) y `should_stop=` (una función
 que, si devuelve True, detiene la descarga con {dd}`DownloadCancelled`). La aplicación los usa para la
 barra de progreso y el botón de cancelar.
 
@@ -106,7 +109,7 @@ Name: completo, dtype: int64
 
 {dd}`geih.available()` trae una fila por mes con los módulos que encontró, si está completo y qué le falta.
 Desde la terminal, `dane-data estado` muestra lo mismo resumido por año. Para la EAM,
-{dd}`eam.available()`.
+{dd}`eam.available()`, y para las Estadísticas Vitales, {dd}`eevv.available()`.
 
 ## Espacio en disco
 
@@ -115,6 +118,7 @@ Desde la terminal, `dane-data estado` muestra lo mismo resumido por año. Para l
 | Un año de la GEIH extraído | 500 MB, más los ZIP si se conservan (`delete_zips=False`, el valor por defecto) |
 | Toda la serie principal 2007–2026 | 11 GB extraída |
 | Toda la EAM 1992–2024 | 330 MB |
+| Todas las Estadísticas Vitales | 3,6 GB extraídas (2,2 GB de nacimientos, 1,2 GB de defunciones), 1,6 GB de ZIP |
 | Caché de `dane-data` con toda la GEIH leída | 700 MB en `~/.cache/dane_data` |
 
 La caché se puede borrar cuando se quiera con {dd}`geih.clear_cache()`; se vuelve a crear al leer los datos.

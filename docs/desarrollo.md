@@ -22,8 +22,10 @@ src/dane_data/
 ├── _io.py             lectura robusta de los archivos del DANE (separador, codificación, coma decimal)
 ├── stats.py           tablas, medias y cuantiles ponderados
 ├── referencias.py     salario mínimo, departamentos, diccionarios DDI (data/*.json)
+├── proyecciones.py    proyecciones de población del DANE (data/proyecciones_poblacion.parquet)
 ├── geih/              downloader.py · loader.py · indicadores.py · agregados.py
 ├── eam/               downloader.py · loader.py · indicadores.py
+├── eevv/              downloader.py · loader.py · indicadores.py · agregados.py
 ├── cli.py             comando dane-data
 └── app/               aplicación Streamlit (Inicio.py + paginas/)
 ```
@@ -33,7 +35,8 @@ variables armonizadas van en minúscula y las originales del DANE en mayúscula.
 
 ## Pruebas
 
-* `tests/conftest.py` construye carpetas **sintéticas** de la GEIH y la EAM con las rarezas de cada época.
+* `tests/conftest.py` construye carpetas **sintéticas** de la GEIH, la EAM y las Estadísticas Vitales con las rarezas de cada
+  época.
   Cuando aparezca una rareza nueva en los archivos del DANE, agréguela a estos datos.
 * Las pruebas de los descargadores usan ZIP en memoria: nunca se conectan a internet.
 * GitHub Actions (`.github/workflows/pruebas.yml`) corre todas las pruebas en cada push a `main` y en cada
@@ -46,6 +49,16 @@ variables armonizadas van en minúscula y las originales del DANE en mayúscula.
 
   ```bash
   uv run --extra app python tests/datos/actualizar_publicado.py sep2026
+  ```
+
+* Las Estadísticas Vitales se comparan con los cuadros del DANE si hay datos en `$DANE_DATA_TEST_EEVV` o en la carpeta
+  configurada. Cuando el DANE publica un año nuevo, agréguelo al descargador (`eevv/downloader.py`) y actualice las cifras:
+
+  ```bash
+  uv run --extra app --with xlrd --with msoffcrypto-tool python tests/datos/actualizar_eevv_publicado.py
+  uv run --extra app python tests/datos/actualizar_eevv_causas.py
+  uv run python tests/datos/actualizar_eevv_diccionario.py
+  uv run --extra app python tests/datos/actualizar_proyecciones.py
   ```
 
 ## Documentación

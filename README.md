@@ -2,8 +2,8 @@
 
 [Documentación](https://integralindefinida.github.io/DANE-data/) · [PyPI](https://pypi.org/project/dane-data/)
 
-Microdatos del DANE listos para analizar: la Gran Encuesta Integrada de Hogares (GEIH, 2007–2026) y la
-Encuesta Anual Manufacturera (EAM, 1992–2024).
+Microdatos del DANE listos para analizar: la Gran Encuesta Integrada de Hogares (GEIH, 2007–2026), la
+Encuesta Anual Manufacturera (EAM, 1992–2024) y las Estadísticas Vitales (nacimientos y defunciones, 1979–2025).
 
 Dos formas de usarlo:
 
@@ -74,6 +74,7 @@ dane-data app          # o doble clic en el lanzador; el navegador se abre solo
 | 🔎 Tablas y microdatos | Tablas ponderadas a la medida, distribución de ingresos frente al salario mínimo, exportación |
 | 🏭 Indicadores industriales | Producción, valor agregado, empleo, productividad y participación laboral por sector o departamento |
 | 🧱 Panel y microdatos EAM | Panel de establecimientos (balanceado o no), supervivencia, exportación |
+| 👶 Nacimientos y defunciones | Indicadores de los tres certificados, tasas sobre la población y causas de muerte |
 | 📚 Diccionario | Buscador de variables con las etiquetas y categorías oficiales del DANE |
 
 Cada tabla se descarga en CSV, Excel o Stata, y cada página muestra el código Python equivalente, que se
@@ -125,7 +126,14 @@ panel = dd.eam.panel(eam, balanceado=True)               # índice (nordest, ani
 dd.eam.supervivencia(eam)                                # % de plantas que reaparecen cada año
 dd.eam.deflactar(eam, ["valagri"], ipp_por_anio)         # a precios constantes
 
-# 7. Diccionario oficial
+# 7. Estadísticas Vitales: certificados de nacimiento y de defunción
+dd.eevv.download(2025)
+nac = dd.eevv.load(2025, tipo="nacimientos")             # un certificado por fila
+dd.eevv.indicadores(nac, por="edad_madre")               # bajo peso, prematuros, cesáreas…
+dd.eevv.tasas(range(2015, 2026), por="departamento")     # natalidad, mortalidad, fecundidad, mortalidad infantil
+dd.poblacion(2025, sexo="Mujer", edades=(15, 49))        # las proyecciones del DANE, sin descargar nada
+
+# 8. Diccionario oficial
 dd.buscar_variable("pensión")
 dd.describir("P6920")
 ```
@@ -155,6 +163,12 @@ MAYÚSCULA (GEIH) son las originales del DANE.
 
 **EAM**: todas las columnas en minúscula, más `anio`, `ciiu`, `ciiu_rev`, `division`, `sector`,
 `departamento`, `microagregado`, `grupo_microagregacion`.
+
+**Estadísticas Vitales**: en todos, `anio`, `mes`, `sexo`, `departamento_ocurrencia`, `departamento_residencia`, sus códigos,
+`mpio_ocurrencia`, `mpio_residencia`, `area_ocurrencia`, `area_residencia` y `regimen_salud`. En defunciones, además,
+`grupo_edad`, `grupo_edad_amplio`, `menor_un_anio`, `causa_cie`, `cie_rev`, `causa_105`, `causa_667`, `gran_causa`,
+`manera_muerte`, `materna`, `sitio`, `estado_civil`, `nivel_educativo` y `etnia`. En nacimientos, `edad_madre`,
+`madre_adolescente`, `peso_grupo`, `bajo_peso`, `gestacion_grupo`, `prematuro`, `cesarea`, `parto_multiple`, `consultas` y otras.
 
 ### Lo que `dane-data` resuelve por usted
 
@@ -188,6 +202,10 @@ ejemplo, la desocupación promedio fue 10,5 % en 2019 y 10,2 % en 2023. Las prue
 sintéticos con las rarezas de cada época. Si encuentran los datos reales, también los comparan mes a mes con
 las cifras publicadas (`tests/datos/dane_publicado.csv`) y buscan huecos o saltos bruscos en la serie.
 
+En las Estadísticas Vitales, el total y el sexo de los tres certificados en 2008–2025 y los 33 departamentos en 2019–2025
+coinciden exactamente con los cuadros definitivos del DANE. Antes de 2008 no hay cuadros en la página del DANE con qué
+comparar.
+
 ## Advertencias metodológicas
 
 - **Informalidad**: `formal` replica la medición oficial del DANE (17.ª CIET) con el código que el DANE
@@ -213,6 +231,16 @@ las cifras publicadas (`tests/datos/dane_publicado.csv`) y buscan huecos o salto
   la mitad del valor agregado o más, son el promedio de un grupo de establecimientos (casi siempre 3), no los
   propios. Sirven para agregados; para productividad, funciones de producción o paneles por planta,
   excluya o controle los registros `microagregado` (`dd.eam.panel(..., excluir_microagregados=True)`).
+- **Estadísticas Vitales, tasas**: `dd.eevv.tasas` usa hechos registrados, sin ajustar por subregistro, así que no tiene por
+  qué coincidir con los indicadores demográficos del DANE, que salen de un modelo. Los años antiguos salen más bajos que los
+  reales. Por departamento y área se usa la residencia, y quedan por fuera los residentes en el extranjero y quienes no
+  tienen el dato.
+- **Estadísticas Vitales, comparación en el tiempo**: las causas básicas pasan de CIE-9 a CIE-10 en 1997 (use `causa_105`
+  para series largas), los archivos de 1979 y 1980 están incompletos, y enero–junio de 1991 no separa las edades de los
+  menores de 10 años. El registro fue mejorando: parte de los cambios, sobre todo en defunciones fetales hasta 2012, es mejor
+  cobertura.
+- **Estadísticas Vitales, prematuridad**: solo se puede saber con `T_GES_AGRU_CIE`, que no está en 2012, 2013, 2020 ni antes de
+  2008. `T_GES` agrupa «de 28 a 37» semanas, que mezcla prematuros con nacidos a término.
 - **Muestras pequeñas**: con menos de ~100 observaciones (`n_muestra`) las cifras no son confiables.
 - El salario mínimo histórico (`dd.SMLV`) está tomado de los decretos; verifíquelo antes de publicar.
 
@@ -258,9 +286,11 @@ src/dane_data/
 ├── _hooks.py          lo común de los descargadores: progreso, cancelación, descarga y extracción
 ├── stats.py           tablas, medias y cuantiles ponderados
 ├── referencias.py     SMLV, departamentos, diccionarios DDI
-├── data/              diccionarios DDI oficiales (geih_diccionario.json, eam_diccionario.json)
+├── proyecciones.py    proyecciones de población del DANE (dd.poblacion)
+├── data/              diccionarios DDI oficiales, causas de muerte y proyecciones de población
 ├── geih/              downloader.py · loader.py · indicadores.py · agregados.py (serie_*, exportar)
 ├── eam/               downloader.py · loader.py · indicadores.py
+├── eevv/              downloader.py · loader.py · indicadores.py · agregados.py (serie_*, tasas)
 ├── cli.py             comando `dane-data`
 └── app/               aplicación Streamlit (Inicio.py + paginas/)
 ```

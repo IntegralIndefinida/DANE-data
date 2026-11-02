@@ -1,8 +1,8 @@
 # Las encuestas
 
-`dane-data` trabaja con dos operaciones estadísticas del DANE cuyos microdatos se publican en el
+`dane-data` trabaja con tres operaciones estadísticas del DANE cuyos microdatos se publican en el
 [Archivo Nacional de Datos (ANDA)](https://microdatos.dane.gov.co): la Gran Encuesta Integrada de Hogares
-(GEIH) y la Encuesta Anual Manufacturera (EAM).
+(GEIH), la Encuesta Anual Manufacturera (EAM) y las Estadísticas Vitales (EEVV).
 
 ## GEIH: Gran Encuesta Integrada de Hogares
 
@@ -100,10 +100,17 @@ intermedio, valor agregado, empleo, salarios, activos e inversión.
 * La actividad se clasifica con la CIIU, que cambia de revisión: Rev. 2 hasta 2000, Rev. 3 en 2001–2011 y
   Rev. 4 desde 2012. Los sectores de revisiones distintas no se pueden comparar directamente.
 
+## EEVV: Estadísticas Vitales
+
+No es una encuesta, sino el registro de los certificados de nacimiento (desde 1998), de defunción (desde 1979) y de
+defunción fetal (desde 1998). Cada registro es un hecho: no hay factor de expansión y los agregados son conteos. Trae edad,
+sexo, lugar de residencia y de ocurrencia hasta el municipio, y causa básica de muerte, peso al nacer, semanas de gestación
+y tipo de parto. Vea {doc}`eevv`.
+
 ## Los diccionarios oficiales
 
-`dane-data` trae los diccionarios de variables (DDI) que publica el ANDA: el de la GEIH 2025 y el de la EAM
-2024. Sirven para encontrar variables sin salir de Python:
+`dane-data` trae los diccionarios de variables (DDI) que publica el ANDA: el de la GEIH 2025, el de la EAM 2024 y los tres
+de las Estadísticas Vitales 2025. Sirven para encontrar variables sin salir de Python:
 
 ```python
 >>> dd.buscar_variable("arriendo")["variable"].tolist()

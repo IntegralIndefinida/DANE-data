@@ -230,7 +230,12 @@ def serie_indicadores(
     Ejemplos
     --------
     >>> import dane_data as dd
-    >>> dd.eevv.serie_indicadores(range(1998, 2026), tipo="nacimientos")  # doctest: +SKIP
+    >>> r = dd.eevv.serie_indicadores(range(2023, 2026), tipo="nacimientos")  # doctest: +SKIP
+    >>> r[["anio", "nacimientos", "pct_bajo_peso", "pct_cesarea"]].round(1)  # doctest: +SKIP
+       anio  nacimientos  pct_bajo_peso  pct_cesarea
+    0  2023       515549           11.0         50.0
+    1  2024       453901           11.3         51.8
+    2  2025       441537           11.0         53.8
     >>> dd.eevv.serie_indicadores(2025, por="gran_causa", filtros={"sexo": ["Mujer"]})  # doctest: +SKIP
     """
     anios = _anios_lista(anios)
@@ -292,7 +297,10 @@ def serie_conteos(
     --------
     >>> import dane_data as dd
     >>> causas = dd.eevv.serie_conteos(2025, por="causa_105_nombre")  # doctest: +SKIP
-    >>> causas.nlargest(3, "n")  # doctest: +SKIP
+    >>> causas.nlargest(2, "n")[["causa_105_nombre", "n"]]  # doctest: +SKIP
+                                                  causa_105_nombre      n
+    31                             Enfermedades isquémicas del corazón  49261
+    18      Enfermedades crónicas de las vías respiratorias inferiores  18187
     """
     anios = _anios_lista(anios)
     if tipo == "defunciones":
@@ -435,13 +443,16 @@ def tasas(
     extranjero; por eso la suma es menor que el total nacional, que sí los incluye para coincidir con lo publicado.
     Los certificados de nacimiento y las defunciones de menores de un año se atribuyen a la residencia de la madre.
 
-    Los nacimientos sin edad de la madre no entran en la fecundidad, lo que la subestima un poco en los años con más
-    registros sin ese dato: alrededor de 1 % en 1998 y menos de 0,5 % desde 2007.
+    Los nacimientos sin edad de la madre no entran en la fecundidad, lo que la subestima un poco: son como mucho 1,5 % de
+    los nacimientos de cada año.
 
     Ejemplos
     --------
     >>> import dane_data as dd
-    >>> dd.eevv.tasas(2025)  # doctest: +SKIP
+    >>> r = dd.eevv.tasas(2025)  # doctest: +SKIP
+    >>> r[["tasa_natalidad", "tasa_mortalidad", "tasa_global_fecundidad", "mortalidad_infantil"]].round(2)  # doctest: +SKIP
+       tasa_natalidad  tasa_mortalidad  tasa_global_fecundidad  mortalidad_infantil
+    0            8.32             5.36                    1.02                10.25
     >>> dd.eevv.tasas(range(2015, 2026), por="departamento")  # doctest: +SKIP
     """
     por = _por_valido(por)
@@ -548,7 +559,11 @@ def tasas_especificas(
     Ejemplos
     --------
     >>> import dane_data as dd
-    >>> dd.eevv.tasas_especificas(2025, "nacimientos")  # doctest: +SKIP
+    >>> r = dd.eevv.tasas_especificas(2025, "nacimientos").round(2)  # doctest: +SKIP
+    >>> r[["edad_madre", "nacimientos", "mujeres", "tasa"]].head(2)  # doctest: +SKIP
+            edad_madre  nacimientos  mujeres   tasa
+    0  De 10 a 14 años       2967.0  2016446   1.47
+    1  De 15 a 19 años      59104.0  2126519  27.79
     >>> dd.eevv.tasas_especificas(2025, "defunciones", por="sexo")  # doctest: +SKIP
     """
     if tipo not in ("nacimientos", "defunciones"):
