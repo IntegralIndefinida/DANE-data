@@ -433,6 +433,10 @@ def test_eevv_indicadores_por_certificado(app_eevv):
     assert any("serie_indicadores" in c.value and "por='sexo'" in c.value for c in at.code)
     _seleccionar(at, "Certificado", "Nacimientos")
     assert at.metric[0].label == "Nacimientos" and at.metric[0].value == "3"
+    variables = next(s for s in at.selectbox if s.label == "Variable").options
+    assert "Bajo peso al nacer, pretérmino (%)" in variables and "Bajo peso al nacer, a término (%)" in variables
+    _seleccionar(at, "Variable", "Bajo peso al nacer, a término (%)")
+    assert any("prematuros" in c.value and "a término" in c.value for c in at.caption)  # explica por qué se separa
     _seleccionar(at, "Variable", "Prematuros (%)")
     _seleccionar(at, "Certificado", "Defunciones fetales")
     assert at.metric[0].label == "Defunciones fetales" and at.metric[1].label == "Mortinatos"

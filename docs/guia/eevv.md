@@ -77,6 +77,24 @@ consultas prenatales sobre todos los nacidos vivos, y causas mal definidas sobre
 9  Sin información          760            NaN            NaN          NaN
 ```
 
+El bajo peso al nacer junta dos grupos muy distintos: cerca de 60 % de los prematuros pesa menos de 2.500 gramos, y solo
+cerca de 4 % de los nacidos a término. Por eso el DANE lo publica también por tiempo de gestación, y `indicadores` da
+`pct_bajo_peso_pretermino` y `pct_bajo_peso_a_termino` (coinciden con el boletín de nacimientos del DANE en 2014–2023):
+
+```text
+>>> r = dd.eevv.serie_indicadores([2014, 2019, 2023, 2025], tipo="nacimientos")
+>>> r[["anio", "nacimientos", "pct_bajo_peso", "pct_bajo_peso_pretermino", "pct_bajo_peso_a_termino"]].round(1)
+   anio  nacimientos  pct_bajo_peso  pct_bajo_peso_pretermino  pct_bajo_peso_a_termino
+0  2014       669137            8.8                      60.4                      3.4
+1  2019       642660            9.5                      61.2                      3.9
+2  2023       515549           11.0                      60.1                      4.9
+3  2025       441537           11.0                      59.8                      4.8
+```
+
+La subida está en los nacidos a término. Al leerla, tenga en cuenta que el número de nacidos con bajo peso casi no cambió
+entre 2014 y 2022 (de 58 326 a 59 489): lo que cayó fueron los nacimientos, sobre todo los de peso normal. En las defunciones
+fetales no hay bajo peso ni prematuros: casi todas son abortos de menos de 22 semanas, y pasarían de 95 %.
+
 {dd}`eevv.serie_indicadores()` hace lo mismo año por año, sin tener todo en memoria:
 
 ```text

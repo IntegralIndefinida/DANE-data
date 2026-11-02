@@ -25,6 +25,8 @@ VARIABLES = {
     },
     "nacimientos": {
         "Nacimientos": ("nacimientos", "conteo"), "Bajo peso al nacer (%)": ("pct_bajo_peso", "pct"),
+        "Bajo peso al nacer, pretérmino (%)": ("pct_bajo_peso_pretermino", "pct"),
+        "Bajo peso al nacer, a término (%)": ("pct_bajo_peso_a_termino", "pct"),
         "Prematuros (%)": ("pct_prematuro", "pct"), "Cesáreas (%)": ("pct_cesarea", "pct"),
         "Madres adolescentes (%)": ("pct_madre_adolescente", "pct"), "Partos múltiples (%)": ("pct_parto_multiple", "pct"),
         "Partos en institución de salud (%)": ("pct_parto_institucional", "pct"),
@@ -120,6 +122,8 @@ if vista == "Indicadores":
     serie(res, columna, por, tipo_valor, nombre)
     if tipo != "defunciones" and columna == "pct_prematuro":
         st.caption("💡 " + dd.eevv.GLOSARIO["Prematuro"])
+    if columna.startswith("pct_bajo_peso"):
+        st.caption("💡 " + dd.eevv.GLOSARIO["Bajo peso al nacer"])
 
     with st.expander("📋 Tabla completa"):
         st.dataframe(res, hide_index=True, width="stretch",

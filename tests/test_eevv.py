@@ -320,6 +320,8 @@ def test_indicadores_nacimientos(eevv_root):
     assert r["razon_sexo"] == 100  # un hombre, una mujer; el indeterminado no cuenta
     # Sobre quienes tienen el dato: 2 de los 3 nacimientos
     assert r["pct_cesarea"] == 50 and r["pct_prematuro"] == 50 and r["pct_bajo_peso"] == 50
+    # Por tiempo de gestación, como el boletín del DANE: la prematura pesó menos de 2.500 g, el de término no
+    assert (r["pct_bajo_peso_pretermino"], r["pct_bajo_peso_a_termino"]) == (100, 0)
     assert r["pct_parto_multiple"] == 50 and r["pct_madre_adolescente"] == 50
     # Los de la ficha metodológica del DANE van sobre todos los nacidos vivos, también el que no tiene el dato
     assert r["pct_cuatro_consultas"] == pytest.approx(100 / 3) and r["consultas_promedio"] == 3
@@ -329,6 +331,7 @@ def test_indicadores_nacimientos(eevv_root):
 def test_indicadores_vacios_sin_el_dato(eevv_root):
     r = dd.eevv.indicadores(dd.eevv.load(1998, tipo="nacimientos", root=eevv_root), por="anio").iloc[0]
     assert pd.isna(r["pct_prematuro"])
+    assert pd.isna(r["pct_bajo_peso_pretermino"]) and pd.isna(r["pct_bajo_peso_a_termino"])  # sin T_GES_AGRU_CIE
     assert r["pct_cesarea"] == 50
 
 
@@ -658,6 +661,23 @@ def test_real_neonatales_y_gestacion_coinciden_con_los_cuadros():
     assert (r["neonatales_precoces"], r["neonatales"]) == (265 + 495 + 1237, 265 + 495 + 1237 + 991)
     f = dd.eevv.load(2025, tipo="fetales", root=REAL)
     assert f["gestacion_grupo"].eq("Menos de 22").sum() == 13234
+
+
+# Boletín técnico de nacimientos del DANE, gráfico 4 (bajo peso al nacer según tiempo de gestación): total, pretérmino y a
+# término. 2020 no tiene T_GES_AGRU_CIE en el ANDA, así que solo se compara el total.
+BAJO_PESO_DANE = {2014: (8.8, 60.4, 3.4), 2015: (8.8, 60.9, 3.4), 2016: (9.1, 60.9, 3.6), 2017: (9.1, 61.3, 3.6),
+                  2018: (9.2, 61.1, 3.7), 2019: (9.5, 61.2, 3.9), 2020: (9.2, None, None), 2021: (9.9, 59.0, 4.0),
+                  2022: (10.5, 60.1, 4.3), 2023: (11.0, 60.1, 4.9)}
+
+
+@hay_datos_reales
+def test_real_bajo_peso_coincide_con_el_boletin():
+    r = dd.eevv.serie_indicadores(list(BAJO_PESO_DANE), tipo="nacimientos", root=REAL).set_index("anio")
+    columnas = ("pct_bajo_peso", "pct_bajo_peso_pretermino", "pct_bajo_peso_a_termino")
+    for anio, cifras in BAJO_PESO_DANE.items():
+        for columna, publicado in zip(columnas, cifras):
+            if publicado is not None:  # el DANE publica con un decimal
+                assert r.loc[anio, columna] == pytest.approx(publicado, abs=0.0501), (anio, columna)
 
 
 @hay_datos_reales

@@ -20,7 +20,11 @@ GLOSARIO = {
     "Lista 105": "Agrupación colombiana de la causa básica en 105 causas (causa_105). Es la única disponible en toda la "
                  "serie, 1979–2025.",
     "Lista 6/67": "Agrupación de la OPS en 67 causas (causa_667), con seis grandes grupos más las mal definidas.",
-    "Bajo peso al nacer": "Menos de 2.500 gramos. El porcentaje se calcula sobre los nacidos con peso conocido.",
+    "Bajo peso al nacer": "Nacidos vivos de menos de 2.500 gramos, sobre los nacidos con peso conocido (ficha metodológica "
+                          "del DANE). Junta dos grupos muy distintos: los prematuros, de los que cerca de 60 % pesa menos de "
+                          "2.500 gramos, y los nacidos a término pequeños para su edad gestacional, cerca de 4 %. Por eso el "
+                          "DANE lo publica también por tiempo de gestación (pct_bajo_peso_pretermino y "
+                          "pct_bajo_peso_a_termino).",
     "Prematuro": "Menos de 37 semanas de gestación. Solo se puede saber con T_GES_AGRU_CIE, que no está en 2012, 2013, "
                  "2020 ni antes de 2008: T_GES agrupa «de 28 a 37» semanas.",
     "Madre adolescente": "Madre de menos de 20 años al momento del parto.",
@@ -101,7 +105,8 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, dropna
         * Defunciones: ``defunciones``, ``menores_un_anio``, ``neonatales`` (0 a 27 días), ``neonatales_precoces``
           (0 a 6 días), ``pct_menores_un_anio``, ``maternas`` (hasta 42 días), ``maternas_tardias``, ``homicidios``,
           ``suicidios``, ``accidentes``, ``pct_mal_definidas``.
-        * Nacimientos: ``nacimientos``, ``razon_sexo``, ``pct_bajo_peso``, ``pct_prematuro``, ``pct_cesarea``,
+        * Nacimientos: ``nacimientos``, ``razon_sexo``, ``pct_bajo_peso``, ``pct_prematuro``,
+          ``pct_bajo_peso_pretermino``, ``pct_bajo_peso_a_termino``, ``pct_cesarea``,
           ``pct_parto_multiple``, ``pct_madre_adolescente``, ``pct_parto_institucional``, ``pct_cuatro_consultas``,
           ``consultas_promedio``.
         * Fetales: ``fetales``, ``mortinatos`` (22 semanas o 1.000 gramos o más) y ``pct_madre_adolescente``. No hay
@@ -204,6 +209,13 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, dropna
         for columna, nombre in (("bajo_peso", "pct_bajo_peso"), ("prematuro", "pct_prematuro")):
             if tiene(columna):
                 res[nombre] = pct(columna)
+    if tipo == "nacimientos" and tiene("bajo_peso") and tiene("prematuro"):
+        # Como el boletín de nacimientos del DANE: el total mezcla prematuros (cerca de 60 % con bajo peso) y nacidos a
+        # término (cerca de 4 %), así que sube o baja con la proporción de prematuros aunque ninguno de los dos cambie
+        for valor, nombre in ((True, "pct_bajo_peso_pretermino"), (False, "pct_bajo_peso_a_termino")):
+            grupo = base["prematuro"].eq(valor).fillna(False).astype(bool)
+            con_peso = contar(grupo & base["bajo_peso"].notna())
+            res[nombre] = 100 * contar(grupo & base["bajo_peso"].fillna(False).astype(bool)) / con_peso.where(lambda v: v > 0)
     if tipo == "nacimientos":
         for columna, nombre in (("cesarea", "pct_cesarea"), ("parto_multiple", "pct_parto_multiple")):
             if tiene(columna):
