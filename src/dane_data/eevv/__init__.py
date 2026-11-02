@@ -7,7 +7,8 @@ from typing import Iterable
 
 from .. import config
 from .downloader import EEVV_KNOWN_FILES, EEVVDownloader
-from .loader import TIPOS, _tipo_valido, available, find_files
+from .loader import (CATEGORIAS, CORE, ETIQUETAS, GRANDES_CAUSAS, GRUPOS_EDAD, GRUPOS_EDAD_AMPLIOS, TIPOS, _tipo_valido,
+                     available, causas, find_files, harmonize, load)
 
 ANIOS_DISPONIBLES = {tipo: sorted(a for a, t in EEVV_KNOWN_FILES if t == tipo) for tipo in TIPOS}
 
@@ -91,4 +92,7 @@ def download(
     return dl.run_pipeline(target_years=years, tipos=tipos)
 
 
-__all__ = ["download", "available", "find_files", "TIPOS", "ANIOS_DISPONIBLES"]
+__all__ = [
+    "download", "available", "find_files", "load", "harmonize", "causas", "TIPOS", "ANIOS_DISPONIBLES", "CORE",
+    "ETIQUETAS", "CATEGORIAS", "GRANDES_CAUSAS", "GRUPOS_EDAD", "GRUPOS_EDAD_AMPLIOS",
+]

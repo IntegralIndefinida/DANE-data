@@ -41,6 +41,7 @@ def test_referencia_cubre_all(modulo, pagina, prefijo):
     "dane_data.config", "dane_data.stats", "dane_data.referencias", "dane_data._hooks", "dane_data.proyecciones",
     "dane_data.geih", "dane_data.geih.loader", "dane_data.geih.indicadores", "dane_data.geih.agregados",
     "dane_data.eam", "dane_data.eam.loader", "dane_data.eam.indicadores",
+    "dane_data.eevv", "dane_data.eevv.loader",
 ])
 def test_ejemplos_de_los_docstrings(modulo):
     mod = importlib.import_module(modulo)

@@ -1,4 +1,4 @@
-"""Datos sintéticos que imitan las rarezas de cada época de la GEIH y la EAM."""
+"""Datos sintéticos que imitan las rarezas de cada época de la GEIH, la EAM y las Estadísticas Vitales."""
 
 from pathlib import Path
 
@@ -153,4 +153,72 @@ def eam_root(tmp_path):
     _write(d / "2024" / "EAM_ANONIMIZADA_2024.txt", "nordemp\tnordest\tdpto\tciiu4\tperiodo\tPRODBR2\tCONSIN2\t"
                                                     "VALAGRI\tPERTOTAL\tPPERYTEM\tSALPEYTE\tPRESPYTE\n"
                                                     "1.0\t10.0\t5.0\t1011.0\t2024.0\t300\t180\t120\t15\t12\t30\t6\n")
+    return root
+
+
+@pytest.fixture
+def eevv_root(tmp_path):
+    """Un archivo por cada época de las Estadísticas Vitales, con las rarezas que tiene el real."""
+    root = tmp_path / "eevv"
+    d = root / "datos"
+
+    # --- 1979: mayúsculas, tabulador, sin AREA_RES, CIE-9 sin letras, 83 = Caquetá, 01 = residencia sin información
+    cab = "COD_DPTO\tCOD_MUNIC\tA_DEFUN\tANO\tMES\tSEXO\tGRU_ED1\tEST_CIVIL\tCODPTORE\tCODMUNRE\tSIT_DEFUN\tC_BAS1\tCONS_EXP\tCAU_HOMOL\n"
+    _write(d / "defunciones" / "1979" / "Defun1979.txt",
+           cab + "83\t001\t1\t1979\t01\t2\t05\t1\t83\t001\t2\t0090\t2\t001\n"
+                 "05\t001\t2\t1979\t02\t1\t10\t4\t01\t001\t1\t7651\t1\t080\n"
+                 "05\t002\t3\t1979\t03\t1\t25\t5\t05\t002\t4\t7999\t1\t104\n")
+    # --- 1991: minúsculas; en enero–junio las edades de menores de 10 años van en 6, 7 y 8
+    cab = cab.lower()
+    _write(d / "defunciones" / "1991" / "Defun1991.txt",
+           cab + "05\t001\t1\t1991\t03\t1\t07\t1\t05\t001\t1\t7650\t1\t080\n"
+                 "05\t001\t1\t1991\t09\t1\t07\t1\t05\t001\t1\t0090\t1\t001\n"
+                 "05\t001\t1\t1991\t03\t2\t24\t2\t05\t001\t2\t4100\t1\t051\n")
+    # --- 1998: Latin-1, 26 grupos de edad, manera de muerte en dos variables, lista 6/66
+    _write(d / "defunciones" / "1998" / "Defunciones 1998.txt",
+           "cod_dpto\tcod_munic\ta_defun\tsit_defun\tnom_inst\tano\tmes\tsexo\test_civil\tgru_ed1\tgru_ed2\tnivel_edu\tcodptore\t"
+           "codmunre\tarea_res\tseg_social\tpman_muer\tman_muer\tc_bas1\tcausa_666\tcau_homol\n"
+           "11\t001\t1\t1\tCLÍNICA\t1998\t04\t1\t1\t11\t04\t2\t11\t001\t1\t4\t2\t2\tX954\t512\t101\n"
+           "27\t006\t3\t3\t\t1998\t4\t2\t5\t06\t01\t8\t75\t\t\t9\t1\t\tI219\t307\t051\n"
+           "27\t006\t2\t3\t\t1998\t5\t2\t9\t26\t07\t9\t27\t006\t9\t3\t3\t\tR99X\t700\t104\n",
+           encoding="latin-1")
+    # --- 2025: CSV con comillas, Latin-1, 30 grupos de edad, P_PMAN_IRIS, residencia en blanco
+    _write(d / "defunciones" / "2025" / "BD-EEVV-Defuncionesnofetales-2025.csv",
+           "COD_DPTO,COD_MUNIC,A_DEFUN,SIT_DEFUN,OTRSITIODE,ANO,MES,SEXO,EST_CIVIL,GRU_ED1,GRU_ED2,NIVEL_EDU,IDPERTET,CODPTORE,CODMUNRE,"
+           "AREA_RES,SEG_SOCIAL,P_PMAN_IRIS,C_BAS1,CAUSA_667,CAU_HOMOL\n"
+           '"19","001","1","1","","2025","12","2","6","14","04","09","1","19","001","1","2","0","O149","612","078"\n'
+           '"08","634","1","6","MORGUE DE SABANAGRANDE","2025","11","1","9","01","01","13","6","","","","1","1","X954","512","101"\n'
+           '"05","001","2","3","","2025","01","1","5","28","06","99","9","05","001","2","5","4","X700","511","100"\n',
+           encoding="latin-1")
+
+    # --- Nacimientos 1998: tabulador, sin T_GES_AGRU_CIE
+    _write(d / "nacimientos" / "1998" / "Nacimientos_1998.txt",
+           "cod_dpto\tcod_munic\tareanac\tsit_parto\tsexo\tpeso_nac\tano\tmes\taten_par\tt_ges\tnumconsul\ttipo_parto\tmul_parto\t"
+           "edad_madre\test_civm\tniv_edum\tcodptore\tcodmunre\tarea_res\tn_hijosv\tn_emb\tseg_social\tedad_padre\n"
+           "27\t006\t1\t1\t1\t4\t1998\t11\t1\t4\t03\t2\t1\t2\t1\t3\t27\t006\t1\t1\t1\t4\t25\n"
+           "11\t001\t1\t1\t2\t6\t1998\t06\t1\t4\t99\t1\t2\t3\t2\t8\t11\t001\t9\t99\t99\t9\t99\n")
+    # --- Nacimientos 2025: CSV, UTF-8 con BOM, T_GES_AGRU_CIE
+    _write(d / "nacimientos" / "2025" / "BD-EEVV-Nacimientos-2025.csv",
+           "COD_DPTO,COD_MUNIC,AREANAC,SIT_PARTO,SEXO,PESO_NAC,ANO,MES,ATEN_PAR,T_GES,T_GES_AGRU_CIE,NUMCONSUL,TIPO_PARTO,MUL_PARTO,"
+           "IDPERTET,EDAD_MADRE,EST_CIVM,NIV_EDUM,CODPTORE,CODMUNRE,AREA_RES,N_HIJOSV,N_EMB,SEG_SOCIAL,EDAD_PADRE\n"
+           '"85","250","1","1","1",6,"2025","11","1",3,"4","02","1","1","6",4,"1","03","85","125","3",5,5,"2",40\n'
+           '"13","001","1","1","2",3,"2025","10","1",3,"3","04","2","2","6",2,"6","09","13","001","1",1,1,"2",20\n'
+           '"13","001","1","1","3",9,"2025","10","9",9,"9","99","9","9","9",99,"9","99","","","",99,99,"9",99\n')
+
+    # --- Fetales 1998: Latin-1 y N_HIJOSM con texto en vez de códigos
+    _write(d / "fetales" / "1998" / "fetal1998.txt",
+           "cod_dpto\tcod_munic\ta_defun\tsit_defun\tano\tmes\tsexo\tcodptore\tcodmunre\tarea_res\tseg_social\tt_ges\tpeso_nac\t"
+           "edad_madre\tn_hijosm\test_civm\tniv_edum\tc_bas1\tcausa_666\tcau_homol\n"
+           "68\t755\t1\t1\t1998\t8\t1\t68\t755\t1\t3\t3\t1\t2\tNúmero de hijos nacidos muertos\t1\t7\tP018\t\t080\n"
+           "13\t001\t1\t3\t1998\t1\t3\t13\t001\t1\t9\t4\t9\t99\tSin información\t9\t9\tP018\t\t080\n", encoding="latin-1")
+    # --- Fetales 2009: NIV_EDUM no sigue el DDI
+    _write(d / "fetales" / "2009" / "fetal2009.csv",
+           "COD_DPTO,COD_MUNIC,A_DEFUN,SIT_DEFUN,ANO,MES,SEXO,CODPTORE,CODMUNRE,AREA_RES,SEG_SOCIAL,T_GES,T_GES_AGRU_CIE,PESO_NAC,EDAD_MADRE,"
+           "EST_CIVM,NIV_EDUM,C_BAS1,CAUSA_666,CAUSA_667,CAU_HOMOL\n"
+           "11,001,1,3,2009,06,3,11,001,1,1,1,1,1,2,5,9,P018,402,402,080\n")
+    # --- Fetales 2025: el régimen de salud pasa de SEG_SOCIAL a REGSOCIALMADRE
+    _write(d / "fetales" / "2025" / "BD-EEVV-Defuncionesfetales-2025.csv",
+           "COD_DPTO,COD_MUNIC,A_DEFUN,SIT_DEFUN,ANO,MES,SEXO,CODPTORE,CODMUNRE,AREA_RES,REGSOCIALMADRE,T_GES,T_GES_AGRU_CIE,PESO_NAC,"
+           "EDAD_MADRE,EST_CIVM,NIV_EDUM,C_BAS1,CAUSA_667,CAU_HOMOL\n"
+           '"68","755","1","1","2025","12","1","68","755","1","2",4,"4",6,4,"6","09","P018","402","080"\n')
     return root
