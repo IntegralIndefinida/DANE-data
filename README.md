@@ -167,7 +167,7 @@ MAYÚSCULA (GEIH) son las originales del DANE.
 **Estadísticas Vitales**: en todos, `anio`, `mes`, `sexo`, `departamento_ocurrencia`, `departamento_residencia`, sus códigos,
 `mpio_ocurrencia`, `mpio_residencia`, `area_ocurrencia`, `area_residencia` y `regimen_salud`. En defunciones, además,
 `grupo_edad`, `grupo_edad_amplio`, `menor_un_anio`, `causa_cie`, `cie_rev`, `causa_105`, `causa_667`, `gran_causa`,
-`manera_muerte`, `materna`, `sitio`, `estado_civil`, `nivel_educativo` y `etnia`. En nacimientos, `edad_madre`,
+`manera_muerte`, `materna`, `materna_tardia`, `sitio`, `estado_civil`, `nivel_educativo` y `etnia`. En nacimientos, `edad_madre`,
 `madre_adolescente`, `peso_grupo`, `bajo_peso`, `gestacion_grupo`, `prematuro`, `cesarea`, `parto_multiple`, `consultas` y otras.
 
 ### Lo que `dane-data` resuelve por usted

@@ -99,7 +99,10 @@ ETIQUETAS = {
         "nivel_educativo": "Nivel educativo (NIVEL_EDU), desde 1998",
         "etnia": "Pertenencia étnica (IDPERTET), desde 2008",
         "manera_muerte": "Manera de muerte (PMAN_MUER y MAN_MUER, o P_PMAN_IRIS desde 2019), desde 1997",
-        "materna": "True si la causa básica es del capítulo O de la CIE-10; vacío antes de 1997",
+        "materna": "True si es una muerte materna según el DANE: causa básica del capítulo O de la CIE-10 salvo O96 (tardía) "
+                   "y O97 (secuelas), es decir, hasta 42 días después del embarazo; vacío antes de 1997",
+        "materna_tardia": "True si la causa básica es O96, muerte materna tardía (de 43 días a un año después del embarazo); "
+                          "vacío antes de 1997",
     },
     "nacimientos": {
         **_COMUNES_ETIQUETAS, **_MADRE_ETIQUETAS,
@@ -425,6 +428,21 @@ def _causas_armonizadas(df: pd.DataFrame, anio: int) -> dict[str, pd.Series]:
     }
 
 
+def _maternas(causa: pd.Series, anio: int) -> dict[str, pd.Series]:
+    """
+    ``materna`` y ``materna_tardia``, como en la ficha técnica de la razón de mortalidad materna del DANE (2026).
+
+    Los cuadros de defunciones maternas del DANE (7 y 8) cuentan todo el capítulo O, pero la razón solo las de hasta 42
+    días: sin O96 (tardía, de 43 días a un año) ni O97 (secuelas, después de un año). La CIE-9 (hasta 1996) no se usa.
+    """
+    if anio < 1997:
+        return {c: pd.Series(pd.NA, index=causa.index, dtype="boolean") for c in ("materna", "materna_tardia")}
+    texto = causa.astype("string")
+    categoria = texto.str[:3]
+    return {"materna": (texto.str.startswith("O") & ~categoria.isin(["O96", "O97"])).astype("boolean"),
+            "materna_tardia": categoria.eq("O96").astype("boolean")}
+
+
 def _madre(df: pd.DataFrame, anio: int, tipo: str) -> dict[str, pd.Series]:
     gestacion = _GESTACION_FETAL_ANTIGUA if tipo == "fetales" and anio <= 2007 else _GESTACION
     peso, edad = _numero(df, "PESO_NAC"), _numero(df, "EDAD_MADRE")
@@ -519,8 +537,7 @@ def harmonize(df: pd.DataFrame, tipo: str, anio: int) -> pd.DataFrame:
                                           "nivel_educativo"),
             "etnia": _etiquetar(df, "IDPERTET", _ETNIA, "etnia"),
             "manera_muerte": _manera_muerte(df, anio),
-            "materna": (hechas["causa_cie"].astype("string").str.startswith("O").astype("boolean") if anio >= 1997
-                        else pd.Series(pd.NA, index=df.index, dtype="boolean")),
+            **_maternas(hechas["causa_cie"], anio),
         }
     elif tipo == "nacimientos":
         parto = _numero(df, "TIPO_PARTO")

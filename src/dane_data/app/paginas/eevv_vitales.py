@@ -17,6 +17,7 @@ VARIABLES = {
     "defunciones": {
         "Defunciones": ("defunciones", "conteo"), "Hombres": ("hombres", "conteo"), "Mujeres": ("mujeres", "conteo"),
         "Menores de un año": ("menores_un_anio", "conteo"), "Defunciones maternas": ("maternas", "conteo"),
+        "Defunciones maternas tardías": ("maternas_tardias", "conteo"),
         "Homicidios": ("homicidios", "conteo"), "Suicidios": ("suicidios", "conteo"), "Accidentes": ("accidentes", "conteo"),
         "Menores de un año (% de las defunciones)": ("pct_menores_un_anio", "pct"),
         "Causas mal definidas (%)": ("pct_mal_definidas", "pct"),

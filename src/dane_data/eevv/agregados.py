@@ -413,7 +413,8 @@ def tasas(
         * ``tasa_natalidad`` y ``tasa_mortalidad``, por 1.000 habitantes.
         * ``tasa_global_fecundidad``, hijos por mujer, de 15 a 49 años.
         * ``mortalidad_infantil``, por 1.000 nacidos vivos.
-        * ``razon_mortalidad_materna``, por 100.000 nacidos vivos.
+        * ``razon_mortalidad_materna``, por 100.000 nacidos vivos. Cuenta las muertes maternas de hasta 42 días
+          (``materna``: capítulo O sin O96 ni O97), como la ficha técnica del DANE.
         * ``razon_mortalidad_fetal``, por 1.000 nacidos vivos más defunciones fetales.
 
         Por sexo solo hay ``tasa_mortalidad`` y ``mortalidad_infantil``: las demás quedan vacías.

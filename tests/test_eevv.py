@@ -177,6 +177,17 @@ def test_causas(eevv_root):
     assert bool(d.loc[12, "materna"]) and not d.loc[11, "materna"]
 
 
+def test_muertes_maternas_como_la_ficha_del_dane():
+    """La razón de mortalidad materna cuenta el capítulo O sin O96 (tardía) ni O97 (secuelas)."""
+    crudo = pd.DataFrame({"SEXO": [2] * 5, "GRU_ED1": [13] * 5, "C_BAS1": ["O149", "O96X", "O97X", "O998", "A099"]})
+    d = dd.eevv.harmonize(crudo, "defunciones", 2025)
+    assert d["materna"].tolist() == [True, False, False, True, False]
+    assert d["materna_tardia"].tolist() == [False, True, False, False, False]
+    r = dd.eevv.indicadores(d).iloc[0]
+    assert (r["maternas"], r["maternas_tardias"]) == (2, 1)
+    assert dd.eevv.harmonize(crudo, "defunciones", 1996)[["materna", "materna_tardia"]].isna().all().all()  # CIE-9
+
+
 def test_listas_de_causas_completas():
     c = dd.eevv.causas()
     assert len(c["667"]) == 67 and len(c["105"]) == 105
@@ -601,9 +612,12 @@ def test_real_serie_sin_saltos():
 
 
 @hay_datos_reales
-def test_real_materna_coincide_con_el_cuadro_7():
-    r = dd.eevv.indicadores(dd.eevv.load(2025, root=REAL)).iloc[0]
-    assert r["maternas"] == 355
+def test_real_materna_coincide_con_el_cuadro_8():
+    """El cuadro 8 de 2025 trae 355 defunciones maternas: todo el capítulo O, con 151 O96 y 4 O97, que la razón no usa."""
+    d = dd.eevv.load(2025, root=REAL)
+    r = dd.eevv.indicadores(d).iloc[0]
+    assert (r["maternas"], r["maternas_tardias"]) == (200, 151)
+    assert d["causa_cie"].astype("string").str.startswith("O97").sum() == 4
     assert r["menores_un_anio"] == 4526
 
 

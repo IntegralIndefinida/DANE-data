@@ -32,7 +32,12 @@ GLOSARIO = {
     "Tasa específica": "Hechos de un grupo de edad por cada 1.000 personas de ese grupo.",
     "Mortalidad infantil registrada": "Defunciones de menores de un año por cada 1.000 nacidos vivos del mismo año, tal "
                                       "como se registraron, sin ajustar por subregistro.",
-    "Razón de mortalidad materna": "Defunciones con causa básica del capítulo O de la CIE-10 por cada 100.000 nacidos vivos.",
+    "Muerte materna": "Muerte de una mujer durante el embarazo o hasta 42 días después, por una causa relacionada con el "
+                      "embarazo o su atención. En los datos, causa básica del capítulo O de la CIE-10 salvo O96 y O97, como "
+                      "en la ficha técnica del DANE.",
+    "Muerte materna tardía": "Por causas obstétricas, de 43 días a un año después del embarazo (O96). No entra en la razón de "
+                             "mortalidad materna, aunque los cuadros de defunciones maternas del DANE sí la cuentan.",
+    "Razón de mortalidad materna": "Muertes maternas (hasta 42 días) por cada 100.000 nacidos vivos.",
     "Razón de mortalidad fetal": "Defunciones fetales por cada 1.000 nacidos vivos más defunciones fetales.",
 }
 
@@ -81,8 +86,8 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, dropna
         Una fila por grupo. En todos: ``hombres`` y ``mujeres``, salvo en fetales, donde casi siempre es
         indeterminado.
 
-        * Defunciones: ``defunciones``, ``menores_un_anio``, ``pct_menores_un_anio``, ``maternas``, ``homicidios``,
-          ``suicidios``, ``accidentes``, ``pct_mal_definidas``.
+        * Defunciones: ``defunciones``, ``menores_un_anio``, ``pct_menores_un_anio``, ``maternas`` (hasta 42 días),
+          ``maternas_tardias``, ``homicidios``, ``suicidios``, ``accidentes``, ``pct_mal_definidas``.
         * Nacimientos: ``nacimientos``, ``razon_sexo``, ``pct_bajo_peso``, ``pct_prematuro``, ``pct_cesarea``,
           ``pct_parto_multiple``, ``pct_madre_adolescente``, ``pct_cuatro_consultas``, ``consultas_promedio``.
         * Fetales: ``fetales``, ``pct_bajo_peso``, ``pct_prematuro``, ``pct_madre_adolescente``.
@@ -156,8 +161,9 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, dropna
                 sin_detalle = contar(base["grupo_edad"].eq("Menor de 10 años, sin detalle").fillna(False).astype(bool))
                 res["menores_un_anio"] = res["menores_un_anio"].where(sin_detalle == 0)
             res["pct_menores_un_anio"] = 100 * res["menores_un_anio"] / total
-        if tiene("materna"):
-            res["maternas"] = verdaderos("materna")
+        for columna, nombre in (("materna", "maternas"), ("materna_tardia", "maternas_tardias")):
+            if tiene(columna):
+                res[nombre] = verdaderos(columna)
         if tiene("manera_muerte"):
             con_manera = valido("manera_muerte").where(lambda v: v > 0)
             for nombre, valor in (("homicidios", "Homicidio"), ("suicidios", "Suicidio"), ("accidentes", "Accidente")):
