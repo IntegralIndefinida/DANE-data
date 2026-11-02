@@ -3,7 +3,7 @@ import logging
 import streamlit as st
 
 import dane_data as dd
-from dane_data.app._ui import LogEnPantalla, disponibles_eam, disponibles_geih, rutas_actuales
+from dane_data.app._ui import CERTIFICADOS, LogEnPantalla, disponibles_eam, disponibles_eevv, disponibles_geih, rutas_actuales
 
 st.title("⬇️ Descargar datos del DANE")
 st.markdown(
@@ -11,7 +11,8 @@ st.markdown(
     "La descarga es **incremental**: si se interrumpe, al repetirla continúa donde iba."
 )
 
-encuesta = st.radio("Encuesta", ["GEIH (hogares, mensual)", "EAM (industria, anual)"], horizontal=True)
+encuesta = st.radio("Encuesta", ["GEIH (hogares, mensual)", "EAM (industria, anual)", "Estadísticas Vitales (nacimientos y defunciones)"],
+                    horizontal=True)
 rutas = rutas_actuales()
 
 if encuesta.startswith("GEIH"):
@@ -48,6 +49,32 @@ if encuesta.startswith("GEIH"):
         progress=prog, should_stop=stop, forzar=forzar)
     codigo_py = (f"dd.geih.download({anios!r}" + (", empalme=True" if empalme else "")
                  + (", limit_files=1" if prueba else "") + (", forzar=True" if forzar else "") + ")")
+elif encuesta.startswith("Estadísticas"):
+    ya = disponibles_eevv(rutas)
+    elegidos = st.multiselect("Certificados", list(CERTIFICADOS), default=list(CERTIFICADOS),
+                              help="Defunciones desde 1979; nacimientos y defunciones fetales desde 1998.")
+    tipos = [CERTIFICADOS[c] for c in elegidos]
+    todos = sorted({a for t in tipos for a in dd.eevv.ANIOS_DISPONIBLES[t]})
+    tiene = set(ya[ya.tipo.isin(tipos)].anio.unique()) if len(ya) else set()
+    if "descargar_eevv_anios" not in st.session_state:
+        st.session_state["descargar_eevv_anios"] = [2025]
+    # Si se quita un certificado, un año elegido puede dejar de existir
+    st.session_state["descargar_eevv_anios"] = [a for a in st.session_state["descargar_eevv_anios"] if a in todos]
+    anios = st.multiselect("Años", todos, key="descargar_eevv_anios",
+                           format_func=lambda a: f"{a} ✓" if a in tiene else str(a))
+    st.button(f"Seleccionar toda la serie {todos[0]}–{todos[-1]}" if todos else "Seleccionar toda la serie", disabled=not todos,
+              on_click=lambda: st.session_state.update(descargar_eevv_anios=list(todos)))
+    st.caption("✓ = ya descargado. Algunos ZIP del DANE traen varios años (2008–2011, 2012–2013, 2017–2018): se baja el paquete "
+               "entero aunque pida uno solo.")
+    borrar = st.toggle("Borrar los ZIP después de extraer", value=True)
+    forzar = st.toggle("Volver a bajar lo que ya está descargado",
+                       help="Solo si el DANE corrigió o volvió a publicar esos años: reemplaza lo que hay.")
+    # Promedio por año en disco, ya extraído (toda la serie ocupa unos 3,6 GB)
+    peso = sum({"nacimientos": 90, "defunciones": 40, "fetales": 5}[t] for t in tipos) * len(anios)
+    st.info(f"📦 Tamaño aproximado en disco: **{peso} MB** · destino: `{dd.get_path('eevv')}`")
+    lanzar = lambda prog, stop: dd.eevv.download(anios, tipos=tipos, delete_zips=borrar, progress=prog,  # noqa: E731
+                                                 should_stop=stop, forzar=forzar)
+    codigo_py = f"dd.eevv.download({anios!r}, tipos={tipos!r}" + (", forzar=True" if forzar else "") + ")"
 else:
     ya = disponibles_eam(rutas)
     tiene = set(ya.anio.unique()) if len(ya) else set()
@@ -74,7 +101,10 @@ else:
 sin_modulos = encuesta.startswith("GEIH") and not modulos  # sin módulos, la librería no sabe qué bajar
 if sin_modulos:
     st.warning("Elija al menos un módulo en las opciones avanzadas.")
-if st.button("⬇️ Descargar", type="primary", disabled=not anios or sin_modulos):
+sin_certificados = encuesta.startswith("Estadísticas") and not tipos
+if sin_certificados:
+    st.warning("Elija al menos un certificado.")
+if st.button("⬇️ Descargar", type="primary", disabled=not anios or sin_modulos or sin_certificados):
     barra = st.progress(0.0, text="Conectando con el DANE…")
     detalle = st.empty()
     logs = st.empty()
@@ -111,4 +141,5 @@ if st.button("⬇️ Descargar", type="primary", disabled=not anios or sin_modul
 
 with st.expander("🐍 Hacerlo desde Python o la terminal"):
     st.code(f"import dane_data as dd\n{codigo_py}", language="python")
-    st.code("dane-data descargar geih --anios 2024 2025\ndane-data descargar eam --anios 2022 2023 2024", language="bash")
+    st.code("dane-data descargar geih --anios 2024 2025\ndane-data descargar eam --anios 2022 2023 2024\n"
+            "dane-data descargar eevv --anios 2025 --tipos nacimientos defunciones", language="bash")

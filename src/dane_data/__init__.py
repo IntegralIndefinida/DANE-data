@@ -1,5 +1,5 @@
 """
-dane-data — microdatos del DANE (GEIH y EAM) listos para analizar.
+dane-data — microdatos del DANE (GEIH, EAM y Estadísticas Vitales) listos para analizar.
 
     import dane_data as dd
     dd.set_paths(geih="~/datos/GEIH/data", eam="~/datos/EAM/data", save=True)
@@ -9,6 +9,8 @@ dane-data — microdatos del DANE (GEIH y EAM) listos para analizar.
 
     eam = dd.eam.load(range(2015, 2025))
     dd.eam.resumen(eam, por=["anio", "division"])
+
+    dd.eevv.tasas(range(2015, 2026), por="departamento")
 """
 
 from . import eam, eevv, geih

@@ -3,17 +3,17 @@ from pathlib import Path
 import streamlit as st
 
 import dane_data as dd
-from dane_data.app._ui import aviso_version_nueva, disponibles_eam, disponibles_geih, rutas_actuales
+from dane_data.app._ui import aviso_version_nueva, disponibles_eam, disponibles_eevv, disponibles_geih, rutas_actuales
 
 st.title("📊 DANE-data")
 # El aviso va arriba pero se llena al final: sin internet, la consulta no demora el resto de la página
 hueco_version = st.empty()
 st.markdown(
     "#### Microdatos del DANE listos para analizar\n"
-    "Esta aplicación descarga, organiza y resume dos encuestas oficiales de Colombia publicadas por el DANE:"
+    "Esta aplicación descarga, organiza y resume tres fuentes oficiales de Colombia publicadas por el DANE:"
 )
 
-c1, c2 = st.columns(2)
+c1, c2, c3 = st.columns(3)
 with c1, st.container(border=True):
     st.markdown(
         "##### 👥 GEIH — Gran Encuesta Integrada de Hogares\n"
@@ -31,12 +31,21 @@ with c2, st.container(border=True):
         "**Úsela para:** productividad por sector, participación laboral, concentración "
         "regional, funciones de producción y costos…"
     )
+with c3, st.container(border=True):
+    st.markdown(
+        "##### 👶 EEVV — Estadísticas Vitales\n"
+        "Registro de los **certificados** de nacimiento (desde 1998) y de defunción (desde 1979). Cada fila es un hecho "
+        "registrado; no es una encuesta.\n\n"
+        "**Úsela para:** natalidad y fecundidad, mortalidad infantil y materna, causas de muerte, homicidios, "
+        "desigualdades entre departamentos…"
+    )
 
 st.subheader("¿Cómo empiezo?")
 st.markdown(
     "1. **Datos:** si aún no los tiene, vaya a **⬇️ Descargar datos** (menú izquierdo). "
     "Si ya los descargó, indique la carpeta abajo.\n"
-    "2. **Explore:** abra **👥 Indicadores laborales** o **🏭 Indicadores industriales**, elija años y filtros.\n"
+    "2. **Explore:** abra **👥 Indicadores laborales**, **🏭 Indicadores industriales** o **👶 Nacimientos y defunciones**, "
+    "elija años y filtros.\n"
     "3. **Exporte:** cada tabla se descarga en CSV, Excel o Stata. Cada página muestra el "
     "**código Python** equivalente para pasar a un notebook cuando esté listo."
 )
@@ -51,14 +60,17 @@ st.info(
 st.subheader("Datos disponibles en este computador")
 rutas = rutas_actuales()
 g, e, ge = disponibles_geih(False, rutas), disponibles_eam(rutas), disponibles_geih(True, rutas)
+v = disponibles_eevv(rutas)
 
-m1, m2, m3 = st.columns(3)
+m1, m2, m3, m4 = st.columns(4)
 m1.metric("GEIH (serie principal)", f"{g.anio.nunique()} años" if len(g) else "Sin datos",
           f"{g.anio.min()}–{g.anio.max()} · {len(g)} meses" if len(g) else None, delta_color="off")
 m2.metric("GEIH (serie de empalme)", f"{ge.anio.nunique()} años" if len(ge) else "Sin datos",
           f"{ge.anio.min()}–{ge.anio.max()}" if len(ge) else None, delta_color="off")
 m3.metric("EAM", f"{e.anio.nunique()} años" if len(e) else "Sin datos",
           f"{e.anio.min()}–{e.anio.max()}" if len(e) else None, delta_color="off")
+m4.metric("Estadísticas Vitales", f"{v.anio.nunique()} años" if len(v) else "Sin datos",
+          f"{v.anio.min()}–{v.anio.max()}" if len(v) else None, delta_color="off")
 
 incompletos = g[~g.completo] if len(g) else g
 if len(incompletos):
@@ -68,18 +80,20 @@ if len(incompletos):
                    "lo que ya está descargado» en las opciones avanzadas.")
 
 # ---------------------------------------------------------------- Configuración
-with st.expander("⚙️ Carpetas de datos", expanded=not (len(g) or len(e))):
+with st.expander("⚙️ Carpetas de datos", expanded=not (len(g) or len(e) or len(v))):
     st.caption(
         "Indique dónde están (o dónde quiere guardar) los datos. Para la GEIH, la carpeta que "
-        "contiene `datos_csv/`; para la EAM, la que contiene `datos/`. Se recuerda para la próxima vez."
+        "contiene `datos_csv/`; para la EAM y las Estadísticas Vitales, la que contiene `datos/`. Se recuerda para la "
+        "próxima vez."
     )
     with st.form("rutas"):
         p_geih = st.text_input("GEIH serie principal", str(dd.get_path("geih")))
         p_emp = st.text_input("GEIH serie de empalme", str(dd.get_path("geih_empalme")))
         p_eam = st.text_input("EAM", str(dd.get_path("eam")))
+        p_eevv = st.text_input("Estadísticas Vitales", str(dd.get_path("eevv")))
         if st.form_submit_button("Guardar", type="primary"):
             # Solo las que cambiaron: así no se fija en el archivo una ruta que viene de una variable de entorno
-            cambios = {k: v.strip() for k, v in (("geih", p_geih), ("geih_empalme", p_emp), ("eam", p_eam))
+            cambios = {k: v.strip() for k, v in (("geih", p_geih), ("geih_empalme", p_emp), ("eam", p_eam), ("eevv", p_eevv))
                        if v.strip() != str(dd.get_path(k))}
             # La app corre dentro de la carpeta del paquete: una ruta relativa quedaría ahí (y uv la borra al
             # reinstalar), lejos de donde la buscaría un notebook.
@@ -100,7 +114,8 @@ with st.expander("⚙️ Carpetas de datos", expanded=not (len(g) or len(e))):
 st.divider()
 st.caption(
     "Fuente: DANE — Archivo Nacional de Datos (ANDA), microdatos anonimizados de uso público. "
-    "Cite: *DANE, Gran Encuesta Integrada de Hogares (GEIH)* / *Encuesta Anual Manufacturera (EAM)*."
+    "Cite: *DANE, Gran Encuesta Integrada de Hogares (GEIH)* / *Encuesta Anual Manufacturera (EAM)* / *Estadísticas "
+    "Vitales (EEVV)*."
 )
 
 with hueco_version.container():

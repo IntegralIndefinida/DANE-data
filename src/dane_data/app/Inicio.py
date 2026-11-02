@@ -18,6 +18,9 @@ paginas = {
         st.Page("paginas/eam_industria.py", title="Indicadores industriales", icon="🏭"),
         st.Page("paginas/eam_microdatos.py", title="Panel y microdatos", icon="🧱"),
     ],
+    "Estadísticas Vitales": [
+        st.Page("paginas/eevv_vitales.py", title="Nacimientos y defunciones", icon="👶"),
+    ],
     "Herramientas": [
         st.Page("paginas/descargar.py", title="Descargar datos", icon="⬇️"),
         st.Page("paginas/diccionario.py", title="Diccionario de variables", icon="📚"),

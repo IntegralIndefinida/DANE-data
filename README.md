@@ -296,13 +296,13 @@ Código: MIT. Datos: DANE, Archivo Nacional de Datos (ANDA). Cite como
 
 Si `dane-data` le sirvió en un trabajo, cítelo también, con la versión que usó (`dd.__version__`):
 
-> Ramírez, L. (2026). *dane-data: microdatos del DANE (GEIH y EAM) listos para analizar* (versión X.Y.Z)
+> Ramírez, L. (2026). *dane-data: microdatos del DANE (GEIH, EAM y Estadísticas Vitales) listos para analizar* (versión X.Y.Z)
 > [software]. https://github.com/IntegralIndefinida/DANE-data
 
 ```bibtex
 @software{dane_data,
   author  = {Ramírez, Luis},
-  title   = {dane-data: microdatos del DANE (GEIH y EAM) listos para analizar},
+  title   = {dane-data: microdatos del DANE (GEIH, EAM y Estadísticas Vitales) listos para analizar},
   version = {X.Y.Z},
   year    = {2026},
   url     = {https://github.com/IntegralIndefinida/DANE-data},

@@ -3,7 +3,7 @@ import streamlit as st
 import dane_data as dd
 
 # La misma cita que CITATION.cff y docs/citar.md, con la versión instalada
-TITULO = "dane-data: microdatos del DANE (GEIH y EAM) listos para analizar"
+TITULO = "dane-data: microdatos del DANE (GEIH, EAM y Estadísticas Vitales) listos para analizar"
 REPOSITORIO = "https://github.com/IntegralIndefinida/DANE-data"
 DOCS = "https://integralindefinida.github.io/DANE-data"
 
@@ -33,12 +33,17 @@ st.code(
 )
 
 st.subheader("Los datos")
-st.markdown("Cite la encuesta y el catálogo del ANDA que usó:")
+st.markdown("Cite la encuesta y el catálogo del ANDA que usó. Si usó tasas de las Estadísticas Vitales, cite también las "
+            "proyecciones de población:")
 st.code(
     "DANE. Gran Encuesta Integrada de Hogares (GEIH) [microdatos]. Archivo Nacional de Datos (ANDA). "
     "https://microdatos.dane.gov.co\n\n"
     "DANE. Encuesta Anual Manufacturera (EAM) [microdatos]. Archivo Nacional de Datos (ANDA). "
-    "https://microdatos.dane.gov.co",
+    "https://microdatos.dane.gov.co\n\n"
+    "DANE. Estadísticas Vitales (EEVV) [microdatos]. Archivo Nacional de Datos (ANDA). "
+    "https://microdatos.dane.gov.co\n\n"
+    "DANE. Proyecciones de población. "
+    "https://www.dane.gov.co/index.php/estadisticas-por-tema/demografia-y-poblacion/proyecciones-de-poblacion",
     language=None, wrap_lines=True,
 )
 

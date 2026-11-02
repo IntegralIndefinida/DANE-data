@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import io
 import logging
+import warnings
 from collections import deque
 
 import pandas as pd
@@ -160,6 +161,38 @@ def cargar_eam(anios: tuple, extra: tuple, rutas: tuple) -> pd.DataFrame:
     return dd.eam.load(list(anios), columns=list(extra) or "core")
 
 
+# Como en la GEIH: las Estadísticas Vitales salen de dd.eevv.serie_* y tasas, año por año, y quedan en disco. Sus avisos
+# de cobertura se muestran en la barra lateral (seleccion_eevv): aquí solo llegarían a la terminal.
+@st.cache_data(max_entries=50, show_spinner=False)
+def indicadores_eevv(anios, tipo: str, por: str | None, filtros: dict) -> pd.DataFrame:
+    barra, progreso = _barra("Preparando indicadores…")
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+        res = dd.eevv.serie_indicadores(anios, tipo, por=por, filtros=filtros or None, progress=progreso)
+    barra.empty()
+    return res
+
+
+@st.cache_data(max_entries=50, show_spinner=False)
+def conteos_eevv(anios, tipo: str, por: str | None, filtros: dict) -> pd.DataFrame:
+    barra, progreso = _barra("Preparando la tabla…")
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+        res = dd.eevv.serie_conteos(anios, tipo, por=por, filtros=filtros or None, progress=progreso)
+    barra.empty()
+    return res
+
+
+@st.cache_data(max_entries=20, show_spinner=False)
+def tasas_eevv(anios, por: str | None) -> pd.DataFrame:
+    barra, progreso = _barra("Calculando las tasas…")
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+        res = dd.eevv.tasas(anios, por=por, progress=progreso)
+    barra.empty()
+    return res
+
+
 def rutas_actuales() -> tuple:
     """Parte de la llave de caché: si el usuario cambia de carpeta, se recarga."""
     return tuple(sorted(dd.show_paths().items()))
@@ -173,6 +206,11 @@ def disponibles_geih(empalme: bool, rutas: tuple) -> pd.DataFrame:
 @st.cache_data(ttl=30, show_spinner=False)
 def disponibles_eam(rutas: tuple) -> pd.DataFrame:
     return dd.eam.available()
+
+
+@st.cache_data(ttl=30, show_spinner=False)
+def disponibles_eevv(rutas: tuple) -> pd.DataFrame:
+    return dd.eevv.available()
 
 
 # --------------------------------------------------------------------------- #
@@ -380,6 +418,51 @@ def seleccion_geih(clave: str = "geih", varios_anios: bool = True, ayuda_anios: 
     }
     aviso_marcos(seleccion["anios"], empalme)
     return seleccion
+
+
+# --------------------------------------------------------------------------- #
+# Selector de las Estadísticas Vitales (barra lateral)
+# --------------------------------------------------------------------------- #
+CERTIFICADOS = {"Defunciones": "defunciones", "Nacimientos": "nacimientos", "Defunciones fetales": "fetales"}
+
+
+def seleccion_eevv(clave: str = "eevv") -> dict:
+    """Dibuja la barra lateral de las Estadísticas Vitales y devuelve la selección, sin cargar datos."""
+    with st.sidebar:
+        st.header("Estadísticas Vitales")
+        av = disponibles_eevv(rutas_actuales())
+        if av.empty:
+            sin_datos("serie de Estadísticas Vitales")
+        presentes = {nombre: t for nombre, t in CERTIFICADOS.items() if t in set(av["tipo"])}
+        tipo = presentes[st.radio("Certificado", list(presentes), key=f"{clave}_tipo")]
+        anios_disp = sorted(int(a) for a in av.loc[av["tipo"] == tipo, "anio"])
+        inicio = next(a for a in anios_disp if a >= anios_disp[-1] - 9)
+        # La llave lleva el tipo: los años disponibles cambian, y un rango viejo de otro tipo no sería válido
+        lo, hi = st.select_slider("Años", options=anios_disp, value=(inicio, anios_disp[-1]), key=f"{clave}_rango_{tipo}",
+                                  help=AYUDA_ANIOS) if len(anios_disp) > 1 else (anios_disp[0], anios_disp[0])
+        anios = [a for a in anios_disp if lo <= a <= hi]
+
+        st.header("Filtros")
+        # Fetales casi siempre traen sexo indeterminado
+        sexo = [] if tipo == "fetales" else st.multiselect("Sexo", ["Hombre", "Mujer"], key=f"{clave}_sexo", placeholder="Todos")
+        dptos = st.multiselect("Departamento de residencia", sorted(dd.DEPARTAMENTOS.values()), key=f"{clave}_dpto",
+                               placeholder="Todos")
+    if tipo == "defunciones" and (lo <= 1980):
+        st.warning("⚠️ Los archivos de 1979 y 1980 están incompletos: faltan departamentos enteros en 1979 y parte de otros en "
+                   "1980. Esos totales nacionales no son comparables con los de otros años.")
+    if tipo == "defunciones" and lo <= 1991 <= hi:
+        st.warning("⚠️ En enero–junio de 1991 no se pueden separar las edades de los menores de 10 años: las defunciones de "
+                   "menores de un año de ese año quedan vacías.")
+    partes = [f"{TITULOS_CERTIFICADO[tipo]} {lo}–{hi}" if lo != hi else f"{TITULOS_CERTIFICADO[tipo]} {lo}"]
+    for nombre, val in (("sexo", sexo), ("residencia", dptos)):
+        if val:
+            partes.append(f"{nombre}: {', '.join(val)}")
+    return {"tipo": tipo, "anios": anios, "descripcion": " · ".join(partes),
+            # en el formato de dd.eevv.serie_indicadores
+            "filtros": {k: v for k, v in (("sexo", list(sexo)), ("departamento_residencia", list(dptos))) if v}}
+
+
+TITULOS_CERTIFICADO = {v: k for k, v in CERTIFICADOS.items()}
 
 
 # --------------------------------------------------------------------------- #

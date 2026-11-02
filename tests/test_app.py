@@ -397,3 +397,125 @@ def test_inicio_avisa_la_version_nueva(tmp_path, monkeypatch):
     assert not at.exception
     assert pedidas == ["9.9.9"] and any("vuelva a abrir" in s.value for s in at.success)
 
+
+
+# ---------------------------------------------------------------------------------------------------- #
+# Estadísticas Vitales
+# ---------------------------------------------------------------------------------------------------- #
+@pytest.fixture
+def app_eevv(eevv_root, tmp_path, monkeypatch):
+    monkeypatch.setitem(dd.config._session, "eevv", eevv_root)
+    monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
+    return AppTest.from_file(str(PAGINAS / "eevv_vitales.py"), default_timeout=60)
+
+
+def _seleccionar(at, etiqueta, valor):
+    next(w for w in [*at.radio, *at.selectbox] if w.label == etiqueta).set_value(valor).run()
+    assert not at.exception
+
+
+def test_eevv_sin_datos(tmp_path, monkeypatch):
+    monkeypatch.setitem(dd.config._session, "eevv", tmp_path / "nada")
+    # Fuera de la navegación de Inicio.py, st.page_link no encuentra las páginas
+    monkeypatch.setattr("streamlit.page_link", lambda *a, **k: None)
+    at = AppTest.from_file(str(PAGINAS / "eevv_vitales.py"), default_timeout=60).run()
+    assert not at.exception
+    assert any("Estadísticas Vitales" in w.value for w in at.warning)
+
+
+def test_eevv_indicadores_por_certificado(app_eevv):
+    at = app_eevv.run()
+    assert not at.exception
+    assert at.metric[0].label == "Defunciones" and at.metric[0].value == "3"
+    _seleccionar(at, "Variable", "Homicidios")
+    _seleccionar(at, "Desagregar por", "Sexo")
+    assert any("serie_indicadores" in c.value and "por='sexo'" in c.value for c in at.code)
+    _seleccionar(at, "Certificado", "Nacimientos")
+    assert at.metric[0].label == "Nacimientos" and at.metric[0].value == "3"
+    _seleccionar(at, "Variable", "Prematuros (%)")
+    _seleccionar(at, "Certificado", "Defunciones fetales")
+    assert at.metric[0].label == "Defunciones fetales"
+
+
+def test_eevv_filtros_en_el_codigo_equivalente(app_eevv):
+    at = app_eevv.run()
+    at.multiselect(key="eevv_sexo").set_value(["Mujer"]).run()
+    assert not at.exception
+    assert at.metric[0].value == "1"
+    assert any("{'sexo': ['Mujer']}" in c.value for c in at.code)
+
+
+def test_eevv_tasas(app_eevv):
+    at = app_eevv.run()
+    _seleccionar(at, "Vista", "Tasas sobre la población")
+    assert any("sin ajustar por subregistro" in i.value for i in at.info)
+    _seleccionar(at, "Tasa", "Mortalidad infantil (por 1.000 nacidos vivos)")
+    _seleccionar(at, "Desagregar por", "Departamento de residencia")
+    assert any("dd.eevv.tasas" in c.value and "por='departamento'" in c.value for c in at.code)
+
+
+def test_eevv_causas_solo_con_defunciones(app_eevv):
+    at = app_eevv.run()
+    assert "Causas de muerte" in next(r for r in at.radio if r.label == "Vista").options
+    _seleccionar(at, "Vista", "Causas de muerte")
+    assert any("causa_105_nombre" in c.value for c in at.code)
+    _seleccionar(at, "Certificado", "Nacimientos")
+    assert "Causas de muerte" not in next(r for r in at.radio if r.label == "Vista").options
+
+
+def test_eevv_avisos_de_cobertura(app_eevv):
+    at = app_eevv.run()
+    assert not any("1979" in w.value for w in at.warning)
+    at.select_slider(key="eevv_rango_defunciones").set_value((1979, 2025)).run()
+    assert not at.exception
+    assert any("1979 y 1980" in w.value for w in at.warning)
+    assert any("1991" in w.value for w in at.warning)
+
+
+def test_descargar_eevv(tmp_path, monkeypatch):
+    for clave in ("geih", "geih_empalme", "eam", "eevv"):
+        monkeypatch.setitem(dd.config._session, clave, tmp_path / clave)
+    pedidos = []
+    monkeypatch.setattr(dd.eevv, "download", lambda anios, **kw: pedidos.append((list(anios), kw["tipos"])) or [])
+    at = AppTest.from_file(str(PAGINAS / "descargar.py")).run()
+    at.radio[0].set_value("Estadísticas Vitales (nacimientos y defunciones)").run()
+    assert not at.exception
+    next(m for m in at.multiselect if m.label == "Certificados").set_value(["Nacimientos"]).run()
+    next(b for b in at.button if b.label.endswith("Descargar")).click().run()
+    assert not at.exception
+    assert pedidos == [([2025], ["nacimientos"])]
+    next(b for b in at.button if b.label.startswith("Seleccionar toda")).click().run()
+    assert next(m for m in at.multiselect if m.label == "Años").value == dd.eevv.ANIOS_DISPONIBLES["nacimientos"]
+    # Sin certificados no se puede descargar, y sin defunciones no sobran los años anteriores a 1998
+    next(m for m in at.multiselect if m.label == "Certificados").set_value([]).run()
+    assert not at.exception
+    assert next(b for b in at.button if b.label.endswith("Descargar")).disabled
+
+
+def test_inicio_con_eevv(eevv_root, tmp_path, monkeypatch):
+    archivo = tmp_path / "config.json"
+    monkeypatch.setattr(dd.config, "CONFIG_FILE", archivo)
+    monkeypatch.setattr(dd.config, "_session", {"geih": tmp_path / "g", "geih_empalme": tmp_path / "e", "eam": tmp_path / "eam",
+                                                "eevv": eevv_root})
+    at = AppTest.from_file(str(PAGINAS / "inicio.py"), default_timeout=60).run()
+    assert not at.exception
+    metrica = next(m for m in at.metric if m.label == "Estadísticas Vitales")
+    assert metrica.value == "5 años"
+    next(t for t in at.text_input if t.label == "Estadísticas Vitales").set_value(str(tmp_path / "otra"))
+    next(b for b in at.button if b.label == "Guardar").click().run()
+    assert not at.exception
+    assert json.loads(archivo.read_text(encoding="utf-8")) == {"eevv": str(tmp_path / "otra")}
+
+
+@pytest.mark.parametrize("encuesta", ["Defunciones", "Nacimientos", "Defunciones fetales"])
+def test_diccionario_eevv(encuesta):
+    at = AppTest.from_file(str(PAGINAS / "diccionario.py"), default_timeout=60).run()
+    at.radio[0].set_value(encuesta).run()
+    assert not at.exception
+    at.text_input[0].set_value("sexo").run()
+    assert not at.exception
+
+
+def test_las_paginas_estan_en_la_navegacion():
+    inicio = (PAGINAS.parent / "Inicio.py").read_text(encoding="utf-8")
+    assert "paginas/eevv_vitales.py" in inicio

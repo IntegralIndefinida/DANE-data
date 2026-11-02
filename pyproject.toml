@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "dane-data"
 version = "0.3.2"
-description = "Descarga, carga y análisis de microdatos del DANE (GEIH y EAM) para estudiantes de economía."
+description = "Descarga, carga y análisis de microdatos del DANE (GEIH, EAM y Estadísticas Vitales) para estudiantes de economía."
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
