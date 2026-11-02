@@ -25,11 +25,11 @@ import shutil
 import zipfile
 import tempfile
 import logging
-import unicodedata
 from pathlib import Path
 from bs4 import BeautifulSoup
 
-from .._hooks import DescargadorANDA, extraer_miembro, url_del_anda, ya_extraido
+from .._hooks import DescargadorANDA, extraer_miembro, sanitize_member_name as _sanitize_comun, url_del_anda, ya_extraido
+from ..referencias import strip_accents
 from .loader import EXTENSIONES, _pick_files, MesGEIH, month_from_folder
 
 MARCADOR = ".dane_data_ok"  # se escribe tras una extracción exitosa
@@ -150,18 +150,9 @@ CSV_DANADOS = {
 EXCLUDE_MODULE_PATTERNS = ("otros ingresos", "migracion", "tipo de investigacion")
 
 
-def normalize_text(text: str) -> str:
-    """Elimina acentos/diacríticos y normaliza espacios no separables (NBSP)."""
-    text = text.replace("\xa0", " ").replace("\u202f", " ").replace("\u200b", "")
-    return "".join(
-        c for c in unicodedata.normalize("NFD", text)
-        if unicodedata.category(c) != "Mn"
-    ).lower()
-
-
 def _formato(nombre: str) -> str | None:
     """Formato de un ZIP del ANDA según su nombre ("Marzo_txt.zip" -> "txt"); None si no lo dice."""
-    n = normalize_text(nombre)
+    n = strip_accents(nombre)
     for formato, marcas in (("csv", ("csv",)), ("txt", ("txt",)), ("sav", ("sav", "spss")), ("dta", ("dta",))):
         if any(m in n for m in marcas):
             return formato
@@ -181,7 +172,7 @@ def is_target_csv(filename: str, modules=DEFAULT_MODULES, extensiones=(".csv",))
     if not filename.lower().endswith(tuple(extensiones)):
         return False
 
-    norm_name = normalize_text(filename)
+    norm_name = strip_accents(filename)
 
     # Si coincide con exclusiones explícitas (e.g. 'no ocupados', 'desocupados')
     if any(ex in norm_name for ex in EXCLUDE_MODULE_PATTERNS):
@@ -196,15 +187,8 @@ def is_target_csv(filename: str, modules=DEFAULT_MODULES, extensiones=(".csv",))
 
 
 def sanitize_member_name(raw_name: str) -> str:
-    """Limpia caracteres corruptos habituales de codificación DOS/Windows en ZIPs."""
-    name = Path(raw_name).name
-    # Intentar decodificación limpia
-    try:
-        clean = name.encode("cp437").decode("utf-8")
-    except Exception:
-        clean = name
-
-    # Reemplazar posibles caracteres de dibujo de cajas o fallos de tabla OEM
+    """El de ``_hooks``, más los nombres de la GEIH que la tabla OEM deja con caracteres de dibujo de cajas."""
+    clean = _sanitize_comun(raw_name)
     for bad, good in [("╡rea", "Area"), ("µrea", "Area"), ("CaracterÝsticas", "Caracteristicas"), ("Caracter¡sticas", "Caracteristicas"), ("educaci¾n", "educacion"), ("educaci¢n", "educacion")]:
         clean = clean.replace(bad, good)
 
@@ -313,7 +297,7 @@ class GEIHDownloader(DescargadorANDA):
                         continue
 
                     # Filtrar módulos satélite y submuestras territoriales
-                    norm_title = normalize_text(title)
+                    norm_title = strip_accents(title)
                     is_satellite = any(w in norm_title for w in [
                         "san andres", "amazon", "orinoqu", "ciudades intermedias",
                         "infantil", "mti", "mfpt", "formacion", "migracion",
@@ -421,7 +405,7 @@ class GEIHDownloader(DescargadorANDA):
         # Descartamos archivos de documentación o complementarios no mensuales.
         monthly_bundles = []
         for url, name in unique_files.items():
-            norm_name = normalize_text(name)
+            norm_name = strip_accents(name)
             # Ignorar FEX u otros zips de apoyo si no son los datos mensuales
             if "fex" in norm_name or "proyecciones" in norm_name:
                 continue
