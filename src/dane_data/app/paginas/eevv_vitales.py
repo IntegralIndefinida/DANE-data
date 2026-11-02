@@ -16,7 +16,8 @@ st.caption(f"**Datos:** {sel['descripcion']}")
 VARIABLES = {
     "defunciones": {
         "Defunciones": ("defunciones", "conteo"), "Hombres": ("hombres", "conteo"), "Mujeres": ("mujeres", "conteo"),
-        "Menores de un año": ("menores_un_anio", "conteo"), "Defunciones maternas": ("maternas", "conteo"),
+        "Menores de un año": ("menores_un_anio", "conteo"), "Neonatales (0 a 27 días)": ("neonatales", "conteo"),
+        "Neonatales precoces (0 a 6 días)": ("neonatales_precoces", "conteo"), "Defunciones maternas": ("maternas", "conteo"),
         "Defunciones maternas tardías": ("maternas_tardias", "conteo"),
         "Homicidios": ("homicidios", "conteo"), "Suicidios": ("suicidios", "conteo"), "Accidentes": ("accidentes", "conteo"),
         "Menores de un año (% de las defunciones)": ("pct_menores_un_anio", "pct"),
@@ -30,7 +31,7 @@ VARIABLES = {
         "Consultas prenatales (promedio)": ("consultas_promedio", "numero"), "Hombres por cada 100 mujeres": ("razon_sexo", "numero"),
     },
     "fetales": {
-        "Defunciones fetales": ("fetales", "conteo"), "Bajo peso (%)": ("pct_bajo_peso", "pct"),
+        "Defunciones fetales": ("fetales", "conteo"), "Mortinatos (22 semanas o más)": ("mortinatos", "conteo"), "Bajo peso (%)": ("pct_bajo_peso", "pct"),
         "Prematuros (%)": ("pct_prematuro", "pct"), "Madres adolescentes (%)": ("pct_madre_adolescente", "pct"),
     },
 }
@@ -50,11 +51,12 @@ TASAS = {
     "Tasa global de fecundidad (hijos por mujer)": "tasa_global_fecundidad",
     "Mortalidad infantil (por 1.000 nacidos vivos)": "mortalidad_infantil",
     "Razón de mortalidad materna (por 100.000 nacidos vivos)": "razon_mortalidad_materna",
-    "Razón de mortalidad fetal (por 1.000 nacidos vivos y defunciones fetales)": "razon_mortalidad_fetal",
+    "Mortalidad neonatal (por 1.000 nacidos vivos)": "mortalidad_neonatal",
+    "Mortalidad perinatal (por 1.000 nacidos vivos y mortinatos)": "mortalidad_perinatal",
 }
 POR_TASAS = {"Total nacional": None, "Departamento de residencia": "departamento", "Sexo": "sexo", "Área de residencia": "area"}
 # dd.eevv.tasas las deja vacías por sexo: los nacimientos son del sexo del nacido, no de quien los tiene
-SOLO_POR_SEXO = {"tasa_mortalidad", "mortalidad_infantil"}
+SOLO_POR_SEXO = {"tasa_mortalidad", "mortalidad_infantil", "mortalidad_neonatal"}
 TITULO = {"defunciones": "Defunciones", "nacimientos": "Nacimientos", "fetales": "Defunciones fetales"}
 
 
@@ -153,7 +155,8 @@ elif vista == "Tasas sobre la población":
         botones_descarga(res, f"tasas_{anios[0]}_{anios[-1]}", "eevvtasas")
     with st.expander("📖 Glosario"):
         for clave in ("Tasa bruta de natalidad", "Tasa bruta de mortalidad", "Tasa global de fecundidad",
-                      "Mortalidad infantil registrada", "Razón de mortalidad materna", "Razón de mortalidad fetal"):
+                      "Mortalidad infantil registrada", "Mortalidad neonatal", "Mortalidad perinatal", "Mortinato",
+                      "Razón de mortalidad materna"):
             st.markdown(f"**{clave}.** {dd.eevv.GLOSARIO[clave]}")
     codigo(f"""
 import dane_data as dd

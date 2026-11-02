@@ -38,7 +38,11 @@ GLOSARIO = {
     "Muerte materna tardía": "Por causas obstétricas, de 43 días a un año después del embarazo (O96). No entra en la razón de "
                              "mortalidad materna, aunque los cuadros de defunciones maternas del DANE sí la cuentan.",
     "Razón de mortalidad materna": "Muertes maternas (hasta 42 días) por cada 100.000 nacidos vivos.",
-    "Razón de mortalidad fetal": "Defunciones fetales por cada 1.000 nacidos vivos más defunciones fetales.",
+    "Mortinato": "Defunción fetal de 22 semanas o más de gestación o de 500 gramos o más (ficha técnica del DANE). Los "
+                 "microdatos agrupan el peso desde «menos de 1.000 gramos», así que dane-data solo puede confirmar el peso "
+                 "desde 1.000. Las de menos de 22 semanas y 500 gramos son abortos.",
+    "Mortalidad neonatal": "Defunciones de 0 a 27 días completos de vida por cada 1.000 nacidos vivos. La precoz, de 0 a 6 días.",
+    "Mortalidad perinatal": "Mortinatos y defunciones de 0 a 6 días por cada 1.000 nacidos vivos más mortinatos.",
 }
 
 
@@ -86,11 +90,13 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, dropna
         Una fila por grupo. En todos: ``hombres`` y ``mujeres``, salvo en fetales, donde casi siempre es
         indeterminado.
 
-        * Defunciones: ``defunciones``, ``menores_un_anio``, ``pct_menores_un_anio``, ``maternas`` (hasta 42 días),
-          ``maternas_tardias``, ``homicidios``, ``suicidios``, ``accidentes``, ``pct_mal_definidas``.
+        * Defunciones: ``defunciones``, ``menores_un_anio``, ``neonatales`` (0 a 27 días), ``neonatales_precoces``
+          (0 a 6 días), ``pct_menores_un_anio``, ``maternas`` (hasta 42 días), ``maternas_tardias``, ``homicidios``,
+          ``suicidios``, ``accidentes``, ``pct_mal_definidas``.
         * Nacimientos: ``nacimientos``, ``razon_sexo``, ``pct_bajo_peso``, ``pct_prematuro``, ``pct_cesarea``,
           ``pct_parto_multiple``, ``pct_madre_adolescente``, ``pct_cuatro_consultas``, ``consultas_promedio``.
-        * Fetales: ``fetales``, ``pct_bajo_peso``, ``pct_prematuro``, ``pct_madre_adolescente``.
+        * Fetales: ``fetales``, ``mortinatos`` (22 semanas o 1.000 gramos o más), ``pct_bajo_peso``, ``pct_prematuro``,
+          ``pct_madre_adolescente``.
 
         Los porcentajes se calculan sobre quienes tienen el dato. Un valor queda vacío si el dato no existe en esos
         años; por ejemplo, ``pct_prematuro`` en 2012.
@@ -154,12 +160,14 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, dropna
         res["mujeres"] = contar(base["sexo"].eq("Mujer").fillna(False).astype(bool)).astype("int64")
 
     if tipo == "defunciones":
-        if tiene("menor_un_anio"):
-            res["menores_un_anio"] = verdaderos("menor_un_anio")
-            if tiene("grupo_edad"):
-                # Un grupo con edades de menores de 10 sin detalle (1991) contaría de menos
-                sin_detalle = contar(base["grupo_edad"].eq("Menor de 10 años, sin detalle").fillna(False).astype(bool))
-                res["menores_un_anio"] = res["menores_un_anio"].where(sin_detalle == 0)
+        # Un grupo con edades de menores de 10 sin detalle (1991) contaría de menos los menores de un año y los neonatales
+        sin_detalle = (contar(base["grupo_edad"].eq("Menor de 10 años, sin detalle").fillna(False).astype(bool))
+                       if tiene("grupo_edad") else None)
+        for columna, nombre in (("menor_un_anio", "menores_un_anio"), ("neonatal", "neonatales"),
+                                ("neonatal_precoz", "neonatales_precoces")):
+            if tiene(columna):
+                res[nombre] = verdaderos(columna) if sin_detalle is None else verdaderos(columna).where(sin_detalle == 0)
+        if "menores_un_anio" in res.columns:
             res["pct_menores_un_anio"] = 100 * res["menores_un_anio"] / total
         for columna, nombre in (("materna", "maternas"), ("materna_tardia", "maternas_tardias")):
             if tiene(columna):
@@ -175,6 +183,8 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, dropna
     elif tipo == "nacimientos":
         if "hombres" in res.columns:
             res["razon_sexo"] = 100 * res["hombres"] / res["mujeres"].where(lambda v: v > 0)
+    if tipo == "fetales" and tiene("mortinato"):
+        res["mortinatos"] = verdaderos("mortinato")
     if tipo in ("nacimientos", "fetales"):
         for columna, nombre in (("bajo_peso", "pct_bajo_peso"), ("prematuro", "pct_prematuro")):
             if tiene(columna):

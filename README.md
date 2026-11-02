@@ -166,9 +166,9 @@ MAYÚSCULA (GEIH) son las originales del DANE.
 
 **Estadísticas Vitales**: en todos, `anio`, `mes`, `sexo`, `departamento_ocurrencia`, `departamento_residencia`, sus códigos,
 `mpio_ocurrencia`, `mpio_residencia`, `area_ocurrencia`, `area_residencia` y `regimen_salud`. En defunciones, además,
-`grupo_edad`, `grupo_edad_amplio`, `menor_un_anio`, `causa_cie`, `cie_rev`, `causa_105`, `causa_667`, `gran_causa`,
+`grupo_edad`, `grupo_edad_amplio`, `menor_un_anio`, `neonatal`, `neonatal_precoz`, `causa_cie`, `cie_rev`, `causa_105`, `causa_667`, `gran_causa`,
 `manera_muerte`, `materna`, `materna_tardia`, `sitio`, `estado_civil`, `nivel_educativo` y `etnia`. En nacimientos, `edad_madre`,
-`madre_adolescente`, `peso_grupo`, `bajo_peso`, `gestacion_grupo`, `prematuro`, `cesarea`, `parto_multiple`, `consultas` y otras.
+`madre_adolescente`, `peso_grupo`, `bajo_peso`, `gestacion_grupo`, `prematuro`, `cesarea`, `parto_multiple`, `consultas` y otras. En fetales, las de la madre y las causas, más `mortinato`.
 
 ### Lo que `dane-data` resuelve por usted
 
@@ -276,6 +276,7 @@ el DANE, así que en estos casos no coincide con las variables armonizadas.
 | `N_HIJOSM` (fetales 1998, catálogo 366) | Número de hijos nacidos muertos. | 10 995 de los 16 004 registros traen el texto «Número de hijos nacidos muertos» y 2 546 «Sin información», en vez de un número. No es una variable armonizada; si se carga con `columns=["N_HIJOSM"]`, llega como texto. |
 | `MUL_PARTO` → `parto_multiple` (nacimientos 2008–2011 y 2014–2019) | «Sin información» es el 5. | En los datos siempre es el 9, como en los demás años, y el 5 no aparece. `parto_multiple` deja vacíos los dos. |
 | `CAUSA_667`, `CAU_HOMOL` → `causa_667_nombre`, `causa_105_nombre` (toda la serie) | El DDI trae los códigos sin nombre. | Los nombres salen de los cuadros de defunciones del DANE. `CAUSA_666` (hasta 2018) es otra lista, aunque se parezca: el 407 de una es el 406 de la otra, así que `causa_667` queda vacía donde solo está `CAUSA_666` y `gran_causa` usa su primer dígito, que sí coincide (el 7 de la 6/66 es el 0 de la 6/67). |
+| `PESO_NAC` → `mortinato`, `mortalidad_perinatal` (fetales, toda la serie) | La ficha técnica de la tasa de mortalidad perinatal del DANE (2026) cuenta como mortinato la defunción fetal de 22 semanas o más **o** de 500 gramos o más. | Los microdatos agrupan el peso desde «menos de 1.000 gramos» (los cuadros del DANE sí separan de 300 a 999), así que con menos de 22 semanas, o sin gestación, no se puede saber si pesaba 500 gramos. `mortinato` es True con 22 semanas o más o con 1.000 gramos o más, False con menos de 22 semanas y de 1.000 gramos (el DANE contaría las de 500 a 999), y vacío sin gestación y con menos de 1.000 gramos: 2 309 de las 19 620 defunciones fetales de 2025. Por eso `mortalidad_perinatal` puede quedar algo por debajo de la del DANE. |
 
 ## Estructura
 

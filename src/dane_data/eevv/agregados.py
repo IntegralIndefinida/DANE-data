@@ -345,9 +345,16 @@ def _contar_para_tasas(tipo: str, anios, por: list[str], root, progress=None) ->
             sin_detalle = d["grupo_edad"].eq(_SIN_DETALLE).groupby([d[k] for k in llaves], observed=True).sum()
             menores = d["menor_un_anio"].fillna(False).astype(bool).groupby([d[k] for k in llaves], observed=True).sum()
             res["defunciones_menores_1"] = menores.astype("float64").where(sin_detalle == 0)
+            for columna, nombre in (("neonatal", "defunciones_neonatales"), ("neonatal_precoz", "defunciones_neonatales_precoces")):
+                con_dato = d[columna].notna().groupby([d[k] for k in llaves], observed=True).sum()
+                n = d[columna].fillna(False).astype(bool).groupby([d[k] for k in llaves], observed=True).sum()
+                res[nombre] = n.astype("float64").where((sin_detalle == 0) & (con_dato > 0))
             con_causa = d["materna"].notna().groupby([d[k] for k in llaves], observed=True).sum()
             maternas = d["materna"].fillna(False).astype(bool).groupby([d[k] for k in llaves], observed=True).sum()
             res["defunciones_maternas"] = maternas.astype("float64").where(con_causa > 0)
+        elif tipo == "fetales":
+            mortinatos = d["mortinato"].fillna(False).astype(bool).groupby([d[k] for k in llaves], observed=True).sum()
+            res["mortinatos"] = mortinatos.astype("float64")
         return res.reset_index()
 
     partes = _por_anio("para_tasas", anios, tipo, {"por": por}, calcular, root, progress)
@@ -408,16 +415,19 @@ def tasas(
     DataFrame
         ``anio``, las columnas de ``por`` y:
 
-        * ``poblacion``, ``nacimientos``, ``defunciones``, ``defunciones_menores_1``, ``defunciones_maternas``,
-          ``fetales``.
+        * ``poblacion``, ``nacimientos``, ``defunciones``, ``defunciones_menores_1``, ``defunciones_neonatales``
+          (0 a 27 días), ``defunciones_neonatales_precoces`` (0 a 6 días), ``defunciones_maternas``, ``fetales`` y
+          ``mortinatos``.
         * ``tasa_natalidad`` y ``tasa_mortalidad``, por 1.000 habitantes.
         * ``tasa_global_fecundidad``, hijos por mujer, de 15 a 49 años.
-        * ``mortalidad_infantil``, por 1.000 nacidos vivos.
+        * ``mortalidad_infantil`` y ``mortalidad_neonatal``, por 1.000 nacidos vivos. La neonatal queda vacía antes de
+          1998, cuando los grupos de edad juntan de 7 a 29 días.
+        * ``mortalidad_perinatal``: mortinatos y defunciones de 0 a 6 días, por 1.000 nacidos vivos más mortinatos.
         * ``razon_mortalidad_materna``, por 100.000 nacidos vivos. Cuenta las muertes maternas de hasta 42 días
-          (``materna``: capítulo O sin O96 ni O97), como la ficha técnica del DANE.
-        * ``razon_mortalidad_fetal``, por 1.000 nacidos vivos más defunciones fetales.
+          (``materna``: capítulo O sin O96 ni O97).
 
-        Por sexo solo hay ``tasa_mortalidad`` y ``mortalidad_infantil``: las demás quedan vacías.
+        Cada una sigue la ficha técnica del DANE (2026). Por sexo solo hay ``tasa_mortalidad``, ``mortalidad_infantil``
+        y ``mortalidad_neonatal``: las demás quedan vacías.
 
     Lanza
     -----
@@ -484,7 +494,8 @@ def tasas(
         avance = None if progress is None else lambda f, m, i=i: progress((i + f) / len(tipos), m)
         conteo = _contar_para_tasas(tipo, disponibles, por, root, avance)
         res = conteo if res is None else res.merge(conteo, how="outer", on=llaves)
-    for columna in ("nacimientos", "defunciones", "defunciones_menores_1", "defunciones_maternas", "fetales"):
+    for columna in ("nacimientos", "defunciones", "defunciones_menores_1", "defunciones_neonatales",
+                    "defunciones_neonatales_precoces", "defunciones_maternas", "fetales", "mortinatos"):
         if columna not in res.columns:
             res[columna] = np.nan
 
@@ -499,7 +510,10 @@ def tasas(
     res["tasa_mortalidad"] = _MIL * res["defunciones"] / res["poblacion"]
     res["mortalidad_infantil"] = _MIL * res["defunciones_menores_1"] / res["nacimientos"]
     res["razon_mortalidad_materna"] = np.nan if por_sexo else 100_000 * res["defunciones_maternas"] / res["nacimientos"]
-    res["razon_mortalidad_fetal"] = _MIL * res["fetales"] / (res["nacimientos"] + res["fetales"])
+    res["mortalidad_neonatal"] = _MIL * res["defunciones_neonatales"] / res["nacimientos"]
+    # Ficha técnica de la mortalidad perinatal: el denominador suma los mortinatos, no todas las defunciones fetales
+    res["mortalidad_perinatal"] = (_MIL * (res["mortinatos"] + res["defunciones_neonatales_precoces"])
+                                   / (res["nacimientos"] + res["mortinatos"]))
     res["tasa_global_fecundidad"] = np.nan
     if "sexo" not in por and find_files(anios, tipo="nacimientos", root=root):
         especificas = tasas_especificas(disponibles, "nacimientos", por, root=root)
@@ -509,9 +523,10 @@ def tasas(
         res = res.merge(tgf, how="left", on=llaves)
         res["tasa_global_fecundidad"] = res.pop("_tgf")
 
-    orden = [*llaves, "poblacion", "nacimientos", "defunciones", "defunciones_menores_1", "defunciones_maternas", "fetales",
-             "tasa_natalidad", "tasa_mortalidad", "tasa_global_fecundidad", "mortalidad_infantil",
-             "razon_mortalidad_materna", "razon_mortalidad_fetal"]
+    orden = [*llaves, "poblacion", "nacimientos", "defunciones", "defunciones_menores_1", "defunciones_neonatales",
+             "defunciones_neonatales_precoces", "defunciones_maternas", "fetales", "mortinatos", "tasa_natalidad",
+             "tasa_mortalidad", "tasa_global_fecundidad", "mortalidad_infantil", "mortalidad_neonatal",
+             "mortalidad_perinatal", "razon_mortalidad_materna"]
     return res[orden].replace([np.inf, -np.inf], np.nan).sort_values(llaves, ignore_index=True)
 
 

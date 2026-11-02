@@ -188,6 +188,35 @@ def test_muertes_maternas_como_la_ficha_del_dane():
     assert dd.eevv.harmonize(crudo, "defunciones", 1996)[["materna", "materna_tardia"]].isna().all().all()  # CIE-9
 
 
+def test_neonatales_por_epoca(eevv_root):
+    """0 a 6 y 0 a 27 días, con los códigos de GRU_ED1 de cada época; antes de 1998 el 3 junta de 7 a 29 días."""
+    with pytest.warns(UserWarning, match="1991"):
+        d = dd.eevv.load([1979, 1991, 1998, 2025], root=eevv_root)
+    a = d[d.anio == 2025].set_index("grupo_edad")
+    assert bool(a.loc["Menor de 1 año", "neonatal"]) and bool(a.loc["Menor de 1 año", "neonatal_precoz"])
+    assert not a.loc["De 85 años y más", "neonatal"]
+    assert d.loc[d.anio == 1979, "neonatal"].isna().all()  # no se puede separar
+    assert not d.loc[(d.anio == 1979) & (d.grupo_edad == "Menor de 1 año"), "neonatal_precoz"].any()  # de 6 a 11 meses
+    sin_detalle = d[d.grupo_edad == "Menor de 10 años, sin detalle"]
+    assert len(sin_detalle) == 1 and sin_detalle["neonatal_precoz"].isna().all()  # enero–junio de 1991
+    assert d.loc[d.grupo_edad == "Edad desconocida", "neonatal"].isna().all()
+    crudo = pd.DataFrame({"GRU_ED1": [0, 2, 3, 4, 29]})
+    n = dd.eevv.harmonize(crudo, "defunciones", 2025)
+    assert n["neonatal_precoz"].tolist()[:4] == [True, True, False, False]
+    assert n["neonatal"].tolist()[:4] == [True, True, True, False] and pd.isna(n["neonatal"].iloc[4])
+
+
+def test_mortinatos_como_la_ficha_del_dane():
+    """22 semanas o más, o 1.000 gramos o más (el DANE dice 500, pero el peso viene agrupado)."""
+    crudo = pd.DataFrame({"T_GES": [2, 1, 1, 9, 9, 9, 1], "PESO_NAC": [1, 2, 1, 1, 9, 5, 9]})
+    d = dd.eevv.harmonize(crudo, "fetales", 2025)
+    assert d["mortinato"].tolist()[:3] == [True, True, False]
+    assert pd.isna(d["mortinato"].iloc[3])  # sin gestación y con menos de 1.000 gramos: puede pesar 500 o más
+    assert d["mortinato"].tolist()[4:] == [False, True, False]
+    antigua = dd.eevv.harmonize(pd.DataFrame({"T_GES": [3, 1], "PESO_NAC": [1, 1]}), "fetales", 2000)
+    assert antigua["mortinato"].tolist() == [True, False]  # en 1998–2007 el 3 es «28 y más»
+
+
 def test_listas_de_causas_completas():
     c = dd.eevv.causas()
     assert len(c["667"]) == 67 and len(c["105"]) == 105
@@ -403,7 +432,10 @@ def test_tasas_a_mano(eevv_root, cache):
     assert r["mortalidad_infantil"] == pytest.approx(1000 * 1 / 3)
     assert r["defunciones_maternas"] == 1
     assert r["razon_mortalidad_materna"] == pytest.approx(100_000 * 1 / 3)
-    assert r["razon_mortalidad_fetal"] == pytest.approx(1000 * 1 / (3 + 1))
+    # El fetal de 2025 tiene de 38 a 41 semanas: es mortinato. La defunción de menos de un día es neonatal precoz.
+    assert (r["mortinatos"], r["defunciones_neonatales"], r["defunciones_neonatales_precoces"]) == (1, 1, 1)
+    assert r["mortalidad_neonatal"] == pytest.approx(1000 * 1 / 3)
+    assert r["mortalidad_perinatal"] == pytest.approx(1000 * (1 + 1) / (3 + 1))
     # Una madre de 25–29 y otra de 15–19; la que no tiene edad no entra. Los demás grupos fértiles valen 0.
     mujeres_15 = _poblacion(2025, sexo="Mujer", edades=(15, 19))
     mujeres_25 = _poblacion(2025, sexo="Mujer", edades=(25, 29))
@@ -429,7 +461,7 @@ def test_tasas_por_sexo_y_area(eevv_root, cache):
     assert r.loc["Hombre", "defunciones"] == 2 and r.loc["Mujer", "defunciones"] == 1
     assert r.loc["Mujer", "tasa_mortalidad"] == pytest.approx(1000 / _poblacion(2025, sexo="Mujer"))
     # No aplican por sexo: los nacimientos son del sexo del nacido, y las muertes maternas son todas de mujeres
-    for columna in ("tasa_natalidad", "tasa_global_fecundidad", "razon_mortalidad_materna", "razon_mortalidad_fetal", "fetales"):
+    for columna in ("tasa_natalidad", "tasa_global_fecundidad", "razon_mortalidad_materna", "mortalidad_perinatal", "fetales"):
         assert r[columna].isna().all(), columna
     assert r.loc["Mujer", "defunciones_maternas"] == 1
     # La mortalidad infantil sí: el menor de un año es un niño, y nació un niño
@@ -462,7 +494,8 @@ def test_tasas_1991_sin_mortalidad_infantil(eevv_root, cache):
 def test_tasas_solo_con_lo_descargado(eevv_root, cache):
     # 2009 solo tiene fetales
     r = dd.eevv.tasas(2009, root=eevv_root).iloc[0]
-    assert r["fetales"] == 1 and pd.isna(r["nacimientos"]) and pd.isna(r["razon_mortalidad_fetal"])
+    assert r["fetales"] == 1 and pd.isna(r["nacimientos"]) and pd.isna(r["mortalidad_perinatal"])
+    assert r["mortinatos"] == 0  # menos de 22 semanas y de 1.000 gramos: aborto
 
 
 def test_tasas_errores(tmp_path, eevv_root, cache):
@@ -609,6 +642,16 @@ def test_real_serie_sin_saltos():
             variacion = t.pct_change().abs().dropna()
             saltos = {int(a) for a in variacion[variacion > 0.10].index} - conocidos[tipo]
             assert not saltos, (tipo, saltos)
+
+
+@hay_datos_reales
+def test_real_neonatales_y_gestacion_coinciden_con_los_cuadros():
+    """Cuadro 1 de defunciones 2025: 265 de menos de una hora, 495 de 1 a 23 horas, 1 237 de 1 a 6 días y 991 de 7 a 27.
+    Cuadro 4 de fetales 2025: 13 234 de menos de 22 semanas."""
+    r = dd.eevv.indicadores(dd.eevv.load(2025, root=REAL)).iloc[0]
+    assert (r["neonatales_precoces"], r["neonatales"]) == (265 + 495 + 1237, 265 + 495 + 1237 + 991)
+    f = dd.eevv.load(2025, tipo="fetales", root=REAL)
+    assert f["gestacion_grupo"].eq("Menos de 22").sum() == 13234
 
 
 @hay_datos_reales

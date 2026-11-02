@@ -94,6 +94,10 @@ ETIQUETAS = {
         "grupo_edad": "Grupo de edad, comparable en toda la serie (GRU_ED1)",
         "grupo_edad_amplio": "Grupo de edad amplio: menor de 1, 1–4, 5–14, 15–44, 45–64 y 65 o más",
         "menor_un_anio": "True si tenía menos de un año; vacío sin edad y en el primer semestre de 1991",
+        "neonatal": "True si murió en los primeros 27 días completos de vida; vacío sin edad, en el primer semestre de "
+                    "1991 y antes de 1998 (GRU_ED1 junta de 7 a 29 días)",
+        "neonatal_precoz": "True si murió en los primeros 6 días completos de vida; vacío sin edad y en el primer "
+                           "semestre de 1991",
         "sitio": "Sitio de la defunción (SIT_DEFUN)",
         "estado_civil": "Estado civil (EST_CIVIL)",
         "nivel_educativo": "Nivel educativo (NIVEL_EDU), desde 1998",
@@ -120,6 +124,8 @@ ETIQUETAS = {
     "fetales": {
         **_COMUNES_ETIQUETAS, **_CAUSA_ETIQUETAS, **_MADRE_ETIQUETAS,
         "sitio": "Sitio de la defunción (SIT_DEFUN)",
+        "mortinato": "True si tenía 22 semanas o más de gestación o pesaba 1.000 gramos o más; vacío sin gestación y con "
+                     "menos de 1.000 gramos (el DANE cuenta desde 500, pero los microdatos agrupan el peso)",
     },
 }
 
@@ -184,6 +190,11 @@ _GESTACIONES = ["Menos de 22", "De 22 a 27", "De 28 a 37", "De 38 a 41", "De 42 
 _GESTACION = {1: "Menos de 22", 2: "De 22 a 27", 3: "De 28 a 37", 4: "De 38 a 41", 5: "De 42 y más", 6: "Ignorado", 9: _SIN}
 # Fetales 1998–2007: el certificado solo separaba hasta 28 semanas
 _GESTACION_FETAL_ANTIGUA = {1: "Menos de 22", 2: "De 22 a 27", 3: "De 28 y más", 4: "Ignorado", 9: _SIN}
+_GESTACION_22_O_MAS = ["De 22 a 27", "De 28 a 37", "De 38 a 41", "De 42 y más", "De 28 y más"]
+
+# Códigos de GRU_ED1 de 0 a 6 días y de 0 a 27 días, por época. En 1979–1997 el 3 es «de 7 a 29 días»: no se puede
+# separar el período neonatal (0 a 27 días), así que queda vacío.
+_NEONATAL = {1979: ({1, 2}, None), 1998: ({1, 2}, {1, 2, 3}), 2008: ({0, 1, 2}, {0, 1, 2, 3})}
 
 _EDADES_MADRE = [f"De {i} a {i + 4} años" for i in range(10, 55, 5)] + [_SIN]
 _EDAD_MADRE = {i + 1: e for i, e in enumerate(_EDADES_MADRE[:9])} | {99: _SIN}
@@ -443,6 +454,36 @@ def _maternas(causa: pd.Series, anio: int) -> dict[str, pd.Series]:
             "materna_tardia": categoria.eq("O96").astype("boolean")}
 
 
+def _neonatales(df: pd.DataFrame, anio: int, grupo: pd.Series) -> dict[str, pd.Series]:
+    """``neonatal`` (0 a 27 días) y ``neonatal_precoz`` (0 a 6 días), como en las fichas técnicas de la mortalidad
+    neonatal y perinatal del DANE (2026). Vacías sin edad o en el primer semestre de 1991 (sin detalle)."""
+    codigos = _numero(df, "GRU_ED1")
+    sin_dato = grupo.isna() | grupo.isin([_DESCONOCIDA, _SIN_DETALLE])
+    precoz, neonatal = _NEONATAL[1979 if anio <= 1997 else 1998 if anio <= 2007 else 2008]
+
+    def marcar(incluidos) -> pd.Series:
+        if incluidos is None:
+            return pd.Series(pd.NA, index=df.index, dtype="boolean")
+        return codigos.isin(incluidos).astype("boolean").mask(sin_dato)
+
+    return {"neonatal": marcar(neonatal), "neonatal_precoz": marcar(precoz)}
+
+
+def _mortinato(gestacion: pd.Series, peso: pd.Series) -> pd.Series:
+    """
+    Mortinato según la ficha técnica de la mortalidad perinatal del DANE (2026): 22 semanas o más **o** 500 gramos o más.
+
+    Los microdatos agrupan el peso desde «menos de 1.000 gramos», así que solo se puede confirmar con 1.000 gramos o más.
+    Sin gestación y con menos de 1.000 gramos queda vacío: el DANE, con el peso exacto, sabe si pesaba 500 o más. Con
+    menos de 22 semanas y de 1.000 gramos se toma como aborto, aunque el DANE contaría como mortinato el que pesara de
+    500 a 999 gramos (ver README). Sin gestación ni peso no cumple ningún criterio, y no es mortinato.
+    """
+    gestacion, peso = gestacion.astype("object"), peso.astype("object")
+    si = gestacion.isin(_GESTACION_22_O_MAS) | peso.isin(_PESOS[1:8])
+    dudoso = ~si & ~gestacion.isin(["Menos de 22"]) & peso.eq("Menos de 1.000")
+    return si.astype("boolean").mask(dudoso)
+
+
 def _madre(df: pd.DataFrame, anio: int, tipo: str) -> dict[str, pd.Series]:
     gestacion = _GESTACION_FETAL_ANTIGUA if tipo == "fetales" and anio <= 2007 else _GESTACION
     peso, edad = _numero(df, "PESO_NAC"), _numero(df, "EDAD_MADRE")
@@ -538,6 +579,7 @@ def harmonize(df: pd.DataFrame, tipo: str, anio: int) -> pd.DataFrame:
             "etnia": _etiquetar(df, "IDPERTET", _ETNIA, "etnia"),
             "manera_muerte": _manera_muerte(df, anio),
             **_maternas(hechas["causa_cie"], anio),
+            **_neonatales(df, anio, grupo),
         }
     elif tipo == "nacimientos":
         parto = _numero(df, "TIPO_PARTO")
@@ -555,8 +597,10 @@ def harmonize(df: pd.DataFrame, tipo: str, anio: int) -> pd.DataFrame:
             "etnia": _etiquetar(df, "IDPERTET", _ETNIA, "etnia"),
         }
     else:
-        nuevas |= _causas_armonizadas(df, anio) | _madre(df, anio, tipo) | {
+        madre = _madre(df, anio, tipo)
+        nuevas |= _causas_armonizadas(df, anio) | madre | {
             "sitio": _etiquetar(df, "SIT_DEFUN", _SITIO, "sitio"),
+            "mortinato": _mortinato(madre["gestacion_grupo"], madre["peso_grupo"]),
         }
     return pd.concat([df, pd.DataFrame(nuevas)], axis=1)
 
