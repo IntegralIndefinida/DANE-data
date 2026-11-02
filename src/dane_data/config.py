@@ -7,10 +7,11 @@ generan los descargadores originales:
     GEIH  (serie principal) : <raiz>/datos_csv/<año>/<mes>/*.csv|*.txt|*.dta
     GEIH  (serie empalme)   : <raiz>/datos_csv/<año>/<mes>/*.csv
     EAM                     : <raiz>/datos/<año>/*.csv|*.txt|*.dta
+    Estadísticas Vitales    : <raiz>/datos/<tipo>/<año>/*.csv|*.txt|*.dta
 
 Prioridad para resolver cada ruta:
   1. ``set_paths(...)`` en la sesión actual.
-  2. Variables de entorno ``DANE_DATA_GEIH``, ``DANE_DATA_GEIH_EMPALME``, ``DANE_DATA_EAM``.
+  2. Variables de entorno ``DANE_DATA_GEIH``, ``DANE_DATA_GEIH_EMPALME``, ``DANE_DATA_EAM``, ``DANE_DATA_EEVV``.
   3. Archivo ``~/.config/dane_data/config.json`` (lo escribe ``save()`` y la app).
   4. Valor por defecto bajo ``~/dane_data_datos/``.
 """
@@ -40,6 +41,7 @@ _KEYS = {
     "geih": ("DANE_DATA_GEIH", DEFAULT_HOME / "geih"),
     "geih_empalme": ("DANE_DATA_GEIH_EMPALME", DEFAULT_HOME / "geih" / "empalme"),
     "eam": ("DANE_DATA_EAM", DEFAULT_HOME / "eam"),
+    "eevv": ("DANE_DATA_EEVV", DEFAULT_HOME / "eevv"),
 }
 _session: dict[str, Path] = {}
 
@@ -54,16 +56,16 @@ def _read_file() -> dict:
 
 def get_path(key: str) -> Path:
     """
-    Carpeta raíz de una encuesta.
+    Carpeta raíz de una encuesta o registro.
 
     Se resuelve en este orden: ``set_paths`` en la sesión actual, la variable de entorno
-    (``DANE_DATA_GEIH``, ``DANE_DATA_GEIH_EMPALME`` o ``DANE_DATA_EAM``), el archivo
+    (``DANE_DATA_GEIH``, ``DANE_DATA_GEIH_EMPALME``, ``DANE_DATA_EAM`` o ``DANE_DATA_EEVV``), el archivo
     ``~/.config/dane_data/config.json`` y, si nada de eso existe, ``~/dane_data_datos/``.
 
     Parámetros
     ----------
     key
-        ``"geih"``, ``"geih_empalme"`` o ``"eam"``.
+        ``"geih"``, ``"geih_empalme"``, ``"eam"`` o ``"eevv"``.
 
     Devuelve
     --------
@@ -73,12 +75,12 @@ def get_path(key: str) -> Path:
     Lanza
     -----
     KeyError
-        Si ``key`` no es una de las tres claves.
+        Si ``key`` no es una de esas claves.
 
     Véase también
     -------------
     set_paths : Cambiar las carpetas.
-    show_paths : Las tres carpetas a la vez.
+    show_paths : Todas las carpetas a la vez.
 
     Ejemplos
     --------
@@ -99,12 +101,13 @@ def get_path(key: str) -> Path:
     return default
 
 
-def set_paths(geih=None, geih_empalme=None, eam=None, save: bool = False) -> None:
+def set_paths(geih=None, geih_empalme=None, eam=None, save: bool = False, eevv=None) -> None:
     """
     Fija las carpetas raíz de los datos.
 
-    Cada carpeta es la raíz de una encuesta: la GEIH queda en ``<raíz>/datos_csv/<año>/<mes>/`` y la EAM en
-    ``<raíz>/datos/<año>/``. Las carpetas que no se indican no cambian.
+    Cada carpeta es la raíz de una encuesta: la GEIH queda en ``<raíz>/datos_csv/<año>/<mes>/``, la EAM en
+    ``<raíz>/datos/<año>/`` y las Estadísticas Vitales en ``<raíz>/datos/<tipo>/<año>/``. Las carpetas que no se
+    indican no cambian.
 
     Parámetros
     ----------
@@ -118,6 +121,8 @@ def set_paths(geih=None, geih_empalme=None, eam=None, save: bool = False) -> Non
         Si True, guarda las carpetas indicadas en esta llamada en ``~/.config/dane_data/config.json``:
         valen para las próximas sesiones, para la línea de comandos y para la aplicación. Si False, solo
         para esta sesión.
+    eevv
+        Carpeta de las Estadísticas Vitales.
 
     Lanza
     -----
@@ -132,14 +137,15 @@ def set_paths(geih=None, geih_empalme=None, eam=None, save: bool = False) -> Non
     Véase también
     -------------
     get_path : Carpeta efectiva de una encuesta.
-    show_paths : Las tres carpetas efectivas.
+    show_paths : Todas las carpetas efectivas.
 
     Ejemplos
     --------
     >>> import dane_data as dd
     >>> dd.set_paths(geih="~/datos/GEIH", eam="~/datos/EAM", save=True)  # doctest: +SKIP
     """
-    nuevas = {k: v for k, v in (("geih", geih), ("geih_empalme", geih_empalme), ("eam", eam)) if v is not None}
+    nuevas = {k: v for k, v in (("geih", geih), ("geih_empalme", geih_empalme), ("eam", eam), ("eevv", eevv))
+              if v is not None}
     if vacias := [k for k, v in nuevas.items() if not str(v).strip()]:
         raise ValueError(f"Carpeta vacía para {', '.join(vacias)}: indique una ruta.")
     for key, val in nuevas.items():
@@ -158,14 +164,14 @@ def set_paths(geih=None, geih_empalme=None, eam=None, save: bool = False) -> Non
 
 def show_paths() -> dict[str, str]:
     """
-    Carpetas efectivas de las tres encuestas.
+    Carpetas efectivas de todas las encuestas.
 
     Útil para revisar de dónde está leyendo la librería.
 
     Devuelve
     --------
     dict
-        ``{"geih": ..., "geih_empalme": ..., "eam": ...}`` con las rutas como texto.
+        ``{"geih": ..., "geih_empalme": ..., "eam": ..., "eevv": ...}`` con las rutas como texto.
 
     Véase también
     -------------
@@ -175,6 +181,6 @@ def show_paths() -> dict[str, str]:
     --------
     >>> import dane_data as dd
     >>> dd.show_paths()  # doctest: +SKIP
-    {'geih': '/home/ana/datos/GEIH', 'geih_empalme': '/home/ana/dane_data_datos/geih/empalme', 'eam': '/home/ana/datos/EAM'}
+    {'geih': '/home/ana/datos/GEIH', 'geih_empalme': '/home/ana/dane_data_datos/geih/empalme', 'eam': '/home/ana/datos/EAM', 'eevv': '/home/ana/dane_data_datos/eevv'}
     """
     return {k: str(get_path(k)) for k in _KEYS}
