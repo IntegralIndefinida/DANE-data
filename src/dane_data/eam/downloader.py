@@ -39,7 +39,7 @@ import tempfile
 import logging
 from pathlib import Path
 
-from .._hooks import DescargadorANDA, extraer_miembro, url_del_anda
+from .._hooks import DescargadorANDA, extraer_miembro, sanitize_member_name, url_del_anda
 from .loader import EXTENSIONES
 
 __version__ = "1.0.0"
@@ -104,16 +104,6 @@ EAM_TIC_CATALOGS = {
     "2017": ("523", "EAM_TIC_2017.zip", "https://microdatos.dane.gov.co/index.php/catalog/523/download/10331"),
     "2018": ("650", "EAM_TIC.zip", "https://microdatos.dane.gov.co/index.php/catalog/650/download/12484"),
 }
-
-
-def sanitize_member_name(raw_name: str) -> str:
-    """Corrige codificación CP850/CP437/Latin1 habitual en ZIPs generados en Windows."""
-    clean = Path(raw_name).name
-    try:
-        clean = clean.encode("cp437").decode("utf-8")
-    except Exception:
-        pass
-    return clean
 
 
 _CONSERVA = " Se conserva lo extraído antes."

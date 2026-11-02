@@ -20,7 +20,7 @@ class DownloadCancelled(Exception):
     """
     La descarga se detuvo porque ``should_stop()`` devolvió True.
 
-    La lanzan ``dd.geih.download`` y ``dd.eam.download`` cuando se les pasa ``should_stop`` (la aplicación
+    La lanzan ``dd.geih.download``, ``dd.eam.download`` y ``dd.eevv.download`` cuando se les pasa ``should_stop`` (la aplicación
     lo usa para su botón de cancelar). Los meses o años que ya terminaron quedan en disco y la próxima
     descarga los salta.
 
@@ -50,7 +50,7 @@ class ProgressMixin:
 
 
 class DescargadorANDA(ProgressMixin):
-    """Lo común de los descargadores de la GEIH y la EAM: la sesión HTTP y la descarga de cada ZIP."""
+    """Lo común de los descargadores: la sesión HTTP y la descarga de cada ZIP."""
 
     base_url = "https://microdatos.dane.gov.co"
     log = logging.getLogger("dane_data")  # cada descargador pone el suyo
@@ -164,6 +164,16 @@ def zip_valido(archivo: Path, nombre: Path | None = None) -> bool:
     ``archivo``, no termina en ``.zip``). Detecta descargas cortadas y páginas de error del servidor.
     """
     return (nombre or archivo).suffix.lower() != ".zip" or zipfile.is_zipfile(archivo)
+
+
+def sanitize_member_name(raw_name: str) -> str:
+    """Corrige codificación CP850/CP437/Latin1 habitual en ZIPs generados en Windows."""
+    clean = Path(raw_name).name
+    try:
+        clean = clean.encode("cp437").decode("utf-8")
+    except Exception:
+        pass
+    return clean
 
 
 def ya_extraido(member: zipfile.ZipInfo, destino: Path) -> bool:

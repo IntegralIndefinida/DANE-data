@@ -9,6 +9,7 @@ import pytest
 
 import dane_data as dd
 from dane_data.eam.downloader import EAM_TIC_CATALOGS, EAMDownloader
+from dane_data.eevv.downloader import EEVV_KNOWN_FILES, EEVVDownloader
 from dane_data.geih.downloader import MARCADOR, GEIHDownloader, faltantes_mes, mes_completo
 
 CAR = "DIRECTORIO;SECUENCIA_P;ORDEN;P6040;FEX_C18\n1;1;1;30;10\n"
@@ -779,3 +780,155 @@ def test_mes_sin_resto_queda_incompleto(geih_root):
     (mes / "Area - Fuerza de trabajo.csv").write_text("Directorio;Secuencia_p;Orden;Fex_c_2011\n", encoding="utf-8")
     (m,) = dd.geih.find_months(2016, root=geih_root)
     assert m.faltantes == ["Cabecera - Fuerza de trabajo", "Resto - Fuerza de trabajo", "Resto - Ocupados"]
+
+
+# ---------------------------------------------------------------------------------------------------- #
+# Estadísticas Vitales
+# ---------------------------------------------------------------------------------------------------- #
+class FakeEEVVDownloader(EEVVDownloader):
+    pausa = 0
+
+    def __init__(self, paquetes: dict, **kw):
+        super().__init__(**kw)
+        self.paquetes = paquetes
+        self.descargas = []
+
+    def download_file(self, url, dest_path, max_retries=3):
+        self.descargas.append(url)
+        if url not in self.paquetes:
+            return False
+        dest_path.write_bytes(self.paquetes[url])
+        return True
+
+
+def _zip_eevv(miembros: dict) -> bytes:
+    """ZIP en memoria: ``{nombre: contenido}``; un dict como contenido es un ZIP anidado."""
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as z:
+        for nombre, contenido in miembros.items():
+            z.writestr(nombre, _zip_eevv(contenido) if isinstance(contenido, dict) else contenido)
+    return buf.getvalue()
+
+
+def _url_eevv(anio, tipo):
+    return EEVV_KNOWN_FILES[anio, tipo][2]
+
+
+def _baja_eevv(tmp_path, paquetes, anios, tipos=("defunciones",), **kw):
+    dl = FakeEEVVDownloader(paquetes, base_dir=tmp_path, **kw)
+    return dl, dl.run_pipeline(target_years=anios, tipos=tipos)
+
+
+def test_eevv_tabla_cubre_toda_la_serie():
+    for tipo, desde in (("defunciones", 1979), ("nacimientos", 1998), ("fetales", 1998)):
+        assert sorted(a for a, t in EEVV_KNOWN_FILES if t == tipo) == list(range(desde, 2026))
+    assert len(EEVV_KNOWN_FILES) == 47 + 28 + 28
+    # Nombres raros del ANDA, tal como aparecen en el catálogo
+    assert EEVV_KNOWN_FILES[2000, "defunciones"][1] == "Defunciones  2000.zip"
+    assert EEVV_KNOWN_FILES[2007, "nacimientos"][1] == "Nacimientos_2007.zip"
+    assert EEVV_KNOWN_FILES[1985, "defunciones"][2].endswith("/catalog/396/download/6350")
+    assert EEVV_KNOWN_FILES[2007, "fetales"][2].endswith("/catalog/366/download/6686")
+    assert EEVV_KNOWN_FILES[2025, "nacimientos"][2].endswith("/catalog/915/download/24798")
+
+
+def test_eevv_prefiere_txt_a_spss(tmp_path):
+    paquete = _zip_eevv({"Defun1979.txt": "ANO\n1979\n", "Defun1979.sav": "spss"})
+    dl, fallidos = _baja_eevv(tmp_path, {_url_eevv(1979, "defunciones"): paquete}, [1979])
+    assert fallidos == []
+    assert [f.name for f in (tmp_path / "datos" / "defunciones" / "1979").iterdir()] == ["Defun1979.txt"]
+
+
+def test_eevv_prefiere_csv_a_stata(tmp_path):
+    paquete = _zip_eevv({"nac2020.csv": "ANO\n2020\n", "nac2020.dta": "stata", "nac2020.sav": "spss"})
+    _baja_eevv(tmp_path, {_url_eevv(2020, "nacimientos"): paquete}, [2020], tipos=("nacimientos",))
+    assert [f.name for f in (tmp_path / "datos" / "nacimientos" / "2020").iterdir()] == ["nac2020.csv"]
+
+
+def test_eevv_zip_de_varios_anios_con_zip_anidado(tmp_path):
+    """Nacidos.zip (2008–2011) trae un ZIP por año: se baja una vez y cada año queda en su carpeta."""
+    paquete = _zip_eevv({f"Nacidos/nac{a}.zip": {f"nac{a}.csv": f"ANO\n{a}\n", f"nac{a}.dta": "x"}
+                         for a in range(2008, 2012)})
+    url = _url_eevv(2008, "nacimientos")
+    dl, fallidos = _baja_eevv(tmp_path, {url: paquete}, [2009, 2010], tipos=("nacimientos",))
+    assert fallidos == []
+    assert dl.descargas == [url]
+    base = tmp_path / "datos" / "nacimientos"
+    assert sorted(p.name for p in base.iterdir()) == ["2009", "2010"]
+    assert (base / "2010" / "nac2010.csv").read_text() == "ANO\n2010\n"
+    assert (tmp_path / "raw_zips" / "375" / "Nacidos.zip").exists()
+
+
+def test_eevv_txt_de_varios_anios_sin_anidar(tmp_path):
+    paquete = _zip_eevv({"Defunciones txt/Defun_2012.txt": "ANO\n2012\n", "Defunciones txt/Defun_2013.txt": "ANO\n2013\n"})
+    _baja_eevv(tmp_path, {_url_eevv(2013, "defunciones"): paquete}, [2013])
+    assert [f.name for f in (tmp_path / "datos" / "defunciones" / "2013").iterdir()] == ["Defun_2013.txt"]
+
+
+def test_eevv_incremental_y_forzar(tmp_path):
+    url = _url_eevv(2020, "fetales")
+    paquetes = {url: _zip_eevv({"fetal2020.csv": "ANO\n2020\n"})}
+    dl, _ = _baja_eevv(tmp_path, paquetes, [2020], tipos=("fetales",))
+    assert dl.descargas == [url]
+    dl, _ = _baja_eevv(tmp_path, paquetes, [2020], tipos=("fetales",))
+    assert dl.descargas == []  # ya estaba
+    paquetes[url] = _zip_eevv({"fetal2020_corregido.csv": "ANO\n2020\n"})
+    dl, _ = _baja_eevv(tmp_path, paquetes, [2020], tipos=("fetales",), forzar=True)
+    assert dl.descargas == [url]
+    assert [f.name for f in (tmp_path / "datos" / "fetales" / "2020").iterdir()] == ["fetal2020_corregido.csv"]
+
+
+def test_eevv_forzar_conserva_lo_anterior_si_falla(tmp_path):
+    url = _url_eevv(2020, "fetales")
+    _baja_eevv(tmp_path, {url: _zip_eevv({"fetal2020.csv": "ANO\n2020\n"})}, [2020], tipos=("fetales",))
+    _, fallidos = _baja_eevv(tmp_path, {url: _zip_eevv({"fetal2020.sav": "spss"})}, [2020], tipos=("fetales",), forzar=True)
+    assert len(fallidos) == 1 and "fetales 2020" in fallidos[0] and "Se conserva" in fallidos[0]
+    assert (tmp_path / "datos" / "fetales" / "2020" / "fetal2020.csv").exists()
+
+
+def test_eevv_reporta_fallos_y_sigue(tmp_path):
+    bueno = {_url_eevv(2021, "fetales"): _zip_eevv({"fetal2021.csv": "ANO\n2021\n"})}
+    _, fallidos = _baja_eevv(tmp_path, bueno, [2020, 2021], tipos=("fetales",))
+    assert len(fallidos) == 1 and "fetales 2020" in fallidos[0]
+    assert (tmp_path / "datos" / "fetales" / "2021" / "fetal2021.csv").exists()
+
+
+def test_eevv_zip_danado_no_es_excepcion(tmp_path):
+    _, fallidos = _baja_eevv(tmp_path, {_url_eevv(2020, "fetales"): b"esto no es un zip"}, [2020], tipos=("fetales",))
+    assert len(fallidos) == 1 and "fetales 2020" in fallidos[0]
+
+
+def test_eevv_borrar_zip_al_terminar_su_ultimo_anio(tmp_path):
+    paquete = _zip_eevv({f"Fetales/fetal{a}.zip": {f"fetal{a}.csv": "ANO\n1\n"} for a in (2017, 2018)})
+    url = _url_eevv(2017, "fetales")
+    _, fallidos = _baja_eevv(tmp_path, {url: paquete}, [2017, 2018], tipos=("fetales",), keep_zips=False)
+    assert fallidos == []
+    assert not (tmp_path / "raw_zips" / "652" / "Fetales.zip").exists()
+    assert (tmp_path / "datos" / "fetales" / "2018" / "fetal2018.csv").exists()
+
+
+def test_eevv_anio_sin_archivos_se_ignora_con_aviso(tmp_path, caplog):
+    with caplog.at_level("WARNING", logger="dane_data.eevv"):
+        dl, fallidos = _baja_eevv(tmp_path, {}, [1985], tipos=("nacimientos",))
+    assert fallidos == [] and dl.descargas == []
+    assert "1985" in caplog.text
+
+
+def test_eevv_cancelar(tmp_path):
+    url = _url_eevv(2020, "fetales")
+    dl = FakeEEVVDownloader({url: _zip_eevv({"fetal2020.csv": "ANO\n1\n"})}, base_dir=tmp_path, should_stop=lambda: True)
+    with pytest.raises(dd.DownloadCancelled):
+        dl.run_pipeline(target_years=[2020], tipos=("fetales",))
+
+
+def test_eevv_download_valida_tipos(tmp_path):
+    with pytest.raises(ValueError, match="Tipo desconocido"):
+        dd.eevv.download(2020, tipos="bautizos", root=tmp_path)
+
+
+def test_eevv_available(tmp_path):
+    url = _url_eevv(2020, "fetales")
+    _baja_eevv(tmp_path, {url: _zip_eevv({"fetal2020.csv": "ANO\n2020\n"})}, [2020], tipos=("fetales",))
+    tabla = dd.eevv.available(root=tmp_path)
+    assert tabla[["tipo", "anio", "archivo"]].values.tolist() == [["fetales", 2020, "fetal2020.csv"]]
+    assert list(dd.eevv.find_files(2020, tipo="fetales", root=tmp_path)) == [2020]
+    assert dd.eevv.find_files(2020, tipo="nacimientos", root=tmp_path) == {}
