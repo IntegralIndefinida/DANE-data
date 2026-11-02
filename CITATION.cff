@@ -8,13 +8,15 @@ type: software
 title: "dane-data: microdatos del DANE (GEIH, EAM y Estadísticas Vitales) listos para analizar"
 abstract: >-
   Descarga, carga, armoniza y analiza los microdatos del DANE para Colombia: la Gran Encuesta Integrada de
-  Hogares (GEIH, 2007–2026 y el empalme 2010–2020) y la Encuesta Anual Manufacturera (EAM, 1992–2024).
+  Hogares (GEIH, 2007–2026 y el empalme 2010–2020), la Encuesta Anual Manufacturera (EAM, 1992–2024) y las
+  Estadísticas Vitales (EEVV: defunciones 1979–2025, nacimientos y defunciones fetales 1998–2025), con las
+  proyecciones de población del DANE.
   Incluye una librería de Python, una línea de comandos y una aplicación de Streamlit para estudiantes.
 authors:
   - family-names: Ramírez
     given-names: Luis
-version: 0.3.2
-date-released: "2026-10-29"
+version: 0.4.0
+date-released: "2026-11-02"
 license: MIT
 repository-code: "https://github.com/IntegralIndefinida/DANE-data"
 url: "https://integralindefinida.github.io/DANE-data/"
@@ -26,6 +28,7 @@ keywords:
   - microdatos
   - mercado laboral
   - encuestas de hogares
+  - estadísticas vitales
 references:
   - type: data
     title: "Gran Encuesta Integrada de Hogares (GEIH)"
@@ -41,3 +44,15 @@ references:
     publisher:
       name: "Archivo Nacional de Datos (ANDA)"
     url: "https://microdatos.dane.gov.co"
+  - type: data
+    title: "Estadísticas Vitales (EEVV)"
+    authors:
+      - name: "Departamento Administrativo Nacional de Estadística (DANE)"
+    publisher:
+      name: "Archivo Nacional de Datos (ANDA)"
+    url: "https://microdatos.dane.gov.co"
+  - type: data
+    title: "Proyecciones de población"
+    authors:
+      - name: "Departamento Administrativo Nacional de Estadística (DANE)"
+    url: "https://www.dane.gov.co/index.php/estadisticas-por-tema/demografia-y-poblacion/proyecciones-de-poblacion"

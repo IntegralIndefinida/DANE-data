@@ -1,6 +1,6 @@
 # Novedades
 
-## Sin publicar
+## 0.4.0 (2 de noviembre de 2026)
 
 **Nuevo**
 
@@ -14,6 +14,8 @@
   perinatal y materna, con las fórmulas de las fichas técnicas de indicadores del DANE (2026). Son de hechos registrados, sin
   ajustar por subregistro.
 * {dd}`set_paths()` acepta `eevv=` y `dane-data config` acepta `--eevv`.
+* {dd}`describir()`, {dd}`buscar_variable()` y {dd}`diccionario()` traen los diccionarios oficiales de los tres certificados:
+  `encuesta="eevv_defunciones"`, `"eevv_nacimientos"` o `"eevv_fetales"`. La página *Diccionario* de la aplicación también.
 
 **Instalación**
 
