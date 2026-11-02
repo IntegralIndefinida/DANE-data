@@ -624,6 +624,20 @@ def test_eam_tic_en_anio_ya_descargado(tmp_path):
     assert dl.descargas == ["principal", tic_url]
 
 
+def test_eam_borra_los_zip_si_se_pide(tmp_path, sin_pausas_eam):
+    """Con keep_zips=False se borran los ZIP de un año extraído bien, también el del módulo TIC."""
+    _, tic_nombre, tic_url = EAM_TIC_CATALOGS["2015"]
+    paquetes = {"principal": _zip({"EAM_2015.csv": "nordest;valagri\n1;10\n"}),
+                tic_url: _zip({"EAM_TIC_2015.csv": "nordest;usa_internet\n1;1\n"})}
+    dl = FakeEAMDownloader(paquetes, base_dir=tmp_path, keep_zips=False, include_tic=True)
+    dl.fallidos = []
+    dl.process_year("2015", "491", "EAM_2015.zip", "principal")
+    assert dl.fallidos == []
+    assert (tmp_path / "datos" / "2015" / "EAM_2015.csv").exists()
+    assert (tmp_path / "datos" / "2015" / "TIC" / "EAM_TIC_2015.csv").exists()
+    assert list((tmp_path / "raw_zips" / "2015").iterdir()) == []
+
+
 def test_descarga_fallida_se_informa(tmp_path, sin_pausas_eam, caplog):
     """Un ZIP que no se pudo bajar no termina en «exitosamente»: run_pipeline lo devuelve."""
     class Falla(FakeDownloader):

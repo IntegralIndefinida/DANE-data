@@ -15,6 +15,11 @@
   ajustar por subregistro.
 * {dd}`set_paths()` acepta `eevv=` y `dane-data config` acepta `--eevv`.
 
+**Correcciones**
+
+* {dd}`eam.download()` con `delete_zips=True` (`dane-data descargar eam --borrar-zips`) ya borra los ZIP de los años que
+  se extraen bien. En la 0.3.2 solo borraba los de los años que fallaban.
+
 ## 0.3.2 (29 de octubre de 2026)
 
 **Al actualizar**

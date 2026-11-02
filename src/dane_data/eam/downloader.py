@@ -316,9 +316,8 @@ class EAMDownloader(DescargadorANDA):
             if success and self.extract_data and not self._extraer(zip_dest, year_data_dir):
                 self._fallo(f"{year}: no se pudo extraer un archivo CSV, TXT o Stata de {zip_filename}."
                             + _CONSERVA * bool(existing_data))
-
-                if not self.keep_zips and zip_dest.exists():
-                    zip_dest.unlink()
+            if not self.keep_zips and zip_dest.exists():
+                zip_dest.unlink()
 
         # 4. Descargar satélite TIC si fue solicitado (también en años ya descargados)
         tic_pendiente = (self.include_tic and year in EAM_TIC_CATALOGS
@@ -334,8 +333,8 @@ class EAMDownloader(DescargadorANDA):
             if tic_ok and self.extract_data and not self._extraer(tic_zip, tic_data_dir):
                 self._fallo(f"{year}: no se pudo extraer el módulo TIC de {tic_name}."
                             + _CONSERVA * bool(_archivos_datos(tic_data_dir)))
-                if not self.keep_zips and tic_zip.exists():
-                    tic_zip.unlink()
+            if not self.keep_zips and tic_zip.exists():
+                tic_zip.unlink()
 
         if not existing_data or self.forzar or tic_pendiente:  # pausa entre descargas, no entre años saltados
             time.sleep(1)
