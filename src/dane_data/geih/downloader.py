@@ -15,7 +15,6 @@ Features:
 
 Autor original: Luis Ramírez (adaptado para dane-data)
 License: MIT
-Version: 1.0.0
 """
 
 import re
@@ -82,8 +81,6 @@ def _escribir_marcador(dest: Path, zip_name: str, n: int, modules) -> None:
     dest.mkdir(parents=True, exist_ok=True)
     data = {"zip": zip_name, "csv_extraidos": n, "modulos": sorted(modules), "completo": True}
     (dest / MARCADOR).write_text(json.dumps(data), encoding="utf-8")
-
-__version__ = "1.0.0"
 
 log = logging.getLogger("dane_data.geih")
 
@@ -198,7 +195,7 @@ def sanitize_member_name(raw_name: str) -> str:
 class GEIHDownloader(DescargadorANDA):
     log = log
 
-    def __init__(self, base_dir="data", keep_zips=True, extract_csv=True, is_empalme=False, modules=None,
+    def __init__(self, base_dir="data", keep_zips=True, is_empalme=False, modules=None,
                  progress=None, should_stop=None, forzar=False):
         self.progress = progress
         self.should_stop = should_stop
@@ -212,7 +209,6 @@ class GEIHDownloader(DescargadorANDA):
         self.raw_dir = self.base_dir / "raw_zips"
         self.csv_dir = self.base_dir / "datos_csv"
         self.keep_zips = keep_zips
-        self.extract_csv = extract_csv
         if isinstance(modules, str):  # un solo módulo: tuple("ocupados") lo partiría en letras
             modules = [modules]
         modules = DEFAULT_MODULES if modules is None else tuple(modules)
@@ -230,8 +226,7 @@ class GEIHDownloader(DescargadorANDA):
         """Crea la estructura de carpetas local."""
         self.metadata_dir.mkdir(parents=True, exist_ok=True)
         self.raw_dir.mkdir(parents=True, exist_ok=True)
-        if self.extract_csv:
-            self.csv_dir.mkdir(parents=True, exist_ok=True)
+        self.csv_dir.mkdir(parents=True, exist_ok=True)
         series_label = "Serie de Empalme (2010-2020)" if self.is_empalme else "Serie Principal (2007-2026)"
         log.info(f"Directorio base configurado para [{series_label}] en: {self.base_dir.resolve()}")
 
@@ -550,8 +545,7 @@ class GEIHDownloader(DescargadorANDA):
         year_raw_dir.mkdir(parents=True, exist_ok=True)
 
         year_csv_dir = self.csv_dir / year
-        if self.extract_csv:
-            year_csv_dir.mkdir(parents=True, exist_ok=True)
+        year_csv_dir.mkdir(parents=True, exist_ok=True)
 
         # 3. Descargar y extraer selectivamente
         for item in files:
@@ -573,7 +567,7 @@ class GEIHDownloader(DescargadorANDA):
                 success = self.download_file(item["url"], zip_dest)
                 if not success:
                     self._fallo(f"Empalme {year}: no se pudo descargar {item['name']}.")
-                if success and self.extract_csv:
+                if success:
                     self._extraer(zip_dest, year_csv_dir, f"Empalme {year}", item["name"])
             else:
                 month_csv_dir = year_csv_dir / month_stem
@@ -592,7 +586,7 @@ class GEIHDownloader(DescargadorANDA):
                 success = self.download_file(item["url"], zip_dest)
                 if not success:
                     self._fallo(f"{year}: no se pudo descargar {item['name']}.")
-                if success and self.extract_csv:
+                if success:
                     self._extraer(zip_dest, month_csv_dir, f"{month_stem} ({year})", item["name"],
                                   (f".{item.get('formato', 'csv')}",))
 

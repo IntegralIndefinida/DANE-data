@@ -40,8 +40,6 @@ from pathlib import Path
 from .._hooks import DescargadorANDA, archivos_datos, extraer_aparte, extraer_miembro, sanitize_member_name, url_del_anda
 from .loader import EXTENSIONES
 
-__version__ = "1.0.0"
-
 log = logging.getLogger("dane_data.eam")
 
 # Catálogos oficiales verificados en ANDA (DANE) para la EAM (1992-2024)
@@ -110,7 +108,7 @@ _CONSERVA = " Se conserva lo extraído antes."
 class EAMDownloader(DescargadorANDA):
     log = log
 
-    def __init__(self, base_dir="data", keep_zips=True, extract_data=True, include_tic=False,
+    def __init__(self, base_dir="data", keep_zips=True, include_tic=False,
                  progress=None, should_stop=None, forzar=False):
         self.progress = progress
         self.should_stop = should_stop
@@ -120,7 +118,6 @@ class EAMDownloader(DescargadorANDA):
         self.raw_dir = self.base_dir / "raw_zips"
         self.data_dir = self.base_dir / "datos"
         self.keep_zips = keep_zips
-        self.extract_data = extract_data
         self.include_tic = include_tic
 
         self._abrir_sesion()
@@ -131,8 +128,7 @@ class EAMDownloader(DescargadorANDA):
         """Crea la estructura de carpetas local."""
         self.metadata_dir.mkdir(parents=True, exist_ok=True)
         self.raw_dir.mkdir(parents=True, exist_ok=True)
-        if self.extract_data:
-            self.data_dir.mkdir(parents=True, exist_ok=True)
+        self.data_dir.mkdir(parents=True, exist_ok=True)
         log.info(f"Directorio base de la EAM configurado en: {self.base_dir.resolve()}")
 
     def discover_catalogs(self) -> dict:
@@ -273,11 +269,10 @@ class EAMDownloader(DescargadorANDA):
         year_raw_dir.mkdir(parents=True, exist_ok=True)
 
         year_data_dir = self.data_dir / year
-        if self.extract_data:
-            year_data_dir.mkdir(parents=True, exist_ok=True)
+        year_data_dir.mkdir(parents=True, exist_ok=True)
 
         # Comprobar si ya existe el archivo de datos (.csv o .txt)
-        existing_data = archivos_datos(year_data_dir, EXTENSIONES) if self.extract_data else []
+        existing_data = archivos_datos(year_data_dir, EXTENSIONES)
         if existing_data and not self.forzar:
             log.info(f"Año {year} ya cuenta con datos extraídos ({[f.name for f in existing_data]}). Saltando descarga.")
         else:
@@ -290,7 +285,7 @@ class EAMDownloader(DescargadorANDA):
                 self._fallo(f"{year}: no se pudo descargar {zip_filename}.")
 
             # 3. Extraer formato preferido (.csv -> .txt -> .dta)
-            if success and self.extract_data and not self._extraer(zip_dest, year_data_dir):
+            if success and not self._extraer(zip_dest, year_data_dir):
                 self._fallo(f"{year}: no se pudo extraer un archivo CSV, TXT o Stata de {zip_filename}."
                             + _CONSERVA * bool(existing_data))
             if not self.keep_zips and zip_dest.exists():
@@ -307,7 +302,7 @@ class EAMDownloader(DescargadorANDA):
             if not tic_ok:
                 self._fallo(f"{year}: no se pudo descargar el módulo TIC ({tic_name}).")
             tic_data_dir = year_data_dir / "TIC"
-            if tic_ok and self.extract_data and not self._extraer(tic_zip, tic_data_dir):
+            if tic_ok and not self._extraer(tic_zip, tic_data_dir):
                 self._fallo(f"{year}: no se pudo extraer el módulo TIC de {tic_name}."
                             + _CONSERVA * bool(archivos_datos(tic_data_dir, EXTENSIONES)))
             if not self.keep_zips and tic_zip.exists():

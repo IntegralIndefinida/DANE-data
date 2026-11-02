@@ -103,7 +103,6 @@ def download(
     dl = GEIHDownloader(
         base_dir=_root(empalme, root),
         keep_zips=not delete_zips,
-        extract_csv=True,
         is_empalme=empalme,
         modules=modules,
         progress=progress,

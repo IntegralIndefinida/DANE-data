@@ -77,7 +77,6 @@ def download(
     dl = EAMDownloader(
         base_dir=_root(root),
         keep_zips=not delete_zips,
-        extract_data=True,
         include_tic=include_tic,
         progress=progress,
         should_stop=should_stop,
