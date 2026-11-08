@@ -218,7 +218,6 @@ class GEIHDownloader(DescargadorANDA):
         # A diferencia del script original, base_dir ya es la raíz de la serie
         # (la serie de empalme no se anida automáticamente en base_dir/empalme).
         self.base_dir = Path(base_dir)
-        self.metadata_dir = self.base_dir / "metadata"
         self.raw_dir = self.base_dir / "raw_zips"
         self.csv_dir = self.base_dir / "datos_csv"
         self.keep_zips = keep_zips
@@ -237,7 +236,6 @@ class GEIHDownloader(DescargadorANDA):
 
     def _setup_directories(self):
         """Crea la estructura de carpetas local."""
-        self.metadata_dir.mkdir(parents=True, exist_ok=True)
         self.raw_dir.mkdir(parents=True, exist_ok=True)
         self.csv_dir.mkdir(parents=True, exist_ok=True)
         series_label = "Serie de Empalme (2010-2020)" if self.is_empalme else "Serie Principal (2007-2026)"
@@ -276,31 +274,6 @@ class GEIHDownloader(DescargadorANDA):
         catalogos = {**descubiertos, **verificados}
         log.info(f"Catálogos identificados para {len(catalogos)} años: {sorted(catalogos)}")
         return catalogos
-
-    def fetch_metadata(self, year: str, catalog_id: str) -> dict:
-        """Obtiene y almacena el JSON metodológico de ANDA."""
-        metadata_path = self.metadata_dir / f"{year}.json"
-        if metadata_path.exists():
-            try:
-                with open(metadata_path, "r", encoding="utf-8") as f:
-                    return json.load(f)
-            except Exception:
-                pass
-
-        json_url = f"{self.base_url}/index.php/metadata/export/{catalog_id}/json"
-        try:
-            res = self.session.get(json_url, timeout=20)
-            if res.status_code == 200:
-                data = res.json()
-                with open(metadata_path, "w", encoding="utf-8") as f:
-                    json.dump(data, f, indent=4, ensure_ascii=False)
-                log.info(f"Metadata metodológica guardada: {metadata_path.name}")
-                return data
-            else:
-                log.warning(f"Endpoint metadata JSON retornó HTTP {res.status_code} para catálogo {catalog_id}")
-        except Exception as e:
-            log.warning(f"No se pudo descargar metadata JSON para {year}: {e}")
-        return {}
 
     def _enlaces(self, catalog_id: str) -> dict:
         """``{url: nombre}`` de todos los archivos de /get-microdata del catálogo."""
@@ -484,10 +457,7 @@ class GEIHDownloader(DescargadorANDA):
         series_label = f"Empalme Año {year}" if self.is_empalme else f"Año {year}"
         log.info(f"\n{'='*20} Procesando GEIH {series_label} (Catálogo {catalog_id}) {'='*20}")
 
-        # 1. Metadata metodológica
-        self.fetch_metadata(year, catalog_id)
-
-        # 2. Obtener lista de archivos a descargar (CSV, u otro formato si el CSV está dañado)
+        # 1. Obtener lista de archivos a descargar (CSV, u otro formato si el CSV está dañado)
         files = self.get_download_links(year, catalog_id)
         if not files:
             self._fallo(f"{year}: no se encontraron enlaces de microdatos en el ANDA (catálogo {catalog_id}).")
@@ -503,7 +473,7 @@ class GEIHDownloader(DescargadorANDA):
         year_csv_dir = self.csv_dir / year
         year_csv_dir.mkdir(parents=True, exist_ok=True)
 
-        # 3. Descargar y extraer selectivamente
+        # 2. Descargar y extraer selectivamente
         for item in files:
             self._check_stop()
             self._emit(None, f"{year}: {item['name']}")

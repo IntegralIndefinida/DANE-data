@@ -31,7 +31,6 @@ Versión: 1.0.0
 """
 
 import re
-import json
 import time
 import zipfile
 import logging
@@ -114,7 +113,6 @@ class EAMDownloader(DescargadorANDA):
         self.should_stop = should_stop
         self.forzar = forzar
         self.base_dir = Path(base_dir)
-        self.metadata_dir = self.base_dir / "metadata"
         self.raw_dir = self.base_dir / "raw_zips"
         self.data_dir = self.base_dir / "datos"
         self.keep_zips = keep_zips
@@ -126,7 +124,6 @@ class EAMDownloader(DescargadorANDA):
 
     def _setup_directories(self):
         """Crea la estructura de carpetas local."""
-        self.metadata_dir.mkdir(parents=True, exist_ok=True)
         self.raw_dir.mkdir(parents=True, exist_ok=True)
         self.data_dir.mkdir(parents=True, exist_ok=True)
         log.info(f"Directorio base de la EAM configurado en: {self.base_dir.resolve()}")
@@ -171,23 +168,6 @@ class EAMDownloader(DescargadorANDA):
 
         log.info(f"Se identificaron archivos de EAM para {len(final_catalogs)} años: {sorted(final_catalogs.keys())}")
         return final_catalogs
-
-    def fetch_metadata(self, catalog_id: str):
-        """Obtiene y guarda localmente la metadata metodológica JSON del catálogo."""
-        metadata_path = self.metadata_dir / f"catalogo_{catalog_id}.json"
-        if metadata_path.exists():
-            return
-
-        json_url = f"{self.base_url}/index.php/metadata/export/{catalog_id}/json"
-        try:
-            res = self.session.get(json_url, timeout=20)
-            if res.status_code == 200:
-                data = res.json()
-                with open(metadata_path, "w", encoding="utf-8") as f:
-                    json.dump(data, f, indent=4, ensure_ascii=False)
-                log.info(f"Metadata metodológica guardada: {metadata_path.name}")
-        except Exception as e:
-            log.warning(f"No se pudo descargar metadata JSON para catálogo {catalog_id}: {e}")
 
     def extract_preferred_format(self, zip_path: Path, dest_dir: Path) -> list:
         """
@@ -262,9 +242,6 @@ class EAMDownloader(DescargadorANDA):
         """Descarga y procesa un año específico de la EAM."""
         log.info(f"\n{'='*20} Procesando EAM Año {year} (Catálogo {catalog_id}) {'='*20}")
 
-        # 1. Guardar metadata metodológica
-        self.fetch_metadata(catalog_id)
-
         year_raw_dir = self.raw_dir / year
         year_raw_dir.mkdir(parents=True, exist_ok=True)
 
@@ -276,7 +253,7 @@ class EAMDownloader(DescargadorANDA):
         if existing_data and not self.forzar:
             log.info(f"Año {year} ya cuenta con datos extraídos ({[f.name for f in existing_data]}). Saltando descarga.")
         else:
-            # 2. Descargar paquete ZIP
+            # 1. Descargar paquete ZIP
             safe_name = "".join(c for c in zip_filename if c.isalnum() or c in (" ", ".", "_", "-")).strip()
             zip_dest = year_raw_dir / safe_name
 
@@ -284,14 +261,14 @@ class EAMDownloader(DescargadorANDA):
             if not success:
                 self._fallo(f"{year}: no se pudo descargar {zip_filename}.")
 
-            # 3. Extraer formato preferido (.csv -> .txt -> .dta)
+            # 2. Extraer formato preferido (.csv -> .txt -> .dta)
             if success and not self._extraer(zip_dest, year_data_dir):
                 self._fallo(f"{year}: no se pudo extraer un archivo CSV, TXT o Stata de {zip_filename}."
                             + _CONSERVA * bool(existing_data))
             if not self.keep_zips and zip_dest.exists():
                 zip_dest.unlink()
 
-        # 4. Descargar satélite TIC si fue solicitado (también en años ya descargados)
+        # 3. Descargar satélite TIC si fue solicitado (también en años ya descargados)
         tic_pendiente = (self.include_tic and year in EAM_TIC_CATALOGS
                          and (self.forzar or not archivos_datos(year_data_dir / "TIC", EXTENSIONES)))
         if tic_pendiente:

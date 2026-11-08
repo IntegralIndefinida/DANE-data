@@ -52,9 +52,6 @@ class FakeDownloader(GEIHDownloader):
         self.paquetes = paquetes
         self.descargas = []
 
-    def fetch_metadata(self, year, catalog_id):
-        return {}
-
     def get_csv_download_links(self, catalog_id):
         return [{"name": n, "url": n} for n in self.paquetes]
 
@@ -421,7 +418,7 @@ def test_zip_que_falla_al_extraer_se_borra(tmp_path, sin_pausas_eam):
 
 
 # --------------------------------------------------------------------------- #
-# Raspado del ANDA (páginas de búsqueda, get-microdata y metadata) sin red
+# Raspado del ANDA (páginas de búsqueda y get-microdata) sin red
 # --------------------------------------------------------------------------- #
 class _Pagina:
     def __init__(self, texto="", estado=200, datos=None):
@@ -516,22 +513,6 @@ def test_enlaces_de_microdatos_por_epoca(tmp_path):
     assert dl.get_csv_download_links("4") == []             # HTTP 404
 
 
-def test_metadata_se_guarda_y_se_reutiliza(tmp_path):
-    dl = GEIHDownloader(base_dir=tmp_path)
-    dl.session = _ANDA({"/index.php/metadata/export/819/json": _Pagina(datos={"titulo": "GEIH 2024"})})
-    assert dl.fetch_metadata("2024", "819") == {"titulo": "GEIH 2024"}
-    assert dl.fetch_metadata("2024", "819") == {"titulo": "GEIH 2024"}
-    assert len(dl.session.pedidos) == 1                     # la segunda vez, del disco
-    assert dl.fetch_metadata("2025", "853") == {}           # HTTP 404: sigue sin metadata
-
-    eam = EAMDownloader(base_dir=tmp_path / "eam")
-    eam.session = _ANDA({"/index.php/metadata/export/491/json": _Pagina(datos={"titulo": "EAM"})})
-    eam.fetch_metadata("491")
-    eam.fetch_metadata("491")
-    assert len(eam.session.pedidos) == 1
-    assert json.loads((tmp_path / "eam" / "metadata" / "catalogo_491.json").read_text()) == {"titulo": "EAM"}
-
-
 def test_descubrir_catalogos_eam(tmp_path):
     from dane_data.eam.downloader import EAM_KNOWN_CATALOGS
 
@@ -593,9 +574,6 @@ class FakeEAMDownloader(EAMDownloader):
         super().__init__(**kw)
         self.paquetes = paquetes
         self.descargas = []
-
-    def fetch_metadata(self, catalog_id):
-        pass
 
     def download_file(self, url, dest_path, max_retries=3):
         self.descargas.append(url)

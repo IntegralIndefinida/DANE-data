@@ -6,6 +6,9 @@
 
 * {dd}`tabla()` copia solo las columnas que usa, no todo el DataFrame: con `dd.geih.load(..., columns="all")` ya no
   duplica la memoria.
+* {dd}`geih.download()` y {dd}`eam.download()` ya no bajan la ficha metodológica del ANDA a `<raíz>/metadata/`: nada la
+  usaba y costaba una consulta más al DANE por año. Esa carpeta, si la tiene, se puede borrar; los diccionarios oficiales
+  siguen en {dd}`describir()` y {dd}`buscar_variable()`.
 
 **Correcciones**
 
