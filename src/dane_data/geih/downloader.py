@@ -1,20 +1,13 @@
 """
-GEIH Downloader & Extractor
-===========================
-Automated pipeline to discover, download, and extract microdata from Colombia's
-Gran Encuesta Integrada de Hogares (GEIH) and its official Empalme Series (CNPV 2018)
-from DANE's National Data Archive (ANDA).
+Descarga y extracción de la GEIH desde el ANDA del DANE: la serie principal (desde 2007) y la serie de empalme
+(2010–2020, con el CNPV 2018).
 
-Features:
-  - Exclusive CSV extraction for key modules (Housing, Demographics, Labor force,
-    Employed, Other forms of work).
-  - Preserves household, individual, and geographic identifiers (DIRECTORIO,
-    SECUENCIA_P, ORDEN, HOGAR, DPTO, MPIO, CLASE, AREA, FEX_C).
-  - Automatic handling of nested archives, non-breaking spaces, and historical naming typos.
-  - Resilient downloads with retry backoff and incremental caching (skips already extracted months).
+De cada mes baja el ZIP del catálogo del año (``KNOWN_CATALOGS``, ``EMPALME_CATALOGS``) y extrae solo los módulos
+pedidos, también de los ZIP anidados. Donde el CSV del ANDA está dañado baja otro formato del mismo catálogo
+(``CSV_DANADOS``). Es incremental: un mes completo (marcador ``.dane_data_ok`` o todos los módulos en disco) se salta.
 
 Autor original: Luis Ramírez (adaptado para dane-data)
-License: MIT
+Licencia: MIT
 """
 
 import re
@@ -171,20 +164,16 @@ def _formato(nombre: str) -> str | None:
 
 def is_target_csv(filename: str, modules=DEFAULT_MODULES, extensiones=(".csv",)) -> bool:
     """
-    Determina si un archivo dentro del ZIP es un CSV correspondiente a uno de los
-    módulos solicitados:
-      - Identificación de vivienda y hogar
-      - Características generales (Personas)
-      - Fuerza de trabajo
-      - Ocupados
-      - Otras formas de trabajo / Otras actividades
+    Si ``filename``, un archivo dentro del ZIP, tiene una de las ``extensiones`` y es de uno de los ``modules`` pedidos
+    (según los patrones de ``MODULE_PATTERNS``). Los módulos que no se usan (``EXCLUDE_MODULE_PATTERNS``: otros ingresos,
+    migración...) nunca cuentan.
     """
     if not filename.lower().endswith(tuple(extensiones)):
         return False
 
     norm_name = strip_accents(filename)
 
-    # Si coincide con exclusiones explícitas (e.g. 'no ocupados', 'desocupados')
+    # Módulos que no se usan, aunque su nombre traiga uno de los patrones
     if any(ex in norm_name for ex in EXCLUDE_MODULE_PATTERNS):
         return False
 
@@ -415,17 +404,9 @@ class GEIHDownloader(DescargadorANDA):
     def extract_requested_modules(self, zip_path: Path, dest_dir: Path, extensiones=(".csv",),
                                   errores: list | None = None) -> int:
         """
-        Inspecciona el archivo ZIP descargado y extrae EXCLUSIVAMENTE los archivos CSV
-        de los módulos solicitados:
-          - Vivienda y Hogares / Datos del hogar y la vivienda
-          - Características generales (Personas)
-          - Fuerza de trabajo
-          - Ocupados
-          - Otras formas de trabajo / Otras actividades
-        Conserva los identificadores de personas (DIRECTORIO, SECUENCIA_P, ORDEN)
-        y geográficos (DPTO, MPIO, CLASE, AREA) ya incluidos en dichas tablas.
-        Soporta además archivos ZIP anidados internamente (ej. CSV.zip o meses).
-        Si se pasa ``errores``, se le agregan los fallos (ZIP dañado, ZIP anidado ilegible...).
+        Extrae de ``zip_path`` a ``dest_dir`` los archivos de los módulos pedidos con alguna de las ``extensiones``,
+        también de los ZIP anidados (``CSV.zip``, o uno por mes en el empalme). Devuelve cuántos extrajo. Si se pasa
+        ``errores``, se le agregan los fallos (ZIP dañado, ZIP anidado ilegible...).
         """
         if errores is None:
             errores = []

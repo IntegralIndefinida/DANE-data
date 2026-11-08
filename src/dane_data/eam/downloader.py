@@ -8,7 +8,7 @@ desde el Archivo Nacional de Datos (ANDA).
 Reglas de extracción de formatos:
   1. Prioridad 1: Archivo .csv (utilizado en la gran mayoría de la serie histórica).
   2. Prioridad 2: Archivo .txt delimitado (si no existe .csv, como en 2023).
-  3. Prioridad 3: Conversión de .dta a .txt tabulado (si no existe .csv ni .txt, como en 2024).
+  3. Prioridad 3: Archivo Stata .dta tal cual (si no existe .csv ni .txt, como en 2024).
 
 NOTAS METODOLÓGICAS IMPORTANTES:
   - Clasificación CIIU (Rupturas metodológicas), según los códigos de los archivos:
@@ -27,7 +27,6 @@ NOTAS METODOLÓGICAS IMPORTANTES:
 
 Autor original: Equipo de Investigación (adaptado para dane-data)
 Licencia: MIT
-Versión: 1.0.0
 """
 
 import re
