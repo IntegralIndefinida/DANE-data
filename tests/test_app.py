@@ -44,6 +44,34 @@ def test_descarga_con_fallas_lo_dice(tmp_path, monkeypatch):
     assert any("EAM_2024.zip" in w.value for w in at.warning)
 
 
+def test_registro_de_descarga_solo_de_esta_sesion(tmp_path, monkeypatch):
+    """En modo aula, las líneas que registra la descarga de otra sesión (otro hilo) no salen en esta."""
+    import logging
+    import threading
+
+    from streamlit.runtime.scriptrunner import add_script_run_ctx
+
+    for clave in ("geih", "geih_empalme", "eam"):
+        monkeypatch.setitem(dd.config._session, clave, tmp_path / clave)
+
+    def bajar(anios, **kw):
+        log = logging.getLogger("dane_data.eam")
+        log.info("línea propia")
+        # Con contexto de Streamlit, como el hilo de otra sesión en el servidor (sin él, Streamlit la descarta)
+        otra = add_script_run_ctx(threading.Thread(target=log.info, args=("línea ajena",)))
+        otra.start()
+        otra.join()
+        return []
+
+    monkeypatch.setattr(dd.eam, "download", bajar)
+    at = AppTest.from_file(str(PAGINAS / "descargar.py")).run()
+    at.radio[0].set_value("EAM (industria, anual)").run()
+    next(b for b in at.button if b.label.endswith("Descargar")).click().run()
+    assert not at.exception
+    registro = "\n".join(c.value for c in at.code)
+    assert "línea propia" in registro and "línea ajena" not in registro
+
+
 def test_citar_usa_la_version_instalada():
     at = AppTest.from_file(str(PAGINAS / "citar.py")).run()
     assert not at.exception

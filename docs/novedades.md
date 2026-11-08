@@ -7,6 +7,8 @@
 * {dd}`geih.download()`, {dd}`eam.download()` y {dd}`eevv.download()` devuelven como fallo los años que no están en el
   ANDA, y `dane-data descargar` termina con error. Antes solo avisaban en el registro, devolvían una lista vacía y decían
   «finalizada exitosamente» sin haber bajado nada.
+* En la aplicación compartida en la red (`dane-data app --address 0.0.0.0`, modo aula), el registro de la página *Descargar
+  datos* muestra solo las líneas de la descarga de esa persona. Si dos descargaban a la vez, se mezclaban.
 
 ## 0.4.0 (2 de noviembre de 2026)
 

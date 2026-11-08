@@ -1,4 +1,5 @@
 import logging
+import threading
 
 import streamlit as st
 
@@ -109,6 +110,8 @@ if st.button("⬇️ Descargar", type="primary", disabled=not anios or sin_modul
     detalle = st.empty()
     logs = st.empty()
     handler = LogEnPantalla(logs)
+    # El registro es uno para todas las sesiones: en modo aula, cada quien ve solo las líneas de su descarga
+    handler.addFilter(lambda r, hilo=threading.get_ident(): r.thread == hilo)
     logger = logging.getLogger("dane_data")
     logger.setLevel(logging.INFO)
     logger.addHandler(handler)
