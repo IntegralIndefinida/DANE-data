@@ -26,6 +26,9 @@
 * En la aplicación, cuando no hay datos de una encuesta, el aviso y el botón para ir a *Descargar datos* aparecen en la
   página. Antes estaban en la barra lateral: la página quedaba en blanco, y en el celular, con la barra cerrada, no se
   veía nada.
+* En la aplicación, las variaciones de los indicadores (GEIH y EAM), la tabla ponderada de *Tablas y microdatos* y el
+  tamaño de la descarga usan coma decimal y punto de miles («-0,9 p.p.», «58,5», «24.200.000»), como el resto de cifras.
+  Una variación que redondea a cero sale en gris y sin flecha; antes salía «-0.0» en verde.
 
 ## 0.4.0 (2 de noviembre de 2026)
 

@@ -5,7 +5,7 @@ import streamlit as st
 
 import dane_data as dd
 from dane_data.app._ui import (CERTIFICADOS, LogEnPantalla, args_py, disponibles_eam, disponibles_eevv, disponibles_geih,
-                               rutas_actuales)
+                               fmt_num, rutas_actuales)
 
 st.title("⬇️ Descargar datos del DANE")
 st.markdown(
@@ -44,7 +44,7 @@ if encuesta.startswith("GEIH"):
         borrar = st.toggle("Borrar los ZIP después de extraer (ahorra ~40 % de espacio)", value=True)
         forzar = st.toggle("Volver a bajar lo que ya está descargado",
                            help="Solo si el DANE corrigió o volvió a publicar esos meses: reemplaza lo que hay.")
-    st.info(f"📦 Tamaño aproximado: **{0.6 * len(anios) if not prueba else 0.05 * len(anios):.1f} GB** · "
+    st.info(f"📦 Tamaño aproximado: **{fmt_num(0.6 * len(anios) if not prueba else 0.05 * len(anios), 1)} GB** · "
             f"destino: `{dd.get_path('geih_empalme' if empalme else 'geih')}`")
     lanzar = lambda prog, stop: dd.geih.download(  # noqa: E731
         anios, modules=modulos, empalme=empalme, delete_zips=borrar, limit_files=1 if prueba else None,

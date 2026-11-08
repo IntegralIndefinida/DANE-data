@@ -38,6 +38,21 @@ def fmt_pct(x: float) -> str:
     return "—" if pd.isna(x) else fmt_num(x, 1) + " %"
 
 
+def variacion(actual: float, anterior: float, anio: int, pp: bool = False, inversa: bool = False) -> dict:
+    """
+    ``delta`` y ``delta_color`` de st.metric, con coma decimal: en puntos porcentuales (``pp``) o en %.
+    Una variación que redondea a cero va en gris y sin flecha (antes salía «-0.0» en verde).
+    """
+    if pd.isna(actual) or pd.isna(anterior) or (not pp and anterior == 0):
+        return {}
+    d = round(actual - anterior if pp else 100 * (actual / anterior - 1), 1)
+    unidad = "p.p." if pp else "%"
+    if d == 0:
+        return {"delta": f"0,0 {unidad} vs {anio}", "delta_color": "off", "delta_arrow": "off"}
+    return {"delta": f"{'+' if d > 0 else ''}{fmt_num(d, 1)} {unidad} vs {anio}",
+            "delta_color": "inverse" if inversa else "normal"}
+
+
 def fmt_grande(x: float) -> str:
     """12.345.678 → '12,3 millones'."""
     if pd.isna(x):

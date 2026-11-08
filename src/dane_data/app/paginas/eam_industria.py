@@ -1,9 +1,8 @@
-import pandas as pd
 import streamlit as st
 
 import dane_data as dd
 from dane_data.app._ui import (MAX_SERIES, barras, botones_descarga, codigo, fmt_num, fmt_pct, grafico,
-                             linea, selector_eam)
+                             linea, selector_eam, variacion)
 
 st.title("🏭 Indicadores de la industria manufacturera")
 eam, descripcion, params = selector_eam(clave="eam")
@@ -31,20 +30,18 @@ p = tot.iloc[-2] if len(tot) > 1 else None
 
 
 def var(col, pp=False):
-    if p is None or pd.isna(p[col]) or p[col] == 0:
-        return None
-    return f"{u[col] - p[col]:+.1f} p.p." if pp else f"{100 * (u[col] / p[col] - 1):+.1f} % vs {int(p['anio'])}"
+    return {} if p is None else variacion(u[col], p[col], int(p["anio"]), pp=pp)
 
 
 st.markdown(f"##### Resumen {int(u['anio'])}")
 k = st.columns(5)
-k[0].metric("Establecimientos", fmt_num(u.establecimientos), var("establecimientos"))
-k[1].metric("Personal ocupado", fmt_num(u.personal_total), var("personal_total"))
-k[2].metric("Valor agregado (billones $)", fmt_num(u.valor_agregado / 1e9, 1), var("valor_agregado"),
+k[0].metric("Establecimientos", fmt_num(u.establecimientos), **var("establecimientos"))
+k[1].metric("Personal ocupado", fmt_num(u.personal_total), **var("personal_total"))
+k[2].metric("Valor agregado (billones $)", fmt_num(u.valor_agregado / 1e9, 1), **var("valor_agregado"),
             help="Pesos corrientes. Los microdatos de la EAM vienen en miles de pesos.")
-k[3].metric("Productividad (millones $/persona)", fmt_num(u.productividad_laboral / 1e3, 1), var("productividad_laboral"),
+k[3].metric("Productividad (millones $/persona)", fmt_num(u.productividad_laboral / 1e3, 1), **var("productividad_laboral"),
             help=dd.eam.GLOSARIO["Productividad laboral"])
-k[4].metric("Participación laboral", fmt_pct(u.participacion_laboral), var("participacion_laboral", pp=True),
+k[4].metric("Participación laboral", fmt_pct(u.participacion_laboral), **var("participacion_laboral", pp=True),
             help=dd.eam.GLOSARIO["Participación laboral"])
 st.divider()
 

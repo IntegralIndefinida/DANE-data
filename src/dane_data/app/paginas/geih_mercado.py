@@ -3,7 +3,7 @@ import streamlit as st
 
 import dane_data as dd
 from dane_data.app._ui import (fmt_num, MAX_SERIES, args_py, barras, botones_descarga, codigo, fmt_grande, fmt_pct,
-                             fmt_pesos, grafico, linea, rutas_actuales, seleccion_geih, serie_geih)
+                             fmt_pesos, grafico, linea, rutas_actuales, seleccion_geih, serie_geih, variacion)
 
 st.title("👥 Indicadores del mercado laboral")
 sel = seleccion_geih(clave="geih")
@@ -49,22 +49,21 @@ ult = total.iloc[-1]
 prev = total.iloc[-2] if len(total) > 1 else None
 
 
-def delta(col, pct=True):
-    if prev is None or pd.isna(prev[col]) or pd.isna(ult[col]):  # la informalidad no existe antes de 2022
-        return None
-    d = ult[col] - prev[col]
-    return f"{d:+.1f} p.p. vs {int(prev['anio'])}" if pct else f"{100 * d / prev[col]:+.1f} % vs {int(prev['anio'])}"
+def delta(col, pct=True, inversa=False):
+    if prev is None:  # la informalidad no existe antes de 2022: variacion() no muestra nada si falta un valor
+        return {}
+    return variacion(ult[col], prev[col], int(prev["anio"]), pp=pct, inversa=inversa)
 
 
 st.markdown(f"##### Resumen {int(ult['anio'])}")
 k = st.columns(5)
-k[0].metric("Desocupación", fmt_pct(ult.td), delta("td"), delta_color="inverse",
+k[0].metric("Desocupación", fmt_pct(ult.td), **delta("td", inversa=True),
             help=dd.geih.GLOSARIO["TD"])
-k[1].metric("Participación (TGP)", fmt_pct(ult.tgp), delta("tgp"), help=dd.geih.GLOSARIO["TGP"])
-k[2].metric("Ocupación (TO)", fmt_pct(ult.to), delta("to"), help=dd.geih.GLOSARIO["TO"])
-k[3].metric("Informalidad", fmt_pct(ult.tasa_informalidad), delta("tasa_informalidad"), delta_color="inverse",
+k[1].metric("Participación (TGP)", fmt_pct(ult.tgp), **delta("tgp"), help=dd.geih.GLOSARIO["TGP"])
+k[2].metric("Ocupación (TO)", fmt_pct(ult.to), **delta("to"), help=dd.geih.GLOSARIO["TO"])
+k[3].metric("Informalidad", fmt_pct(ult.tasa_informalidad), **delta("tasa_informalidad", inversa=True),
             help=dd.geih.GLOSARIO["Informalidad"])
-k[4].metric("Ingreso laboral mediano", fmt_pesos(ult.ingreso_mediano), delta("ingreso_mediano", pct=False),
+k[4].metric("Ingreso laboral mediano", fmt_pesos(ult.ingreso_mediano), **delta("ingreso_mediano", pct=False),
             help=dd.geih.GLOSARIO["Ingreso laboral"] + " Pesos corrientes (sin ajustar por inflación).")
 if meses_ult < 12:
     st.info(f"ℹ️ {int(ult['anio'])} tiene solo {meses_ult} mes(es) en la selección. La comparación con el año "

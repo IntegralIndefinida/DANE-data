@@ -290,6 +290,15 @@ def test_descargas_se_arman_al_hacer_clic(eam_root, monkeypatch):
     assert stata["mixta"].iloc[-1] == "1.5" and stata["vacia"].iloc[0] == "" and len(stata["larga"].iloc[-1]) == 3000
 
 
+def test_variacion_con_coma_decimal_y_cero_en_gris():
+    from dane_data.app._ui import variacion
+    assert variacion(54.9, 55.8, 2025, pp=True) == {"delta": "-0,9 p.p. vs 2025", "delta_color": "normal"}
+    assert variacion(1_750_000, 1_424_000, 2025)["delta"] == "+22,9 % vs 2025"
+    cero = variacion(8.93, 8.96, 2025, pp=True, inversa=True)  # -0,03 redondea a cero: antes «-0.0» en verde
+    assert cero["delta"] == "0,0 p.p. vs 2025" and cero["delta_color"] == "off"
+    assert variacion(float("nan"), 1, 2025) == {} == variacion(1, 0, 2025)
+
+
 def test_tabla_pivote_conserva_el_orden_de_las_categorias(geih_root, tmp_path, monkeypatch):
     """El nivel educativo va de Ninguno a Superior, no en orden alfabético."""
     monkeypatch.setitem(dd.config._session, "geih", geih_root)

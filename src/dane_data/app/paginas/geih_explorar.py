@@ -112,12 +112,13 @@ with tab1:
             fig = barras(g, x=f, y=est, pct=est == "porcentaje", horizontal=g[f].nunique() > 8)
         grafico(fig)
 
+        formato = dict(precision=1 if est == "porcentaje" else 0, decimal=",", thousands=".")  # 58,5 y 24.200.000
         if c:
             pivot = t.pivot_table(index=f, columns=c, values=est, observed=True, aggfunc="first")
             pivot.index, pivot.columns = pivot.index.astype(str), pivot.columns.astype(str)  # ya ordenadas
-            st.dataframe(pivot.style.format("{:,.1f}" if est == "porcentaje" else "{:,.0f}"), width="stretch")
+            st.dataframe(pivot.style.format(**formato), width="stretch")
         else:
-            st.dataframe(t, hide_index=True, width="stretch")
+            st.dataframe(t.style.format(subset=[est], **formato), hide_index=True, width="stretch")
         if (t["n_muestra"] < 100).any():
             st.warning("⚠️ Algunas celdas tienen menos de 100 observaciones: interprételas con cautela.")
         st.caption("Distribución (%): porcentaje de cada fila dentro de cada columna. Cifras ponderadas con el "
