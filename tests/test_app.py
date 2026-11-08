@@ -127,6 +127,21 @@ def test_descargar_geih_sin_modulos(tmp_path, monkeypatch):
     assert any("al menos un módulo" in w.value for w in at.warning)
 
 
+def test_descargar_codigo_equivalente_con_las_opciones(tmp_path, monkeypatch):
+    """El código de «Hacerlo desde Python» hace lo mismo que el botón: módulos elegidos, borrar ZIP, TIC."""
+    for clave in ("geih", "geih_empalme", "eam", "eevv"):
+        monkeypatch.setitem(dd.config._session, clave, tmp_path / clave)
+    at = AppTest.from_file(str(PAGINAS / "descargar.py")).run()
+    next(m for m in at.multiselect if m.label == "Módulos").set_value(["caracteristicas", "ocupados"]).run()
+    assert "modules=['caracteristicas', 'ocupados'], delete_zips=True)" in at.code[0].value
+    at.radio[0].set_value("EAM (industria, anual)").run()
+    next(t for t in at.toggle if t.label.startswith("Incluir módulo de TIC")).set_value(True).run()
+    assert "include_tic=True, delete_zips=True)" in at.code[0].value
+    at.radio[0].set_value("Estadísticas Vitales (nacimientos y defunciones)").run()
+    next(t for t in at.toggle if t.label.startswith("Borrar")).set_value(False).run()
+    assert at.code[0].value.endswith("tipos=['defunciones', 'nacimientos', 'fetales'])")
+
+
 @pytest.mark.parametrize("pagina", ["eam_industria.py", "eam_microdatos.py"])
 def test_eam_anios_no_consecutivos(eam_root, monkeypatch, pagina):
     """Años descargados 1992, 2016 y 2024: el rango por defecto empieza en 2016, no en 2014."""

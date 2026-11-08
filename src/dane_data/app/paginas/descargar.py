@@ -4,7 +4,8 @@ import threading
 import streamlit as st
 
 import dane_data as dd
-from dane_data.app._ui import CERTIFICADOS, LogEnPantalla, disponibles_eam, disponibles_eevv, disponibles_geih, rutas_actuales
+from dane_data.app._ui import (CERTIFICADOS, LogEnPantalla, args_py, disponibles_eam, disponibles_eevv, disponibles_geih,
+                               rutas_actuales)
 
 st.title("⬇️ Descargar datos del DANE")
 st.markdown(
@@ -48,8 +49,10 @@ if encuesta.startswith("GEIH"):
     lanzar = lambda prog, stop: dd.geih.download(  # noqa: E731
         anios, modules=modulos, empalme=empalme, delete_zips=borrar, limit_files=1 if prueba else None,
         progress=prog, should_stop=stop, forzar=forzar)
-    codigo_py = (f"dd.geih.download({anios!r}" + (", empalme=True" if empalme else "")
-                 + (", limit_files=1" if prueba else "") + (", forzar=True" if forzar else "") + ")")
+    # Con todas las opciones elegidas, para que el código haga lo mismo que el botón
+    codigo_py = f"dd.geih.download({anios!r}" + args_py(
+        modules=modulos if set(modulos) != set(NOMBRES) else None, empalme=empalme, delete_zips=borrar,
+        limit_files=1 if prueba else None, forzar=forzar) + ")"
 elif encuesta.startswith("Estadísticas"):
     ya = disponibles_eevv(rutas)
     elegidos = st.multiselect("Certificados", list(CERTIFICADOS), default=list(CERTIFICADOS),
@@ -75,7 +78,7 @@ elif encuesta.startswith("Estadísticas"):
     st.info(f"📦 Tamaño aproximado en disco: **{peso} MB** · destino: `{dd.get_path('eevv')}`")
     lanzar = lambda prog, stop: dd.eevv.download(anios, tipos=tipos, delete_zips=borrar, progress=prog,  # noqa: E731
                                                  should_stop=stop, forzar=forzar)
-    codigo_py = f"dd.eevv.download({anios!r}, tipos={tipos!r}" + (", forzar=True" if forzar else "") + ")"
+    codigo_py = f"dd.eevv.download({anios!r}, tipos={tipos!r}" + args_py(delete_zips=borrar, forzar=forzar) + ")"
 else:
     ya = disponibles_eam(rutas)
     tiene = set(ya.anio.unique()) if len(ya) else set()
@@ -97,7 +100,7 @@ else:
     st.info(f"📦 Tamaño aproximado: **{10 * len(anios)} MB** · destino: `{dd.get_path('eam')}`")
     lanzar = lambda prog, stop: dd.eam.download(anios, include_tic=tic, delete_zips=borrar,  # noqa: E731
                                                 progress=prog, should_stop=stop, forzar=forzar)
-    codigo_py = f"dd.eam.download({anios!r}" + (", forzar=True" if forzar else "") + ")"
+    codigo_py = f"dd.eam.download({anios!r}" + args_py(include_tic=tic, delete_zips=borrar, forzar=forzar) + ")"
 
 sin_modulos = encuesta.startswith("GEIH") and not modulos  # sin módulos, la librería no sabe qué bajar
 if sin_modulos:

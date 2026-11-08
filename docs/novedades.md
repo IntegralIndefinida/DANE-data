@@ -19,6 +19,8 @@
   datos* muestra solo las líneas de la descarga de esa persona. Si dos descargaban a la vez, se mezclaban.
 * {dd}`geih.download()` de la serie de empalme con `forzar=True` ya no borra un mes si el paquete nuevo del DANE no lo
   trae: lo informa como fallo y conserva lo de antes. Un paquete anual sin los 12 meses tampoco queda como completo.
+* En la página *Descargar datos*, el código de «Hacerlo desde Python» incluye todas las opciones elegidas (módulos,
+  borrar los ZIP, módulo TIC). Antes, con menos módulos, el código bajaba todos.
 
 ## 0.4.0 (2 de noviembre de 2026)
 
