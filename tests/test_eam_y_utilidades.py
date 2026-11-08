@@ -382,8 +382,14 @@ class _ProcesoFalso:
 
 @pytest.mark.parametrize("interrumpir", [False, True])
 def test_cli_app_lanza_streamlit(monkeypatch, capsys, interrumpir):
+    import importlib.util
+
     from dane_data import cli
 
+    # Streamlit no hace falta (el proceso es falso): así la prueba corre también sin el extra [app]
+    original = importlib.util.find_spec
+    monkeypatch.setattr(importlib.util, "find_spec", lambda nombre, *a: object() if nombre == "streamlit"
+                        else original(nombre, *a))
     procesos = []
     monkeypatch.setattr(cli.subprocess, "Popen",
                         lambda cmd, cwd=None: procesos.append(_ProcesoFalso(cmd, cwd, interrumpir)) or procesos[-1])
