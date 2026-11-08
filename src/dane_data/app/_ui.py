@@ -398,7 +398,8 @@ def seleccion_geih(clave: str = "geih", varios_anios: bool = True, ayuda_anios: 
     with st.sidebar:
         anios_disp = sorted(av.anio.unique())
         defecto = anios_disp[-2:] if varios_anios else anios_disp[-1:]
-        anios = st.multiselect("Años", anios_disp, default=defecto, key=f"{clave}_anios", help=ayuda_anios)
+        anios = st.multiselect("Años", anios_disp, default=defecto, key=f"{clave}_anios", help=ayuda_anios,
+                               placeholder="Elija los años")
         if not anios:
             st.info("Elija al menos un año.")
             st.stop()
@@ -407,6 +408,7 @@ def seleccion_geih(clave: str = "geih", varios_anios: bool = True, ayuda_anios: 
         meses = None
         if not todos:
             meses = st.multiselect("Meses", meses_disp, default=meses_disp[:1], format_func=dd.MESES.get,
+                                   placeholder="Elija los meses",
                                    key=f"{clave}_meses")
             if not meses:
                 st.stop()

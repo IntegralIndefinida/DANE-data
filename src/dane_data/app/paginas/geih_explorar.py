@@ -44,7 +44,7 @@ def etiqueta(v: str, largo: int) -> str:
 
 with st.sidebar:
     extra = st.multiselect(
-        "Variables DANE adicionales", sorted(set(dic) | set(dd.geih.CORE_RAW)), key="exp_extra",
+        "Variables DANE adicionales", sorted(set(dic) | set(dd.geih.CORE_RAW)), key="exp_extra", placeholder="Busque por código o por texto",
         format_func=lambda v: etiqueta(v, 60),
         help="Busque por código o por texto de la pregunta (p. ej. 'arriendo', 'P6500'). "
              "Nombres según el diccionario 2025; en años antiguos algunas no existen.",
@@ -194,7 +194,8 @@ with tab3:
                    "nivel_educativo", "rama2d"]
     # Las variables adicionales se ofrecen aunque falten en este mes: en otros meses pueden estar.
     todas = list(dict.fromkeys([*muestra.columns, *extra]))
-    elegidas = st.multiselect("Columnas", todas, default=[c for c in armonizadas + list(extra) if c in todas])
+    elegidas = st.multiselect("Columnas", todas, default=[c for c in armonizadas + list(extra) if c in todas],
+                              placeholder="Elija las columnas")
     st.dataframe(muestra.reindex(columns=elegidas).head(1000), hide_index=True, width="stretch")
     st.caption(f"{fmt_num(len(muestra))} filas en {dd.MESES[mes_m].lower()} de {anio_m}; "
                f"{fmt_num(n_total)} en toda la selección.")

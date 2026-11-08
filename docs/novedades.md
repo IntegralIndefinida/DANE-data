@@ -31,6 +31,8 @@
 * En la aplicación, las variaciones de los indicadores (GEIH y EAM), la tabla ponderada de *Tablas y microdatos* y el
   tamaño de la descarga usan coma decimal y punto de miles («-0,9 p.p.», «58,5», «24.200.000»), como el resto de cifras.
   Una variación que redondea a cero sale en gris y sin flecha; antes salía «-0.0» en verde.
+* En la aplicación, las listas de selección múltiple vacías dicen en español qué elegir («Elija los años», «Busque por
+  código o por texto»). Antes decían «Choose options».
 
 ## 0.4.0 (2 de noviembre de 2026)
 

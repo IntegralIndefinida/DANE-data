@@ -104,7 +104,7 @@ grupos = list(res[por].dropna().unique()) if por else []
 if por and len(grupos) > MAX_SERIES and res[x].nunique() > 1:
     orden = res.groupby(por, observed=True)["ocupados"].sum().sort_values(ascending=False).index.tolist()
     elegidos = st.multiselect(f"Hay {len(grupos)} grupos; elija hasta {MAX_SERIES} para comparar en el tiempo",
-                              orden, default=orden[:5], max_selections=MAX_SERIES)
+                              orden, default=orden[:5], max_selections=MAX_SERIES, placeholder="Elija los grupos")
     res_graf = res[res[por].isin(elegidos)]
 else:
     res_graf = res

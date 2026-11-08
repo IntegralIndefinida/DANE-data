@@ -24,7 +24,7 @@ if encuesta.startswith("GEIH"):
     anios_ok = dd.geih.ANIOS_EMPALME if empalme else dd.geih.ANIOS_DISPONIBLES
     ya = disponibles_geih(empalme, rutas)
     tiene = set(ya.anio.unique()) if len(ya) else set()
-    anios = st.multiselect("Años", anios_ok, default=[anios_ok[-1]],
+    anios = st.multiselect("Años", anios_ok, default=[anios_ok[-1]], placeholder="Elija los años",
                            format_func=lambda a: f"{a} ✓" if a in tiene else str(a))
     st.caption("✓ = ya descargado (total o parcialmente).")
     NOMBRES = {
@@ -38,6 +38,7 @@ if encuesta.startswith("GEIH"):
     }
     with st.expander("Opciones avanzadas"):
         modulos = st.multiselect("Módulos", list(NOMBRES), default=list(NOMBRES), format_func=NOMBRES.get,
+                                 placeholder="Elija los módulos",
                                  help="Para los indicadores laborales se necesitan al menos: características, "
                                       "fuerza de trabajo, ocupados y desocupados.")
         prueba = st.toggle("Solo el primer mes de cada año (para probar)")
@@ -55,7 +56,7 @@ if encuesta.startswith("GEIH"):
         limit_files=1 if prueba else None, forzar=forzar) + ")"
 elif encuesta.startswith("Estadísticas"):
     ya = disponibles_eevv(rutas)
-    elegidos = st.multiselect("Certificados", list(CERTIFICADOS), default=list(CERTIFICADOS),
+    elegidos = st.multiselect("Certificados", list(CERTIFICADOS), default=list(CERTIFICADOS), placeholder="Elija los certificados",
                               help="Defunciones desde 1979; nacimientos y defunciones fetales desde 1998.")
     tipos = [CERTIFICADOS[c] for c in elegidos]
     todos = sorted({a for t in tipos for a in dd.eevv.ANIOS_DISPONIBLES[t]})
@@ -64,7 +65,7 @@ elif encuesta.startswith("Estadísticas"):
         st.session_state["descargar_eevv_anios"] = [2025]
     # Si se quita un certificado, un año elegido puede dejar de existir
     st.session_state["descargar_eevv_anios"] = [a for a in st.session_state["descargar_eevv_anios"] if a in todos]
-    anios = st.multiselect("Años", todos, key="descargar_eevv_anios",
+    anios = st.multiselect("Años", todos, key="descargar_eevv_anios", placeholder="Elija los años",
                            format_func=lambda a: f"{a} ✓" if a in tiene else str(a))
     st.button(f"Seleccionar toda la serie {todos[0]}–{todos[-1]}" if todos else "Seleccionar toda la serie", disabled=not todos,
               on_click=lambda: st.session_state.update(descargar_eevv_anios=list(todos)))
@@ -88,7 +89,7 @@ else:
     # cambiar la selección: un `if st.button(...)` la perdía al pulsar "Descargar".
     if "descargar_eam_anios" not in st.session_state:
         st.session_state["descargar_eam_anios"] = faltan[-5:]
-    anios = st.multiselect("Años", todos, key="descargar_eam_anios",
+    anios = st.multiselect("Años", todos, key="descargar_eam_anios", placeholder="Elija los años",
                            format_func=lambda a: f"{a} ✓" if a in tiene else str(a))
     c1, c2 = st.columns(2)
     c1.button("Seleccionar toda la serie 1992–2024",

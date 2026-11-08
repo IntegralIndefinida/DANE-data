@@ -85,7 +85,7 @@ if vista == "Evolución":
     if por and g[por].nunique() > MAX_SERIES:
         orden = g.groupby(por)[col].sum().sort_values(ascending=False).index.tolist()
         elegidos = st.multiselect(f"Hay {len(orden)} grupos; elija hasta {MAX_SERIES}", orden, default=orden[:5],
-                                  max_selections=MAX_SERIES)
+                                  max_selections=MAX_SERIES, placeholder="Elija los grupos")
         g = g[g[por].isin(elegidos)]
     y, titulo = "_y", nombre_var + (f" ({unidad})" if unidad else "")
     if indice:

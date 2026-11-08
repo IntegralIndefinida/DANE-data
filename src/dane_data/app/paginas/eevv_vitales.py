@@ -78,7 +78,7 @@ def serie(res: pd.DataFrame, columna: str, por: str | None, tipo_valor: str, tit
     if por and g[por].nunique() > MAX_SERIES:
         orden = g.groupby(por)[columna].sum().sort_values(ascending=False).index.tolist()
         elegidos = st.multiselect(f"Hay {len(orden)} grupos; elija hasta {MAX_SERIES}", orden, default=orden[:5],
-                                  max_selections=MAX_SERIES)
+                                  max_selections=MAX_SERIES, placeholder="Elija los grupos")
         g = g[g[por].isin(elegidos)]
     grafico(linea(g, x="anio", y=columna, color=por, titulo_y=titulo, pct=tipo_valor == "pct"))
 

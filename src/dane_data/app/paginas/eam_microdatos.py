@@ -11,7 +11,7 @@ dic = dd.diccionario("eam")
 with st.sidebar:
     extra = st.multiselect(
         "Variables DANE adicionales", sorted(v.lower() for v in dic if v.lower() not in dd.eam.CORE),
-        key="eamm_extra", format_func=lambda v: f"{v} — {dic.get(v.upper(), {}).get('etiqueta', '')[:60]}",
+        key="eamm_extra", placeholder="Busque por código o por texto", format_func=lambda v: f"{v} — {dic.get(v.upper(), {}).get('etiqueta', '')[:60]}",
         help="Por ejemplo c3r10c1 (sueldos de obreros) o c4r5c1. Nombres del diccionario 2024; "
              "muchas variables de capítulo cambian de nombre entre épocas.",
     )
