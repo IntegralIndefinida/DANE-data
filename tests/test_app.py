@@ -182,7 +182,7 @@ def test_mercado_laboral_precalculado_y_con_filtros(geih_root, tmp_path, monkeyp
 
 
 def test_geih_solo_meses_incompletos_lo_dice(tmp_path, monkeypatch):
-    """Si hay meses pero ninguno completo, la barra lateral lo explica en vez de pedir un año que no puede elegirse."""
+    """Si hay meses pero ninguno completo, la página lo explica en vez de pedir un año que no puede elegirse."""
     mes = tmp_path / "geih" / "datos_csv" / "2025" / "Febrero 2025"
     mes.mkdir(parents=True)
     (mes / "Características generales.CSV").write_text("DIRECTORIO;SECUENCIA_P;ORDEN;FEX_C18\n1;1;1;10\n")
@@ -190,7 +190,7 @@ def test_geih_solo_meses_incompletos_lo_dice(tmp_path, monkeypatch):
     monkeypatch.setattr("streamlit.page_link", lambda *a, **k: None)  # fuera de la navegación de Inicio.py
     at = AppTest.from_file(str(PAGINAS / "geih_mercado.py"), default_timeout=60).run()
     assert not at.exception
-    assert any("incompletos" in w.value for w in at.warning)
+    assert any("incompletos" in w.value for w in at.main.warning)  # en la página: en el celular la barra está cerrada
     assert not any("Elija al menos un año" in i.value for i in at.info)
 
 
@@ -477,7 +477,7 @@ def test_eevv_sin_datos(tmp_path, monkeypatch):
     monkeypatch.setattr("streamlit.page_link", lambda *a, **k: None)
     at = AppTest.from_file(str(PAGINAS / "eevv_vitales.py"), default_timeout=60).run()
     assert not at.exception
-    assert any("Estadísticas Vitales" in w.value for w in at.warning)
+    assert any("Estadísticas Vitales" in w.value for w in at.main.warning)
 
 
 def test_eevv_indicadores_por_certificado(app_eevv):

@@ -23,6 +23,9 @@
   borrar los ZIP, módulo TIC). Antes, con menos módulos, el código bajaba todos.
 * Si todos los meses de la GEIH que hay en la carpeta están incompletos, las páginas de la GEIH lo dicen y llevan a
   *Descargar datos*. Antes pedían elegir un año de una lista vacía.
+* En la aplicación, cuando no hay datos de una encuesta, el aviso y el botón para ir a *Descargar datos* aparecen en la
+  página. Antes estaban en la barra lateral: la página quedaba en blanco, y en el celular, con la barra cerrada, no se
+  veía nada.
 
 ## 0.4.0 (2 de noviembre de 2026)
 

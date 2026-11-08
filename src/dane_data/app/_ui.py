@@ -321,9 +321,12 @@ class LogEnPantalla(logging.Handler):
 
 
 def sin_datos(encuesta: str, aviso: str | None = None) -> None:
+    """Aviso en la página, no en la barra lateral: en el celular la barra está cerrada y la página quedaba en blanco."""
     st.warning(aviso or f"No se encontraron datos de la {encuesta} en la carpeta configurada.")
-    st.page_link("paginas/descargar.py", label="Ir a ⬇️ Descargar datos", icon="⬇️")
-    st.page_link("paginas/inicio.py", label="o configurar la carpeta en 🏠 Inicio", icon="🏠")
+    with st.container(horizontal=True, vertical_alignment="center"):
+        if st.button("Ir a ⬇️ Descargar datos", type="primary"):
+            st.switch_page("paginas/descargar.py")
+        st.page_link("paginas/inicio.py", label="o configurar la carpeta en 🏠 Inicio", icon="🏠")
     st.stop()
 
 
@@ -369,14 +372,15 @@ def seleccion_geih(clave: str = "geih", varios_anios: bool = True, ayuda_anios: 
         serie = st.radio("Serie", ["Principal", "Empalme (2010–2020)"], horizontal=True, key=f"{clave}_serie",
                          help="La serie de empalme re-pondera 2010–2020 con el censo 2018, para comparar "
                               "con los datos desde 2021 sin saltos.")
-        empalme = serie != "Principal"
-        av = disponibles_geih(empalme, rutas_actuales())
-        if av.empty:
-            sin_datos("GEIH")
-        av = av[av.completo]
-        if av.empty:  # hay meses, pero a todos les falta algo: sin esto, pedía elegir un año de una lista vacía
-            sin_datos("GEIH", "Los meses de la GEIH que hay en la carpeta están incompletos y no se pueden usar. "
-                              "Vea cuáles y qué les falta en 🏠 Inicio, y vuelva a descargarlos.")
+    empalme = serie != "Principal"
+    av = disponibles_geih(empalme, rutas_actuales())
+    if av.empty:
+        sin_datos("GEIH")
+    av = av[av.completo]
+    if av.empty:  # hay meses, pero a todos les falta algo: sin esto, pedía elegir un año de una lista vacía
+        sin_datos("GEIH", "Los meses de la GEIH que hay en la carpeta están incompletos y no se pueden usar. "
+                          "Vea cuáles y qué les falta en 🏠 Inicio, y vuelva a descargarlos.")
+    with st.sidebar:
         anios_disp = sorted(av.anio.unique())
         defecto = anios_disp[-2:] if varios_anios else anios_disp[-1:]
         anios = st.multiselect("Años", anios_disp, default=defecto, key=f"{clave}_anios", help=ayuda_anios)
@@ -432,11 +436,11 @@ CERTIFICADOS = {"Defunciones": "defunciones", "Nacimientos": "nacimientos", "Def
 
 def seleccion_eevv(clave: str = "eevv") -> dict:
     """Dibuja la barra lateral de las Estadísticas Vitales y devuelve la selección, sin cargar datos."""
+    av = disponibles_eevv(rutas_actuales())
+    if av.empty:
+        sin_datos("serie de Estadísticas Vitales")
     with st.sidebar:
         st.header("Estadísticas Vitales")
-        av = disponibles_eevv(rutas_actuales())
-        if av.empty:
-            sin_datos("serie de Estadísticas Vitales")
         presentes = {nombre: t for nombre, t in CERTIFICADOS.items() if t in set(av["tipo"])}
         tipo = presentes[st.radio("Certificado", list(presentes), key=f"{clave}_tipo")]
         anios_disp = sorted(int(a) for a in av.loc[av["tipo"] == tipo, "anio"])
@@ -473,11 +477,11 @@ TITULOS_CERTIFICADO = {v: k for k, v in CERTIFICADOS.items()}
 # Selector EAM (barra lateral compartida)
 # --------------------------------------------------------------------------- #
 def selector_eam(extra: tuple = (), clave: str = "eam"):
+    av = disponibles_eam(rutas_actuales())
+    if av.empty:
+        sin_datos("EAM")
     with st.sidebar:
         st.header("Datos EAM")
-        av = disponibles_eam(rutas_actuales())
-        if av.empty:
-            sin_datos("EAM")
         anios_disp = sorted(av.anio.unique())
         # Los últimos 10 años; el inicio tiene que ser un año descargado (pueden no ser consecutivos)
         inicio = next(a for a in anios_disp if a >= anios_disp[-1] - 9)
