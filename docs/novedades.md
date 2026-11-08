@@ -39,6 +39,8 @@
 * Las gráficas mensuales de la aplicación escriben los meses en español («ene 2025», «marzo de 2025»). Salían en inglés.
 * Al pasar el mouse por una gráfica de líneas, el recuadro muestra el grupo y el valor redondeado («Mujer: 10,8 %»). Antes
   repetía la fecha y mostraba el nombre de la columna con seis decimales («td=7,977104 %»).
+* Detalles de la aplicación: la tabla ponderada nombra sus filas y columnas como los selectores («Sexo», no «sexo»), el eje
+  de *Indicadores laborales* ya no repite «(%)» y las tres tarjetas de *Inicio* tienen la misma altura.
 
 ## 0.4.0 (2 de noviembre de 2026)
 

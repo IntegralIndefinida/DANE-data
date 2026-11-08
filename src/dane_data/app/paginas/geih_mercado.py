@@ -112,7 +112,7 @@ if por and len(grupos) > MAX_SERIES and res[x].nunique() > 1:
 else:
     res_graf = res
 
-titulo = nombre_ind + (" (%)" if es_pct else "")
+titulo = nombre_ind  # sin «(%)»: las marcas del eje ya lo dicen
 if res_graf[x].nunique() > 1:
     fig = linea(res_graf, x=x, y=col, color=por, titulo_y=titulo, pct=es_pct)
 else:

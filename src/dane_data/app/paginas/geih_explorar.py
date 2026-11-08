@@ -116,6 +116,7 @@ with tab1:
         if c:
             pivot = t.pivot_table(index=f, columns=c, values=est, observed=True, aggfunc="first")
             pivot.index, pivot.columns = pivot.index.astype(str), pivot.columns.astype(str)  # ya ordenadas
+            pivot.index.name, pivot.columns.name = filas, columnas_tabla  # «Sexo», no el nombre interno «sexo»
             st.dataframe(pivot.style.format(**formato), width="stretch")
         else:
             st.dataframe(t.style.format(subset=[est], **formato), hide_index=True, width="stretch")

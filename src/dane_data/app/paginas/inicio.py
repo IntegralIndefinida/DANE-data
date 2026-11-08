@@ -14,7 +14,7 @@ st.markdown(
 )
 
 c1, c2, c3 = st.columns(3)
-with c1, st.container(border=True):
+with c1, st.container(border=True, height="stretch"):
     st.markdown(
         "##### GEIH — Gran Encuesta Integrada de Hogares\n"
         "Encuesta **mensual** a ~70.000 personas. Es la fuente oficial del **desempleo**, la "
@@ -23,7 +23,7 @@ with c1, st.container(border=True):
         "**Úsela para:** brechas de género, desempleo juvenil, informalidad por región, "
         "ingresos frente al salario mínimo…"
     )
-with c2, st.container(border=True):
+with c2, st.container(border=True, height="stretch"):
     st.markdown(
         "##### EAM — Encuesta Anual Manufacturera\n"
         "Censo **anual** de ~7.000 establecimientos industriales (1992–2024). Cada fila es una "
@@ -31,7 +31,7 @@ with c2, st.container(border=True):
         "**Úsela para:** productividad por sector, participación laboral, concentración "
         "regional, funciones de producción y costos…"
     )
-with c3, st.container(border=True):
+with c3, st.container(border=True, height="stretch"):
     st.markdown(
         "##### EEVV — Estadísticas Vitales\n"
         "Registro de los **certificados** de nacimiento (desde 1998) y de defunción (desde 1979). Cada fila es un hecho "
