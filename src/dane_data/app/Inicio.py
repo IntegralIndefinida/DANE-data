@@ -9,22 +9,22 @@ st.set_page_config(
 )
 
 paginas = {
-    "": [st.Page("paginas/inicio.py", title="Inicio", icon="🏠", default=True)],
+    "": [st.Page("paginas/inicio.py", title="Inicio", icon=":material/home:", default=True)],
     "GEIH · Hogares y mercado laboral": [
-        st.Page("paginas/geih_mercado.py", title="Indicadores laborales", icon="👥"),
-        st.Page("paginas/geih_explorar.py", title="Tablas y microdatos", icon="🔎"),
+        st.Page("paginas/geih_mercado.py", title="Indicadores laborales", icon=":material/groups:"),
+        st.Page("paginas/geih_explorar.py", title="Tablas y microdatos", icon=":material/table_chart:"),
     ],
     "EAM · Industria manufacturera": [
-        st.Page("paginas/eam_industria.py", title="Indicadores industriales", icon="🏭"),
-        st.Page("paginas/eam_microdatos.py", title="Panel y microdatos", icon="🧱"),
+        st.Page("paginas/eam_industria.py", title="Indicadores industriales", icon=":material/factory:"),
+        st.Page("paginas/eam_microdatos.py", title="Panel y microdatos", icon=":material/dataset:"),
     ],
     "Estadísticas Vitales": [
-        st.Page("paginas/eevv_vitales.py", title="Nacimientos y defunciones", icon="👶"),
+        st.Page("paginas/eevv_vitales.py", title="Nacimientos y defunciones", icon=":material/child_care:"),
     ],
     "Herramientas": [
-        st.Page("paginas/descargar.py", title="Descargar datos", icon="⬇️"),
-        st.Page("paginas/diccionario.py", title="Diccionario de variables", icon="📚"),
-        st.Page("paginas/citar.py", title="Cómo citar", icon="📝"),
+        st.Page("paginas/descargar.py", title="Descargar datos", icon=":material/download:"),
+        st.Page("paginas/diccionario.py", title="Diccionario de variables", icon=":material/menu_book:"),
+        st.Page("paginas/citar.py", title="Cómo citar", icon=":material/format_quote:"),
     ],
 }
 st.navigation(paginas).run()

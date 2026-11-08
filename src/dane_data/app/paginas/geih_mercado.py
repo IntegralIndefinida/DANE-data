@@ -5,7 +5,7 @@ import dane_data as dd
 from dane_data.app._ui import (fmt_num, MAX_SERIES, args_py, barras, botones_descarga, codigo, fmt_grande, fmt_pct,
                              fmt_pesos, grafico, linea, rutas_actuales, seleccion_geih, serie_geih, variacion)
 
-st.title("👥 Indicadores del mercado laboral")
+st.title("Indicadores del mercado laboral")
 sel = seleccion_geih(clave="geih")
 
 
@@ -66,9 +66,9 @@ k[3].metric("Informalidad", fmt_pct(ult.tasa_informalidad), **delta("tasa_inform
 k[4].metric("Ingreso laboral mediano", fmt_pesos(ult.ingreso_mediano), **delta("ingreso_mediano", pct=False),
             help=dd.geih.GLOSARIO["Ingreso laboral"] + " Pesos corrientes (sin ajustar por inflación).")
 if meses_ult < 12:
-    st.info(f"ℹ️ {int(ult['anio'])} tiene solo {meses_ult} mes(es) en la selección. La comparación con el año "
+    st.info(f"{int(ult['anio'])} tiene solo {meses_ult} mes(es) en la selección. La comparación con el año "
             "anterior mezcla temporadas distintas (el desempleo es estacional); para comparar bien elija los "
-            "mismos meses en ambos años (desactive «Todos los meses»).")
+            "mismos meses en ambos años (desactive «Todos los meses»).", icon=":material/info:")
 st.caption(f"Ocupados: **{fmt_grande(ult.ocupados)}** · Desocupados: **{fmt_grande(ult.desocupados)}** · "
            f"Población en edad de trabajar: **{fmt_grande(ult.pet)}** (promedio mensual).")
 
@@ -84,14 +84,17 @@ col, es_pct = INDICADORES[nombre_ind]
 por = DESAGREGAR[nombre_por]
 anual = frecuencia == "Anual"
 if col == "tasa_informalidad" and min(sel["anios"]) < 2022:
-    st.info("ℹ️ La informalidad sigue la medición del DANE, que necesita preguntas del cuestionario de 2022: "
-            "antes de 2022 queda vacía. Para 2007–2021, elija «Tasa de informalidad (medición anterior)».")
+    st.info("La informalidad sigue la medición del DANE, que necesita preguntas del cuestionario de 2022: "
+            "antes de 2022 queda vacía. Para 2007–2021, elija «Tasa de informalidad (medición anterior)».",
+            icon=":material/info:")
 if col == "tasa_informalidad_marco2005" and max(sel["anios"]) >= 2022:
-    st.info("ℹ️ La medición anterior del DANE (empresas de hasta 5 personas) llega hasta 2021: desde 2022 queda "
-            "vacía. El DANE la publicaba para 13 y 23 ciudades; no es comparable con la actual.")
+    st.info("La medición anterior del DANE (empresas de hasta 5 personas) llega hasta 2021: desde 2022 queda "
+            "vacía. El DANE la publicaba para 13 y 23 ciudades; no es comparable con la actual.",
+            icon=":material/info:")
 if col == "tasa_informalidad_marco2005" and 2020 in sel["anios"] and not sel["empalme"]:
-    st.info("ℹ️ En marzo y abril de 2020, por el operativo telefónico, unos tres cuartos de los ocupados no "
-            "tienen tamaño de empresa: la medición anterior queda vacía esos meses y en el total de 2020.")
+    st.info("En marzo y abril de 2020, por el operativo telefónico, unos tres cuartos de los ocupados no "
+            "tienen tamaño de empresa: la medición anterior queda vacía esos meses y en el total de 2020.",
+            icon=":material/info:")
 
 res = calcular(por, anual)
 if por:  # grupos sin dato (p. ej. 0–14 años no está en la PET)
@@ -119,11 +122,12 @@ grafico(fig)
 
 pocos = res[res["n_muestra"] < 100]
 if len(pocos):
-    st.warning(f"⚠️ {len(pocos)} celda(s) tienen menos de 100 personas en la muestra: esas cifras son "
-               "poco confiables (mucho error de muestreo). Considere agrupar más meses o menos categorías.")
+    st.warning(f"{len(pocos)} celda(s) tienen menos de 100 personas en la muestra: esas cifras son "
+               "poco confiables (mucho error de muestreo). Considere agrupar más meses o menos categorías.",
+               icon=":material/warning:")
 
 # ---------------------------------------------------------------- Tabla
-with st.expander("📋 Tabla completa", expanded=False):
+with st.expander("Tabla completa", icon=":material/table:", expanded=False):
     tabla = res.drop(columns=["periodo"], errors="ignore")
     st.dataframe(
         tabla, hide_index=True, width="stretch",
@@ -141,7 +145,7 @@ with st.expander("📋 Tabla completa", expanded=False):
     )
     botones_descarga(tabla, f"indicadores_geih_{'_'.join(map(str, sel['anios']))}", "ind")
 
-with st.expander("📖 ¿Qué significa cada indicador?"):
+with st.expander("¿Qué significa cada indicador?", icon=":material/menu_book:"):
     for k_, v in dd.geih.GLOSARIO.items():
         st.markdown(f"**{k_}.** {v}")
     st.markdown(

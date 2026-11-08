@@ -73,14 +73,14 @@ dane-data app          # o doble clic en el lanzador; el navegador se abre solo
 
 | Página | Qué hace |
 |---|---|
-| 🏠 Inicio | Explica las encuestas, muestra qué datos hay y configura las carpetas |
-| ⬇️ Descargar datos | Elige encuesta y años y descarga |
-| 👥 Indicadores laborales | TD, TGP, TO, informalidad e ingresos, por sexo, edad, zona, educación o departamento; anual o mensual |
-| 🔎 Tablas y microdatos | Tablas ponderadas a la medida, distribución de ingresos frente al salario mínimo, exportación |
-| 🏭 Indicadores industriales | Producción, valor agregado, empleo, productividad y participación laboral por sector o departamento |
-| 🧱 Panel y microdatos EAM | Panel de establecimientos (balanceado o no), supervivencia, exportación |
-| 👶 Nacimientos y defunciones | Indicadores de los tres certificados, tasas sobre la población y causas de muerte |
-| 📚 Diccionario | Buscador de variables con las etiquetas y categorías oficiales del DANE |
+| Inicio | Explica las encuestas, muestra qué datos hay y configura las carpetas |
+| Descargar datos | Elige encuesta y años y descarga |
+| Indicadores laborales | TD, TGP, TO, informalidad e ingresos, por sexo, edad, zona, educación o departamento; anual o mensual |
+| Tablas y microdatos | Tablas ponderadas a la medida, distribución de ingresos frente al salario mínimo, exportación |
+| Indicadores industriales | Producción, valor agregado, empleo, productividad y participación laboral por sector o departamento |
+| Panel y microdatos EAM | Panel de establecimientos (balanceado o no), supervivencia, exportación |
+| Nacimientos y defunciones | Indicadores de los tres certificados, tasas sobre la población y causas de muerte |
+| Diccionario | Buscador de variables con las etiquetas y categorías oficiales del DANE |
 
 Cada tabla se descarga en CSV, Excel o Stata, y cada página muestra el código Python equivalente, que se
 puede copiar a un notebook para seguir desde ahí.
@@ -258,7 +258,7 @@ comparar.
 
 Cuando los datos contradicen la documentación oficial del ANDA (diccionarios DDI, etiquetas de
 categorías), `dane-data` sigue los datos y lo anota aquí. El buscador de variables
-(`dd.buscar_variable`, `dd.describir` y la página 📚 Diccionario) muestra el DDI tal como lo publica
+(`dd.buscar_variable`, `dd.describir` y la página *Diccionario de variables*) muestra el DDI tal como lo publica
 el DANE, así que en estos casos no coincide con las variables armonizadas.
 
 | Variable | Qué dice el ANDA | Qué muestran los datos y qué hace `dane-data` |

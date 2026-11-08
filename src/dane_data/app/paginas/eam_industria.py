@@ -4,7 +4,7 @@ import dane_data as dd
 from dane_data.app._ui import (MAX_SERIES, barras, botones_descarga, codigo, fmt_num, fmt_pct, grafico,
                              linea, selector_eam, variacion)
 
-st.title("🏭 Indicadores de la industria manufacturera")
+st.title("Indicadores de la industria manufacturera")
 eam, descripcion, params = selector_eam(clave="eam")
 st.caption(f"**Datos:** EAM {descripcion} · {fmt_num(len(eam))} registros establecimiento-año")
 
@@ -66,14 +66,16 @@ if por:
     res = res[res[por].notna()]
     revs = eam.groupby("anio")["ciiu_rev"].first().nunique()
     if por == "sector" and revs > 1 and vista == "Evolución":
-        st.warning("⚠️ Los años elegidos mezclan revisiones de la CIIU: los sectores cambian de definición y "
-                   "las series se cortan. Elija años de una sola revisión (p. ej. 2012 en adelante).")
+        st.warning("Los años elegidos mezclan revisiones de la CIIU: los sectores cambian de definición y "
+                   "las series se cortan. Elija años de una sola revisión (p. ej. 2012 en adelante).",
+                   icon=":material/warning:")
     if por == "sector":
-        st.warning("⚠️ Para anonimizar, el ANDA publica muchos establecimientos grandes con el código residual "
+        st.warning("Para anonimizar, el ANDA publica muchos establecimientos grandes con el código residual "
                    "«otras industrias manufactureras» (3290, 3699 o 3909): **Otras manufacturas** sale inflada y "
                    "las demás divisiones, subestimadas (en 2024, bebidas suma 5,3 % del valor agregado frente a "
                    "9,7 % en el anexo del DANE). En 2016–2017 el código se trunca y la división sí es la real, "
-                   "así que las series saltan. Para la composición por sector, use los anexos del DANE.")
+                   "así que las series saltan. Para la composición por sector, use los anexos del DANE.",
+                   icon=":material/warning:")
 
 if vista == "Evolución":
     indice = False
@@ -110,16 +112,16 @@ else:
                   fmt_pct(v) if tipo == "pct" else fmt_num(g["_y"].iloc[0], 1))
 
 if tipo == "monetaria":
-    st.caption("💡 Valores en **pesos corrientes**: incluyen inflación (los microdatos vienen en miles de pesos). Para comparar en términos reales use un deflactor "
+    st.caption("Valores en **pesos corrientes**: incluyen inflación (los microdatos vienen en miles de pesos). Para comparar en términos reales use un deflactor "
                "(IPP o deflactor del PIB) con `dd.eam.deflactar` en Python.")
 
-with st.expander("📋 Tabla completa"):
+with st.expander("Tabla completa", icon=":material/table:"):
     res = res.drop(columns="_y")
     st.dataframe(res, hide_index=True, width="stretch",
                  column_config={"anio": st.column_config.NumberColumn("Año", format="%d")})
     botones_descarga(res, f"resumen_eam_{params['anios'][0]}_{params['anios'][-1]}", "eamres")
 
-with st.expander("📖 Glosario"):
+with st.expander("Glosario", icon=":material/menu_book:"):
     for k_, v in dd.eam.GLOSARIO.items():
         st.markdown(f"**{k_}.** {v}")
 

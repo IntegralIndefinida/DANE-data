@@ -3,7 +3,7 @@ import streamlit as st
 
 import dane_data as dd
 
-st.title("📚 Diccionario de variables")
+st.title("Diccionario de variables")
 st.markdown(
     "Busque variables por código o por palabras de la pregunta. Fuente: metadatos oficiales del DANE "
     "(GEIH 2025, EAM 2024 y Estadísticas Vitales 2025). Los nombres pueden variar en años antiguos."
@@ -42,7 +42,7 @@ if filas:
         carga = f'df = dd.{clave}.load(2024, columns=["{var if clave == "geih" else var.lower()}"])'
     st.code(carga, language="python")
 else:
-    st.caption("👆 Seleccione una fila para ver sus categorías.")
+    st.caption("Seleccione una fila para ver sus categorías.")
 
 with st.expander("Variables armonizadas por dane-data (iguales en todos los años)"):
     if clave == "geih":

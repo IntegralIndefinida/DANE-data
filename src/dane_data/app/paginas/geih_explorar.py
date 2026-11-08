@@ -11,7 +11,7 @@ from dane_data.app._ui import (fmt_num, MAX_SERIES, PALETA, _barra, _estilo, arg
                              codigo, fmt_pct, fmt_pesos, frecuencias_geih, grafico, muestra_geih, rutas_actuales,
                              seleccion_geih, tabla_geih)
 
-st.title("🔎 Tablas y microdatos GEIH")
+st.title("Tablas y microdatos GEIH")
 
 POBLACIONES = {
     "Toda la población": None,
@@ -79,7 +79,7 @@ for v in extra:
         else:
             CATEGORICAS[etiqueta(v, 40)] = v
 
-tab1, tab2, tab3 = st.tabs(["📊 Tabla ponderada", "💰 Ingresos y salario mínimo", "🗂️ Microdatos"])
+tab1, tab2, tab3 = st.tabs(["Tabla ponderada", "Ingresos y salario mínimo", "Microdatos"])
 
 # ---------------------------------------------------------------- Tabla ponderada
 with tab1:
@@ -120,7 +120,8 @@ with tab1:
         else:
             st.dataframe(t.style.format(subset=[est], **formato), hide_index=True, width="stretch")
         if (t["n_muestra"] < 100).any():
-            st.warning("⚠️ Algunas celdas tienen menos de 100 observaciones: interprételas con cautela.")
+            st.warning("Algunas celdas tienen menos de 100 observaciones: interprételas con cautela.",
+                       icon=":material/warning:")
         st.caption("Distribución (%): porcentaje de cada fila dentro de cada columna. Cifras ponderadas con el "
                    "factor de expansión (promedio mensual).")
         botones_descarga(t, "tabla_geih", "tab")
@@ -224,7 +225,8 @@ with tab3:
         barra.empty()
         st.success(f"Listo: {fmt_num(filas)} filas en `{destino}`.")
         if destino.stat().st_size < 100e6:
-            st.download_button("⬇️ Descargar el CSV", destino.read_bytes(), destino.name, "text/csv")
+            st.download_button("Descargar el CSV", destino.read_bytes(), destino.name, "text/csv",
+                               icon=":material/download:")
     codigo(f'''
 import dane_data as dd
 
@@ -232,5 +234,5 @@ import dane_data as dd
 dd.geih.exportar({list(anios)!r}, "{destino.name}", variables={elegidas!r}{args_py(poblacion=poblacion)}{args_comunes}\
 {args_py(**formato)})
 ''')
-    st.caption("💡 `fex` es el factor de expansión **mensual**: si junta varios meses, divida por el número "
+    st.caption("`fex` es el factor de expansión **mensual**: si junta varios meses, divida por el número "
                "de meses (o use `dd.geih.serie_tabla`, que lo hace solo).")

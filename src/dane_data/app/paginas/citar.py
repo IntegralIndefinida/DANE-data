@@ -7,7 +7,7 @@ TITULO = "dane-data: microdatos del DANE (GEIH, EAM y Estadísticas Vitales) lis
 REPOSITORIO = "https://github.com/IntegralIndefinida/DANE-data"
 DOCS = "https://integralindefinida.github.io/DANE-data"
 
-st.title("📝 Cómo citar")
+st.title("Cómo citar")
 st.markdown(
     "Si usó esta aplicación o la librería en una tesis, un trabajo o un artículo, cite **los datos del DANE** "
     "y **dane-data**. Mencione también las decisiones metodológicas que afecten sus resultados, por ejemplo "

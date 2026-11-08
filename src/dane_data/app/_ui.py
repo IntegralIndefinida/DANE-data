@@ -275,12 +275,12 @@ def botones_descarga(df: pd.DataFrame, nombre: str, key: str) -> None:
     # Cada archivo se arma al hacer clic (data como función): armar los tres formatos en cada interacción
     # hacía lenta la página aunque nadie descargara.
     c1, c2, c3 = st.columns(3)
-    c1.download_button("⬇️ CSV", lambda: df.to_csv(index=False).encode("utf-8-sig"), f"{nombre}.csv",
-                       "text/csv", key=f"{key}_csv", width="stretch")
+    c1.download_button("CSV", lambda: df.to_csv(index=False).encode("utf-8-sig"), f"{nombre}.csv",
+                       "text/csv", key=f"{key}_csv", width="stretch", icon=":material/download:")
     if len(df) < 1_000_000:
-        c2.download_button("⬇️ Excel", lambda: _excel(df), f"{nombre}.xlsx",
+        c2.download_button("Excel", lambda: _excel(df), f"{nombre}.xlsx",
                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                           key=f"{key}_xlsx", width="stretch")
+                           key=f"{key}_xlsx", width="stretch", icon=":material/download:")
     else:
         c2.caption("Excel no admite más de 1 millón de filas.")
     try:
@@ -288,8 +288,8 @@ def botones_descarga(df: pd.DataFrame, nombre: str, key: str) -> None:
     except Exception as e:  # noqa: BLE001
         c3.caption(f"Stata no disponible: {e}")
     else:
-        c3.download_button("⬇️ Stata (.dta)", lambda: _stata(df), f"{nombre}.dta", "application/x-stata-dta",
-                           key=f"{key}_dta", width="stretch")
+        c3.download_button("Stata (.dta)", lambda: _stata(df), f"{nombre}.dta", "application/x-stata-dta",
+                           key=f"{key}_dta", width="stretch", icon=":material/download:")
 
 
 def aviso_version_nueva() -> None:
@@ -304,7 +304,7 @@ def aviso_version_nueva() -> None:
         return
     version, novedades = st.session_state["version_nueva"]
     with st.container(border=True):
-        st.markdown(f"#### 🆕 Hay una versión nueva de dane-data: {version}\n"
+        st.markdown(f"#### Hay una versión nueva de dane-data: {version}\n"
                     f"Usted tiene la {dd.__version__}. Actualizar no borra sus datos descargados.")
         with st.expander("Qué cambia en la versión nueva"):
             st.markdown(novedades or f"Vea las [novedades]({_actualizacion.URL_DOCS}novedades.html).")
@@ -327,7 +327,7 @@ def aviso_version_nueva() -> None:
 
 
 def codigo(texto: str) -> None:
-    with st.expander("🐍 Ver el código Python equivalente"):
+    with st.expander("Ver el código Python equivalente", icon=":material/code:"):
         st.caption("Copie esto en un notebook para reproducir o extender el análisis con la librería `dane-data`.")
         st.code(texto.strip(), language="python")
 
@@ -353,9 +353,9 @@ def sin_datos(encuesta: str, aviso: str | None = None) -> None:
     """Aviso en la página, no en la barra lateral: en el celular la barra está cerrada y la página quedaba en blanco."""
     st.warning(aviso or f"No se encontraron datos de la {encuesta} en la carpeta configurada.")
     with st.container(horizontal=True, vertical_alignment="center"):
-        if st.button("Ir a ⬇️ Descargar datos", type="primary"):
+        if st.button("Ir a Descargar datos", type="primary", icon=":material/download:"):
             st.switch_page("paginas/descargar.py")
-        st.page_link("paginas/inicio.py", label="o configurar la carpeta en 🏠 Inicio", icon="🏠")
+        st.page_link("paginas/inicio.py", label="o configurar la carpeta en Inicio", icon=":material/folder:")
     st.stop()
 
 
@@ -386,12 +386,12 @@ def aviso_marcos(anios, empalme: bool) -> None:
     if len(grupos) < 2:
         return
     partes = [f"{_rangos(v)} {'usan' if len(v) > 1 else 'usa'} {dd.geih.MARCOS[k]}" for k, v in grupos.items()]
-    texto = ("⚠️ **Los años elegidos mezclan dos versiones de la GEIH que no son comparables.** "
+    texto = ("**Los años elegidos mezclan dos versiones de la GEIH que no son comparables.** "
              + "; ".join(partes) + ". Entre esos años la serie salta por el cambio de método, no por el mercado "
              "laboral (la población en edad de trabajar cambia ~5 %).")
     if any(2010 <= a <= 2020 for a in anios):
         texto += " Para comparar 2010–2020 sin saltos use la serie de empalme."
-    st.warning(texto)
+    st.warning(texto, icon=":material/warning:")
 
 
 def seleccion_geih(clave: str = "geih", varios_anios: bool = True, ayuda_anios: str = AYUDA_ANIOS) -> dict:
@@ -408,7 +408,7 @@ def seleccion_geih(clave: str = "geih", varios_anios: bool = True, ayuda_anios: 
     av = av[av.completo]
     if av.empty:  # hay meses, pero a todos les falta algo: sin esto, pedía elegir un año de una lista vacía
         sin_datos("GEIH", "Los meses de la GEIH que hay en la carpeta están incompletos y no se pueden usar. "
-                          "Vea cuáles y qué les falta en 🏠 Inicio, y vuelva a descargarlos.")
+                          "Vea cuáles y qué les falta en Inicio, y vuelva a descargarlos.")
     with st.sidebar:
         anios_disp = sorted(av.anio.unique())
         defecto = anios_disp[-2:] if varios_anios else anios_disp[-1:]
@@ -487,11 +487,11 @@ def seleccion_eevv(clave: str = "eevv") -> dict:
         dptos = st.multiselect("Departamento de residencia", sorted(dd.DEPARTAMENTOS.values()), key=f"{clave}_dpto",
                                placeholder="Todos")
     if tipo == "defunciones" and (lo <= 1980):
-        st.warning("⚠️ Los archivos de 1979 y 1980 están incompletos: faltan departamentos enteros en 1979 y parte de otros en "
-                   "1980. Esos totales nacionales no son comparables con los de otros años.")
+        st.warning("Los archivos de 1979 y 1980 están incompletos: faltan departamentos enteros en 1979 y parte de otros en "
+                   "1980. Esos totales nacionales no son comparables con los de otros años.", icon=":material/warning:")
     if tipo == "defunciones" and lo <= 1991 <= hi:
-        st.warning("⚠️ En enero–junio de 1991 no se pueden separar las edades de los menores de 10 años: las defunciones de "
-                   "menores de un año de ese año quedan vacías.")
+        st.warning("En enero–junio de 1991 no se pueden separar las edades de los menores de 10 años: las defunciones de "
+                   "menores de un año de ese año quedan vacías.", icon=":material/warning:")
     partes = [f"{TITULOS_CERTIFICADO[tipo]} {lo}–{hi}" if lo != hi else f"{TITULOS_CERTIFICADO[tipo]} {lo}"]
     for nombre, val in (("sexo", sexo), ("residencia", dptos)):
         if val:

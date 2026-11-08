@@ -5,7 +5,7 @@ import dane_data as dd
 from dane_data.app._ui import (MAX_SERIES, args_py, barras, botones_descarga, codigo, conteos_eevv, fmt_grande, fmt_num,
                                fmt_pct, grafico, indicadores_eevv, linea, rutas_actuales, seleccion_eevv, tasas_eevv)
 
-st.title("👶 Nacimientos y defunciones")
+st.title("Nacimientos y defunciones")
 st.caption("**Estadísticas Vitales del DANE.** Es el registro de los certificados, no una encuesta: no hay factor de "
            "expansión y cada fila es un hecho registrado.")
 sel = seleccion_eevv()
@@ -121,11 +121,11 @@ if vista == "Indicadores":
     res = indicadores_eevv(anios, tipo, por, filtros, rutas) if por else total
     serie(res, columna, por, tipo_valor, nombre)
     if tipo != "defunciones" and columna == "pct_prematuro":
-        st.caption("💡 " + dd.eevv.GLOSARIO["Prematuro"])
+        st.caption(dd.eevv.GLOSARIO["Prematuro"])
     if columna.startswith("pct_bajo_peso"):
-        st.caption("💡 " + dd.eevv.GLOSARIO["Bajo peso al nacer"])
+        st.caption(dd.eevv.GLOSARIO["Bajo peso al nacer"])
 
-    with st.expander("📋 Tabla completa"):
+    with st.expander("Tabla completa", icon=":material/table:"):
         st.dataframe(res, hide_index=True, width="stretch",
                      column_config={"anio": st.column_config.NumberColumn("Año", format="%d")})
         botones_descarga(res, f"{tipo}_{anios[0]}_{anios[-1]}", "eevvind")
@@ -138,10 +138,10 @@ res
 
 # ---------------------------------------------------------------- Tasas
 elif vista == "Tasas sobre la población":
-    st.info("📐 Usan las proyecciones de población del DANE, que vienen con la aplicación. Son tasas de **hechos registrados, "
+    st.info("Usan las proyecciones de población del DANE, que vienen con la aplicación. Son tasas de **hechos registrados, "
             "sin ajustar por subregistro**: no tienen por qué coincidir con los indicadores demográficos que publica el DANE, "
             "que salen de un modelo. Los años antiguos, con más subregistro, salen más bajos. Los filtros de la barra lateral "
-            "no aplican aquí.")
+            "no aplican aquí.", icon=":material/info:")
     c1, c2 = st.columns(2)
     nombre = c1.selectbox("Tasa", list(TASAS))
     columna = TASAS[nombre]
@@ -154,11 +154,11 @@ elif vista == "Tasas sobre la población":
     if por == "departamento" and min(anios) < 1985:
         st.warning("Las proyecciones por departamento empiezan en 1985: los años anteriores quedan sin tasa.")
     serie(res, columna, por, "numero", nombre)
-    with st.expander("📋 Tabla completa"):
+    with st.expander("Tabla completa", icon=":material/table:"):
         st.dataframe(res, hide_index=True, width="stretch",
                      column_config={"anio": st.column_config.NumberColumn("Año", format="%d")})
         botones_descarga(res, f"tasas_{anios[0]}_{anios[-1]}", "eevvtasas")
-    with st.expander("📖 Glosario"):
+    with st.expander("Glosario", icon=":material/menu_book:"):
         for clave in ("Tasa bruta de natalidad", "Tasa bruta de mortalidad", "Tasa global de fecundidad",
                       "Mortalidad infantil registrada", "Mortalidad neonatal", "Mortalidad perinatal", "Mortinato",
                       "Razón de mortalidad materna"):
@@ -182,7 +182,7 @@ else:
     grafico(barras(primeras, x="causa", y="n", titulo_y=f"{TITULO[tipo]} en {anio}", horizontal=True))
     st.caption(f"Lista Colombia 105, disponible en toda la serie. Las {n} primeras suman el "
                f"**{fmt_pct(100 * primeras['n'].sum() / res['n'].sum())}** de {fmt_grande(res['n'].sum())} {TITULO[tipo].lower()}.")
-    with st.expander("📋 Tabla completa"):
+    with st.expander("Tabla completa", icon=":material/table:"):
         tabla = res.sort_values("n", ascending=False)
         st.dataframe(tabla, hide_index=True, width="stretch",
                      column_config={"anio": st.column_config.NumberColumn("Año", format="%d")})

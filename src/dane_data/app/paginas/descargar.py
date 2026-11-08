@@ -7,7 +7,7 @@ import dane_data as dd
 from dane_data.app._ui import (CERTIFICADOS, LogEnPantalla, args_py, disponibles_eam, disponibles_eevv, disponibles_geih,
                                fmt_num, rutas_actuales)
 
-st.title("⬇️ Descargar datos del DANE")
+st.title("Descargar datos del DANE")
 st.markdown(
     "Los archivos se bajan del **Archivo Nacional de Datos (ANDA)** del DANE y se guardan en su computador. "
     "La descarga es **incremental**: si se interrumpe, al repetirla continúa donde iba."
@@ -45,7 +45,7 @@ if encuesta.startswith("GEIH"):
         borrar = st.toggle("Borrar los ZIP después de extraer (ahorra ~40 % de espacio)", value=True)
         forzar = st.toggle("Volver a bajar lo que ya está descargado",
                            help="Solo si el DANE corrigió o volvió a publicar esos meses: reemplaza lo que hay.")
-    st.info(f"📦 Tamaño aproximado: **{fmt_num(0.6 * len(anios) if not prueba else 0.05 * len(anios), 1)} GB** · "
+    st.info(f"Tamaño aproximado: **{fmt_num(0.6 * len(anios) if not prueba else 0.05 * len(anios), 1)} GB** · "
             f"destino: `{dd.get_path('geih_empalme' if empalme else 'geih')}`")
     lanzar = lambda prog, stop: dd.geih.download(  # noqa: E731
         anios, modules=modulos, empalme=empalme, delete_zips=borrar, limit_files=1 if prueba else None,
@@ -76,7 +76,7 @@ elif encuesta.startswith("Estadísticas"):
                        help="Solo si el DANE corrigió o volvió a publicar esos años: reemplaza lo que hay.")
     # Promedio por año en disco, ya extraído (toda la serie ocupa unos 3,6 GB)
     peso = sum({"nacimientos": 90, "defunciones": 40, "fetales": 5}[t] for t in tipos) * len(anios)
-    st.info(f"📦 Tamaño aproximado en disco: **{peso} MB** · destino: `{dd.get_path('eevv')}`")
+    st.info(f"Tamaño aproximado en disco: **{peso} MB** · destino: `{dd.get_path('eevv')}`")
     lanzar = lambda prog, stop: dd.eevv.download(anios, tipos=tipos, delete_zips=borrar, progress=prog,  # noqa: E731
                                                  should_stop=stop, forzar=forzar)
     codigo_py = f"dd.eevv.download({anios!r}, tipos={tipos!r}" + args_py(delete_zips=borrar, forzar=forzar) + ")"
@@ -98,7 +98,7 @@ else:
     borrar = st.toggle("Borrar los ZIP después de extraer", value=True)
     forzar = st.toggle("Volver a bajar lo que ya está descargado",
                        help="Solo si el DANE corrigió o volvió a publicar esos años: reemplaza lo que hay.")
-    st.info(f"📦 Tamaño aproximado: **{10 * len(anios)} MB** · destino: `{dd.get_path('eam')}`")
+    st.info(f"Tamaño aproximado: **{10 * len(anios)} MB** · destino: `{dd.get_path('eam')}`")
     lanzar = lambda prog, stop: dd.eam.download(anios, include_tic=tic, delete_zips=borrar,  # noqa: E731
                                                 progress=prog, should_stop=stop, forzar=forzar)
     codigo_py = f"dd.eam.download({anios!r}" + args_py(include_tic=tic, delete_zips=borrar, forzar=forzar) + ")"
@@ -109,7 +109,8 @@ if sin_modulos:
 sin_certificados = encuesta.startswith("Estadísticas") and not tipos
 if sin_certificados:
     st.warning("Elija al menos un certificado.")
-if st.button("⬇️ Descargar", type="primary", disabled=not anios or sin_modulos or sin_certificados):
+if st.button("Descargar", type="primary", icon=":material/download:",
+             disabled=not anios or sin_modulos or sin_certificados):
     barra = st.progress(0.0, text="Conectando con el DANE…")
     detalle = st.empty()
     logs = st.empty()
@@ -135,9 +136,10 @@ if st.button("⬇️ Descargar", type="primary", disabled=not anios or sin_modul
         st.cache_resource.clear()
         if fallidos:
             barra.progress(1.0, text="Terminó con problemas")
-            st.warning(f"⚠️ No se pudo completar todo ({len(fallidos)}):\n\n"
+            st.warning(f"No se pudo completar todo ({len(fallidos)}):\n\n"
                        + "\n".join(f"- {f}" for f in fallidos)
-                       + "\n\nRevise su conexión y vuelva a pulsar **Descargar**: lo que ya está completo se salta.")
+                       + "\n\nRevise su conexión y vuelva a pulsar **Descargar**: lo que ya está completo se salta.",
+                       icon=":material/warning:")
         else:
             barra.progress(1.0, text="¡Listo!")
             st.success("Descarga terminada. Ya puede analizar los datos en las demás páginas.")
@@ -146,7 +148,7 @@ if st.button("⬇️ Descargar", type="primary", disabled=not anios or sin_modul
     finally:
         logger.removeHandler(handler)
 
-with st.expander("🐍 Hacerlo desde Python o la terminal"):
+with st.expander("Hacerlo desde Python o la terminal", icon=":material/code:"):
     st.code(f"import dane_data as dd\n{codigo_py}", language="python")
     st.code("dane-data descargar geih --anios 2024 2025\ndane-data descargar eam --anios 2022 2023 2024\n"
             "dane-data descargar eevv --anios 2025 --tipos nacimientos defunciones", language="bash")

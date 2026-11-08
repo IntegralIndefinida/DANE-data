@@ -5,7 +5,7 @@ import streamlit as st
 import dane_data as dd
 from dane_data.app._ui import aviso_version_nueva, disponibles_eam, disponibles_eevv, disponibles_geih, rutas_actuales
 
-st.title("📊 DANE-data")
+st.title("DANE-data")
 # El aviso va arriba pero se llena al final: sin internet, la consulta no demora el resto de la página
 hueco_version = st.empty()
 st.markdown(
@@ -16,7 +16,7 @@ st.markdown(
 c1, c2, c3 = st.columns(3)
 with c1, st.container(border=True):
     st.markdown(
-        "##### 👥 GEIH — Gran Encuesta Integrada de Hogares\n"
+        "##### GEIH — Gran Encuesta Integrada de Hogares\n"
         "Encuesta **mensual** a ~70.000 personas. Es la fuente oficial del **desempleo**, la "
         "**informalidad** y los **ingresos laborales**. Cada fila es una persona; el *factor de "
         "expansión* dice a cuántas personas del país representa.\n\n"
@@ -25,7 +25,7 @@ with c1, st.container(border=True):
     )
 with c2, st.container(border=True):
     st.markdown(
-        "##### 🏭 EAM — Encuesta Anual Manufacturera\n"
+        "##### EAM — Encuesta Anual Manufacturera\n"
         "Censo **anual** de ~7.000 establecimientos industriales (1992–2024). Cada fila es una "
         "planta: producción, valor agregado, empleo, salarios, activos y energía.\n\n"
         "**Úsela para:** productividad por sector, participación laboral, concentración "
@@ -33,7 +33,7 @@ with c2, st.container(border=True):
     )
 with c3, st.container(border=True):
     st.markdown(
-        "##### 👶 EEVV — Estadísticas Vitales\n"
+        "##### EEVV — Estadísticas Vitales\n"
         "Registro de los **certificados** de nacimiento (desde 1998) y de defunción (desde 1979). Cada fila es un hecho "
         "registrado; no es una encuesta.\n\n"
         "**Úsela para:** natalidad y fecundidad, mortalidad infantil y materna, causas de muerte, homicidios, "
@@ -42,9 +42,9 @@ with c3, st.container(border=True):
 
 st.subheader("¿Cómo empiezo?")
 st.markdown(
-    "1. **Datos:** si aún no los tiene, vaya a **⬇️ Descargar datos** (menú izquierdo). "
+    "1. **Datos:** si aún no los tiene, vaya a **Descargar datos** (menú izquierdo). "
     "Si ya los descargó, indique la carpeta abajo.\n"
-    "2. **Explore:** abra **👥 Indicadores laborales**, **🏭 Indicadores industriales** o **👶 Nacimientos y defunciones**, "
+    "2. **Explore:** abra **Indicadores laborales**, **Indicadores industriales** o **Nacimientos y defunciones**, "
     "elija años y filtros.\n"
     "3. **Exporte:** cada tabla se descarga en CSV, Excel o Stata. Cada página muestra el "
     "**código Python** equivalente para pasar a un notebook cuando esté listo."
@@ -52,8 +52,8 @@ st.markdown(
 st.info(
     "**¿Usa dane-data en una tesis, un trabajo o un artículo?** Por favor cítelo, junto con los datos del "
     "DANE: así otras personas lo encuentran y el proyecto puede seguir creciendo. La cita lista para copiar "
-    "(APA y BibTeX) está en **📝 Cómo citar** (menú izquierdo).",
-    icon="🎓",
+    "(APA y BibTeX) está en **Cómo citar** (menú izquierdo).",
+    icon=":material/school:",
 )
 
 # ---------------------------------------------------------------- Estado de datos
@@ -74,13 +74,14 @@ m4.metric("Estadísticas Vitales", f"{v.anio.nunique()} años" if len(v) else "S
 
 incompletos = g[~g.completo] if len(g) else g
 if len(incompletos):
-    with st.expander(f"⚠️ {len(incompletos)} mes(es) de la GEIH están incompletos y se omitirán"):
+    with st.expander(f"{len(incompletos)} mes(es) de la GEIH están incompletos y se omitirán",
+                     icon=":material/warning:"):
         st.dataframe(incompletos[["anio", "nombre_mes", "carpeta", "faltantes"]], hide_index=True)
-        st.caption("Vuelva a descargarlos en ⬇️ Descargar datos. Si siguen incompletos, active «Volver a bajar "
+        st.caption("Vuelva a descargarlos en Descargar datos. Si siguen incompletos, active «Volver a bajar "
                    "lo que ya está descargado» en las opciones avanzadas.")
 
 # ---------------------------------------------------------------- Configuración
-with st.expander("⚙️ Carpetas de datos", expanded=not (len(g) or len(e) or len(v))):
+with st.expander("Carpetas de datos", icon=":material/folder:", expanded=not (len(g) or len(e) or len(v))):
     st.caption(
         "Indique dónde están (o dónde quiere guardar) los datos. Para la GEIH, la carpeta que "
         "contiene `datos_csv/`; para la EAM y las Estadísticas Vitales, la que contiene `datos/`. Se recuerda para la "
