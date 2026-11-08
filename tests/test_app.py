@@ -181,6 +181,19 @@ def test_mercado_laboral_precalculado_y_con_filtros(geih_root, tmp_path, monkeyp
     assert "filtros={'sexo': ['Mujer']}" in at.code[0].value
 
 
+def test_geih_solo_meses_incompletos_lo_dice(tmp_path, monkeypatch):
+    """Si hay meses pero ninguno completo, la barra lateral lo explica en vez de pedir un año que no puede elegirse."""
+    mes = tmp_path / "geih" / "datos_csv" / "2025" / "Febrero 2025"
+    mes.mkdir(parents=True)
+    (mes / "Características generales.CSV").write_text("DIRECTORIO;SECUENCIA_P;ORDEN;FEX_C18\n1;1;1;10\n")
+    monkeypatch.setitem(dd.config._session, "geih", tmp_path / "geih")
+    monkeypatch.setattr("streamlit.page_link", lambda *a, **k: None)  # fuera de la navegación de Inicio.py
+    at = AppTest.from_file(str(PAGINAS / "geih_mercado.py"), default_timeout=60).run()
+    assert not at.exception
+    assert any("incompletos" in w.value for w in at.warning)
+    assert not any("Elija al menos un año" in i.value for i in at.info)
+
+
 def test_informalidad_vacia_antes_de_2022(geih_root, tmp_path, monkeypatch):
     """2021 no tiene las preguntas de la medición del DANE: la tasa queda vacía y la página lo explica."""
     monkeypatch.setitem(dd.config._session, "geih", geih_root)

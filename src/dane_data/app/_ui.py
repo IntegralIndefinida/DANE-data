@@ -320,8 +320,8 @@ class LogEnPantalla(logging.Handler):
             self.contenedor.code("\n".join(self.buffer), language=None)
 
 
-def sin_datos(encuesta: str) -> None:
-    st.warning(f"No se encontraron datos de la {encuesta} en la carpeta configurada.")
+def sin_datos(encuesta: str, aviso: str | None = None) -> None:
+    st.warning(aviso or f"No se encontraron datos de la {encuesta} en la carpeta configurada.")
     st.page_link("paginas/descargar.py", label="Ir a ⬇️ Descargar datos", icon="⬇️")
     st.page_link("paginas/inicio.py", label="o configurar la carpeta en 🏠 Inicio", icon="🏠")
     st.stop()
@@ -374,6 +374,9 @@ def seleccion_geih(clave: str = "geih", varios_anios: bool = True, ayuda_anios: 
         if av.empty:
             sin_datos("GEIH")
         av = av[av.completo]
+        if av.empty:  # hay meses, pero a todos les falta algo: sin esto, pedía elegir un año de una lista vacía
+            sin_datos("GEIH", "Los meses de la GEIH que hay en la carpeta están incompletos y no se pueden usar. "
+                              "Vea cuáles y qué les falta en 🏠 Inicio, y vuelva a descargarlos.")
         anios_disp = sorted(av.anio.unique())
         defecto = anios_disp[-2:] if varios_anios else anios_disp[-1:]
         anios = st.multiselect("Años", anios_disp, default=defecto, key=f"{clave}_anios", help=ayuda_anios)
