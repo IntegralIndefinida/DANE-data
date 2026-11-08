@@ -210,6 +210,15 @@ def test_informalidad_vacia_antes_de_2022(geih_root, tmp_path, monkeypatch):
     assert any("llega hasta 2021" in i.value for i in at.info)
 
 
+def test_con_pocos_anios_la_serie_es_mensual(geih_root, tmp_path, monkeypatch):
+    """Con dos años, la serie anual serían dos puntos casi en línea recta: la página abre en la mensual."""
+    monkeypatch.setitem(dd.config._session, "geih", geih_root)
+    monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
+    at = AppTest.from_file(str(PAGINAS / "geih_mercado.py"), default_timeout=60).run()
+    assert not at.exception
+    assert next(r for r in at.radio if r.label == "Frecuencia").value == "Mensual"
+
+
 def test_aviso_cuando_los_anios_mezclan_marcos(geih_root, tmp_path, monkeypatch):
     monkeypatch.setitem(dd.config._session, "geih", geih_root)
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")

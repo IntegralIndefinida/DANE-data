@@ -9,6 +9,8 @@
 * {dd}`geih.download()` y {dd}`eam.download()` ya no bajan la ficha metodológica del ANDA a `<raíz>/metadata/`: nada la
   usaba y costaba una consulta más al DANE por año. Esa carpeta, si la tiene, se puede borrar; los diccionarios oficiales
   siguen en {dd}`describir()` y {dd}`buscar_variable()`.
+* En *Indicadores laborales*, con tres años o menos la gráfica abre en la serie mensual. La anual eran dos o tres puntos
+  casi en línea recta.
 
 **Correcciones**
 

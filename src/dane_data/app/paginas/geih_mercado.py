@@ -78,7 +78,8 @@ st.divider()
 c1, c2, c3 = st.columns([2, 2, 1])
 nombre_ind = c1.selectbox("Indicador", list(INDICADORES))
 nombre_por = c2.selectbox("Desagregar por", list(DESAGREGAR))
-frecuencia = c3.radio("Frecuencia", ["Anual", "Mensual"], horizontal=True)
+# Con pocos años, la serie anual son 2 o 3 puntos casi en línea recta: por defecto, la mensual
+frecuencia = c3.radio("Frecuencia", ["Anual", "Mensual"], horizontal=True, index=int(len(sel["anios"]) <= 3))
 col, es_pct = INDICADORES[nombre_ind]
 por = DESAGREGAR[nombre_por]
 anual = frecuencia == "Anual"
