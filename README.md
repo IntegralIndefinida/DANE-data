@@ -5,6 +5,11 @@
 Microdatos del DANE listos para analizar: la Gran Encuesta Integrada de Hogares (GEIH, 2007–2026), la
 Encuesta Anual Manufacturera (EAM, 1992–2024) y las Estadísticas Vitales (nacimientos y defunciones, 1979–2025).
 
+[![Tasa de desocupación mensual y promedio de 12 meses, total nacional, 2007–2026, calculada con dane-data](https://raw.githubusercontent.com/IntegralIndefinida/DANE-data/main/docs/_static/galeria/desempleo.png)](https://integralindefinida.github.io/DANE-data/ejemplos/desempleo.html)
+
+*La tasa de desocupación de cada mes desde 2007, calculada con dane-data a partir de los microdatos de la GEIH
+([ejemplo completo](https://integralindefinida.github.io/DANE-data/ejemplos/desempleo.html)).*
+
 Dos formas de usarlo:
 
 | | Para quién | Cómo |
