@@ -7,9 +7,9 @@ import plotly.graph_objects as go
 import streamlit as st
 
 import dane_data as dd
-from dane_data.app._ui import (fmt_num, MAX_SERIES, _barra, _estilo, args_py, barras, botones_descarga,
+from dane_data.app._ui import (fmt_num, MAX_SERIES, PALETA, _barra, _estilo, args_py, barras, botones_descarga,
                              codigo, fmt_pct, fmt_pesos, frecuencias_geih, grafico, muestra_geih, rutas_actuales,
-                             paleta, seleccion_geih, tabla_geih)
+                             seleccion_geih, tabla_geih)
 
 st.title("Tablas y microdatos GEIH")
 
@@ -163,7 +163,7 @@ with tab2:
 
         st.markdown("**Histograma del ingreso / salario mínimo** (hasta 4 SMLV)")
         hist, edges = np.histogram(r[r <= 4], bins=80, weights=w[r <= 4])
-        fig = go.Figure(go.Bar(x=(edges[:-1] + edges[1:]) / 2, y=100 * hist / w.sum(), marker_color=paleta()[0],
+        fig = go.Figure(go.Bar(x=(edges[:-1] + edges[1:]) / 2, y=100 * hist / w.sum(), marker_color=PALETA[0],
                                marker_line_width=0,
                                hovertemplate="%{x:.2f} SMLV: %{y:.2f} %<extra></extra>"))
         fig.add_vline(x=1, line_dash="dash", line_width=1.5, line_color="gray",

@@ -12,8 +12,9 @@
 * En *Indicadores laborales*, con tres años o menos la gráfica abre en la serie mensual. La anual eran dos o tres puntos
   casi en línea recta.
 * Los títulos de las páginas de la aplicación son más pequeños (30 px en vez de 44): en el celular ocupaban tres líneas.
-* La aplicación tiene modo oscuro: sigue el modo claro u oscuro del sistema. Las gráficas usan en él los mismos colores con
-  el tono ajustado para el fondo oscuro.
+* La aplicación tiene modo oscuro. Sigue el modo del sistema, o se elige en el menú de arriba a la derecha (⋮): *System*,
+  *Light* o *Dark*. Los colores de las gráficas cambian un poco y son los mismos en los dos modos, con buen contraste en
+  ambos.
 * La aplicación usa los iconos de Material de Streamlit en vez de emoji: en el menú, los avisos, los desplegables y los
   botones. Los títulos ya no llevan emoji.
 

@@ -1,4 +1,5 @@
-# Con [theme.light] y [theme.dark] la app sigue el modo claro u oscuro del sistema; con solo [theme] quedaba siempre clara.
+# Con [theme.light] y [theme.dark] la app sigue el modo del sistema o el que se elija en el menú; con solo [theme]
+# quedaba siempre clara.
 [theme]
 # h1 (st.title) a h6. El tamaño por defecto del título, 44 px, es de página de inicio; en el celular ocupaba tres líneas.
 headingFontSizes = ["30px", "26px", "22px", "20px", "18px", "16px"]
@@ -19,4 +20,6 @@ linkColor = "#6ea8f0"
 gatherUsageStats = false
 
 [client]
-toolbarMode = "minimal"
+# "viewer": el menú de arriba a la derecha permite elegir el modo (sistema, claro u oscuro), imprimir y grabar la
+# pantalla, sin las opciones de desarrollo (volver a ejecutar, borrar la caché, publicar). Con "minimal" no había menú.
+toolbarMode = "viewer"
