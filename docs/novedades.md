@@ -34,6 +34,7 @@
   Una variación que redondea a cero sale en gris y sin flecha; antes salía «-0.0» en verde.
 * En la aplicación, las listas de selección múltiple vacías dicen en español qué elegir («Elija los años», «Busque por
   código o por texto»). Antes decían «Choose options».
+* Las gráficas mensuales de la aplicación escriben los meses en español («ene 2025», «marzo de 2025»). Salían en inglés.
 
 ## 0.4.0 (2 de noviembre de 2026)
 

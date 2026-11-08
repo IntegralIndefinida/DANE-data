@@ -89,6 +89,8 @@ def linea(df: pd.DataFrame, x: str, y: str, color: str | None = None, titulo_y: 
     fig.update_layout(hovermode="x unified")
     if pd.api.types.is_integer_dtype(df[x]) or x == "anio":
         fig.update_xaxes(dtick=1 if df[x].nunique() <= 15 else None, tickformat="d")
+    elif pd.api.types.is_datetime64_any_dtype(df[x]):  # series mensuales (día 1): «marzo de 2025», no «mar 1, 2025»
+        fig.update_xaxes(hoverformat="%B de %Y")
     return fig
 
 
@@ -110,8 +112,17 @@ def barras(df: pd.DataFrame, x: str, y: str, color: str | None = None, titulo_y:
     return fig
 
 
+# Meses y días en español para las fechas de Plotly: config "locale": "es" solo no basta, porque el archivo de ese
+# idioma no viene con Streamlit y las fechas salían en inglés («Jan 2025»).
+_MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre",
+          "noviembre", "diciembre"]
+_DIAS = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"]
+LOCALE_ES = {"format": {"months": _MESES, "shortMonths": [m[:3] for m in _MESES], "days": _DIAS,
+                        "shortDays": [d[:3] for d in _DIAS], "date": "%d/%m/%Y"}}
+
+
 def grafico(fig: go.Figure) -> None:
-    st.plotly_chart(fig, width="stretch", config={"displaylogo": False, "locale": "es"})
+    st.plotly_chart(fig, width="stretch", config={"displaylogo": False, "locale": "es", "locales": {"es": LOCALE_ES}})
 
 
 # --------------------------------------------------------------------------- #
