@@ -1,7 +1,19 @@
+# Con [theme.light] y [theme.dark] la app sigue el modo claro u oscuro del sistema; con solo [theme] quedaba siempre clara.
 [theme]
-primaryColor = "#2a78d6"
 # h1 (st.title) a h6. El tamaño por defecto del título, 44 px, es de página de inicio; en el celular ocupaba tres líneas.
 headingFontSizes = ["30px", "26px", "22px", "20px", "18px", "16px"]
+
+[theme.light]
+primaryColor = "#2a78d6"
+
+# Grises neutros (sin el azul del oscuro de Streamlit), los de la superficie oscura de la skill dataviz. Contraste del
+# texto 15:1. Los enlaces van más claros que el color principal: #2a78d6 sobre este fondo da 3,9:1 y el texto pide 4,5.
+[theme.dark]
+primaryColor = "#2a78d6"
+backgroundColor = "#1a1a19"
+secondaryBackgroundColor = "#262624"
+textColor = "#f0efec"
+linkColor = "#6ea8f0"
 
 [browser]
 gatherUsageStats = false

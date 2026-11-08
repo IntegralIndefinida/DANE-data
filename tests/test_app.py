@@ -308,6 +308,18 @@ def test_variacion_con_coma_decimal_y_cero_en_gris():
     assert variacion(float("nan"), 1, 2025) == {} == variacion(1, 0, 2025)
 
 
+def test_paleta_segun_el_modo(monkeypatch):
+    """En modo oscuro, los mismos ocho tonos con el paso validado para el fondo oscuro de config.toml."""
+    from types import SimpleNamespace
+
+    from dane_data.app import _ui
+    assert len(_ui.PALETA_OSCURA) == len(_ui.PALETA) == _ui.MAX_SERIES
+    monkeypatch.setattr(_ui.st, "context", SimpleNamespace(theme=SimpleNamespace(type="dark")))
+    assert _ui.paleta() == _ui.PALETA_OSCURA
+    monkeypatch.setattr(_ui.st, "context", SimpleNamespace(theme=SimpleNamespace(type=None)))  # aún sin saber
+    assert _ui.paleta() == _ui.PALETA
+
+
 def test_tabla_pivote_conserva_el_orden_de_las_categorias(geih_root, tmp_path, monkeypatch):
     """El nivel educativo va de Ninguno a Superior, no en orden alfabético."""
     monkeypatch.setitem(dd.config._session, "geih", geih_root)

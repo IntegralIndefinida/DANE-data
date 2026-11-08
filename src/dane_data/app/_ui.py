@@ -15,10 +15,16 @@ import streamlit as st
 import dane_data as dd
 from dane_data.app import _actualizacion
 
-# Paleta categórica validada (orden fijo; nunca se recicla). Ver skill dataviz.
+# Paleta categórica validada (orden fijo; nunca se recicla). Ver skill dataviz. La oscura son los mismos ocho tonos con
+# otro paso, validada sobre el fondo oscuro de config.toml (#1a1a19): los claros #008300 y #4a3aa7 casi no se ven ahí.
 PALETA = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#4a3aa7", "#e34948"]
-COLOR_UNICO = PALETA[0]
+PALETA_OSCURA = ["#3987e5", "#d95926", "#199e70", "#c98500", "#d55181", "#008300", "#9085e9", "#e66767"]
 MAX_SERIES = len(PALETA)
+
+
+def paleta() -> list[str]:
+    """La paleta del modo que está viendo el usuario (claro u oscuro)."""
+    return PALETA_OSCURA if st.context.theme.type == "dark" else PALETA
 
 
 # --------------------------------------------------------------------------- #
@@ -83,7 +89,7 @@ def _estilo(fig: go.Figure, titulo_y: str | None = None, pct: bool = False) -> g
 
 def linea(df: pd.DataFrame, x: str, y: str, color: str | None = None, titulo_y: str | None = None,
           pct: bool = False) -> go.Figure:
-    fig = px.line(df, x=x, y=y, color=color, markers=True, color_discrete_sequence=PALETA)
+    fig = px.line(df, x=x, y=y, color=color, markers=True, color_discrete_sequence=paleta())
     # Sin esto, el recuadro repetía la fecha y mostraba el nombre de la columna con seis decimales («td=7,977104 %»)
     valor = "%{y:,.1f} %" if pct else "%{y:,.2~f}"
     fig.update_traces(line=dict(width=2), marker=dict(size=8),
@@ -101,14 +107,14 @@ def barras(df: pd.DataFrame, x: str, y: str, color: str | None = None, titulo_y:
            pct: bool = False, horizontal: bool = False) -> go.Figure:
     if horizontal:
         fig = px.bar(df, y=x, x=y, color=color, orientation="h", barmode="group",
-                     color_discrete_sequence=PALETA)
+                     color_discrete_sequence=paleta())
         fig.update_yaxes(categoryorder="total ascending", title=None)
         fig.update_xaxes(gridcolor="rgba(128,128,128,0.18)", title=titulo_y, ticksuffix=" %" if pct else None,
                          tickformat=",~f")
         fig.update_layout(separators=",.", margin=dict(l=10, r=10, t=40, b=10), legend=dict(orientation="h", y=1.02, title=None),
                           height=max(350, 24 * df[x].nunique() * (df[color].nunique() if color else 1)))
     else:
-        fig = px.bar(df, x=x, y=y, color=color, barmode="group", color_discrete_sequence=PALETA)
+        fig = px.bar(df, x=x, y=y, color=color, barmode="group", color_discrete_sequence=paleta())
         fig = _estilo(fig, titulo_y, pct)
     fig.update_traces(marker_line_width=0)
     fig.update_layout(bargap=0.25, bargroupgap=0.08)
