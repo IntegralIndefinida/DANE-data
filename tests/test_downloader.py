@@ -153,6 +153,22 @@ def test_empalme_con_un_mes_ilegible_no_escribe_marcador(tmp_path):
     assert (anio / "3. Marzo" / "Ocupados.CSV").exists() and (anio / MARCADOR).exists()
 
 
+def test_empalme_forzar_sin_un_mes_conserva_lo_anterior(tmp_path):
+    """Con forzar, un paquete anual nuevo al que le falta un mes no borra ese mes de lo extraído antes."""
+    mes = _zip({"Características generales (personas).CSV": CAR, "Ocupados.CSV": MOD,
+                "Fuerza de trabajo.CSV": MOD, "Desocupados.CSV": MOD})
+    anual = lambda sin="": _zip({f"{i}. {m}.zip": mes for i, m in enumerate(NOMBRES_MESES, start=1) if m != sin})  # noqa: E731
+    modulos = ("caracteristicas", "ocupados", "fuerza_trabajo", "desocupados")
+    dl = FakeDownloader({"GEIH_Empalme_2016.zip": anual()}, base_dir=tmp_path, is_empalme=True, modules=modulos)
+    dl.process_year("2016", "757")
+    assert dl.fallidos == []
+    dl.paquetes["GEIH_Empalme_2016.zip"] = anual(sin="Marzo")
+    dl.forzar = True
+    dl.process_year("2016", "757")
+    assert dl.fallidos == ["El ZIP del DANE para Empalme 2016 no trae: Marzo (todo el mes). Se conserva lo extraído antes."]
+    assert (tmp_path / "datos_csv" / "2016" / "3. Marzo" / "Ocupados.CSV").exists()
+
+
 def test_marcador_registra_modulos(tmp_path):
     """Una descarga previa de solo Características no impide completar el mes después."""
     FakeDownloader({"Marzo 2024.zip": _mes_2024()}, base_dir=tmp_path,

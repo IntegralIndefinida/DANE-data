@@ -14,6 +14,8 @@
   «finalizada exitosamente» sin haber bajado nada.
 * En la aplicación compartida en la red (`dane-data app --address 0.0.0.0`, modo aula), el registro de la página *Descargar
   datos* muestra solo las líneas de la descarga de esa persona. Si dos descargaban a la vez, se mezclaban.
+* {dd}`geih.download()` de la serie de empalme con `forzar=True` ya no borra un mes si el paquete nuevo del DANE no lo
+  trae: lo informa como fallo y conserva lo de antes. Un paquete anual sin los 12 meses tampoco queda como completo.
 
 ## 0.4.0 (2 de noviembre de 2026)
 

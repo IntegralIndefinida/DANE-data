@@ -28,7 +28,7 @@ import logging
 from pathlib import Path
 
 from .._hooks import DescargadorANDA, extraer_miembro, sanitize_member_name as _sanitize_comun, url_del_anda, ya_extraido
-from ..referencias import strip_accents
+from ..referencias import MESES, strip_accents
 from .loader import EXTENSIONES, _pick_files, MesGEIH, month_from_folder
 
 MARCADOR = ".dane_data_ok"  # se escribe tras una extracción exitosa
@@ -555,7 +555,11 @@ class GEIHDownloader(DescargadorANDA):
         meses = [d for d in carpeta.iterdir() if d.is_dir() and month_from_folder(d.name)] if carpeta.is_dir() else []
         if not meses:
             return ["todos"]
-        return [f"{d.name}: {', '.join(f)}" for d in sorted(meses) if (f := faltantes_mes(d, self.modules))]
+        falta = [f"{d.name}: {', '.join(f)}" for d in sorted(meses) if (f := faltantes_mes(d, self.modules))]
+        # Cada año del empalme trae los 12 meses (como pide el salto de process_year): sin esto, con forzar, un
+        # paquete nuevo sin un mes reemplazaba lo de antes y ese mes se perdía
+        sin = sorted(set(range(1, 13)) - {month_from_folder(d.name) for d in meses})
+        return falta + [f"{MESES[m]} (todo el mes)" for m in sin]
 
     def _extraer(self, zip_dest: Path, carpeta: Path, etiqueta: str, nombre_zip: str, extensiones=(".csv",)) -> None:
         """
