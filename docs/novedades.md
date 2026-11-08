@@ -35,6 +35,8 @@
 * En la aplicación, las listas de selección múltiple vacías dicen en español qué elegir («Elija los años», «Busque por
   código o por texto»). Antes decían «Choose options».
 * Las gráficas mensuales de la aplicación escriben los meses en español («ene 2025», «marzo de 2025»). Salían en inglés.
+* Al pasar el mouse por una gráfica de líneas, el recuadro muestra el grupo y el valor redondeado («Mujer: 10,8 %»). Antes
+  repetía la fecha y mostraba el nombre de la columna con seis decimales («td=7,977104 %»).
 
 ## 0.4.0 (2 de noviembre de 2026)
 

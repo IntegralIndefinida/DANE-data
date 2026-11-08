@@ -84,7 +84,10 @@ def _estilo(fig: go.Figure, titulo_y: str | None = None, pct: bool = False) -> g
 def linea(df: pd.DataFrame, x: str, y: str, color: str | None = None, titulo_y: str | None = None,
           pct: bool = False) -> go.Figure:
     fig = px.line(df, x=x, y=y, color=color, markers=True, color_discrete_sequence=PALETA)
-    fig.update_traces(line=dict(width=2), marker=dict(size=8))
+    # Sin esto, el recuadro repetía la fecha y mostraba el nombre de la columna con seis decimales («td=7,977104 %»)
+    valor = "%{y:,.1f} %" if pct else "%{y:,.2~f}"
+    fig.update_traces(line=dict(width=2), marker=dict(size=8),
+                      hovertemplate=("%{fullData.name}: " if color else "") + valor + "<extra></extra>")
     fig = _estilo(fig, titulo_y, pct)
     fig.update_layout(hovermode="x unified")
     if pd.api.types.is_integer_dtype(df[x]) or x == "anio":
