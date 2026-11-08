@@ -1,5 +1,13 @@
 # Novedades
 
+## Sin publicar
+
+**Correcciones**
+
+* {dd}`geih.download()`, {dd}`eam.download()` y {dd}`eevv.download()` devuelven como fallo los años que no están en el
+  ANDA, y `dane-data descargar` termina con error. Antes solo avisaban en el registro, devolvían una lista vacía y decían
+  «finalizada exitosamente» sin haber bajado nada.
+
 ## 0.4.0 (2 de noviembre de 2026)
 
 **Nuevo**

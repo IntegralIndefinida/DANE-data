@@ -40,7 +40,7 @@ def download(
     years
         Año o lista de años. ``None`` descarga todos los de la serie (``ANIOS_DISPONIBLES``, o
         ``ANIOS_EMPALME`` con ``empalme=True``); una lista vacía, ninguno. Los años que no están en el
-        ANDA se ignoran con un aviso.
+        ANDA se saltan y quedan en la lista que se devuelve.
     modules
         Módulo o lista de módulos a extraer, con los nombres de ``DEFAULT_MODULES``: ``vivienda``,
         ``caracteristicas``, ``fuerza_trabajo``, ``ocupados``, ``desocupados``, ``inactivos``,

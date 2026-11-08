@@ -170,14 +170,15 @@ class EEVVDownloader(DescargadorANDA):
     def run_pipeline(self, target_years=None, tipos=TIPOS) -> list[str]:
         """Descarga los años y tipos pedidos. Devuelve lo que no se pudo bajar o extraer."""
         pedidos = sorted(k for k in EEVV_KNOWN_FILES if k[1] in tipos)
+        self.fallidos = []
         if target_years is not None:  # [] es "ningún año", no "todos"
             anios = {int(a) for a in target_years}
+            # Un fallo y no solo un aviso: si no, pedir un año que no está devolvía "éxito" sin bajar nada
             if desconocidos := sorted(anios - {a for a, _ in pedidos}):
-                log.warning(f"Años sin archivos de {', '.join(tipos)} en el ANDA (se ignoran): "
+                self._fallo(f"Años sin archivos de {', '.join(tipos)} en el ANDA: "
                             f"{', '.join(map(str, desconocidos))}.")
             pedidos = [k for k in pedidos if k[0] in anios]
 
-        self.fallidos = []
         faltantes = [k for k in pedidos if self.forzar or not archivos_datos(self.data_dir / k[1] / str(k[0]), EXTENSIONES)]
         for anio, tipo in pedidos:
             if (anio, tipo) not in faltantes:

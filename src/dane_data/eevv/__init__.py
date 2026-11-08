@@ -32,7 +32,7 @@ def download(
     ----------
     years
         Año o lista de años. ``None`` descarga toda la serie (unos 1,6 GB de ZIP); una lista vacía, ninguno. Los
-        años que no están en el ANDA se ignoran con un aviso.
+        años que no están en el ANDA se saltan y quedan en la lista que se devuelve.
     tipos
         ``"defunciones"`` (1979–2025), ``"nacimientos"`` o ``"fetales"`` (ambos 1998–2025), o una lista. ``None``
         para los tres.

@@ -297,15 +297,14 @@ class _EAMCatalogos(_CatalogosFijos, EAMDownloader):
 
 
 @pytest.mark.parametrize("clase", [_GEIHCatalogos, _EAMCatalogos])
-def test_anios_vacios_o_desconocidos(tmp_path, caplog, clase):
+def test_anios_vacios_o_desconocidos(tmp_path, clase):
     dl = clase(base_dir=tmp_path)
     dl.procesados = []
     dl.run_pipeline(target_years=[])
     assert dl.procesados == []                          # lista vacía: ningún año, no todos
-    with caplog.at_level("WARNING"):
-        dl.run_pipeline(target_years=[2024, 2030])
+    fallidos = dl.run_pipeline(target_years=[2024, 2030])
     assert dl.procesados == ["2024"]
-    assert "2030" in caplog.text
+    assert len(fallidos) == 1 and "2030" in fallidos[0]  # un año que no está no es un éxito
     dl.run_pipeline(target_years=None)
     assert dl.procesados == ["2024", "2023", "2024"]
 
@@ -922,11 +921,10 @@ def test_eevv_borrar_zip_al_terminar_su_ultimo_anio(tmp_path):
     assert (tmp_path / "datos" / "fetales" / "2018" / "fetal2018.csv").exists()
 
 
-def test_eevv_anio_sin_archivos_se_ignora_con_aviso(tmp_path, caplog):
-    with caplog.at_level("WARNING", logger="dane_data.eevv"):
-        dl, fallidos = _baja_eevv(tmp_path, {}, [1985], tipos=("nacimientos",))
-    assert fallidos == [] and dl.descargas == []
-    assert "1985" in caplog.text
+def test_eevv_anio_sin_archivos_es_un_fallo(tmp_path):
+    dl, fallidos = _baja_eevv(tmp_path, {}, [1985], tipos=("nacimientos",))
+    assert dl.descargas == []
+    assert len(fallidos) == 1 and "1985" in fallidos[0]  # un año que no está no es un éxito
 
 
 def test_eevv_cancelar(tmp_path):

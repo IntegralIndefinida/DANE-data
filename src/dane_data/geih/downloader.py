@@ -618,17 +618,18 @@ class GEIHDownloader(DescargadorANDA):
         catalogs = self.discover_catalogs()
 
         years_to_process = sorted(catalogs.keys(), key=lambda y: int(y))
+        self.fallidos, self._reemplazadas = [], set()
         if target_years is not None:  # [] es "ningún año", no "todos"
             target_years = [str(y) for y in target_years]
+            # Un fallo y no solo un aviso: si no, pedir un año que no está devolvía "éxito" sin bajar nada
             if desconocidos := [y for y in target_years if y not in catalogs]:
-                log.warning(f"Años sin catálogo de la GEIH en el ANDA (se ignoran): {', '.join(desconocidos)}. "
+                self._fallo(f"Años sin catálogo de la GEIH en el ANDA: {', '.join(desconocidos)}. "
                             f"Disponibles: {years_to_process[0]}–{years_to_process[-1]}.")
             years_to_process = [y for y in years_to_process if y in target_years]
 
         series_name = "Empalme" if self.is_empalme else "Principal"
         log.info(f"Iniciando descarga de la serie [{series_name}] para {len(years_to_process)} años: {years_to_process}")
 
-        self.fallidos, self._reemplazadas = [], set()
         for i, year in enumerate(years_to_process):
             self._check_stop()
             self._emit(i / max(len(years_to_process), 1), f"Procesando año {year}")
