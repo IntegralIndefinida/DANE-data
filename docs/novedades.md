@@ -11,6 +11,7 @@
   siguen en {dd}`describir()` y {dd}`buscar_variable()`.
 * En *Indicadores laborales*, con tres años o menos la gráfica abre en la serie mensual. La anual eran dos o tres puntos
   casi en línea recta.
+* Los títulos de las páginas de la aplicación son más pequeños (30 px en vez de 44): en el celular ocupaban tres líneas.
 
 **Correcciones**
 

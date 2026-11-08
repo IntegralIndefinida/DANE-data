@@ -1,5 +1,7 @@
 [theme]
 primaryColor = "#2a78d6"
+# h1 (st.title) a h6. El tamaño por defecto del título, 44 px, es de página de inicio; en el celular ocupaba tres líneas.
+headingFontSizes = ["30px", "26px", "22px", "20px", "18px", "16px"]
 
 [browser]
 gatherUsageStats = false
