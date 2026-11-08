@@ -263,7 +263,10 @@ def tabla(
     if estadistico not in ("total", "porcentaje", "media", "mediana"):
         raise ValueError("estadistico debe ser 'total', 'porcentaje', 'media' o 'mediana'.")
     por = _as_list(por)
-    d = df.copy()
+    # Solo las columnas que se usan: copiar todo df duplica la memoria (con columns="all", varios GB)
+    usadas = [*por, *([variable] if variable else []), *(c for c in ("anio", "mes") if c in df.columns),
+              *([peso] if peso else [])]
+    d = df[list(dict.fromkeys(usadas))].copy()
     if peso is None:
         d["_w"] = 1.0
     else:

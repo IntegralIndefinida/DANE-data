@@ -2,6 +2,11 @@
 
 ## Sin publicar
 
+**Mejoras**
+
+* {dd}`tabla()` copia solo las columnas que usa, no todo el DataFrame: con `dd.geih.load(..., columns="all")` ya no
+  duplica la memoria.
+
 **Correcciones**
 
 * {dd}`geih.download()`, {dd}`eam.download()` y {dd}`eevv.download()` devuelven como fallo los años que no están en el
