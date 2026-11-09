@@ -2,8 +2,8 @@ import pandas as pd
 import streamlit as st
 
 import dane_data as dd
-from dane_data.app._ui import (fmt_num, MAX_SERIES, args_py, barras, botones_descarga, codigo, fmt_grande, fmt_pct,
-                             fmt_pesos, grafico, linea, rutas_actuales, seleccion_geih, serie_geih, variacion)
+from dane_data.app._ui import (GRIS, fmt_num, MAX_SERIES, _valor, args_py, barras, botones_descarga, codigo, fmt_grande,
+                             fmt_pct, fmt_pesos, grafico, linea, rutas_actuales, seleccion_geih, serie_geih, variacion)
 
 st.title("Indicadores del mercado laboral")
 sel = seleccion_geih(clave="geih")
@@ -75,14 +75,20 @@ st.caption(f"Ocupados: **{fmt_grande(ult.ocupados)}** · Desocupados: **{fmt_gra
 st.divider()
 
 # ---------------------------------------------------------------- Gráfico
-c1, c2, c3 = st.columns([2, 2, 1])
+c1, c2, c3 = st.columns([3, 3, 2])
 nombre_ind = c1.selectbox("Indicador", list(INDICADORES))
 nombre_por = c2.selectbox("Desagregar por", list(DESAGREGAR))
-# Con pocos años, la serie anual son 2 o 3 puntos casi en línea recta: por defecto, la mensual
-frecuencia = c3.radio("Frecuencia", ["Anual", "Mensual"], horizontal=True, index=int(len(sel["anios"]) <= 3))
 col, es_pct = INDICADORES[nombre_ind]
 por = DESAGREGAR[nombre_por]
+# El trimestre móvil no puede dar la mediana ni la media del ingreso con los resultados de cada mes
+frecuencias = ["Anual", "Mensual"] + ([] if col in ("ingreso_medio", "ingreso_mediano") else ["Trimestre móvil"])
+# Con pocos años, la serie anual son 2 o 3 puntos casi en línea recta: por defecto, la mensual; por departamento, el
+# trimestre móvil, porque un departamento en un solo mes tiene poca muestra y la tasa salta mucho
+defecto = ("Anual" if len(sel["anios"]) > 3 else
+           "Trimestre móvil" if por == "departamento" and "Trimestre móvil" in frecuencias else "Mensual")
+frecuencia = c3.radio("Frecuencia", frecuencias, horizontal=True, index=frecuencias.index(defecto))
 anual = frecuencia == "Anual"
+movil = frecuencia == "Trimestre móvil"
 if col == "tasa_informalidad" and min(sel["anios"]) < 2022:
     st.info("La informalidad sigue la medición del DANE, que necesita preguntas del cuestionario de 2022: "
             "antes de 2022 queda vacía. Para 2007–2021, elija «Tasa de informalidad (medición anterior)».",
@@ -96,7 +102,12 @@ if col == "tasa_informalidad_marco2005" and 2020 in sel["anios"] and not sel["em
             "tienen tamaño de empresa: la medición anterior queda vacía esos meses y en el total de 2020.",
             icon=":material/info:")
 
-res = calcular(por, anual)
+def serie(por_):
+    r = calcular(por_, anual)
+    return dd.geih.trimestre_movil(r) if movil else r
+
+
+res = serie(por)
 if por:  # grupos sin dato (p. ej. 0–14 años no está en la PET)
     res = res[res.groupby(por, observed=True)[col].transform("count") > 0]
 if not anual:
@@ -115,10 +126,21 @@ else:
 titulo = nombre_ind  # sin «(%)»: las marcas del eje ya lo dicen
 if res_graf[x].nunique() > 1:
     fig = linea(res_graf, x=x, y=col, color=por, titulo_y=titulo, pct=es_pct)
+    if por:  # el total en gris, para leer cada grupo contra algo
+        nacional = serie(None)
+        if not anual:
+            nacional["periodo"] = pd.to_datetime(dict(year=nacional["anio"], month=nacional["mes"], day=1))
+        nombre = "Total de la selección" if sel["filtrada"] else "Total nacional"
+        fig.add_scatter(x=nacional[x], y=nacional[col], name=nombre, mode="lines", line=dict(color=GRIS, width=2),
+                        hovertemplate=f"{nombre}: {_valor('y', es_pct)}<extra></extra>")
+        fig.data = fig.data[-1:] + fig.data[:-1]  # primero en la leyenda
 else:
     fig = barras(res_graf, x=por or x, y=col, titulo_y=titulo, pct=es_pct,
                  horizontal=bool(por) and len(grupos) > 6)
 grafico(fig)
+if movil:
+    st.caption("Cada punto es el trimestre que termina en ese mes: marzo junta enero, febrero y marzo, como en el "
+               "trimestre móvil del DANE. Los niveles son el promedio de los tres meses.")
 
 pocos = res[res["n_muestra"] < 100]
 if len(pocos):
@@ -162,5 +184,5 @@ import dane_data as dd
 # Igual a dd.geih.indicadores(...) sobre los microdatos filtrados, pero año por año y
 # guardado en caché: la segunda vez es instantáneo.
 ind = dd.geih.serie_indicadores({sel["anios"]!r}{argumentos}{args_py(empalme=sel["empalme"], filtros=sel["filtros"], meses=sel["meses"])})
-ind
+{"ind = dd.geih.trimestre_movil(ind)  # cada mes junta ese mes y los dos anteriores" + chr(10) if movil else ""}ind
 ''')

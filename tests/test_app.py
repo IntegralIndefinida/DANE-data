@@ -219,6 +219,19 @@ def test_con_pocos_anios_la_serie_es_mensual(geih_root, tmp_path, monkeypatch):
     assert next(r for r in at.radio if r.label == "Frecuencia").value == "Mensual"
 
 
+def test_por_departamento_abre_en_trimestre_movil(geih_root, tmp_path, monkeypatch):
+    """Un departamento en un solo mes tiene poca muestra; el ingreso no tiene trimestre móvil."""
+    monkeypatch.setitem(dd.config._session, "geih", geih_root)
+    monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
+    at = AppTest.from_file(str(PAGINAS / "geih_mercado.py"), default_timeout=60).run()
+    next(s for s in at.selectbox if s.label == "Desagregar por").set_value("Departamento").run()
+    assert not at.exception
+    assert next(r for r in at.radio if r.label == "Frecuencia").value == "Trimestre móvil"
+    next(s for s in at.selectbox if s.label == "Indicador").set_value("Ingreso laboral mediano").run()
+    assert not at.exception
+    assert "Trimestre móvil" not in next(r for r in at.radio if r.label == "Frecuencia").options
+
+
 def test_aviso_cuando_los_anios_mezclan_marcos(geih_root, tmp_path, monkeypatch):
     monkeypatch.setitem(dd.config._session, "geih", geih_root)
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")

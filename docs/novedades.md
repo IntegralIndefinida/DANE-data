@@ -56,6 +56,9 @@
 * Los grupos que tienen un orden (edades, niveles educativos, años) se dibujan en un solo azul, de claro a oscuro, para que
   el orden se vea en el color; «Sin información» y «Edad desconocida» van en gris. Con más de seis grupos se usan los
   colores de siempre, porque más tonos de azul ya no se distinguen.
+* *Indicadores laborales* tiene la frecuencia *Trimestre móvil* ({dd}`geih.trimestre_movil()`), y por departamento abre en
+  ella: un departamento en un solo mes tiene poca muestra y la tasa salta mucho. Al desagregar, la gráfica muestra
+  también el total en gris, para leer cada grupo contra él.
 
 ## 0.4.0 (2 de noviembre de 2026)
 
