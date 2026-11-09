@@ -335,7 +335,8 @@ La única excepción es la consulta de versiones nuevas que se describe abajo, q
 Solo se conecta a internet para lo siguiente:
 
 - El lanzador, la primera vez, instala [uv](https://docs.astral.sh/uv/) desde `astral.sh` en
-  `%USERPROFILE%\.local\bin`, sin cambiar el `PATH` del usuario. uv descarga Python y las librerías de
+  `%USERPROFILE%\.local\bin` (Windows) o `~/.local/bin` (Mac y Linux), sin cambiar el `PATH` del usuario ni
+  archivos como `~/.zshrc` o `~/.bashrc`. uv descarga Python y las librerías de
   `uv.lock` (desde GitHub y PyPI): Python y la caché quedan en las carpetas de uv del usuario, y el entorno
   en `.venv/`, dentro de la carpeta del zip.
 - La app y la librería descargan los microdatos del ANDA del DANE (`microdatos.dane.gov.co`) solo cuando

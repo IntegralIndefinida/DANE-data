@@ -10,9 +10,22 @@ echo "=============================================="
 echo "  dane-data - Microdatos del DANE"
 echo "=============================================="
 
+# Abierto desde un visor de archivos comprimidos, el lanzador queda solo en una carpeta temporal: sin
+# pyproject.toml, uv da un error que no dice qué pasó (lo mismo revisan el .bat y el .exe)
+if [ ! -f pyproject.toml ]; then
+    echo
+    echo "Este lanzador tiene que estar dentro de la carpeta de dane-data ya descomprimida."
+    echo "Descomprima el .zip y abra el lanzador desde la carpeta extraída."
+    pausa
+    exit 1
+fi
+
 if ! command -v uv >/dev/null 2>&1; then
     echo
     echo "Primera vez: instalando el asistente 'uv' (unos segundos)..."
+    # Sin tocar ~/.zshrc ni ~/.bashrc: este lanzador ya agrega ~/.local/bin a su propio PATH (arriba), como
+    # el .bat y el .exe en Windows. Sin esto, el instalador de uv cambia el PATH del usuario.
+    export UV_NO_MODIFY_PATH=1
     if command -v curl >/dev/null 2>&1; then
         curl -LsSf https://astral.sh/uv/install.sh | sh
     else

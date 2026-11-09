@@ -112,6 +112,8 @@ con la versión nueva.
   ```
 
   En Mac y Linux: `~/.local/bin/uv cache clean`, `~/.local/bin/uv python uninstall --all` y
-  `rm ~/.local/bin/uv ~/.local/bin/uvx`.
+  `rm ~/.local/bin/uv ~/.local/bin/uvx`. Si instaló uv con el lanzador de Mac o Linux de la versión 0.4.0 o
+  anterior, el instalador de uv pudo agregar una línea con `.local/bin/env` a `~/.zshrc`, `~/.bashrc` o
+  `~/.profile`: bórrela también.
 * Los datos descargados, las cachés y la configuración no se borran solos. Están en su carpeta de usuario:
   `dane_data_datos/` (la carpeta de datos por defecto), `.cache/dane_data/` y `.config/dane_data/`.

@@ -57,6 +57,10 @@
 
 **Correcciones**
 
+* El lanzador de Mac y Linux instala uv sin cambiar `~/.zshrc`, `~/.bashrc` ni `~/.profile`, como ya hacían los de
+  Windows y como dice la sección «Privacidad» del README. Antes, el instalador de uv agregaba ahí `~/.local/bin` al
+  `PATH`; si lo usó, vea {doc}`instalacion` para quitar esa línea. Además, abierto sin descomprimir el zip, ahora dice
+  qué hacer en vez de mostrar el error de uv.
 * En las páginas de la GEIH, el tope de 100 de la barra *Edad* es «100 o más»: antes, por ejemplo con 65 a 100, quedaban
   por fuera las personas de más de 100 años (la GEIH trae hasta 108; en enero de 2024, unas 6100 personas expandidas).
 * {dd}`tabla()`, {dd}`geih.serie_tabla()` y {dd}`geih.tabla_de_frecuencias()` con `estadistico="media"` o `"mediana"`
