@@ -70,6 +70,9 @@ def geih_root(tmp_path):
     # Cada módulo trae las dos partes, aunque una esté vacía (sin una, el mes queda incompleto)
     _write(m / "Resto - Desocupados.csv", "Directorio;Secuencia_p;Orden;Dsi;Fex_c_2011\n")
     _write(m / "Cabecera - Inactivos.csv", "Directorio;Secuencia_p;Orden;Ini;Fex_c_2011\n")
+    oi = "Directorio;Secuencia_p;Orden;P7495;P7500S1A1;Fex_c_2011\n"
+    _write(m / "Cabecera - Otros ingresos.csv", oi + "1;1;1;1;800000;100,5\n2;1;1;2; ;200,0\n")
+    _write(m / "Resto - Otros ingresos.csv", oi + "3;1;1;1;150000;300,25\n")
     # Carpeta que no es un mes (debe ignorarse)
     (base / "2016" / "Total_fact_exp_dto").mkdir(parents=True)
 
@@ -90,6 +93,10 @@ def geih_root(tmp_path):
     _write(m / "CSV 13" / "No ocupados.CSV", "DIRECTORIO;SECUENCIA_P;ORDEN;DSI;FFT;FEX_C18\n"
                                              "10;1;2;1;;1000.5\n11;1;1;;1;500\n")
     _write(m / "Datos del hogar y la vivienda.CSV", "DIRECTORIO;SECUENCIA_P;P5000;FEX_C18\n10;1;4;1000.5\n11;1;2;500\n")
+    _write(m / "Otros ingresos e impuestos.CSV", "DIRECTORIO;SECUENCIA_P;ORDEN;P7495;FEX_C18\n10;1;1;2;1000.5\n"
+                                                 "11;1;1;1;500\n", encoding="latin-1")
+    _write(m / "Migración.CSV", "DIRECTORIO;SECUENCIA_P;ORDEN;P3373;FEX_C18\n10;1;1;1;1000.5\n10;1;2;3;1000.5\n"
+                                "11;1;1;1;500\n")
 
     # --- 2011: el CSV del ANDA perdió el punto decimal del factor; el TXT del mismo catálogo está bien
     for carpeta, sep, fex in (("Marzo_csv", ";", ("849.491.032.387.525", "107.845.157.267.357")),

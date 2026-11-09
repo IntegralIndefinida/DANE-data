@@ -109,7 +109,7 @@ Las piezas de `load` también son públicas, por si se necesita controlar cada p
 ```python
 >>> meses = dd.geih.find_months(2024)
 >>> meses[0].anio, meses[0].mes, meses[0].modulos
-(2024, 1, ['caracteristicas', 'fuerza', 'no_ocupados', 'ocupados', 'otras', 'vivienda'])
+(2024, 1, ['caracteristicas', 'fuerza', 'migracion', 'no_ocupados', 'ocupados', 'otras', 'otros_ingresos', 'vivienda'])
 >>> crudo = dd.geih.load_month(meses[0])     # variables del DANE, sin armonizar
 >>> crudo.shape
 (70648, 29)

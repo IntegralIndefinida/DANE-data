@@ -4,6 +4,13 @@
 
 **Mejoras**
 
+* {dd}`geih.download()` y {dd}`geih.load()` incluyen dos módulos de la GEIH que antes se descartaban: `otros_ingresos`
+  (ingresos no laborales: arriendos, pensiones, ayudas de otros hogares y del gobierno, intereses, cesantías y, desde
+  2022, impuestos) y `migracion` (lugar de nacimiento y de residencia hace 12 meses y hace 5 años, desde 2022). Sus
+  variables se piden con `columns`, por ejemplo `dd.geih.load(2024, columns=["P7495", "P3373"])`. No se exigen: de marzo
+  a julio de 2020 el DANE no publicó Otros ingresos, y Migración empieza en 2022. En los meses ya descargados cuyo ZIP sigue en `raw_zips/`, la próxima descarga los
+  saca de ese ZIP sin bajar nada; si los ZIP se borraron, use `forzar=True` con `modules=["otros_ingresos",
+  "migracion"]`. Cada año ocupa unos 100 a 160 MB más. La caché de cada mes se vuelve a crear una vez.
 * {dd}`tabla()` copia solo las columnas que usa, no todo el DataFrame: con `dd.geih.load(..., columns="all")` ya no
   duplica la memoria.
 * {dd}`geih.download()` y {dd}`eam.download()` ya no bajan la ficha metodológica del ANDA a `<raíz>/metadata/`: nada la

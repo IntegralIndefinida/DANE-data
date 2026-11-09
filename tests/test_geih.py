@@ -22,6 +22,9 @@ from dane_data.geih.loader import classify_file, month_from_folder
     ("No ocupado.CSV", ("no_ocupados", None)),                 # marzo 2024, en singular
     ("Area - Ocupados04.csv", ("ocupados", "area")),            # 2013, sufijo de mes
     ("Resto - Deocupados04.csv", ("no_ocupados", "resto")),
+    ("Cabecera - Otros ingresos.csv", ("otros_ingresos", "cabecera")),
+    ("Otros ingresos e impuestos.CSV", ("otros_ingresos", None)),
+    ("Migración.CSV", ("migracion", None)),
 ])
 def test_classify_file(name, expected):
     assert classify_file(name) == expected
@@ -151,6 +154,16 @@ def test_new_era_and_nested_folder(geih_root):
     assert cond[(11, 1)] == "Inactivo"
     assert df.loc[df.ORDEN.eq(1) & df.DIRECTORIO.eq(10), "ratio_smlv"].item() == pytest.approx(1.0)
     assert "P5000" in df.columns  # módulo hogar fusionado por DIRECTORIO + SECUENCIA_P
+
+
+def test_otros_ingresos_y_migracion(geih_root):
+    """Los dos módulos se unen por persona (hasta 2021, Cabecera + Resto); sin pedir sus variables no agregan nada."""
+    df = dd.geih.load([2016, 2025], root=geih_root, cache=False, columns=["P7495", "P7500S1A1", "P3373"])
+    p = df.set_index(["anio", "DIRECTORIO", "ORDEN"])
+    assert p["P7500S1A1"].dropna().to_dict() == {(2016, 1, 1): 800000, (2016, 3, 1): 150000}
+    assert p.loc[(2025, 11, 1), "P7495"] == 1 and p.loc[(2025, 10, 2), "P3373"] == 3
+    nucleo = dd.geih.load([2016, 2025], root=geih_root, cache=False)
+    assert len(nucleo) == len(df) and not {"P7495", "P3373"} & set(nucleo.columns)
 
 
 def test_posicion_ocupacional_cambia_en_2022():

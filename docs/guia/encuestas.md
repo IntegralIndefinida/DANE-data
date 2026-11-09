@@ -33,6 +33,8 @@ en una sola tabla de personas:
 | `no_ocupados` | Desocupados e inactivos (desde 2022 en un solo archivo) | «No ocupados», «Desocupados», «Inactivos» |
 | `otras` | Otras formas de trabajo y actividades | «Otras actividades y ayudas», «Otras formas de trabajo» |
 | `vivienda` | Vivienda y hogar (una fila por hogar) | «Vivienda y hogares» |
+| `otros_ingresos` | Ingresos no laborales: arriendos, pensiones, ayudas, subsidios, intereses; desde 2022, también impuestos. No viene de marzo a julio de 2020 | «Otros ingresos», «Otros ingresos e impuestos» |
+| `migracion` | Lugar de nacimiento y de residencia hace 12 meses y hace 5 años (desde 2022) | «Migración» |
 
 ### Dominios: Cabecera y Resto
 

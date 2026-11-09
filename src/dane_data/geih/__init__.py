@@ -44,7 +44,8 @@ def download(
     modules
         Módulo o lista de módulos a extraer, con los nombres de ``DEFAULT_MODULES``: ``vivienda``,
         ``caracteristicas``, ``fuerza_trabajo``, ``ocupados``, ``desocupados``, ``inactivos``,
-        ``otras_formas_trabajo``. Por defecto, todos.
+        ``otras_formas_trabajo``, ``otros_ingresos``, ``migracion``. Por defecto, todos. Los dos últimos no
+        se exigen: de marzo a julio de 2020 no viene Otros ingresos, y Migración empieza en 2022.
     empalme
         Descargar la serie de empalme (2010–2020, con proyecciones del CNPV 2018) en vez de la principal.
     root

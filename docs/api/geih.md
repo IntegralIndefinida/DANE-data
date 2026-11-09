@@ -81,7 +81,7 @@ Vea {doc}`../guia/tablas` y {doc}`../guia/series_largas`.
 |---|---|
 | `ANIOS_DISPONIBLES` | Años de la serie principal con catálogo conocido en el ANDA |
 | `ANIOS_EMPALME` | Años de la serie de empalme (2010–2020) |
-| `MODULOS` | Módulos que `load` une en cada mes: `caracteristicas`, `fuerza`, `ocupados`, `no_ocupados`, `otras`, `vivienda` |
+| `MODULOS` | Módulos que `load` une en cada mes: `caracteristicas`, `fuerza`, `ocupados`, `no_ocupados`, `otras`, `vivienda`, `otros_ingresos`, `migracion` |
 | `DEFAULT_MODULES` | Módulos que `download` baja por defecto (nombres del descargador) |
 | `MODULE_PATTERNS` | Fragmentos del nombre de archivo con que `download` reconoce cada módulo |
 | `CORE_RAW` | Variables DANE que `load` lee siempre, las que necesita `harmonize` |

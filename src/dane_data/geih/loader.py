@@ -64,7 +64,7 @@ CORE_RAW = [
     *_COMPACTAS,
 ]
 
-MODULOS = ("caracteristicas", "fuerza", "ocupados", "no_ocupados", "otras", "vivienda")
+MODULOS = ("caracteristicas", "fuerza", "ocupados", "no_ocupados", "otras", "vivienda", "otros_ingresos", "migracion")
 _MESES_PREFIJO = {
     "ene": 1, "feb": 2, "mar": 3, "abr": 4, "may": 5, "jun": 6, "jul": 7,
     "ago": 8, "sep": 9, "set": 9, "oct": 10, "nov": 11, "dic": 12,
@@ -101,6 +101,10 @@ def classify_file(filename: str) -> tuple[str | None, str | None]:
         modulo = "caracteristicas"
     elif "hogar" in n or "vivienda" in n:
         modulo = "vivienda"
+    elif "otros ingresos" in n:
+        modulo = "otros_ingresos"
+    elif "migracion" in n:
+        modulo = "migracion"
     elif "otras" in n:
         modulo = "otras"
     else:
@@ -297,7 +301,7 @@ def find_months(years: Iterable[int] | int | None = None, empalme: bool = False,
     >>> meses[0].anio, meses[0].mes, meses[0].completo  # doctest: +SKIP
     (2024, 1, True)
     >>> meses[0].modulos  # doctest: +SKIP
-    ['caracteristicas', 'fuerza', 'no_ocupados', 'ocupados', 'otras', 'vivienda']
+    ['caracteristicas', 'fuerza', 'migracion', 'no_ocupados', 'ocupados', 'otras', 'otros_ingresos', 'vivienda']
     """
     base = _csv_dir(_root(empalme, root))
     if not base.is_dir():
@@ -490,15 +494,12 @@ def load_month(mes: MesGEIH, columns="core", modules: Iterable[str] | None = Non
         raise FileNotFoundError(f"{mes.carpeta}: falta el módulo de características generales")
     base = _read_module(mes.archivos["caracteristicas"], selector)
 
-    for modulo in ("fuerza", "ocupados", "no_ocupados", "otras"):
+    # Una columna que está en varios módulos sale del primero: los nuevos (otros ingresos, migración) van al final
+    for modulo in ("fuerza", "ocupados", "no_ocupados", "otras", "vivienda", "otros_ingresos", "migracion"):
         if modulo not in mes.archivos or modulo not in modules:
             continue
         df = _read_module(mes.archivos[modulo], selector)
-        base = _merge_new_columns(base, df, KEYS_PERSONA)
-
-    if "vivienda" in mes.archivos and "vivienda" in modules:
-        df = _read_module(mes.archivos["vivienda"], selector)
-        base = _merge_new_columns(base, df, KEYS_HOGAR)
+        base = _merge_new_columns(base, df, KEYS_HOGAR if modulo == "vivienda" else KEYS_PERSONA)
 
     for c in set(_COMPACTAS) & set(base.columns):
         if pd.api.types.is_float_dtype(base[c]) or pd.api.types.is_integer_dtype(base[c]):
