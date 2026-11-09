@@ -447,6 +447,21 @@ def test_trimestre_movil_igual_a_juntar_los_tres_meses(geih_root, por):
         dd.geih.trimestre_movil(esperado)
 
 
+def test_trimestre_movil_no_cruza_el_cambio_de_marco():
+    """Enero y febrero de 2022 juntarían la PET de 12+ del censo 2005 (2021) con la de 15+ del CNPV 2018; en el
+    empalme, 2019 y 2020 son del mismo marco y el trimestre sí sigue. Una serie con meses repetidos es un error claro."""
+    meses = [(2021, 10), (2021, 11), (2021, 12), (2022, 1), (2022, 2), (2022, 3)]
+    serie = pd.DataFrame([{"anio": a, "mes": m, "pet": 100.0, "fuerza_trabajo": 60.0, "ocupados": 54.0,
+                           "desocupados": 6.0, "inactivos": 40.0, "tasa_informalidad": np.nan,
+                           "tasa_informalidad_marco2005": 50.0, "n_muestra": 10} for a, m in meses])
+    td = dd.geih.trimestre_movil(serie).set_index(["anio", "mes"])["td"]
+    assert td.isna().tolist() == [True, True, False, True, True, False]
+    empalme = serie.assign(anio=serie["anio"] - 2)                       # 2019-10 a 2020-03
+    assert dd.geih.trimestre_movil(empalme, empalme=True)["td"].notna().sum() == 4
+    with pytest.raises(ValueError, match="repetidos"):
+        dd.geih.trimestre_movil(pd.concat([serie, serie]))
+
+
 def test_serie_indicadores_sin_grupo_vacio(geih_root, tmp_path, monkeypatch):
     """
     Por defecto serie_indicadores deja fuera la fila de nivel educativo vacío (en los datos reales, los

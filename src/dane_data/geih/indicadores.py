@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 
 from ..stats import _as_list, _con_categorias, peso_mensual_promedio, weighted_mean, weighted_quantile
+from .loader import marco_muestral
 
 GLOSARIO = {
     "PET": "Población en edad de trabajar. Desde 2022 (marco 2018): 15 años o más. "
@@ -193,7 +194,7 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, anual:
     return res[keys + _COLUMNAS]
 
 
-def trimestre_movil(serie: pd.DataFrame) -> pd.DataFrame:
+def trimestre_movil(serie: pd.DataFrame, empalme: bool = False) -> pd.DataFrame:
     """
     Trimestre móvil de una serie mensual de indicadores, como lo publica el DANE.
 
@@ -206,19 +207,24 @@ def trimestre_movil(serie: pd.DataFrame) -> pd.DataFrame:
     ----------
     serie
         Resultado mensual de ``indicadores(..., anual=False)`` o ``serie_indicadores(..., anual=False)``.
+    empalme
+        Si ``serie`` es de la serie de empalme: decide dónde cambia el marco muestral (``marco_muestral``).
 
     Devuelve
     --------
     DataFrame
         Las mismas filas y columnas. La fila de cada mes es el trimestre que termina en ese mes, y queda vacía
         si falta alguno de los dos meses anteriores (los dos primeros de la serie, o junto a un mes que no
-        está). ``n_muestra`` suma los tres meses. ``ingreso_medio`` e ``ingreso_mediano`` quedan vacíos: no
-        se pueden sacar de los resultados de cada mes.
+        está) o si alguno es de otro marco muestral: en la serie principal, enero y febrero de 2020, 2021 y
+        2022 juntarían meses con otra PET y otras proyecciones de población. ``n_muestra`` suma los tres
+        meses. ``ingreso_medio`` e ``ingreso_mediano`` quedan vacíos: no se pueden sacar de los resultados
+        de cada mes.
 
     Lanza
     -----
     ValueError
-        Si ``serie`` no es mensual (no tiene la columna ``mes``).
+        Si ``serie`` no es mensual (no tiene la columna ``mes``) o trae un mes repetido en un grupo (por
+        ejemplo, dos series que se solapan, unidas con ``pd.concat``).
 
     Véase también
     -------------
@@ -233,13 +239,18 @@ def trimestre_movil(serie: pd.DataFrame) -> pd.DataFrame:
     if "mes" not in serie.columns:
         raise ValueError("trimestre_movil necesita una serie mensual: use anual=False.")
     grupos = [c for c in serie.columns if c not in ("anio", "mes", *_COLUMNAS)]
+    if serie.duplicated([*grupos, "anio", "mes"]).any():
+        raise ValueError("trimestre_movil: la serie trae meses repetidos en un mismo grupo (¿dos series que se "
+                         "solapan?). Deje una fila por mes y grupo.")
     niveles = ["pet", "fuerza_trabajo", "ocupados", "desocupados", "inactivos"]
     informalidad = ["tasa_informalidad", "tasa_informalidad_marco2005"]
     d = serie.assign(_periodo=serie["anio"] * 12 + serie["mes"] - 1,
+                     _marco=serie["anio"].map(lambda a: marco_muestral(int(a), empalme)),
                      **{f"_inf_{c}": serie[c] / 100 * serie["ocupados"] for c in informalidad})
     sumas = [*niveles, "n_muestra", *(f"_inf_{c}" for c in informalidad)]
     partes = []
-    for _, g in (d.groupby(grupos, observed=True, dropna=False, sort=False) if grupos else [(None, d)]):
+    # Cada marco muestral por aparte: un trimestre que cruza el cambio juntaría dos PET distintas
+    for _, g in d.groupby([*grupos, "_marco"], observed=True, dropna=False, sort=False):
         s = g.set_index("_periodo")[sumas].astype("float64").sort_index()
         s = s.reindex(range(s.index.min(), s.index.max() + 1))  # un mes que falta corta los trimestres que lo tocan
         partes.append(s.rolling(3, min_periods=3).sum().reindex(g["_periodo"]).set_axis(g.index))

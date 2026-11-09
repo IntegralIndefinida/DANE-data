@@ -111,7 +111,7 @@ if col == "tasa_informalidad_marco2005" and 2020 in sel["anios"] and not sel["em
 
 def serie(por_):
     r = calcular(por_, anual)
-    return dd.geih.trimestre_movil(r) if movil else r
+    return dd.geih.trimestre_movil(r, empalme=sel["empalme"]) if movil else r
 
 
 res = serie(por)
@@ -194,5 +194,5 @@ import dane_data as dd
 # Igual a dd.geih.indicadores(...) sobre los microdatos filtrados, pero año por año y
 # guardado en caché: la segunda vez es instantáneo.
 ind = dd.geih.serie_indicadores({sel["anios"]!r}{argumentos}{args_py(empalme=sel["empalme"], filtros=sel["filtros"], meses=sel["meses"])})
-{"ind = dd.geih.trimestre_movil(ind)  # cada mes junta ese mes y los dos anteriores" + chr(10) if movil else ""}ind
+{f"ind = dd.geih.trimestre_movil(ind{args_py(empalme=sel['empalme'])})  # cada mes junta ese mes y los dos anteriores" + chr(10) if movil else ""}ind
 ''')

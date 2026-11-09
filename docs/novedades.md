@@ -6,7 +6,9 @@
 
 * {dd}`geih.trimestre_movil()`: el trimestre móvil de una serie mensual de indicadores, como lo publica el DANE (cada
   mes junta ese mes y los dos anteriores). Da lo mismo que juntar los microdatos de los tres meses con el factor de
-  expansión dividido por 3. Sirve para grupos con poca muestra, como los departamentos.
+  expansión dividido por 3. Sirve para grupos con poca muestra, como los departamentos. Un trimestre no cruza un
+  cambio de marco muestral: en la serie principal, enero y febrero de 2020, 2021 y 2022 quedan vacíos, porque
+  juntarían meses con otra PET y otras proyecciones de población (con `empalme=True`, la serie de empalme no se corta).
 
 **Mejoras**
 
