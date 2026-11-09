@@ -324,6 +324,14 @@ def test_el_color_sigue_al_grupo(monkeypatch):
     assert nuevo["Dpto 7"] == antes["Antioquia"]                   # el color que quedó libre
 
 
+def test_recuadro_de_las_barras_sin_nombres_internos():
+    from dane_data.app import _ui
+    df = pd.DataFrame({"sexo": ["Hombre", "Mujer"], "porcentaje": [58.4567, 41.5433]})
+    for horizontal in (False, True):
+        plantilla = _ui.barras(df, x="sexo", y="porcentaje", pct=True, horizontal=horizontal).data[0].hovertemplate
+        assert "=" not in plantilla and ":,.1f} %" in plantilla      # antes «sexo=%{x}<br>porcentaje=%{y}»
+
+
 def test_tabla_pivote_conserva_el_orden_de_las_categorias(geih_root, tmp_path, monkeypatch):
     """El nivel educativo va de Ninguno a Superior, no en orden alfabético."""
     monkeypatch.setitem(dd.config._session, "geih", geih_root)

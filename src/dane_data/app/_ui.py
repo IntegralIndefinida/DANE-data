@@ -118,15 +118,19 @@ def _estilo(fig: go.Figure, titulo_y: str | None = None, pct: bool = False) -> g
     return fig
 
 
+def _valor(eje: str, pct: bool) -> str:
+    """El valor en el recuadro al pasar el mouse: redondeado, con coma decimal (``separators``) y «%» si es tasa."""
+    return f"%{{{eje}:,.1f}} %" if pct else f"%{{{eje}:,.2~f}}"
+
+
 def linea(df: pd.DataFrame, x: str, y: str, color: str | None = None, titulo_y: str | None = None,
           pct: bool = False, orden: list | None = None) -> go.Figure:
     """``orden``: todos los grupos posibles de ``color``, si ``df`` ya no los tiene (p. ej. con el grupo como texto)."""
     df, colores_px = _por_grupo(df, color, orden)
     fig = px.line(df, x=x, y=y, color=color, markers=True, **colores_px)
     # Sin esto, el recuadro repetía la fecha y mostraba el nombre de la columna con seis decimales («td=7,977104 %»)
-    valor = "%{y:,.1f} %" if pct else "%{y:,.2~f}"
     fig.update_traces(line=dict(width=2), marker=dict(size=8),
-                      hovertemplate=("%{fullData.name}: " if color else "") + valor + "<extra></extra>")
+                      hovertemplate=("%{fullData.name}: " if color else "") + _valor("y", pct) + "<extra></extra>")
     fig = _estilo(fig, titulo_y, pct)
     fig.update_layout(hovermode="x unified")
     if pd.api.types.is_integer_dtype(df[x]) or x == "anio":
@@ -149,7 +153,10 @@ def barras(df: pd.DataFrame, x: str, y: str, color: str | None = None, titulo_y:
     else:
         fig = px.bar(df, x=x, y=y, color=color, barmode="group", **colores_px)
         fig = _estilo(fig, titulo_y, pct)
-    fig.update_traces(marker_line_width=0)
+    # «Hombre: 58,5 %», con el grupo de color delante si lo hay; no «anio=2025<br>sexo=Hombre<br>porcentaje=58.4567»
+    categoria, valor = ("%{y}", _valor("x", pct)) if horizontal else ("%{x}", _valor("y", pct))
+    fig.update_traces(marker_line_width=0, hovertemplate=("%{fullData.name} · " if color else "") + categoria + ": "
+                      + valor + "<extra></extra>")
     fig.update_layout(bargap=0.25, bargroupgap=0.08)
     return fig
 
