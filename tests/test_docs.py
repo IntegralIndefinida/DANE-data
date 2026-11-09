@@ -1,8 +1,12 @@
-"""La documentación: la referencia cubre toda la API pública y los ejemplos de los docstrings funcionan."""
+"""
+La documentación: la referencia cubre toda la API pública, los ejemplos de los docstrings funcionan y los
+enlaces {dd} de la guía existen.
+"""
 
 import doctest
 import importlib
 import inspect
+import json
 import re
 from pathlib import Path
 
@@ -48,3 +52,23 @@ def test_ejemplos_de_los_docstrings(modulo):
     mod = importlib.import_module(modulo)
     resultado = doctest.testmod(mod, optionflags=doctest.NORMALIZE_WHITESPACE | doctest.ELLIPSIS, verbose=False)
     assert resultado.failed == 0
+
+
+# Sphinx publica un {dd}`nombre` que ya no existe como texto sin enlace, sin avisar (nitpicky está apagado)
+@pytest.mark.skipif(not API.is_dir(), reason="sin docs/ (por ejemplo, desde el sdist)")
+def test_los_enlaces_dd_de_la_guia_existen():
+    docs = API.parent
+    rotos = []
+    for ruta in sorted([*docs.rglob("*.md"), *docs.rglob("*.ipynb")]):
+        if {"_build", "_generado", ".ipynb_checkpoints"} & set(ruta.parts):
+            continue
+        texto = ruta.read_text(encoding="utf-8")
+        if ruta.suffix == ".ipynb":
+            texto = "\n".join("".join(c["source"]) for c in json.loads(texto)["cells"] if c["cell_type"] == "markdown")
+        for nombre in re.findall(r"\{dd\}`([^`]+)`", texto):
+            objeto = dd
+            for parte in nombre.removesuffix("()").split("."):
+                objeto = getattr(objeto, parte, None)
+            if objeto is None:
+                rotos.append(f"{ruta.relative_to(docs)}: {nombre}")
+    assert not rotos, f"{{dd}} que no existen en dane_data: {rotos}"
