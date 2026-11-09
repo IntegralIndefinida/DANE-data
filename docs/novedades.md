@@ -61,6 +61,8 @@
   también el total en gris, para leer cada grupo contra él.
 * Las barras de las gráficas son más delgadas, con la punta redondeada. En *Ingresos y salario mínimo*, el tramo de un
   salario mínimo va en color y los demás en gris.
+* Las gráficas de líneas marcan cada dato con un punto solo si son pocos (24 o menos por línea): en una serie mensual
+  larga, los puntos tapaban la línea.
 
 ## 0.4.0 (2 de noviembre de 2026)
 

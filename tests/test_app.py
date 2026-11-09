@@ -352,6 +352,13 @@ def test_grupos_ordenados_en_un_solo_tono():
     assert [t.marker.color for t in _ui.barras(ocho, "x", "v", color="anio").data] == _ui.PALETA
 
 
+def test_marcadores_solo_con_pocos_puntos():
+    from dane_data.app import _ui
+    serie = lambda n: pd.DataFrame({"t": range(n), "v": range(n)})  # noqa: E731
+    assert _ui.linea(serie(_ui.MAX_PUNTOS), "t", "v").data[0].mode == "lines+markers"
+    assert _ui.linea(serie(_ui.MAX_PUNTOS + 1), "t", "v").data[0].mode == "lines"
+
+
 def test_recuadro_de_las_barras_sin_nombres_internos():
     from dane_data.app import _ui
     df = pd.DataFrame({"sexo": ["Hombre", "Mujer"], "porcentaje": [58.4567, 41.5433]})
