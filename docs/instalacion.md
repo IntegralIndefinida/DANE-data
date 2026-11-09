@@ -4,7 +4,7 @@
 
 ::::{tab-set}
 :::{tab-item} Instalación automática
-1. Descargue la última version de [dane-data.zip](https://github.com/IntegralIndefinida/DANE-data/releases/latest/download/dane-data.zip).
+1. Descargue la última versión de [dane-data.zip](https://github.com/IntegralIndefinida/DANE-data/releases/latest/download/dane-data.zip).
 2. Descomprímalo (en Windows: clic derecho → *Extraer todo…*; abrirlo con doble clic no basta).
 3. Haga doble clic en el lanzador de su sistema:
 

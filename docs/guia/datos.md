@@ -53,7 +53,8 @@ dd.eevv.download(tipos="defunciones")   # todas las defunciones, 1979–2025
 ```
 
 {dd}`geih.download()` y {dd}`eam.download()` buscan los archivos en el catálogo del ANDA de cada año, bajan
-los ZIP y extraen los módulos. Las descargas son **incrementales**:
+los ZIP y extraen los módulos. {dd}`eevv.download()` no busca en el ANDA: tiene una tabla fija con los archivos de cada
+año y certificado (los años están en `dd.eevv.ANIOS_DISPONIBLES`). Las descargas son **incrementales**:
 
 * Al terminar un mes se escribe un marcador (`.dane_data_ok`) que registra qué módulos se extrajeron. Una
   descarga posterior salta los meses que ya tienen esos módulos. Si al mes le falta algo (el ZIP del DANE no
