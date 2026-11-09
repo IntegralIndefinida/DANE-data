@@ -73,7 +73,7 @@ dd.eam.download(range(2014, 2025))
 dd.eevv.download(2025)
 ```
 
-Un año de la GEIH ocupa unos 500 MB, toda la EAM unos 330 MB y todas las Estadísticas Vitales unos 3,6 GB. Los detalles están en
+Un año de la GEIH ocupa unos 600 MB, toda la EAM unos 330 MB y todas las Estadísticas Vitales unos 3,6 GB. Los detalles están en
 {doc}`guia/datos`.
 
 ## Actualizar

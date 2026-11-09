@@ -86,7 +86,7 @@ def download(
     -----
     En algunos meses los CSV que publica el ANDA están dañados (2008 y 2011: el factor de expansión sin
     punto decimal; septiembre de 2021: separado por espacios). Para esos meses se baja otro formato del
-    mismo catálogo (TXT o Stata). Un año extraído ocupa unos 500 MB en disco, más los ZIP si se
+    mismo catálogo (TXT o Stata). Un año extraído ocupa unos 600 MB en disco, más los ZIP si se
     conservan.
 
     Ejemplos

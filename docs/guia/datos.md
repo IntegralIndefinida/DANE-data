@@ -119,7 +119,7 @@ Desde la terminal, `dane-data estado` muestra lo mismo resumido por año. Para l
 
 | | Tamaño aproximado |
 |---|---|
-| Un año de la GEIH extraído | 500 MB, más los ZIP si se conservan (`delete_zips=False`, el valor por defecto) |
+| Un año de la GEIH extraído | 600 MB, más los ZIP si se conservan (`delete_zips=False`, el valor por defecto) |
 | Toda la serie principal 2007–2026 | 11 GB extraída |
 | Toda la EAM 1992–2024 | 330 MB |
 | Todas las Estadísticas Vitales | 3,6 GB extraídas (2,2 GB de nacimientos, 1,2 GB de defunciones), 1,6 GB de ZIP |
