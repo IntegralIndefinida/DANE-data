@@ -35,6 +35,26 @@ Además, una prueba recorre toda la serie mes a mes buscando huecos y saltos bru
 más de 1 % fuera de los cambios de metodología conocidos, y cambios de las tasas de más de 5 puntos fuera de
 la pandemia (abril de 2020).
 
+## Informalidad
+
+Con los datos reales, las pruebas comparan también los ocupados informales de cada mes con los anexos de informalidad
+del DANE (diferencias menores a 0,01 %):
+
+| Medición | Qué se compara | Anexo del DANE |
+|---|---|---|
+| `formal`, la actual (desde 2022) | Total nacional, cada mes | Anexo vigente de *Empleo informal y seguridad social* |
+| `formal_marco2005`, la anterior (2007–2019 y 2021) | 13 y 23 ciudades, cada trimestre móvil | Anexo de octubre a diciembre de 2021 |
+
+Coinciden todos los meses salvo febrero de 2008 en las 23 ciudades (134 informales de 4,6 millones). 2020 no se compara
+con la medición anterior: sus microdatos en el ANDA vienen con las proyecciones del CNPV 2018 y el anexo con las del
+censo 2005. Las reglas de cada medición están en {doc}`variables`.
+
+## EAM
+
+La EAM no tiene una prueba automática con datos reales. Se comparó a mano con los anexos del DANE de 1998, 2008–2011
+y 2024: los totales nacionales y por departamento coinciden, pero la composición por división industrial no, porque
+el ANDA oculta la actividad de muchos establecimientos grandes para anonimizarlos (vea {doc}`eam` y {doc}`diferencias`).
+
 ## Estadísticas Vitales
 
 Con los datos reales, las pruebas comparan los tres certificados con los cuadros definitivos del DANE, y coinciden
