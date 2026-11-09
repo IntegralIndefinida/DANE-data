@@ -173,7 +173,10 @@ def month_from_folder(name: str) -> int | None:
 
 
 _NOMBRE_PARTE = {"caracteristicas": "Características generales", "fuerza": "Fuerza de trabajo",
-                 "ocupados": "Ocupados", "desocupados": "Desocupados"}
+                 "ocupados": "Ocupados", "desocupados": "Desocupados", "vivienda": "Vivienda y Hogares",
+                 "otras": "Otras actividades y ayudas en la semana", "otros_ingresos": "Otros ingresos"}
+# Módulos que no hacen falta para los indicadores: sin uno, o sin una de sus partes, el mes se carga igual y se avisa
+_OPCIONALES = ("vivienda", "otras", "otros_ingresos")
 
 
 @dataclass
@@ -213,10 +216,13 @@ class MesGEIH:
             falta.append("fuerza")
         return falta + [nombre for _, nombre in self.partes_faltantes()]
 
-    def partes_faltantes(self) -> list[tuple[str, str]]:
-        """``(módulo, archivo)`` de las partes Cabecera o Resto que faltan, p. ej. ``("ocupados", "Resto - Ocupados")``."""
+    def partes_faltantes(self, modulos=("caracteristicas", "fuerza", "ocupados", "no_ocupados")) -> list[tuple[str, str]]:
+        """
+        ``(módulo, archivo)`` de las partes Cabecera o Resto que faltan de ``modulos`` (por defecto, los que exigen
+        los indicadores), p. ej. ``("ocupados", "Resto - Ocupados")``.
+        """
         partes: dict[str, set] = {}
-        for modulo in ("caracteristicas", "fuerza", "ocupados", "no_ocupados"):
+        for modulo in modulos:
             for f in self.archivos.get(modulo, []):
                 # Antes de 2022, Desocupados e Inactivos son archivos aparte. Inactivos no hace falta: la PET
                 # sale de Fuerza de trabajo (y faltantes tampoco lo pide).
@@ -1044,17 +1050,35 @@ def load(
             f"No hay datos GEIH para años={years}, meses={months} en {_root(empalme, root)}. "
             "Descárguelos con dane_data.geih.download(...) o revise dane_data.set_paths(...)."
         )
-    # Un mes sin un módulo que sí traen los demás meses de su año queda con esas variables vacías
+    # Un mes sin un módulo que sí traen los demás meses de su año, o (hasta 2021) sin su parte Cabecera o Resto,
+    # queda con esas variables vacías, o vacías en la zona de la parte que falta
+    pedidos = set(modules or MODULOS)
     huecos: dict[tuple, list] = {}
     for m in meses:
-        if faltan := sorted((del_anio[m.anio] & set(modules or MODULOS)) - set(m.archivos)):
+        faltan = sorted((del_anio[m.anio] & pedidos) - set(m.archivos))
+        faltan += [nombre for modulo, nombre in m.partes_faltantes(_OPCIONALES) if modulo in pedidos]
+        if faltan:
             huecos.setdefault(tuple(faltan), []).append(f"{MESES[m.mes]} {m.anio}")
     if huecos:
         detalle = "; ".join(f"{', '.join(mods)} en {', '.join(ms)}" for mods, ms in huecos.items())
-        log.warning(f"Meses sin módulos que sí traen los demás meses de su año; sus variables quedan vacías en esos "
-                    f"meses: {detalle}. De marzo a julio de 2020 es el formulario reducido del operativo telefónico del DANE "
-                    "(la condición de actividad sale igual, de las marcas de Características); en otro mes, vuelva a "
-                    "descargarlo con dane_data.geih.download(...).")
+        log.warning(f"Meses sin módulos, o sin una de sus partes, que sí traen los demás meses de su año; sus variables "
+                    f"quedan vacías en esos meses: {detalle}. De marzo a julio de 2020 es el formulario reducido del "
+                    "operativo telefónico del DANE (la condición de actividad sale igual, de las marcas de "
+                    "Características); en otro mes, vuelva a descargarlo con dane_data.geih.download(...).")
+    # Años bajados antes de que dane-data extrajera Otros ingresos y Migración: no los trae ningún mes del año, así
+    # que el aviso anterior no sale, y sus variables quedarían vacías sin explicación
+    sin_extraer: dict[str, set] = {}
+    for m in meses:
+        for modulo, desde in (("otros_ingresos", 2007), ("migracion", 2022)):
+            if (modulo in pedidos and m.anio >= desde and modulo not in del_anio[m.anio]
+                    and not (m.anio == 2020 and 3 <= m.mes <= 7)):  # el DANE no publicó Otros ingresos esos meses
+                sin_extraer.setdefault(modulo, set()).add(m.anio)
+    for modulo, anios in sin_extraer.items():
+        anios = sorted(anios)
+        log.warning(f"Ningún mes de {', '.join(map(str, anios))} en disco trae el módulo {modulo}: sus variables quedan "
+                    "vacías. Si se bajaron con una versión de dane-data que no lo extraía, vuelva a bajarlo con "
+                    f"dane_data.geih.download({anios}, forzar=True, modules=['{modulo}']"
+                    f"{', empalme=True' if empalme else ''}).")
 
     frames = []
     for i, mes in enumerate(meses):

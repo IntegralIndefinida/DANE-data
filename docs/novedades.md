@@ -24,7 +24,10 @@
   pasa de 80 a 105 MB con las variables por defecto.
 * {dd}`geih.load()` avisa cuando un mes no trae un módulo que sí traen los demás meses de su año, porque las
   variables de ese módulo quedan vacías en ese mes. Pasa de marzo a julio de 2020, con el formulario reducido del operativo
-  telefónico del DANE, y con meses bajados antes de que dane-data extrajera un módulo.
+  telefónico del DANE, y con meses bajados antes de que dane-data extrajera un módulo. Hasta 2021 también avisa si a
+  Vivienda, Otras actividades u Otros ingresos les falta la parte Cabecera o Resto. Si ningún mes de un año trae
+  `otros_ingresos` (o, desde 2022, `migracion`), porque se bajó con una versión anterior, avisa y da el comando para
+  bajarlo.
 * {dd}`tabla()` copia solo las columnas que usa, no todo el DataFrame: con `dd.geih.load(..., columns="all")` ya no
   duplica la memoria.
 * {dd}`geih.download()` y {dd}`eam.download()` ya no bajan la ficha metodológica del ANDA a `<raíz>/metadata/`: nada la
