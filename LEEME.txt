@@ -2,7 +2,8 @@ dane-data - Microdatos del DANE (GEIH, EAM y Estadísticas Vitales)
 =============================================
 
 COMO ABRIR LA APLICACION
-  Windows : doble clic en  "Abrir dane-data (Windows).bat"
+  Windows : doble clic en  "Abrir dane-data.exe"
+            (o en "Abrir dane-data (Windows).bat", que hace lo mismo)
   Mac     : doble clic en  "Abrir dane-data (Mac).command"
   Linux   : ejecute         ./abrir-dane-data.sh
 

@@ -123,7 +123,8 @@ jobs:
           CARPETA="zip/dane-data"
           mkdir -p "${CARPETA}"
           # Los lanzadores salen del checkout con sus finales de línea (.gitattributes) y permisos (+x)
-          cp estudiantes/pyproject.toml .python-version LICENSE README.md abrir-dane-data.sh \
+          # LEEME.txt: en Windows un .txt se abre directo en el Bloc de notas, el README.md no
+          cp estudiantes/pyproject.toml .python-version LICENSE README.md LEEME.txt abrir-dane-data.sh \
             "Abrir dane-data (Mac).command" "Abrir dane-data (Windows).bat" "build/Abrir dane-data.exe" "${CARPETA}/"
           # PyPI puede tardar unos minutos en mostrar la versión recién publicada
           for intento in $(seq 1 20); do

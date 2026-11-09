@@ -57,6 +57,9 @@
 
 **Correcciones**
 
+* El zip para estudiantes trae `LEEME.txt`, la guía corta para abrir la aplicación y los avisos de Windows y Mac la
+  primera vez. Estaba en el repositorio pero nunca entraba al zip, y decía que en Windows se abriera el `.bat` en vez
+  de `Abrir dane-data.exe`.
 * `Abrir dane-data.exe` busca uv solo en las carpetas del `PATH`. Antes miraba primero su propia carpeta y ejecutaba
   un `uv.exe` que alguien hubiera puesto junto al lanzador, algo que ya evitaba con PowerShell (lo llama por su ruta
   completa).
