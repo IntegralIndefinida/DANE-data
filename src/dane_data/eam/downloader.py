@@ -289,7 +289,11 @@ class EAMDownloader(DescargadorANDA):
 
     def run_pipeline(self, target_years=None) -> list[str]:
         """Descarga todos los años o los seleccionados. Devuelve lo que no se pudo bajar o extraer."""
-        catalogs = self.discover_catalogs()
+        # Si todos los años pedidos tienen catálogo verificado, consultar los 13 catálogos del ANDA no cambiaría nada
+        if target_years is not None and {str(y) for y in target_years} <= set(EAM_KNOWN_CATALOGS):
+            catalogs = dict(EAM_KNOWN_CATALOGS)
+        else:
+            catalogs = self.discover_catalogs()
 
         years_to_process = sorted(catalogs.keys(), key=lambda y: int(y))
         self.fallidos = []

@@ -574,7 +574,12 @@ class GEIHDownloader(DescargadorANDA):
 
     def run_pipeline(self, target_years=None, limit_files: int = None) -> list[str]:
         """Descarga todos los años o los seleccionados. Devuelve lo que no se pudo bajar o extraer."""
-        catalogs = self.discover_catalogs()
+        verificados = EMPALME_CATALOGS if self.is_empalme else KNOWN_CATALOGS
+        # Si todos los años pedidos tienen catálogo verificado, la búsqueda no cambiaría nada (lo verificado gana)
+        if target_years is not None and {str(y) for y in target_years} <= set(verificados):
+            catalogs = dict(verificados)
+        else:
+            catalogs = self.discover_catalogs()
 
         years_to_process = sorted(catalogs.keys(), key=lambda y: int(y))
         self.fallidos, self._reemplazadas = [], set()

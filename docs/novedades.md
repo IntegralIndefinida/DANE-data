@@ -17,6 +17,9 @@
 
 **Mejoras**
 
+* {dd}`geih.download()` y {dd}`eam.download()` ya no consultan el buscador del ANDA (en la EAM, 13 páginas de
+  catálogos) cuando todos los años pedidos tienen catálogo verificado: lo que encontraba no cambiaba nada, porque lo
+  verificado gana. La descarga empieza antes y le pide menos al DANE.
 * {dd}`geih.download()` y {dd}`geih.load()` incluyen dos módulos de la GEIH que antes se descartaban: `otros_ingresos`
   (ingresos no laborales: arriendos, pensiones, ayudas de otros hogares y del gobierno, intereses, cesantías y, desde
   2022, impuestos) y `migracion` (lugar de nacimiento y de residencia hace 12 meses y hace 5 años, desde 2022). Las

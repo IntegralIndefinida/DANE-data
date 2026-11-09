@@ -515,6 +515,18 @@ def test_descubrir_catalogos_geih(tmp_path):
     assert len(dl.session.pedidos) == 2
 
 
+@pytest.mark.parametrize("clase", [GEIHDownloader, EAMDownloader])
+def test_sin_busqueda_si_los_anios_estan_verificados(tmp_path, clase):
+    """Con todos los años pedidos en el catálogo verificado, la búsqueda del ANDA no cambiaría nada: no se hace."""
+    dl, procesados = clase(base_dir=tmp_path), []
+    dl.session = _ANDA({})
+    dl.process_year = lambda anio, *a, **k: procesados.append(anio)
+    dl.run_pipeline(target_years=[2024])
+    assert procesados == ["2024"] and dl.session.pedidos == []
+    dl.run_pipeline(target_years=[2099])                     # un año sin catálogo verificado sí se busca
+    assert dl.session.pedidos
+
+
 def test_descubrir_catalogos_empalme_y_sin_conexion(tmp_path):
     from dane_data.geih.downloader import EMPALME_CATALOGS, KNOWN_CATALOGS
 
