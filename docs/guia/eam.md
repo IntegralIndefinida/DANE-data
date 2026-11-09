@@ -10,7 +10,7 @@
 ```
 
 Entre 1992 y 2024 cambian el separador de los archivos, las mayúsculas de los nombres y el nombre de la
-variable CIIU (`CIIU2N4`, `ciiu2`, `CIIU`, `ciiu3`, `ciiu4`, `ciiu_4`). `load` deja todos los nombres en
+variable {term}`CIIU` (`CIIU2N4`, `ciiu2`, `CIIU`, `ciiu3`, `ciiu4`, `ciiu_4`). `load` deja todos los nombres en
 minúscula y agrega:
 
 | Variable | Contenido |
@@ -31,7 +31,7 @@ Por defecto se leen las variables comparables entre años (`dd.eam.CORE`):
 ```{include} ../_generado/eam_variables.md
 ```
 
-Los **montos están en miles de pesos corrientes**: el valor agregado total de 2024 suma unos 1,48 × 10¹¹,
+Los **montos están en miles de pesos corrientes**: el {term}`valor agregado` total de 2024 suma unos 1,48 × 10¹¹,
 es decir, unos 148 billones de pesos. Para otras variables use `columns=["c3r10c1", ...]` o
 `columns="all"`, y {dd}`buscar_variable()` con `encuesta="eam"` para encontrarlas.
 
@@ -46,12 +46,12 @@ es decir, unos 148 billones de pesos. Para otras variables use `columns=["c3r10c
 Los códigos de una revisión no corresponden a los de otra: el `sector` «Alimentos» de la Rev. 4 (división
 10) no es el mismo agregado que «Alimentos y bebidas» de la Rev. 3 (división 15). Para comparar sectores
 entre revisiones hace falta una tabla correlativa. Los totales de toda la industria sí se pueden comparar.
-La documentación del ANDA ubica los cambios de revisión en otros años; `dane-data` sigue lo que muestran
+La documentación del {term}`ANDA` ubica los cambios de revisión en otros años; `dane-data` sigue lo que muestran
 los archivos (vea {doc}`diferencias`).
 
 ## Actividad anonimizada
 
-Los totales nacionales y por departamento de los microdatos coinciden con los anexos del DANE. La
+Los totales nacionales y por departamento de los {term}`microdatos` coinciden con los anexos del DANE. La
 composición por actividad, no: para anonimizar, el ANDA publica muchos establecimientos, sobre todo los
 grandes, con el **código residual** de la revisión, «otras industrias manufactureras» (3909, 3699 o
 3290), o con el código **truncado** a 2 o 3 dígitos. Los catálogos no lo explican; se ve al comparar los

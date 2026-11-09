@@ -14,7 +14,7 @@ Indicadores, tablas y gráficas en el navegador, sin escribir código.
 :::
 
 :::{grid-item-card} {octicon}`database` Datos
-Las dos encuestas, dónde quedan los archivos y cómo descargarlos.
+Las tres fuentes, dónde quedan los archivos y cómo descargarlos.
 
 * {doc}`encuestas`
 * {doc}`datos`

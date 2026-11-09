@@ -29,7 +29,7 @@ nac = dd.eevv.load(2025, tipo="nacimientos")
 2  2025    7   Mujer                 Bolívar  3.000 a 3.499      False  De 25 a 29 años     True
 ```
 
-Algunos ZIP del ANDA traen varios años (2008–2011, 2012–2013, 2017–2018): pedir un solo año baja el paquete entero, aunque
+Algunos ZIP del {term}`ANDA` traen varios años (2008–2011, 2012–2013, 2017–2018): pedir un solo año baja el paquete entero, aunque
 se extrae solo el año pedido. Los nacimientos de 2008–2011 pesan 192 MB.
 
 Un año de nacimientos tiene hasta 750 000 filas, pero ocupa unos 40 MB en memoria y carga en unos 2 segundos. Para series
@@ -110,7 +110,7 @@ fetales no hay bajo peso ni prematuros: casi todas son abortos de menos de 22 se
 6  2025       284254           4526.0      2988.0     200.0             151.0     15003.0
 ```
 
-`maternas` son las muertes maternas de la razón de mortalidad materna del DANE: causa básica del capítulo O de la CIE-10, salvo
+`maternas` son las muertes maternas de la razón de mortalidad materna del DANE: {term}`causa básica` del capítulo O de la CIE-10, salvo
 O96 (tardías, de 43 días a un año) y O97 (secuelas). Los cuadros 7 y 8 de defunciones maternas del DANE sí cuentan todo el
 capítulo: en 2025 son 355, de las que 200 entran en la razón, 151 son tardías (`maternas_tardias`) y 4 son secuelas.
 
@@ -180,7 +180,7 @@ Cada tasa sigue su ficha técnica del DANE (*Fichas técnicas de indicadores EEV
 * **Mortalidad infantil y neonatal**: defunciones de menores de un año, y de 0 a 27 días, por 1.000 nacidos vivos. Antes de
   1998 la neonatal queda vacía, porque los grupos de edad juntan de 7 a 29 días.
 * **Mortalidad perinatal**: mortinatos y defunciones de 0 a 6 días, por 1.000 nacidos vivos más mortinatos. Un mortinato
-  es una defunción fetal de 22 semanas o más, o de 500 gramos o más. Los microdatos agrupan el peso desde «menos de 1.000
+  es una defunción fetal de 22 semanas o más, o de 500 gramos o más. Los {term}`microdatos` agrupan el peso desde «menos de 1.000
   gramos», así que `mortinato` solo confirma el peso desde 1.000 y queda vacío sin gestación y con menos de 1.000 gramos
   (2 309 de las 19 620 defunciones fetales de 2025): la tasa puede quedar algo por debajo de la del DANE. Las demás
   defunciones fetales, la mayoría de menos de 22 semanas, son abortos y no entran.

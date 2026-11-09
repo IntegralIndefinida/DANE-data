@@ -24,9 +24,9 @@ terminal (o `Ctrl+C`). Si no tiene Python, use los lanzadores del zip para estud
 | Página | Qué hace |
 |---|---|
 | Inicio | Explica las encuestas, muestra qué datos hay descargados y configura las carpetas |
-| Indicadores laborales | TD, TGP, TO, informalidad e ingresos, por sexo, edad, zona, educación o departamento; anual o mensual; con filtros |
+| Indicadores laborales | {term}`TD`, {term}`TGP`, TO, informalidad e ingresos, por sexo, edad, zona, educación o departamento; anual o mensual; con filtros |
 | Tablas y microdatos | Tablas ponderadas a la medida, distribución de ingresos frente al salario mínimo, vista de los microdatos y exportación a CSV |
-| Indicadores industriales | Producción, valor agregado, empleo, productividad y participación laboral por sector o departamento |
+| Indicadores industriales | Producción, {term}`valor agregado`, empleo, productividad y participación laboral por sector o departamento |
 | Panel y microdatos EAM | Panel de establecimientos (balanceado o no), supervivencia y exportación |
 | Nacimientos y defunciones | Indicadores de los tres certificados, tasas sobre la población y causas de muerte |
 | Descargar datos | Elige encuesta y años y descarga, con barra de progreso y botón para cancelar |

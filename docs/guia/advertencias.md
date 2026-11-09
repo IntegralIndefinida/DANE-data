@@ -6,4 +6,4 @@
 ```
 
 Vea también {doc}`ponderacion` (tamaños de muestra y promedios mensuales) y {doc}`encuestas` (marcos
-muestrales y serie de empalme).
+muestrales y {term}`serie de empalme`).

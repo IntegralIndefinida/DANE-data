@@ -1,6 +1,6 @@
 # Las encuestas
 
-`dane-data` trabaja con tres operaciones estadísticas del DANE cuyos microdatos se publican en el
+`dane-data` trabaja con tres operaciones estadísticas del DANE cuyos {term}`microdatos` se publican en el
 [Archivo Nacional de Datos (ANDA)](https://microdatos.dane.gov.co): la Gran Encuesta Integrada de Hogares
 (GEIH), la Encuesta Anual Manufacturera (EAM) y las Estadísticas Vitales (EEVV).
 
@@ -28,7 +28,7 @@ en una sola tabla de personas:
 | Módulo (`dd.geih.MODULOS`) | Contenido | Archivos del DANE |
 |---|---|---|
 | `caracteristicas` | Sexo, edad, parentesco, educación, salud: una fila por persona | «Características generales», «Personas» |
-| `fuerza` | Quiénes están en edad de trabajar (PET) | «Fuerza de trabajo» |
+| `fuerza` | Quiénes están en edad de trabajar ({term}`PET`) | «Fuerza de trabajo» |
 | `ocupados` | Empleo, ingresos, horas, rama, posición ocupacional | «Ocupados» |
 | `no_ocupados` | Desocupados e inactivos (desde 2022 en un solo archivo) | «No ocupados», «Desocupados», «Inactivos» |
 | `otras` | Otras formas de trabajo y actividades | «Otras actividades y ayudas», «Otras formas de trabajo» |

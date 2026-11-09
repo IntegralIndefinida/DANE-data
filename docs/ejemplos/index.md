@@ -81,6 +81,39 @@ Supervivencia de los identificadores, un panel balanceado y la persistencia de l
 
 ::::
 
+## Para investigar
+
+::::{grid} 1 2 3 3
+:gutter: 3
+:class-container: galeria
+
+:::{grid-item-card} Recetas para investigar
+:img-top: ../_static/galeria/recetas.png
+:img-alt: Recetas para investigar
+:link: recetas
+:link-type: doc
+
+Una ecuación de Mincer ponderada, la descomposición de Oaxaca-Blinder por sexo y una tabla para LaTeX.
+:::
+
+::::
+
+## Estadísticas Vitales
+
+::::{grid} 1 2 3 3
+:gutter: 3
+:class-container: galeria
+
+:::{grid-item-card} Nacimientos y defunciones
+:img-top: ../_static/galeria/vitales.png
+:img-alt: Nacimientos y defunciones
+:link: vitales
+:link-type: doc
+
+La caída de la natalidad, la mortalidad infantil por departamento y los homicidios desde 1981.
+:::
+::::
+
 ## Confiabilidad
 
 ::::{grid} 1 2 3 3
@@ -98,22 +131,6 @@ Cada mes desde 2007 comparado con los anexos oficiales del mercado laboral.
 
 ::::
 
-## Estadísticas Vitales
-
-::::{grid} 1 2 3 3
-:gutter: 3
-:class-container: galeria
-
-:::{grid-item-card} Nacimientos y defunciones
-:img-top: ../_static/galeria/vitales.png
-:img-alt: Nacimientos y defunciones
-:link: vitales
-:link-type: doc
-
-La caída de la natalidad, la mortalidad infantil por departamento y los homicidios desde 1980.
-:::
-::::
-
 ```{toctree}
 :hidden:
 
@@ -124,6 +141,7 @@ informalidad
 salario_minimo
 eam_industria
 eam_panel
+recetas
 vitales
 validacion
 ```

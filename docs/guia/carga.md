@@ -1,6 +1,6 @@
 # Cargar la GEIH
 
-{dd}`geih.load()` carga los microdatos: devuelve un `DataFrame` de pandas con **una fila por persona y
+{dd}`geih.load()` carga los {term}`microdatos`: devuelve un `DataFrame` de pandas con **una fila por persona y
 mes**, los módulos ya unidos y las {doc}`variables armonizadas <variables>`.
 
 ```python
@@ -68,7 +68,7 @@ Para cada mes:
 
 1. **Encuentra los archivos** ({dd}`geih.find_months()`): reconoce el mes en el nombre de la carpeta,
    busca en subcarpetas, clasifica cada archivo por módulo y dominio y se queda con el total nacional
-   (Cabecera + Resto).
+   ({term}`Cabecera` + {term}`Resto`).
 2. **Une los módulos** ({dd}`geih.load_month()`): parte de características generales (una fila por
    persona) y le agrega las columnas nuevas de los demás módulos con la llave de persona; vivienda se une
    con la llave de hogar. Detecta solo el separador, la codificación, la coma decimal y las celdas en
@@ -95,12 +95,30 @@ cada mes. Para cargarlos de todas formas (por ejemplo, si solo necesita variable
 `incluir_incompletos=True`. También se omiten los meses cuyos archivos tienen los
 {ref}`defectos conocidos del ANDA <archivos-danados>`.
 
+Si al mes le falta un módulo que no hace falta para los indicadores (como vivienda u otros ingresos), no se omite,
+pero `load` avisa cuando los demás meses de su año sí lo traen, porque sus variables quedan vacías en ese mes (hasta
+2021, también si al módulo le falta la parte Cabecera o Resto):
+
+```text
+Meses sin módulos, o sin una de sus partes, que sí traen los demás meses de su año; sus variables quedan vacías en
+esos meses: no_ocupados, otras, otros_ingresos, vivienda en Marzo 2020, Abril 2020; otras, otros_ingresos, vivienda
+en Mayo 2020, Junio 2020, Julio 2020. De marzo a julio de 2020 es el formulario reducido del operativo telefónico
+del DANE (la condición de actividad sale igual, de las marcas de Características); en otro mes, vuelva a
+descargarlo con dane_data.geih.download(...).
+```
+
+De marzo a julio de 2020 es así en los archivos del DANE. En otro mes, quiere decir que falta algo en la descarga.
+Si ningún mes de un año trae `otros_ingresos` o `migracion`, porque se bajaron con una versión anterior de
+`dane-data` que no los extraía, el aviso da el comando para bajarlos.
+
 ## La caché
 
 La caché de cada mes se invalida sola si cambia algún archivo del mes (tamaño o fecha), las columnas o
-módulos pedidos, o la versión de la armonización. Nunca hace falta borrarla para tener resultados
-correctos; {dd}`geih.clear_cache()` sirve para liberar espacio. La carpeta se puede cambiar con la variable
-de entorno `XDG_CACHE_HOME`.
+módulos pedidos, o el código de `dane-data` que lee y une los archivos. La armonización se hace después de leer
+la caché, así que un cambio en ella no obliga a leer de nuevo los archivos del DANE. Nunca hace falta borrarla
+para tener resultados correctos: los archivos que no se usan en 90 días se borran solos (vea {doc}`series_largas`),
+y {dd}`geih.clear_cache()` sirve para liberar espacio antes. La carpeta se puede cambiar con la variable de
+entorno `XDG_CACHE_HOME`.
 
 ## Un mes, paso a paso
 

@@ -52,8 +52,9 @@ dd.eevv.download(2025)                  # los tres certificados de las Estadíst
 dd.eevv.download(tipos="defunciones")   # todas las defunciones, 1979–2025
 ```
 
-{dd}`geih.download()` y {dd}`eam.download()` buscan los archivos en el catálogo del ANDA de cada año, bajan
-los ZIP y extraen los módulos. Las descargas son **incrementales**:
+{dd}`geih.download()` y {dd}`eam.download()` buscan los archivos en el catálogo del {term}`ANDA` de cada año, bajan
+los ZIP y extraen los módulos. {dd}`eevv.download()` no busca en el ANDA: tiene una tabla fija con los archivos de cada
+año y certificado (los años están en `dd.eevv.ANIOS_DISPONIBLES`). Las descargas son **incrementales**:
 
 * Al terminar un mes se escribe un marcador (`.dane_data_ok`) que registra qué módulos se extrajeron. Una
   descarga posterior salta los meses que ya tienen esos módulos. Si al mes le falta algo (el ZIP del DANE no
@@ -92,7 +93,7 @@ Algunos CSV que publica el ANDA no se pueden usar:
 
 | Año | Problema del CSV | Qué baja `dane-data` |
 |---|---|---|
-| 2008 y 2011 | El factor de expansión perdió el punto decimal (`849.491.032.387.525` es 84,949…) | La versión TXT del mismo catálogo |
+| 2008 y 2011 | El {term}`factor de expansión` perdió el punto decimal (`849.491.032.387.525` es 84,949…) | La versión TXT del mismo catálogo |
 | Septiembre de 2021 | Separado por espacios, que también aparecen dentro del texto | La versión Stata del mismo catálogo |
 
 Si los datos se descargaron con una versión anterior a la 0.2.0, esos meses quedan con el CSV dañado:
