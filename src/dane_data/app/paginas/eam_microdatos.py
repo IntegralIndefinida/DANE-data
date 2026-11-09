@@ -27,7 +27,8 @@ with tab1:
     )
     sup = dd.eam.supervivencia(eam)
     if len(sup):
-        grafico(linea(sup, x="anio", y="pct_siguen", titulo_y="% que reaparece al año siguiente", pct=True))
+        grafico(linea(sup, x="anio", y="pct_siguen", pct=True), "Establecimientos que reaparecen al año siguiente (%)",
+                "eam", descripcion)
         st.caption("Caídas bruscas suelen indicar cambios de identificador o de cobertura, no cierres reales.")
     bal = st.toggle("Panel balanceado")
     sin_micro = st.toggle(
@@ -49,7 +50,9 @@ with tab1:
     c[1].metric("Años", pan.index.get_level_values("anio").nunique())
     c[2].metric("Observaciones", f"{fmt_num(len(pan))}")
     por_anio = pan.reset_index().groupby("anio").size().rename("establecimientos").reset_index()
-    grafico(barras(por_anio, x="anio", y="establecimientos", titulo_y="Establecimientos"))
+    grafico(barras(por_anio, x="anio", y="establecimientos"), "Establecimientos en el panel, por año", "eam",
+            ("Panel balanceado" if bal else "Panel completo") + (", sin microagregados" if sin_micro else "")
+            + f" · {descripcion}")
     if st.toggle("Preparar panel para descargar", key="pan_dl"):
         botones_descarga(pan.reset_index(), f"panel_eam{'_balanceado' if bal else ''}", "pan")
     codigo(f'''

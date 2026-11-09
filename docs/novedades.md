@@ -63,6 +63,10 @@
   salario mínimo va en color y los demás en gris.
 * Las gráficas de líneas marcan cada dato con un punto solo si son pocos (24 o menos por línea): en una serie mensual
   larga, los puntos tapaban la línea.
+* Cada gráfica de la aplicación lleva adentro su título, el período y los filtros, y la fuente («Fuente: DANE, GEIH.
+  Cálculos con dane-data»); en las Estadísticas Vitales, que son hechos registrados sin ajuste por subregistro. Así la
+  imagen que se descarga con el botón de la cámara sirve sola en una tesis o un informe, y sale con el triple de
+  resolución. La barra de herramientas de las gráficas deja solo descargar y volver a la vista inicial.
 
 ## 0.4.0 (2 de noviembre de 2026)
 

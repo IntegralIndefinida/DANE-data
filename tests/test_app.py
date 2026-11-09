@@ -232,6 +232,19 @@ def test_por_departamento_abre_en_trimestre_movil(geih_root, tmp_path, monkeypat
     assert "Trimestre móvil" not in next(r for r in at.radio if r.label == "Frecuencia").options
 
 
+def test_la_grafica_lleva_titulo_y_fuente(geih_root, tmp_path, monkeypatch):
+    """La imagen que se descarga (botón de la cámara) debe servir sola en una tesis: título, período y fuente."""
+    monkeypatch.setitem(dd.config._session, "geih", geih_root)
+    monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
+    at = AppTest.from_file(str(PAGINAS / "geih_mercado.py"), default_timeout=60).run()
+    figura = json.loads(at.get("plotly_chart")[0].proto.spec)
+    assert "Tasa de desocupación (TD)" in figura["layout"]["title"]["text"]
+    assert "Fuente: DANE, GEIH" in figura["layout"]["annotations"][-1]["text"]
+    assert not figura["layout"]["yaxis"].get("title", {}).get("text")      # el título ya dice qué se mide
+    config = json.loads(at.get("plotly_chart")[0].proto.config)
+    assert config["toImageButtonOptions"]["scale"] == 3
+
+
 def test_aviso_cuando_los_anios_mezclan_marcos(geih_root, tmp_path, monkeypatch):
     monkeypatch.setitem(dd.config._session, "geih", geih_root)
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")

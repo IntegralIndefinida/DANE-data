@@ -63,7 +63,8 @@ SOLO_POR_SEXO = {"tasa_mortalidad", "mortalidad_infantil", "mortalidad_neonatal"
 TITULO = {"defunciones": "Defunciones", "nacimientos": "Nacimientos", "fetales": "Defunciones fetales"}
 
 
-def serie(res: pd.DataFrame, columna: str, por: str | None, tipo_valor: str, titulo: str) -> None:
+def serie(res: pd.DataFrame, columna: str, por: str | None, tipo_valor: str, titulo: str, subtitulo: str,
+          fuente: str) -> None:
     """Gráfico de la variable por año, o por grupo en el único año elegido."""
     g = res[res[columna].notna()].copy()
     todos = None
@@ -75,14 +76,15 @@ def serie(res: pd.DataFrame, columna: str, por: str | None, tipo_valor: str, tit
         st.info("Esta variable no existe en los años elegidos.")
         return
     if por and g["anio"].nunique() == 1:
-        grafico(barras(g, x=por, y=columna, titulo_y=titulo, pct=tipo_valor == "pct", horizontal=True))
+        grafico(barras(g, x=por, y=columna, pct=tipo_valor == "pct", horizontal=True),
+                f"{titulo}, {g['anio'].iloc[0]}", fuente, subtitulo)
         return
     if por and g[por].nunique() > MAX_SERIES:
         orden = g.groupby(por)[columna].sum().sort_values(ascending=False).index.tolist()
         elegidos = st.multiselect(f"Hay {len(orden)} grupos; elija hasta {MAX_SERIES}", orden, default=orden[:5],
                                   max_selections=MAX_SERIES, placeholder="Elija los grupos")
         g = g[g[por].isin(elegidos)]
-    grafico(linea(g, x="anio", y=columna, color=por, titulo_y=titulo, pct=tipo_valor == "pct", todos=todos))
+    grafico(linea(g, x="anio", y=columna, color=por, pct=tipo_valor == "pct", todos=todos), titulo, fuente, subtitulo)
 
 
 vistas = ["Indicadores", "Tasas sobre la población"] + (["Causas de muerte"] if tipo != "nacimientos" else [])
@@ -121,7 +123,8 @@ if vista == "Indicadores":
     columna, tipo_valor = VARIABLES[tipo][nombre]
     por = DESAGREGAR[tipo][nombre_por]
     res = indicadores_eevv(anios, tipo, por, filtros, rutas) if por else total
-    serie(res, columna, por, tipo_valor, nombre)
+    serie(res, columna, por, tipo_valor, nombre, (f"Por {nombre_por.lower()} · " if por else "") + sel["descripcion"],
+          "eevv")
     if tipo != "defunciones" and columna == "pct_prematuro":
         st.caption(dd.eevv.GLOSARIO["Prematuro"])
     if columna.startswith("pct_bajo_peso"):
@@ -155,7 +158,8 @@ elif vista == "Tasas sobre la población":
     res = tasas_eevv(anios, por, rutas)
     if por == "departamento" and min(anios) < 1985:
         st.warning("Las proyecciones por departamento empiezan en 1985: los años anteriores quedan sin tasa.")
-    serie(res, columna, por, "numero", nombre)
+    serie(res, columna, por, "numero", nombre,
+          f"{'Por ' + nombre_por.lower() if por else 'Total nacional'} · {anios[0]}–{anios[-1]}", "tasas")
     with st.expander("Tabla completa", icon=":material/table:"):
         st.dataframe(res, hide_index=True, width="stretch",
                      column_config={"anio": st.column_config.NumberColumn("Año", format="%d")})
@@ -181,7 +185,8 @@ else:
         st.warning("Ningún certificado cumple los filtros elegidos.")
         st.stop()
     primeras = res.nlargest(n, "n").assign(causa=lambda d: d["causa_105_nombre"].astype(str))
-    grafico(barras(primeras, x="causa", y="n", titulo_y=f"{TITULO[tipo]} en {anio}", horizontal=True))
+    grafico(barras(primeras, x="causa", y="n", horizontal=True), f"Las {n} primeras causas, {TITULO[tipo].lower()} {anio}",
+            "eevv", " · ".join(["Lista Colombia 105", *sel["descripcion"].split(" · ")[1:]]))
     st.caption(f"Lista Colombia 105, disponible en toda la serie. Las {n} primeras suman el "
                f"**{fmt_pct(100 * primeras['n'].sum() / res['n'].sum())}** de {fmt_grande(res['n'].sum())} {TITULO[tipo].lower()}.")
     with st.expander("Tabla completa", icon=":material/table:"):

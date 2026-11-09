@@ -89,9 +89,10 @@ with tab1:
     filas = c2.selectbox("Filas", list(CATEGORICAS), index=2)
     cols_opts = ["(ninguna)"] + [k for k in CATEGORICAS if k != filas]
     columnas_tabla = c3.selectbox("Columnas / comparar por", cols_opts, index=cols_opts.index("Año"))
-    variable = None
+    variable = nombre_var = None
     if estad in ("Promedio de…", "Mediana de…"):
-        variable = NUMERICAS[st.selectbox("Variable", list(NUMERICAS))]
+        nombre_var = st.selectbox("Variable", list(NUMERICAS))
+        variable = NUMERICAS[nombre_var]
 
     f, c = CATEGORICAS[filas], (CATEGORICAS[columnas_tabla] if columnas_tabla != "(ninguna)" else None)
     por = [c, f] if c else [f]
@@ -111,7 +112,11 @@ with tab1:
                          todos=t[c])
         else:
             fig = barras(g, x=f, y=est, pct=est == "porcentaje", horizontal=g[f].nunique() > 8)
-        grafico(fig)
+        que = {"porcentaje": "Distribución (%)", "total": "Número de personas",
+               "media": f"Promedio de {nombre_var.lower() if variable else ''}",
+               "mediana": f"Mediana de {nombre_var.lower() if variable else ''}"}[est]
+        grafico(fig, f"{que} por {filas.lower()}" + (f" y {columnas_tabla.lower()}" if c else ""), "geih",
+                f"{pob} · {sel['descripcion']}")
 
         formato = dict(precision=1 if est == "porcentaje" else 0, decimal=",", thousands=".")  # 58,5 y 24.200.000
         if c:
@@ -159,23 +164,22 @@ with tab2:
         k[2].metric("Ganan ≈ 1 SMLV (±5 %)", fmt_pct(100 * w[(r >= 0.95) & (r <= 1.05)].sum() / w.sum()),
                     help="La acumulación en el mínimo muestra cuánto 'muerde' el salario mínimo.")
 
-        st.markdown("**Distribución de los ocupados según su ingreso en salarios mínimos**")
-        fig = barras(dist, x="Salarios mínimos", y="porcentaje", titulo_y="% de ocupados", pct=True)
+        subtitulo = f"Ocupados con ingreso laboral · {sel['descripcion']}"
+        fig = barras(dist, x="Salarios mínimos", y="porcentaje", pct=True)
         # El tramo del mínimo es el punto de la gráfica (el indicador de arriba): en color, los demás en gris
         fig.update_traces(marker_color=[PALETA[0] if t.startswith("≈") else GRIS for t in dist["Salarios mínimos"]])
-        grafico(fig)
+        grafico(fig, "Ocupados según su ingreso, en salarios mínimos (%)", "geih", subtitulo)
 
-        st.markdown("**Histograma del ingreso / salario mínimo** (hasta 4 SMLV)")
         hist, edges = np.histogram(r[r <= 4], bins=80, weights=w[r <= 4])
         fig = go.Figure(go.Bar(x=(edges[:-1] + edges[1:]) / 2, y=100 * hist / w.sum(), marker_color=PALETA[0],
                                marker_line_width=0,
                                hovertemplate="%{x:.2f} SMLV: %{y:.2f} %<extra></extra>"))
         fig.add_vline(x=1, line_dash="dash", line_width=1.5, line_color="gray",
                       annotation_text="1 salario mínimo", annotation_position="top right")
-        fig = _estilo(fig, "% de ocupados", pct=True)
+        fig = _estilo(fig, pct=True)
         fig.update_layout(bargap=0.05)
         fig.update_xaxes(title="Ingreso laboral / salario mínimo del año")
-        grafico(fig)
+        grafico(fig, "Ocupados por ingreso, hasta 4 salarios mínimos (%)", "geih", subtitulo)
         st.caption("Salario mínimo usado por año: " +
                    ", ".join(f"{a}: {fmt_pesos(dd.SMLV.get(a))}" for a in anios))
         codigo(f'''

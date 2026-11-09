@@ -5,6 +5,7 @@ from __future__ import annotations
 import io
 import logging
 import re
+import textwrap
 import warnings
 from collections import deque
 
@@ -15,6 +16,7 @@ import streamlit as st
 
 import dane_data as dd
 from dane_data.app import _actualizacion
+from dane_data.referencias import strip_accents
 
 # Paleta categórica validada (orden fijo; nunca se recicla). Ver skill dataviz. Es la misma en los dos modos: pasa las
 # pruebas sobre el fondo claro y sobre el oscuro (#1a1a19). Una por modo no sirve: al elegir otro modo en el menú,
@@ -124,7 +126,7 @@ def fmt_grande(x: float) -> str:
 # --------------------------------------------------------------------------- #
 # Gráficos
 # --------------------------------------------------------------------------- #
-def _estilo(fig: go.Figure, titulo_y: str | None = None, pct: bool = False) -> go.Figure:
+def _estilo(fig: go.Figure, pct: bool = False) -> go.Figure:
     fig.update_layout(
         separators=",.",  # decimales con coma y miles con punto (español)
         margin=dict(l=10, r=10, t=40, b=10),
@@ -134,7 +136,7 @@ def _estilo(fig: go.Figure, titulo_y: str | None = None, pct: bool = False) -> g
     )
     fig.update_xaxes(showgrid=False, title=None)
     # Eje desde cero: evita que cambios de décimas parezcan enormes.
-    fig.update_yaxes(gridcolor="rgba(128,128,128,0.18)", zeroline=False, title=titulo_y, rangemode="tozero",
+    fig.update_yaxes(gridcolor="rgba(128,128,128,0.18)", zeroline=False, title=None, rangemode="tozero",
                      ticksuffix=" %" if pct else None, tickformat=",~f")
     return fig
 
@@ -147,8 +149,8 @@ def _valor(eje: str, pct: bool) -> str:
     return f"%{{{eje}:,.1f}} %" if pct else f"%{{{eje}:,.2~f}}"
 
 
-def linea(df: pd.DataFrame, x: str, y: str, color: str | None = None, titulo_y: str | None = None,
-          pct: bool = False, todos: pd.Series | None = None) -> go.Figure:
+def linea(df: pd.DataFrame, x: str, y: str, color: str | None = None, pct: bool = False,
+          todos: pd.Series | None = None) -> go.Figure:
     """``todos``: la columna de grupos original, si ``df`` ya no tiene sus categorías (filtrada o como texto)."""
     df, colores_px = _por_grupo(df, color, todos)
     # Un punto en cada dato solo si son pocos: en una serie mensual larga (240 meses) tapaban la línea
@@ -157,7 +159,7 @@ def linea(df: pd.DataFrame, x: str, y: str, color: str | None = None, titulo_y: 
     # Sin esto, el recuadro repetía la fecha y mostraba el nombre de la columna con seis decimales («td=7,977104 %»)
     fig.update_traces(line=dict(width=2), marker=dict(size=8),
                       hovertemplate=("%{fullData.name}: " if color else "") + _valor("y", pct) + "<extra></extra>")
-    fig = _estilo(fig, titulo_y, pct)
+    fig = _estilo(fig, pct)
     fig.update_layout(hovermode="x unified")
     if pd.api.types.is_integer_dtype(df[x]) or x == "anio":
         fig.update_xaxes(dtick=1 if df[x].nunique() <= 15 else None, tickformat="d")
@@ -166,19 +168,19 @@ def linea(df: pd.DataFrame, x: str, y: str, color: str | None = None, titulo_y: 
     return fig
 
 
-def barras(df: pd.DataFrame, x: str, y: str, color: str | None = None, titulo_y: str | None = None,
-           pct: bool = False, horizontal: bool = False, todos: pd.Series | None = None) -> go.Figure:
+def barras(df: pd.DataFrame, x: str, y: str, color: str | None = None, pct: bool = False, horizontal: bool = False,
+           todos: pd.Series | None = None) -> go.Figure:
     df, colores_px = _por_grupo(df, color, todos)
     if horizontal:
         fig = px.bar(df, y=x, x=y, color=color, orientation="h", barmode="group", **colores_px)
         fig.update_yaxes(categoryorder="total ascending", title=None)
-        fig.update_xaxes(gridcolor="rgba(128,128,128,0.18)", title=titulo_y, ticksuffix=" %" if pct else None,
+        fig.update_xaxes(gridcolor="rgba(128,128,128,0.18)", title=None, ticksuffix=" %" if pct else None,
                          tickformat=",~f")
         fig.update_layout(separators=",.", margin=dict(l=10, r=10, t=40, b=10), legend=dict(orientation="h", y=1.02, title=None),
                           height=max(350, 24 * df[x].nunique() * (df[color].nunique() if color else 1)))
     else:
         fig = px.bar(df, x=x, y=y, color=color, barmode="group", **colores_px)
-        fig = _estilo(fig, titulo_y, pct)
+        fig = _estilo(fig, pct)
     # «Hombre: 58,5 %», con el grupo de color delante si lo hay; no «anio=2025<br>sexo=Hombre<br>porcentaje=58.4567»
     categoria, valor = ("%{y}", _valor("x", pct)) if horizontal else ("%{x}", _valor("y", pct))
     fig.update_traces(marker_line_width=0, hovertemplate=("%{fullData.name} · " if color else "") + categoria + ": "
@@ -198,11 +200,45 @@ _MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agost
           "noviembre", "diciembre"]
 _DIAS = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"]
 LOCALE_ES = {"format": {"months": _MESES, "shortMonths": [m[:3] for m in _MESES], "days": _DIAS,
-                        "shortDays": [d[:3] for d in _DIAS], "date": "%d/%m/%Y"}}
+                        "shortDays": [d[:3] for d in _DIAS], "date": "%d/%m/%Y"},
+             "dictionary": {"Download plot as a png": "Descargar como imagen", "Download plot": "Descargar",
+                            "Reset axes": "Volver a la vista inicial",
+                            "Double-click to zoom back out": "Doble clic para volver a la vista inicial"}}
+# Las imágenes que se descargan (botón de la cámara) llevan la fuente; los rangos de la EEVV, que son hechos registrados.
+# Plotly no parte las líneas largas: las de las fuentes van partidas a mano.
+FUENTES = {
+    "geih": "Fuente: DANE, GEIH. Cálculos con dane-data.",
+    "eam": "Fuente: DANE, EAM. Cálculos con dane-data.",
+    "eevv": "Fuente: DANE, Estadísticas Vitales: hechos registrados,<br>sin ajuste por subregistro. Cálculos con dane-data.",
+    "tasas": "Fuente: DANE, Estadísticas Vitales y proyecciones de población:<br>hechos registrados, sin ajuste por "
+             "subregistro. Cálculos con dane-data.",
+}
 
 
-def grafico(fig: go.Figure) -> None:
-    st.plotly_chart(fig, width="stretch", config={"displaylogo": False, "locale": "es", "locales": {"es": LOCALE_ES}})
+def grafico(fig: go.Figure, titulo: str, fuente: str, subtitulo: str | None = None) -> None:
+    """
+    Dibuja la figura con el título, el subtítulo y la fuente adentro, para que la imagen que se descarga sirva sola en
+    una tesis o un informe. El título dice qué se mide, así que los ejes no repiten su nombre.
+    """
+    # Plotly no parte las líneas: a ~56 caracteres el título, ~90 el subtítulo (el tema de Streamlit lo pone todo en negrita)
+    lineas = [f"<b>{t}</b>" for t in textwrap.wrap(titulo, 56)]
+    lineas += [f"<span style='font-size:12px;font-weight:normal'>{t}</span>" for t in textwrap.wrap(subtitulo or "", 90)]
+    leyenda = sum(1 for t in fig.data if t.showlegend is not False and t.name) > 1
+    arriba = 18 + 20 * len(lineas) + (28 if leyenda else 6)
+    eje_x = 24 if fig.layout.xaxis.title.text else 0
+    texto_fuente = FUENTES[fuente]
+    fig.update_layout(title=dict(text="<br>".join(lineas), x=0, xref="paper", xanchor="left", y=1, yref="container",
+                                 yanchor="top", pad=dict(t=12)),
+                      margin=dict(t=arriba, b=40 + eje_x + 14 * (texto_fuente.count("<br>") + 1)))
+    fig.add_annotation(text=texto_fuente, xref="paper", yref="paper", x=0, y=0, xanchor="left", yanchor="top",
+                       yshift=-(28 + eje_x), showarrow=False, align="left", font=dict(size=11, color=GRIS))
+    archivo = re.sub(r"[^a-z0-9]+", "_", strip_accents(titulo)).strip("_")[:60] or "grafica"
+    st.plotly_chart(fig, width="stretch", config={
+        "displaylogo": False, "locale": "es", "locales": {"es": LOCALE_ES},
+        # Solo descargar la imagen y volver a la vista inicial: el zoom sigue funcionando con el mouse
+        "modeBarButtonsToRemove": ["zoom2d", "pan2d", "select2d", "lasso2d", "zoomIn2d", "zoomOut2d", "autoScale2d"],
+        "toImageButtonOptions": {"format": "png", "scale": 3, "filename": archivo},  # nítida al imprimir
+    })
 
 
 # --------------------------------------------------------------------------- #
@@ -512,7 +548,7 @@ def seleccion_geih(clave: str = "geih", varios_anios: bool = True, ayuda_anios: 
         dptos = st.multiselect("Departamento", sorted(dd.DEPARTAMENTOS.values()), key=f"{clave}_dpto",
                                placeholder="Todos")
 
-    partes = [f"{'empalme ' if empalme else ''}{', '.join(map(str, sorted(anios)))}"]
+    partes = [f"{'empalme ' if empalme else ''}{_rangos(anios)}"]  # «2007–2026», no los 20 años uno por uno
     if meses:
         partes.append(", ".join(dd.MESES[m] for m in sorted(meses)))
     for nombre, val in (("sexo", sexo), ("zona", zona), ("dpto", dptos)):

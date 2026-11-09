@@ -95,13 +95,14 @@ if vista == "Evolución":
         base = g.sort_values("anio").groupby(por)[col].transform("first") if por else g[col].iloc[0]
         g["indice"] = 100 * g[col] / base
         y, titulo = "indice", f"{nombre_var} (índice, {g['anio'].min()} = 100)"
-    grafico(linea(g, x="anio", y=y, color=por, titulo_y=titulo, pct=tipo == "pct", todos=todos))
+    grafico(linea(g, x="anio", y=y, color=por, pct=tipo == "pct", todos=todos), titulo, "eam",
+            (f"Por {nombre_por.lower()} · " if por else "") + descripcion)
 else:
     anio = st.select_slider("Año", sorted(res["anio"].unique()), value=res["anio"].max())
     g = res[res["anio"] == anio]
     if por:
-        grafico(barras(g, x=por, y="_y", titulo_y=nombre_var + (f" ({unidad})" if unidad else ""),
-                       pct=tipo == "pct", horizontal=True))
+        grafico(barras(g, x=por, y="_y", pct=tipo == "pct", horizontal=True),
+                nombre_var + (f" ({unidad})" if unidad else "") + f", {anio}", "eam", f"Por {nombre_por.lower()}")
         if tipo in ("monetaria", "personas", "conteo") and col not in ("productividad_laboral", "remuneracion_media"):
             top = g.sort_values(col, ascending=False).head(3)
             share = 100 * top[col].sum() / g[col].sum()

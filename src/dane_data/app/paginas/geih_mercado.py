@@ -123,21 +123,22 @@ if por and len(grupos) > MAX_SERIES and res[x].nunique() > 1:
 else:
     res_graf = res
 
-titulo = nombre_ind  # sin «(%)»: las marcas del eje ya lo dicen
+titulo = nombre_ind + (" (pesos corrientes)" if col.startswith("ingreso") else "")
+total_txt = "Total de la selección" if sel["filtrada"] else "Total nacional"
+subtitulo = f"{'Por ' + nombre_por.lower() if por else total_txt}, {frecuencia.lower()} · {sel['descripcion']}"
 if res_graf[x].nunique() > 1:
-    fig = linea(res_graf, x=x, y=col, color=por, titulo_y=titulo, pct=es_pct)
+    fig = linea(res_graf, x=x, y=col, color=por, pct=es_pct)
     if por:  # el total en gris, para leer cada grupo contra algo
         nacional = serie(None)
         if not anual:
             nacional["periodo"] = pd.to_datetime(dict(year=nacional["anio"], month=nacional["mes"], day=1))
-        nombre = "Total de la selección" if sel["filtrada"] else "Total nacional"
-        fig.add_scatter(x=nacional[x], y=nacional[col], name=nombre, mode="lines", line=dict(color=GRIS, width=2),
-                        hovertemplate=f"{nombre}: {_valor('y', es_pct)}<extra></extra>")
+        fig.add_scatter(x=nacional[x], y=nacional[col], name=total_txt, mode="lines", line=dict(color=GRIS, width=2),
+                        hovertemplate=f"{total_txt}: {_valor('y', es_pct)}<extra></extra>")
         fig.data = fig.data[-1:] + fig.data[:-1]  # primero en la leyenda
 else:
-    fig = barras(res_graf, x=por or x, y=col, titulo_y=titulo, pct=es_pct,
+    fig = barras(res_graf, x=por or x, y=col, pct=es_pct,
                  horizontal=bool(por) and len(grupos) > 6)
-grafico(fig)
+grafico(fig, titulo, "geih", subtitulo)
 if movil:
     st.caption("Cada punto es el trimestre que termina en ese mes: marzo junta enero, febrero y marzo, como en el "
                "trimestre móvil del DANE. Los niveles son el promedio de los tres meses.")
