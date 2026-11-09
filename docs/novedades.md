@@ -47,6 +47,9 @@
   de *Indicadores laborales* ya no repite «(%)» y las tres tarjetas de *Inicio* tienen la misma altura.
 * En las gráficas de la aplicación, cada grupo conserva su color: al quitar un departamento o un sector de la lista, los
   demás ya no cambian de color.
+* Los grupos que tienen un orden (edades, niveles educativos, años) se dibujan en un solo azul, de claro a oscuro, para que
+  el orden se vea en el color; «Sin información» y «Edad desconocida» van en gris. Con más de seis grupos se usan los
+  colores de siempre, porque más tonos de azul ya no se distinguen.
 
 ## 0.4.0 (2 de noviembre de 2026)
 

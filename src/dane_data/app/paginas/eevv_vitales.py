@@ -3,7 +3,7 @@ import streamlit as st
 
 import dane_data as dd
 from dane_data.app._ui import (MAX_SERIES, args_py, barras, botones_descarga, codigo, conteos_eevv, fmt_grande, fmt_num,
-                               fmt_pct, grafico, grupos_posibles, indicadores_eevv, linea, rutas_actuales, seleccion_eevv, tasas_eevv)
+                               fmt_pct, grafico, indicadores_eevv, linea, rutas_actuales, seleccion_eevv, tasas_eevv)
 
 st.title("Nacimientos y defunciones")
 st.caption("**Estadísticas Vitales del DANE.** Es el registro de los certificados, no una encuesta: no hay factor de "
@@ -66,10 +66,10 @@ TITULO = {"defunciones": "Defunciones", "nacimientos": "Nacimientos", "fetales":
 def serie(res: pd.DataFrame, columna: str, por: str | None, tipo_valor: str, titulo: str) -> None:
     """Gráfico de la variable por año, o por grupo en el único año elegido."""
     g = res[res[columna].notna()].copy()
-    orden = None
+    todos = None
     if por:
         g = g[g[por].notna()]
-        orden = grupos_posibles(g[por])  # antes del texto: con las categorías, un filtro no cambia los colores
+        todos = g[por]  # antes del texto: con las categorías, un filtro no cambia los colores y se sabe si hay orden
         g[por] = g[por].astype(str)
     if g.empty:
         st.info("Esta variable no existe en los años elegidos.")
@@ -82,7 +82,7 @@ def serie(res: pd.DataFrame, columna: str, por: str | None, tipo_valor: str, tit
         elegidos = st.multiselect(f"Hay {len(orden)} grupos; elija hasta {MAX_SERIES}", orden, default=orden[:5],
                                   max_selections=MAX_SERIES, placeholder="Elija los grupos")
         g = g[g[por].isin(elegidos)]
-    grafico(linea(g, x="anio", y=columna, color=por, titulo_y=titulo, pct=tipo_valor == "pct", orden=orden))
+    grafico(linea(g, x="anio", y=columna, color=por, titulo_y=titulo, pct=tipo_valor == "pct", todos=todos))
 
 
 vistas = ["Indicadores", "Tasas sobre la población"] + (["Causas de muerte"] if tipo != "nacimientos" else [])

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import io
 import logging
+import re
 import warnings
 from collections import deque
 
@@ -20,21 +21,39 @@ from dane_data.app import _actualizacion
 # Streamlit no vuelve a dibujar las gráficas y quedaban con los colores del modo anterior.
 PALETA = ["#3987e5", "#d95926", "#199e70", "#c98500", "#d55181", "#008300", "#9085e9", "#e66767"]
 MAX_SERIES = len(PALETA)
+# Grupos con orden (edades, niveles educativos, años): un solo tono, de claro a oscuro, para que el orden se vea en el
+# color. Seis pasos entre el 250 (#86b6ef) y el 600 (#184f95) del azul de la skill dataviz, interpolados en OKLab:
+# validados como ordinales sobre los dos fondos, y no caben más con un salto visible entre vecinos.
+RAMPA = ["#86b6ef", "#70a1dd", "#5a8ccb", "#4477b9", "#2f63a7", "#184f95"]
+GRIS = "#898781"  # «Sin información» y parecidos, que no van en el orden
+SIN_DATO = re.compile(r"desconocid|sin informaci|sin detalle", re.IGNORECASE)
 
 
-def grupos_posibles(s: pd.Series) -> list[str]:
+def _rampa(n: int) -> list[str]:
+    """``n`` tonos de RAMPA, repartidos de punta a punta."""
+    return [PALETA[0]] if n == 1 else [RAMPA[round(i * (len(RAMPA) - 1) / (n - 1))] for i in range(n)]
+
+
+def _grupos_posibles(s: pd.Series) -> list[str]:
     """Todos los grupos de una columna, en su orden: las categorías, aunque los filtros dejen solo algunas."""
     if isinstance(s.dtype, pd.CategoricalDtype):
         return [str(c) for c in s.cat.categories]
     return [str(v) for v in sorted(s.dropna().unique())]
 
 
-def colores(grupos: list[str], universo: list[str]) -> dict[str, str]:
+def colores(grupos: list[str], universo: list[str], ordenados: bool = False) -> dict[str, str]:
     """
     El color de cada grupo sigue al grupo, no a su posición: quitar Antioquia no pinta a Atlántico de otro color.
     Si todos los grupos posibles (``universo``) caben en la paleta, cada uno lleva el de su lugar ahí. Si no caben
     (33 departamentos), cada grupo guarda su color en la sesión mientras siga elegido, y uno nuevo toma el primero libre.
+    Los ``ordenados`` van en RAMPA si caben (si todos los posibles no caben, los tonos se reparten entre los visibles).
     """
+    if ordenados:
+        reales = [g for g in universo if not SIN_DATO.search(g)]
+        base = reales if len(reales) <= len(RAMPA) else [g for g in grupos if g in reales]
+        if len(base) <= len(RAMPA):
+            tonos = dict(zip(base, _rampa(len(base))))
+            return {g: tonos.get(g, GRIS) for g in grupos}
     if len(universo) <= len(PALETA):
         return {g: PALETA[universo.index(g)] for g in grupos}
     memoria = st.session_state.setdefault("colores_grupos", {}).setdefault(tuple(universo), {})
@@ -46,16 +65,18 @@ def colores(grupos: list[str], universo: list[str]) -> dict[str, str]:
     return {g: memoria[g] for g in grupos}
 
 
-def _por_grupo(df: pd.DataFrame, color: str | None, orden: list | None) -> tuple[pd.DataFrame, dict]:
+def _por_grupo(df: pd.DataFrame, color: str | None, todos: pd.Series | None) -> tuple[pd.DataFrame, dict]:
     """``df`` con el grupo como texto, y los colores y el orden de la leyenda para px."""
     if not color:
         return df, {"color_discrete_sequence": PALETA}
-    universo = [str(g) for g in orden] if orden is not None else grupos_posibles(df[color])
+    s = df[color] if todos is None else todos
+    universo = _grupos_posibles(s)
+    ordenados = (isinstance(s.dtype, pd.CategoricalDtype) and bool(s.cat.ordered)) or pd.api.types.is_numeric_dtype(s)
     df = df.assign(**{color: df[color].astype(str)})
     presentes = set(df[color])
     universo += [g for g in sorted(presentes) if g not in universo]
     grupos = [g for g in universo if g in presentes]
-    return df, {"color_discrete_map": colores(grupos, universo), "category_orders": {color: grupos}}
+    return df, {"color_discrete_map": colores(grupos, universo, ordenados), "category_orders": {color: grupos}}
 
 
 # --------------------------------------------------------------------------- #
@@ -124,9 +145,9 @@ def _valor(eje: str, pct: bool) -> str:
 
 
 def linea(df: pd.DataFrame, x: str, y: str, color: str | None = None, titulo_y: str | None = None,
-          pct: bool = False, orden: list | None = None) -> go.Figure:
-    """``orden``: todos los grupos posibles de ``color``, si ``df`` ya no los tiene (p. ej. con el grupo como texto)."""
-    df, colores_px = _por_grupo(df, color, orden)
+          pct: bool = False, todos: pd.Series | None = None) -> go.Figure:
+    """``todos``: la columna de grupos original, si ``df`` ya no tiene sus categorías (filtrada o como texto)."""
+    df, colores_px = _por_grupo(df, color, todos)
     fig = px.line(df, x=x, y=y, color=color, markers=True, **colores_px)
     # Sin esto, el recuadro repetía la fecha y mostraba el nombre de la columna con seis decimales («td=7,977104 %»)
     fig.update_traces(line=dict(width=2), marker=dict(size=8),
@@ -141,8 +162,8 @@ def linea(df: pd.DataFrame, x: str, y: str, color: str | None = None, titulo_y: 
 
 
 def barras(df: pd.DataFrame, x: str, y: str, color: str | None = None, titulo_y: str | None = None,
-           pct: bool = False, horizontal: bool = False, orden: list | None = None) -> go.Figure:
-    df, colores_px = _por_grupo(df, color, orden)
+           pct: bool = False, horizontal: bool = False, todos: pd.Series | None = None) -> go.Figure:
+    df, colores_px = _por_grupo(df, color, todos)
     if horizontal:
         fig = px.bar(df, y=x, x=y, color=color, orientation="h", barmode="group", **colores_px)
         fig.update_yaxes(categoryorder="total ascending", title=None)

@@ -2,7 +2,7 @@ import streamlit as st
 
 import dane_data as dd
 from dane_data.app._ui import (MAX_SERIES, barras, botones_descarga, codigo, fmt_num, fmt_pct, grafico,
-                             grupos_posibles, linea, selector_eam, variacion)
+                             linea, selector_eam, variacion)
 
 st.title("Indicadores de la industria manufacturera")
 eam, descripcion, params = selector_eam(clave="eam")
@@ -84,7 +84,7 @@ if vista == "Evolución":
                            help="Los valores están en pesos corrientes: incluyen inflación. El índice facilita "
                                 "comparar crecimientos entre grupos de distinto tamaño.")
     g = res.copy()
-    orden = grupos_posibles(res[por]) if por else None  # todos, no solo los elegidos: así no cambian de color
+    todos = res[por] if por else None  # todos, no solo los elegidos: así no cambian de color
     if por and g[por].nunique() > MAX_SERIES:
         orden = g.groupby(por)[col].sum().sort_values(ascending=False).index.tolist()
         elegidos = st.multiselect(f"Hay {len(orden)} grupos; elija hasta {MAX_SERIES}", orden, default=orden[:5],
@@ -95,7 +95,7 @@ if vista == "Evolución":
         base = g.sort_values("anio").groupby(por)[col].transform("first") if por else g[col].iloc[0]
         g["indice"] = 100 * g[col] / base
         y, titulo = "indice", f"{nombre_var} (índice, {g['anio'].min()} = 100)"
-    grafico(linea(g, x="anio", y=y, color=por, titulo_y=titulo, pct=tipo == "pct", orden=orden))
+    grafico(linea(g, x="anio", y=y, color=por, titulo_y=titulo, pct=tipo == "pct", todos=todos))
 else:
     anio = st.select_slider("Año", sorted(res["anio"].unique()), value=res["anio"].max())
     g = res[res["anio"] == anio]

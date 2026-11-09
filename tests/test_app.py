@@ -314,14 +314,29 @@ def test_el_color_sigue_al_grupo(monkeypatch):
     monkeypatch.setattr(_ui.st, "session_state", {})
     color = lambda fig: {t.name: t.line.color for t in fig.data}  # noqa: E731
     d = pd.DataFrame({"anio": [2025, 2026] * 3, "v": range(6), "g": ["Antioquia"] * 2 + ["Atlántico"] * 2 + ["Bogotá"] * 2})
-    pocos = ["Antioquia", "Atlántico", "Bogotá"]
-    assert color(_ui.linea(d[d.g != "Antioquia"], "anio", "v", color="g", orden=pocos))["Atlántico"] == _ui.PALETA[1]
-    muchos = pocos + [f"Dpto {i}" for i in range(30)]              # no caben en la paleta: los recuerda la sesión
-    antes = color(_ui.linea(d, "anio", "v", color="g", orden=muchos))
-    despues = color(_ui.linea(d[d.g != "Antioquia"], "anio", "v", color="g", orden=muchos))
+    categorias = lambda nombres: pd.Series(pd.Categorical([], categories=nombres))  # noqa: E731
+    pocos = categorias(["Antioquia", "Atlántico", "Bogotá"])
+    assert color(_ui.linea(d[d.g != "Antioquia"], "anio", "v", color="g", todos=pocos))["Atlántico"] == _ui.PALETA[1]
+    muchos = categorias(["Antioquia", "Atlántico", "Bogotá"] + [f"Dpto {i}" for i in range(30)])  # los recuerda la sesión
+    antes = color(_ui.linea(d, "anio", "v", color="g", todos=muchos))
+    despues = color(_ui.linea(d[d.g != "Antioquia"], "anio", "v", color="g", todos=muchos))
     assert despues == {k: v for k, v in antes.items() if k != "Antioquia"}
-    nuevo = color(_ui.linea(d.replace({"Antioquia": "Dpto 7"}), "anio", "v", color="g", orden=muchos))
+    nuevo = color(_ui.linea(d.replace({"Antioquia": "Dpto 7"}), "anio", "v", color="g", todos=muchos))
     assert nuevo["Dpto 7"] == antes["Antioquia"]                   # el color que quedó libre
+
+
+def test_grupos_ordenados_en_un_solo_tono():
+    """Edades y años van de claro a oscuro; «Sin información» en gris; con más de seis, la paleta de siempre."""
+    from dane_data.app import _ui
+    niveles = ["Ninguno", "Primaria", "Secundaria", "Superior", "Sin información"]
+    s = pd.Series(pd.Categorical(niveles, categories=niveles, ordered=True))
+    df = pd.DataFrame({"x": [1] * 5, "v": range(5), "nivel": s})
+    tonos = {t.name: t.marker.color for t in _ui.barras(df, "x", "v", color="nivel").data}
+    assert [tonos[n] for n in niveles] == _ui._rampa(4) + [_ui.GRIS]
+    anios = pd.DataFrame({"x": ["a", "a"], "v": [1, 2], "anio": [2025, 2026]})  # números: también tienen orden
+    assert [t.marker.color for t in _ui.barras(anios, "x", "v", color="anio").data] == [_ui.RAMPA[0], _ui.RAMPA[-1]]
+    ocho = pd.DataFrame({"x": [1] * 8, "v": range(8), "anio": range(2018, 2026)})
+    assert [t.marker.color for t in _ui.barras(ocho, "x", "v", color="anio").data] == _ui.PALETA
 
 
 def test_recuadro_de_las_barras_sin_nombres_internos():
