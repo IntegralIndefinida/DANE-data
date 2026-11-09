@@ -59,6 +59,8 @@
 * *Indicadores laborales* tiene la frecuencia *Trimestre móvil* ({dd}`geih.trimestre_movil()`), y por departamento abre en
   ella: un departamento en un solo mes tiene poca muestra y la tasa salta mucho. Al desagregar, la gráfica muestra
   también el total en gris, para leer cada grupo contra él.
+* Las barras de las gráficas son más delgadas, con la punta redondeada. En *Ingresos y salario mínimo*, el tramo de un
+  salario mínimo va en color y los demás en gris.
 
 ## 0.4.0 (2 de noviembre de 2026)
 

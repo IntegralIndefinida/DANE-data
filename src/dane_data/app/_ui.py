@@ -178,7 +178,12 @@ def barras(df: pd.DataFrame, x: str, y: str, color: str | None = None, titulo_y:
     categoria, valor = ("%{y}", _valor("x", pct)) if horizontal else ("%{x}", _valor("y", pct))
     fig.update_traces(marker_line_width=0, hovertemplate=("%{fullData.name} · " if color else "") + categoria + ": "
                       + valor + "<extra></extra>")
-    fig.update_layout(bargap=0.25, bargroupgap=0.08)
+    # Barras delgadas (skill dataviz: <= 24 px, con aire alrededor) y punta redondeada de 4 px. Plotly no fija el ancho
+    # en píxeles: el hueco sale de cuántas barras hay, para unos 24 px en una gráfica de ~950 px de ancho. Las horizontales
+    # ya miden 18 px (24 px de alto por barra, menos el hueco).
+    por_grupo = df[color].nunique() if color else 1
+    hueco = 0.25 if horizontal else min(0.9, max(0.2, 1 - 24 * por_grupo * df[x].nunique() / 950))
+    fig.update_layout(bargap=hueco, bargroupgap=0.08, barcornerradius=4)
     return fig
 
 

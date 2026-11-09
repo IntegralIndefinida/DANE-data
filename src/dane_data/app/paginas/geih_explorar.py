@@ -7,7 +7,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 import dane_data as dd
-from dane_data.app._ui import (fmt_num, MAX_SERIES, PALETA, _barra, _estilo, args_py, barras, botones_descarga,
+from dane_data.app._ui import (GRIS, fmt_num, MAX_SERIES, PALETA, _barra, _estilo, args_py, barras, botones_descarga,
                              codigo, fmt_pct, fmt_pesos, frecuencias_geih, grafico, muestra_geih, rutas_actuales,
                              seleccion_geih, tabla_geih)
 
@@ -160,7 +160,10 @@ with tab2:
                     help="La acumulación en el mínimo muestra cuánto 'muerde' el salario mínimo.")
 
         st.markdown("**Distribución de los ocupados según su ingreso en salarios mínimos**")
-        grafico(barras(dist, x="Salarios mínimos", y="porcentaje", titulo_y="% de ocupados", pct=True))
+        fig = barras(dist, x="Salarios mínimos", y="porcentaje", titulo_y="% de ocupados", pct=True)
+        # El tramo del mínimo es el punto de la gráfica (el indicador de arriba): en color, los demás en gris
+        fig.update_traces(marker_color=[PALETA[0] if t.startswith("≈") else GRIS for t in dist["Salarios mínimos"]])
+        grafico(fig)
 
         st.markdown("**Histograma del ingreso / salario mínimo** (hasta 4 SMLV)")
         hist, edges = np.histogram(r[r <= 4], bins=80, weights=w[r <= 4])
