@@ -35,6 +35,11 @@
 
 **Correcciones**
 
+* En octubre y noviembre de 2020 (y septiembre en el empalme), {dd}`geih.download()` no extraía «Desoucpados»,
+  «Inativos» ni «Fuerzo de trabajo», con erratas del DANE en el nombre, y {dd}`geih.load()` no los leía: las variables de
+  esos módulos quedaban vacías en esos meses. Los indicadores no cambian (se comprobó en esos meses), porque 2020
+  trae las marcas de ocupado, desocupado e inactivo en Características. Para tener esos archivos:
+  `dd.geih.download(2020, forzar=True, modules=["desocupados", "inactivos", "fuerza_trabajo"])`, también con `empalme=True`.
 * {dd}`geih.download()`, {dd}`eam.download()` y {dd}`eevv.download()` devuelven como fallo los años que no están en el
   ANDA, y `dane-data descargar` termina con error. Antes solo avisaban en el registro, devolvían una lista vacía y decían
   «finalizada exitosamente» sin haber bajado nada.

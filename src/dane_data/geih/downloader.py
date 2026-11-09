@@ -123,10 +123,11 @@ EMPALME_CATALOGS = {
 MODULE_PATTERNS = {
     "vivienda": ("vivienda", "hogar"),
     "caracteristicas": ("caracteristica", "caracterica", "personas"),
-    "fuerza_trabajo": ("fuerza de trabajo",),
+    # Erratas del DANE en septiembre (empalme), octubre y noviembre de 2020: "Fuerzo de trabajo", "Desoucpados", "Inativos"
+    "fuerza_trabajo": ("fuerza de trabajo", "fuerzo de trabajo"),
     "ocupados": ("ocupados",),
-    "desocupados": ("desocupados", "deocupados"),
-    "inactivos": ("inactivos", "no ocupado"),
+    "desocupados": ("desocupados", "deocupados", "desoucpados"),
+    "inactivos": ("inactivos", "no ocupado", "inativos"),
     "otras_formas_trabajo": ("otras formas de trabajo", "otras actividades"),
     "otros_ingresos": ("otros ingresos",),
     "migracion": ("migracion",),

@@ -75,10 +75,12 @@ _MESES_PREFIJO = {
     "ago": 8, "sep": 9, "set": 9, "oct": 10, "nov": 11, "dic": 12,
 }
 # Nombres de módulo con plural opcional: el DANE publica "No ocupado.CSV" (marzo 2024),
-# "No ocupados.CSV", "Desocupados", la errata "Deocupados", "Ocupados04.csv" (2013), etc.
+# "No ocupados.CSV", "Desocupados", la errata "Deocupados", "Ocupados04.csv" (2013), etc. Octubre y noviembre
+# de 2020 (y septiembre en el empalme) traen además "Desoucpados", "Inativos" y "Fuerzo de trabajo".
 _RE_NO_OCU = re.compile(r"\bno ocupados?(?![a-z])")
-_RE_DESOCU = re.compile(r"\bd(?:e|es)ocupados?(?![a-z])")
-_RE_INACT = re.compile(r"\binactivos?(?![a-z])")
+_RE_DESOCU = re.compile(r"\bd(?:e|es)o(?:cu|uc)pados?(?![a-z])")
+_RE_INACT = re.compile(r"\binac?tivos?(?![a-z])")
+_RE_FUERZA = re.compile(r"\bfuerz[ao] de trabajo")
 _RE_OCU = re.compile(r"\bocupados?(?![a-z])")
 # Formatos de los microdatos. Se baja el CSV salvo donde el del ANDA está dañado (ver
 # CSV_DANADOS en el descargador); dentro de una carpeta se prefiere el formato alterno.
@@ -100,7 +102,7 @@ def classify_file(filename: str) -> tuple[str | None, str | None]:
         modulo = "no_ocupados"
     elif _RE_OCU.search(n):
         modulo = "ocupados"
-    elif "fuerza de trabajo" in n:
+    elif _RE_FUERZA.search(n):
         modulo = "fuerza"
     elif "caracter" in n or "personas" in n:
         modulo = "caracteristicas"
@@ -423,11 +425,11 @@ def _markers(path: Path) -> dict[str, int]:
     las variables OCI/DSI/INI: estar en el archivo de Ocupados es ser ocupado.
     """
     n = strip_accents(path.name)
-    if "fuerza de trabajo" in n:
+    if _RE_FUERZA.search(n):
         return {"_EN_FT": 1}
     if _RE_DESOCU.search(n):
         return {"_EN_DSI": 1}
-    if "inactivos" in n:
+    if _RE_INACT.search(n):
         return {"_EN_INI": 1}
     if _RE_OCU.search(n) and not _RE_NO_OCU.search(n):
         return {"_EN_OCU": 1}
@@ -905,7 +907,7 @@ def _firma_lectura() -> str:
     from .. import __version__
 
     partes = [repr((CORE_RAW, _COMPACTAS, KEYS_PERSONA, KEYS_HOGAR, MODULOS, EXTENSIONES,
-                    _RE_NO_OCU, _RE_DESOCU, _RE_INACT, _RE_OCU))]
+                    _RE_NO_OCU, _RE_DESOCU, _RE_INACT, _RE_OCU, _RE_FUERZA))]
     for codigo in (_io, classify_file, _pick_files, _markers, _read_module, _merge_new_columns, load_month):
         try:
             partes.append(inspect.getsource(codigo))

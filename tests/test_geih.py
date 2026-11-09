@@ -25,6 +25,9 @@ from dane_data.geih.loader import classify_file, month_from_folder
     ("Cabecera - Otros ingresos.csv", ("otros_ingresos", "cabecera")),
     ("Otros ingresos e impuestos.CSV", ("otros_ingresos", None)),
     ("Migración.CSV", ("migracion", None)),
+    ("Desoucpados.CSV", ("no_ocupados", None)),                # erratas de octubre y noviembre de 2020
+    ("Inativos.CSV", ("no_ocupados", None)),
+    ("Fuerzo de trabajo.CSV", ("fuerza", None)),
 ])
 def test_classify_file(name, expected):
     assert classify_file(name) == expected
