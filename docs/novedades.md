@@ -57,6 +57,9 @@
 
 **Correcciones**
 
+* `Abrir dane-data.exe` busca uv solo en las carpetas del `PATH`. Antes miraba primero su propia carpeta y ejecutaba
+  un `uv.exe` que alguien hubiera puesto junto al lanzador, algo que ya evitaba con PowerShell (lo llama por su ruta
+  completa).
 * El lanzador de Mac y Linux instala uv sin cambiar `~/.zshrc`, `~/.bashrc` ni `~/.profile`, como ya hacían los de
   Windows y como dice la sección «Privacidad» del README. Antes, el instalador de uv agregaba ahí `~/.local/bin` al
   `PATH`; si lo usó, vea {doc}`instalacion` para quitar esa línea. Además, abierto sin descomprimir el zip, ahora dice

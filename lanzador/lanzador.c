@@ -47,8 +47,11 @@ static long ejecutar(wchar_t *linea) {
     return (long)codigo;
 }
 
+/* Solo en las carpetas del PATH: con NULL, SearchPathW mira antes la carpeta del .exe, y un uv.exe puesto junto al
+   lanzador se ejecutaría (lo mismo que se evita abajo con la ruta completa de PowerShell). */
 static int buscar_uv(void) {
-    return SearchPathW(NULL, L"uv.exe", NULL, LARGO, ruta, NULL) > 0;
+    DWORD largo = GetEnvironmentVariableW(L"PATH", path, LARGO);
+    return largo > 0 && largo < LARGO && SearchPathW(path, L"uv.exe", NULL, LARGO, ruta, NULL) > 0;
 }
 
 /* Ctrl+C lo atiende la app (cierra Streamlit); el lanzador solo espera a que termine. Un manejador, y no
