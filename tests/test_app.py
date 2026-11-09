@@ -283,6 +283,18 @@ def test_salario_minimo_sin_formula(geih_root, tmp_path, monkeypatch):
     assert texto.count("\\$") == texto.count("$") > 0
 
 
+def test_aviso_si_falta_un_modulo_nuevo(geih_root, tmp_path, monkeypatch):
+    """Datos bajados antes de que dane-data extrajera Migración: se dice cómo bajarla, en vez de una tabla vacía."""
+    (geih_root / "datos_csv" / "2025" / "Enero 2025" / "Migración.CSV").unlink()
+    monkeypatch.setitem(dd.config._session, "geih", geih_root)
+    monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
+    at = AppTest.from_file(str(PAGINAS / "geih_explorar.py"), default_timeout=60).run()
+    assert not any("Migración" in i.value for i in at.info)
+    next(s for s in at.selectbox if s.label == "Filas").set_value("Lugar de nacimiento (desde 2022)").run()
+    assert not at.exception
+    assert any(i.value.startswith("Los datos de 2025 no traen el módulo Migración") for i in at.info)
+
+
 def test_aviso_cuando_los_anios_mezclan_marcos(geih_root, tmp_path, monkeypatch):
     monkeypatch.setitem(dd.config._session, "geih", geih_root)
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")

@@ -27,7 +27,7 @@
   telefónico del DANE, y con meses bajados antes de que dane-data extrajera un módulo. Hasta 2021 también avisa si a
   Vivienda, Otras actividades u Otros ingresos les falta la parte Cabecera o Resto. Si ningún mes de un año trae
   `otros_ingresos` (o, desde 2022, `migracion`), porque se bajó con una versión anterior, avisa y da el comando para
-  bajarlo.
+  bajarlo; la página *Tablas y microdatos* de la aplicación dice cómo bajarlo al elegir una de sus variables.
 * {dd}`tabla()` copia solo las columnas que usa, no todo el DataFrame: con `dd.geih.load(..., columns="all")` ya no
   duplica la memoria.
 * {dd}`geih.download()` y {dd}`eam.download()` ya no bajan la ficha metodológica del ANDA a `<raíz>/metadata/`: nada la

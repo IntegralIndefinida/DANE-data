@@ -8,8 +8,8 @@ import streamlit as st
 
 import dane_data as dd
 from dane_data.app._ui import (GRIS, fmt_num, MAX_SERIES, PALETA, _barra, _estilo, args_py, barras, botones_descarga,
-                             codigo, fmt_pct, fmt_pesos, frecuencias_geih, grafico, muestra_geih, rutas_actuales,
-                             seleccion_geih, tabla_geih)
+                             codigo, disponibles_geih, fmt_pct, fmt_pesos, frecuencias_geih, grafico, muestra_geih,
+                             rutas_actuales, seleccion_geih, tabla_geih)
 
 st.title("Tablas y microdatos GEIH")
 
@@ -32,6 +32,10 @@ CATEGORICAS = {
     "Dónde vivía hace 12 meses (desde 2022)": "residencia_hace_12_meses",
     "Dónde vivía hace 5 años (desde 2022)": "residencia_hace_5_anios",
 }
+# Variables de módulos que dane-data no extraía antes: (módulo, nombre en Descargar datos, primer año que lo trae)
+MODULOS_NUEVOS = {"ingreso_no_laboral": ("otros_ingresos", "Otros ingresos", 2007),
+                  **dict.fromkeys(("lugar_nacimiento", "residencia_hace_12_meses", "residencia_hace_5_anios"),
+                                  ("migracion", "Migración", 2022))}
 NUMERICAS = {
     "Ingreso laboral": "ingreso_laboral", "Ingreso / salario mínimo": "ratio_smlv",
     "Horas trabajadas por semana": "horas_semana", "Edad": "edad", "Ingreso no laboral": "ingreso_no_laboral",
@@ -101,6 +105,15 @@ with tab1:
     por = [c, f] if c else [f]
     est = {"Distribución (%)": "porcentaje", "Número de personas": "total", "Promedio de…": "media",
            "Mediana de…": "mediana"}[estad]
+    # Años bajados con una versión de dane-data que no extraía estos módulos: la tabla salía vacía sin decir por qué
+    av = disponibles_geih(sel["empalme"], rutas_actuales())
+    for modulo, nombre, desde in {MODULOS_NUEVOS[v] for v in (f, c, variable) if v in MODULOS_NUEVOS}:
+        con_modulo = set(av.loc[av["modulos"].str.contains(modulo), "anio"])
+        if sin := [a for a in anios if a >= desde and a not in con_modulo]:
+            st.info(f"Los datos de {', '.join(map(str, sin))} no traen el módulo {nombre}: se bajaron con una versión "
+                    "de dane-data que no lo extraía. Para tenerlo, en *Descargar datos* elija esos años, deje solo "
+                    f"«{nombre}» en *Módulos* y active «Volver a bajar lo que ya está descargado» (en *Opciones "
+                    "avanzadas*).", icon=":material/info:")
     # dropna: sin las personas con valor vacío en filas o columnas (p. ej. la rama de quien no trabaja)
     t = tabla_geih(anios, tuple(por), variable, est, poblacion, dropna=True, **comunes)
 
