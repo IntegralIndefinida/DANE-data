@@ -24,7 +24,7 @@ import pandas as pd
 
 from .. import config
 from ..referencias import MESES
-from ..stats import _as_list, _meses_anotados, peso_mensual_promedio, weighted_quantile
+from ..stats import _as_list, _con_categorias, _meses_anotados, peso_mensual_promedio, weighted_quantile
 from .indicadores import _COLUMNAS, indicadores
 from .loader import (CATEGORIAS, MesGEIH, _firma_archivos, _guardar_parquet, _root, _usado,
                      find_months, load)
@@ -413,8 +413,11 @@ def serie_frecuencias(
         x = d[claves].assign(peso=peso_mensual_promedio(d).to_numpy(), n_muestra=1)
         if variable:
             x = x[x[variable].notna()]
-        return x.groupby(claves, observed=True, dropna=False).agg(
+        res = x.groupby(claves, observed=True, dropna=False).agg(
             peso=("peso", "sum"), n_muestra=("n_muestra", "sum")).reset_index()
+        # Como en tabla: pandas 2 quita aquí el orden de las categorías en algunos años, y al juntarlos con los
+        # demás pandas avisa (FutureWarning) que el resultado dejará de ser categórico
+        return _con_categorias(res, x, claves)
 
     solicitud = {"variable": variable, "por": sorted(por), "poblacion": poblacion, "filtros": filtros or {},
                  "meses": _meses(meses), "columns": columns}

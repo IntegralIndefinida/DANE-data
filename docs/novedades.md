@@ -57,6 +57,9 @@
 
 **Correcciones**
 
+* {dd}`geih.serie_frecuencias()` y {dd}`geih.serie_tabla()` conservan el tipo categórico fijo (con su orden) de cada
+  año. Con pandas 2 (Google Colab), agrupar por varias variables quitaba el orden del nivel educativo en algunos años,
+  y al juntarlos pandas avisaba con un `FutureWarning` que el resultado dejaría de ser categórico.
 * El zip para estudiantes trae `LEEME.txt`, la guía corta para abrir la aplicación y los avisos de Windows y Mac la
   primera vez. Estaba en el repositorio pero nunca entraba al zip, y decía que en Windows se abriera el `.bat` en vez
   de `Abrir dane-data.exe`.

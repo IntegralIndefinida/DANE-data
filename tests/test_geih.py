@@ -447,6 +447,18 @@ def test_trimestre_movil_igual_a_juntar_los_tres_meses(geih_root, por):
         dd.geih.trimestre_movil(esperado)
 
 
+def test_serie_frecuencias_conserva_las_categorias(geih_root, tmp_path, monkeypatch):
+    """Con pandas 2, agrupar por varias llaves con dropna=False quitaba el orden del nivel educativo en un año, y al
+    juntar los años pandas avisaba que el resultado dejaría de ser categórico."""
+    import warnings
+
+    monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", FutureWarning)
+        f = dd.geih.serie_frecuencias([2021, 2025], por=["sexo", "nivel_educativo"], root=geih_root)
+    assert f["nivel_educativo"].dtype == dd.geih.CATEGORIAS["nivel_educativo"]
+
+
 @pytest.mark.parametrize("estadistico", ["media", "mediana"])
 def test_media_por_grupo_sin_ningun_valor(estadistico):
     """Sin nadie con la variable (ingreso_laboral en 2007) la tabla sale vacía; antes fallaba con un TypeError."""
