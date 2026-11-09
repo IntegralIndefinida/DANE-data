@@ -2,6 +2,11 @@
 
 ## Sin publicar
 
+**Al actualizar**
+
+* `dd.geih.MODULE_PATTERNS` ya no existe: el descargador reconoce los módulos con la misma clasificación de nombres
+  que el cargador. Los nombres de los módulos que se pueden pedir siguen en `dd.geih.DEFAULT_MODULES`.
+
 **Nuevo**
 
 * {dd}`geih.trimestre_movil()`: el trimestre móvil de una serie mensual de indicadores, como lo publica el DANE (cada
@@ -49,6 +54,11 @@
 
 **Correcciones**
 
+* {dd}`geih.download()` reconoce los archivos con la misma lista de nombres que {dd}`geih.load()`; antes eran dos
+  listas que había que corregir a la vez. Con `modules=["desocupados"]`, desde 2022 no extraía «No ocupados», que
+  trae a los desocupados y a los inactivos juntos, y avisaba que faltaba el módulo; con `modules=["ocupados"]`
+  extraía también los desocupados. Con los módulos por defecto no cambia nada: se comprobó con los 2720 archivos
+  de todos los ZIP de la GEIH.
 * La documentación de {dd}`weighted_quantile()` y {dd}`tabla()` decía que la mediana es la de `_pctile` de Stata. Lo
   es salvo cuando la masa acumulada llega justo a la mitad: Stata promedia los dos valores del medio y `dane-data` se
   queda con el menor (sin pesos, la mediana de 10, 20, 30 y 40 es 20, no 25). El cálculo no cambia; la documentación

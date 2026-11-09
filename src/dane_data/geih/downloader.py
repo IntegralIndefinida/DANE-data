@@ -22,7 +22,8 @@ from pathlib import Path
 
 from .._hooks import DescargadorANDA, extraer_miembro, sanitize_member_name as _sanitize_comun, url_del_anda, ya_extraido
 from ..referencias import MESES, strip_accents
-from .loader import EXTENSIONES, _pick_files, MesGEIH, month_from_folder
+from .loader import (EXTENSIONES, _RE_DESOCU, _RE_INACT, _RE_NO_OCU, _pick_files, MesGEIH, classify_file,
+                     month_from_folder)
 
 MARCADOR = ".dane_data_ok"  # se escribe tras una extracción exitosa
 
@@ -118,21 +119,12 @@ EMPALME_CATALOGS = {
     "2020": "764",
 }
 
-# Patrones por módulo (nombres normalizados sin tildes). Se aceptan variaciones
-# frecuentes de los nombres publicados por DANE.
-MODULE_PATTERNS = {
-    "vivienda": ("vivienda", "hogar"),
-    "caracteristicas": ("caracteristica", "caracterica", "personas"),
-    # Erratas del DANE en septiembre (empalme), octubre y noviembre de 2020: "Fuerzo de trabajo", "Desoucpados", "Inativos"
-    "fuerza_trabajo": ("fuerza de trabajo", "fuerzo de trabajo"),
-    "ocupados": ("ocupados",),
-    "desocupados": ("desocupados", "deocupados", "desoucpados"),
-    "inactivos": ("inactivos", "no ocupado", "inativos"),
-    "otras_formas_trabajo": ("otras formas de trabajo", "otras actividades"),
-    "otros_ingresos": ("otros ingresos",),
-    "migracion": ("migracion",),
-}
-DEFAULT_MODULES = tuple(MODULE_PATTERNS)
+# Módulos que se pueden pedir. De qué módulo es cada archivo lo decide classify_file, la misma que usa el cargador:
+# una sola lista de nombres y erratas del DANE para bajar y para leer. Antes había otra aquí, y cada errata nueva
+# había que agregarla en las dos (las de octubre y noviembre de 2020 no estaban en ninguna).
+DEFAULT_MODULES = ("vivienda", "caracteristicas", "fuerza_trabajo", "ocupados", "desocupados", "inactivos",
+                   "otras_formas_trabajo", "otros_ingresos", "migracion")
+_MODULO_DESCARGA = {"fuerza": "fuerza_trabajo", "otras": "otras_formas_trabajo"}  # cargador -> descargador
 
 # CSV del ANDA (serie principal) que no se pueden leer bien: para esos meses se baja otro
 # formato del mismo catálogo. Ver README, "Diferencias con la documentación del DANE".
@@ -169,25 +161,21 @@ def _formato(nombre: str) -> str | None:
 
 def is_target_csv(filename: str, modules=DEFAULT_MODULES, extensiones=(".csv",)) -> bool:
     """
-    Si ``filename``, un archivo dentro del ZIP, tiene una de las ``extensiones`` y es de uno de los ``modules`` pedidos
-    (según los patrones de ``MODULE_PATTERNS``). Los módulos que no se usan (``EXCLUDE_MODULE_PATTERNS``: tipo de
-    investigación) nunca cuentan.
+    Si ``filename``, un archivo dentro del ZIP, tiene una de las ``extensiones`` y es de uno de los ``modules`` pedidos.
+    El módulo sale de ``classify_file``, como al cargar. Los módulos que no se usan (``EXCLUDE_MODULE_PATTERNS``: tipo
+    de investigación) nunca cuentan.
     """
     if not filename.lower().endswith(tuple(extensiones)):
         return False
-
-    norm_name = strip_accents(filename)
-
-    # Módulos que no se usan, aunque su nombre traiga uno de los patrones
-    if any(ex in norm_name for ex in EXCLUDE_MODULE_PATTERNS):
+    n = strip_accents(Path(filename).name)
+    if any(ex in n for ex in EXCLUDE_MODULE_PATTERNS):
         return False
-
-    # Debe contener alguno de los patrones de los módulos objetivo
-    return any(
-        pattern in norm_name
-        for module in modules
-        for pattern in MODULE_PATTERNS[module]
-    )
+    modulo = classify_file(filename)[0]
+    if modulo == "no_ocupados":  # desde 2022, «No ocupados» trae a los desocupados y a los inactivos juntos
+        junto = bool(_RE_NO_OCU.search(n))
+        return (("desocupados" in modules and (junto or bool(_RE_DESOCU.search(n))))
+                or ("inactivos" in modules and (junto or bool(_RE_INACT.search(n)))))
+    return _MODULO_DESCARGA.get(modulo, modulo) in modules
 
 
 def sanitize_member_name(raw_name: str) -> str:
@@ -220,8 +208,8 @@ class GEIHDownloader(DescargadorANDA):
         modules = DEFAULT_MODULES if modules is None else tuple(modules)
         if not modules:
             raise ValueError("modules está vacío: elija al menos un módulo, o None para todos.")
-        if desconocidos := [m for m in modules if m not in MODULE_PATTERNS]:
-            raise ValueError(f"Módulos desconocidos: {desconocidos}. Opciones: {list(MODULE_PATTERNS)}.")
+        if desconocidos := [m for m in modules if m not in DEFAULT_MODULES]:
+            raise ValueError(f"Módulos desconocidos: {desconocidos}. Opciones: {list(DEFAULT_MODULES)}.")
         self.modules = modules
 
         self._abrir_sesion()

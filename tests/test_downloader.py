@@ -206,6 +206,19 @@ def test_erratas_de_2020_se_extraen(nombre):
     assert is_target_csv(nombre)
 
 
+@pytest.mark.parametrize("nombre, modulos, esperado", [
+    ("No ocupados.CSV", ["desocupados"], True),       # desde 2022 trae desocupados e inactivos: antes no salía
+    ("No ocupado.CSV", ["inactivos"], True),
+    ("Desocupados.CSV", ["ocupados"], False),         # antes «ocupados» también sacaba los desocupados
+    ("Cabecera - Ocupados (3).csv", ["ocupados"], True),
+    ("Resto - Inactivos.csv", ["desocupados"], False),
+    ("Tipo de investigacion.CSV", list(dd.geih.DEFAULT_MODULES), False),
+])
+def test_modulos_del_archivo_como_al_cargar(nombre, modulos, esperado):
+    """El descargador reconoce los módulos con classify_file, la misma lista de nombres que usa el cargador."""
+    assert is_target_csv(nombre, modulos) is esperado
+
+
 def test_marcador_solo_si_el_mes_quedo_completo(tmp_path):
     """Un ZIP al que le falta un módulo no deja marcador: la próxima descarga lo vuelve a revisar y avisar."""
     dl = FakeDownloader({"Marzo 2024.zip": _mes_2024_con(**{"No ocupados.CSV": None})}, base_dir=tmp_path)

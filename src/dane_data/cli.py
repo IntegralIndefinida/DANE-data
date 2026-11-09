@@ -168,7 +168,7 @@ def _parser() -> argparse.ArgumentParser:
     d = sub.add_parser("descargar", help="Descargar microdatos del DANE")
     d.add_argument("encuesta", choices=["geih", "eam", "eevv"])
     d.add_argument("--anios", nargs="+", type=int, help="Años (por defecto todos)")
-    d.add_argument("--modulos", nargs="+", choices=list(geih.MODULE_PATTERNS), help="Solo GEIH")
+    d.add_argument("--modulos", nargs="+", choices=list(geih.DEFAULT_MODULES), help="Solo GEIH")
     d.add_argument("--empalme", action="store_true", help="GEIH: serie de empalme 2010–2020")
     d.add_argument("--limite", type=int, help="GEIH: máximo de archivos mensuales por año (pruebas)")
     d.add_argument("--tic", action="store_true", help="EAM: incluir módulo TIC 2008–2018")

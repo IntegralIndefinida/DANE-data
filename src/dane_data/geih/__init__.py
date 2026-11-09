@@ -5,8 +5,7 @@ from __future__ import annotations
 import numbers
 from typing import Iterable
 
-from .downloader import (DEFAULT_MODULES, EMPALME_CATALOGS, KNOWN_CATALOGS, MODULE_PATTERNS,
-                         GEIHDownloader)
+from .downloader import (DEFAULT_MODULES, EMPALME_CATALOGS, KNOWN_CATALOGS, GEIHDownloader)
 from .agregados import (POBLACIONES, POR_PRECALCULADOS, VARIABLES_INDICADORES, exportar, filtrar, serie_frecuencias,
                         serie_indicadores, serie_tabla, tabla_de_frecuencias)
 from .indicadores import GLOSARIO, indicadores, trimestre_movil
@@ -118,5 +117,5 @@ __all__ = [
     "serie_indicadores", "trimestre_movil", "serie_tabla", "serie_frecuencias", "tabla_de_frecuencias", "exportar", "filtrar",
     "POBLACIONES", "marco_muestral", "MARCOS", "clear_cache", "GLOSARIO", "MODULOS", "CORE_RAW", "CONDICIONES", "NIVELES_EDUC",
     "GRUPOS_EDAD", "CATEGORIAS", "VARIABLES_INDICADORES", "POR_PRECALCULADOS",
-    "ANIOS_DISPONIBLES", "ANIOS_EMPALME", "MODULE_PATTERNS", "DEFAULT_MODULES",
+    "ANIOS_DISPONIBLES", "ANIOS_EMPALME", "DEFAULT_MODULES",
 ]
