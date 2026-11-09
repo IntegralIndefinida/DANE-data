@@ -156,6 +156,31 @@ diccionario oficial de 2022–2025 repite las categorías anteriores, pero los d
 
 La GEIH de 2007 no trae `INGLABO`, así que `ingreso_laboral` está vacío ese año.
 
+## Otros ingresos y migración
+
+Salen de dos módulos: Otros ingresos, que responde la PET (los archivos del ANDA no lo traen de marzo a
+julio de 2020), y Migración, que responden todas las personas y está en los archivos desde 2022. Donde no
+hay módulo, quedan vacías.
+
+| Variable | Definición | Origen |
+|---|---|---|
+| `ingreso_no_laboral` | Ingreso no laboral mensual de la persona, en pesos corrientes, sin imputar (abajo) | `P7500S1A1`–`P7500S3A1`, `P7510S1A1`–`P7510S3A1`, `P7510S5A1` |
+| `lugar_nacimiento` | Este municipio, Otro municipio, Venezuela u Otro país | `P3373`, `P3373S3` |
+| `residencia_hace_12_meses` | Dónde vivía hace 12 meses: las mismas categorías, más «No había nacido» | `P3384`, `P3384S3` |
+| `residencia_hace_5_anios` | Lo mismo, hace 5 años | `P3382`, `P3382S3` |
+
+`ingreso_no_laboral` suma las fuentes no laborales que el DANE cuenta en la pobreza monetaria: arriendos,
+pensiones y pensión alimenticia del mes pasado, y lo recibido en los últimos doce meses de otros hogares (en
+el país o desde el exterior), de instituciones y por intereses o dividendos, dividido entre 12. No incluye
+las cesantías ni «otras fuentes» (loterías, indemnizaciones, venta de propiedades). Vale 0 para quien
+respondió que no recibió nada, y queda vacío si algún monto es 98 o 99 («no sabe», «no informa»): el 0,8 %
+de la PET en enero de 2024 y el 2,5 % en abril de 2015. **No es el ingreso de la pobreza monetaria del
+DANE**, que imputa los faltantes y desde 2020 completa pensiones y ayudas con registros administrativos.
+
+Venezuela va aparte en las tres variables de lugar porque es más de nueve de cada diez nacidos en otro país
+(en enero de 2024, 2,3 millones de 2,46). El país exacto está en `P3373S3`, `P3384S3` y `P3382S3` (código
+ISO 3166 numérico, por ejemplo 862 para Venezuela; {dd}`describir()` da los nombres).
+
 ## Categorías fijas
 
 Las variables categóricas tienen categorías fijas, en `dd.geih.CATEGORIAS`. Así siguen siendo categóricas

@@ -93,10 +93,11 @@ def geih_root(tmp_path):
     _write(m / "CSV 13" / "No ocupados.CSV", "DIRECTORIO;SECUENCIA_P;ORDEN;DSI;FFT;FEX_C18\n"
                                              "10;1;2;1;;1000.5\n11;1;1;;1;500\n")
     _write(m / "Datos del hogar y la vivienda.CSV", "DIRECTORIO;SECUENCIA_P;P5000;FEX_C18\n10;1;4;1000.5\n11;1;2;500\n")
-    _write(m / "Otros ingresos e impuestos.CSV", "DIRECTORIO;SECUENCIA_P;ORDEN;P7495;FEX_C18\n10;1;1;2;1000.5\n"
-                                                 "11;1;1;1;500\n", encoding="latin-1")
-    _write(m / "Migración.CSV", "DIRECTORIO;SECUENCIA_P;ORDEN;P3373;FEX_C18\n10;1;1;1;1000.5\n10;1;2;3;1000.5\n"
-                                "11;1;1;1;500\n")
+    _write(m / "Otros ingresos e impuestos.CSV", "DIRECTORIO;SECUENCIA_P;ORDEN;P7495;P7505;P7510S3A1;FEX_C18\n"
+                                                 "10;1;1;2;2;;1000.5\n11;1;1;2;1;1200000;500\n", encoding="latin-1")
+    # El "." es el faltante del DANE en las subpreguntas de Migración
+    _write(m / "Migración.CSV", "DIRECTORIO;SECUENCIA_P;ORDEN;P3373;P3373S3;FEX_C18\n10;1;1;1;.;1000.5\n"
+                                "10;1;2;3;862;1000.5\n11;1;1;2;.;500\n")
 
     # --- 2011: el CSV del ANDA perdió el punto decimal del factor; el TXT del mismo catálogo está bien
     for carpeta, sep, fex in (("Marzo_csv", ";", ("849.491.032.387.525", "107.845.157.267.357")),

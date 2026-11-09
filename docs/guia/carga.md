@@ -59,7 +59,7 @@ dos formas de cambiarlo:
   `anio` y `mes` se conservan siempre. Una variable del DANE fuera del núcleo hay que pedirla en los dos
   lugares: `columns=["P6500"], variables=["fex", "P6500"]`.
 
-Como referencia, el primer trimestre de 2024 ocupa 80 MB con las variables por defecto y 7 MB con
+Como referencia, el primer trimestre de 2024 ocupa 105 MB con las variables por defecto y 7 MB con
 `variables=["fex", "sexo", "ocupado", "ingreso_laboral"]`.
 
 ## Qué hace `load` por dentro
@@ -112,6 +112,6 @@ Las piezas de `load` también son públicas, por si se necesita controlar cada p
 (2024, 1, ['caracteristicas', 'fuerza', 'migracion', 'no_ocupados', 'ocupados', 'otras', 'otros_ingresos', 'vivienda'])
 >>> crudo = dd.geih.load_month(meses[0])     # variables del DANE, sin armonizar
 >>> crudo.shape
-(70648, 46)
+(70648, 61)
 >>> df = dd.geih.harmonize(crudo)            # + variables armonizadas
 ```

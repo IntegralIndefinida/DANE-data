@@ -11,6 +11,11 @@
   a julio de 2020 el DANE no publicó Otros ingresos, y Migración empieza en 2022. En los meses ya descargados cuyo ZIP sigue en `raw_zips/`, la próxima descarga los
   saca de ese ZIP sin bajar nada; si los ZIP se borraron, use `forzar=True` con `modules=["otros_ingresos",
   "migracion"]`. Cada año ocupa unos 100 a 160 MB más. La caché de cada mes se vuelve a crear una vez.
+* Variables armonizadas nuevas en {dd}`geih.load()`: `ingreso_no_laboral` (arriendos, pensiones, pensión alimenticia,
+  ayudas de hogares y de instituciones, e intereses y dividendos, por mes y sin imputar: las fuentes que el DANE cuenta en
+  la pobreza monetaria), `lugar_nacimiento`, `residencia_hace_12_meses` y `residencia_hace_5_anios` (este municipio,
+  otro municipio, Venezuela u otro país; desde 2022). `load` lee 15 variables más del DANE: el primer trimestre de 2024
+  pasa de 80 a 105 MB con las variables por defecto.
 * {dd}`tabla()` copia solo las columnas que usa, no todo el DataFrame: con `dd.geih.load(..., columns="all")` ya no
   duplica la memoria.
 * {dd}`geih.download()` y {dd}`eam.download()` ya no bajan la ficha metodológica del ANDA a `<raíz>/metadata/`: nada la

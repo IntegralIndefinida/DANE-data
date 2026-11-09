@@ -62,6 +62,8 @@ with st.expander("Variables armonizadas por dane-data (iguales en todos los año
 | `posicion_ocupacional` | P6430 con etiquetas |
 | `nivel_educativo` | Ninguno / Primaria / Secundaria / Media / Superior (P3042 o P6210) |
 | `rama2d`, `rama_rev` | Rama de actividad a 2 dígitos y su revisión CIIU (3 o 4) |
+| `ingreso_no_laboral` | Arriendos, pensiones, ayudas e intereses, por mes y sin imputar (módulo Otros ingresos) |
+| `lugar_nacimiento`, `residencia_hace_12_meses`, `residencia_hace_5_anios` | Este municipio / Otro municipio / Venezuela / Otro país (módulo Migración, desde 2022) |
 """)
     elif clave.startswith("eevv_"):
         st.dataframe([{"variable": k, "descripción": v} for k, v in dd.eevv.ETIQUETAS[clave.removeprefix("eevv_")].items()],

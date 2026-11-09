@@ -157,13 +157,28 @@ def test_new_era_and_nested_folder(geih_root):
 
 
 def test_otros_ingresos_y_migracion(geih_root):
-    """Los dos módulos se unen por persona (hasta 2021, Cabecera + Resto); sin pedir sus variables no agregan nada."""
-    df = dd.geih.load([2016, 2025], root=geih_root, cache=False, columns=["P7495", "P7500S1A1", "P3373"])
+    """Los dos módulos se unen por persona (hasta 2021, Cabecera + Resto) y de ellos salen las variables nuevas."""
+    df = dd.geih.load([2016, 2025], root=geih_root, cache=False)
     p = df.set_index(["anio", "DIRECTORIO", "ORDEN"])
-    assert p["P7500S1A1"].dropna().to_dict() == {(2016, 1, 1): 800000, (2016, 3, 1): 150000}
-    assert p.loc[(2025, 11, 1), "P7495"] == 1 and p.loc[(2025, 10, 2), "P3373"] == 3
-    nucleo = dd.geih.load([2016, 2025], root=geih_root, cache=False)
-    assert len(nucleo) == len(df) and not {"P7495", "P3373"} & set(nucleo.columns)
+    assert p["ingreso_no_laboral"].dropna().to_dict() == {
+        (2016, 1, 1): 800000, (2016, 2, 1): 0, (2016, 3, 1): 150000, (2025, 10, 1): 0, (2025, 11, 1): 100000}
+    assert p["lugar_nacimiento"].dropna().astype(str).to_dict() == {
+        (2025, 10, 1): "Este municipio", (2025, 10, 2): "Venezuela", (2025, 11, 1): "Otro municipio"}
+
+
+def test_ingreso_no_laboral_y_lugares():
+    """Lo de 12 meses va por mes; 98 y 99 son «no sabe» y «no informa»; las residencias corren los códigos en uno."""
+    df = pd.DataFrame({"anio": 2024, "mes": 1, "P7495": [1, 2, 1, None, 2], "P7505": [1, 2, 2, None, 1],
+                       "P7500S2A1": [1_000_000, None, 98, None, None], "P7510S3A1": [1_200_000, None, None, None, 99],
+                       "P7510S7A1": [5_000_000, None, None, None, None],     # «otras fuentes»: no cuenta
+                       "P3373": [1, 2, 3, 3, None], "P3373S3": [".", ".", "862", "840", None],
+                       "P3384": [1, 2, 4, 3, None], "P3384S3": [".", ".", "862", ".", None]})
+    h = dd.geih.harmonize(df)
+    assert h["ingreso_no_laboral"].tolist()[:2] == [1_100_000, 0] and h["ingreso_no_laboral"][2:].isna().all()
+    assert h["lugar_nacimiento"].tolist()[:4] == ["Este municipio", "Otro municipio", "Venezuela", "Otro país"]
+    assert h["residencia_hace_12_meses"].tolist()[:4] == ["No había nacido", "Este municipio", "Venezuela",
+                                                          "Otro municipio"]
+    assert h["residencia_hace_5_anios"].isna().all()                    # sin P3382: vacía, sin error
 
 
 def test_posicion_ocupacional_cambia_en_2022():

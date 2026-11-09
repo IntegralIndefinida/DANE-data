@@ -52,7 +52,11 @@ _COMPACTAS = (
     "P6870", "OFICIO",
     "OFICIO_C8", "P3045S1", "P3046", "P3069", "P6765", "P3065", "P3066", "P3067", "P3067S1", "P3067S2",
     "P6775", "P3068", "P6100", "P6110", "P6450", "P6930", "P6940",
+    "P7495", "P7505", "P3373", "P3382", "P3384",
 )
+# Montos de Otros ingresos que entran en ingreso_no_laboral: los del mes pasado y los de los últimos 12 meses
+_INGRESOS_MES = ("P7500S1A1", "P7500S2A1", "P7500S3A1")      # arriendos, pensiones, pensión alimenticia
+_INGRESOS_ANIO = ("P7510S1A1", "P7510S2A1", "P7510S3A1", "P7510S5A1")  # hogares, exterior, instituciones, intereses
 # Variables originales que se leen siempre (si existen) para poder armonizar.
 CORE_RAW = [
     *KEYS_PERSONA, "HOGAR", "MES", "PERIODO", "DPTO", "AREA", "CLASE",
@@ -61,6 +65,7 @@ CORE_RAW = [
     "OCI", "DSI", "INI", "FFT", "FT", "PET", "PETI",
     "INGLABO", "P6090", "P6920", "P6430", "P6800",
     "RAMA2D", "RAMA2D_R4", "P6210", "P3042",
+    *_INGRESOS_MES, *_INGRESOS_ANIO, "P3373S3", "P3382S3", "P3384S3",
     *_COMPACTAS,
 ]
 
@@ -480,7 +485,7 @@ def load_month(mes: MesGEIH, columns="core", modules: Iterable[str] | None = Non
     >>> mes = dd.geih.find_months(2024)[0]  # doctest: +SKIP
     >>> crudo = dd.geih.load_month(mes)  # doctest: +SKIP
     >>> crudo.shape  # doctest: +SKIP
-    (70648, 46)
+    (70648, 61)
     """
     columns, modules = _lista_columnas(columns), _lista(modules)
     if columns == "all":
@@ -668,6 +673,7 @@ _EDUC_P6210 = {1: "Ninguno", 2: "Ninguno", 3: "Primaria", 4: "Secundaria", 5: "M
 NIVELES_EDUC = ["Ninguno", "Primaria", "Secundaria", "Media", "Superior"]
 CONDICIONES = ["Ocupado", "Desocupado", "Inactivo", "Fuera de la PET"]
 GRUPOS_EDAD = ["0–14", "15–24", "25–34", "35–44", "45–54", "55–64", "65+"]
+LUGARES = ["Este municipio", "Otro municipio", "Venezuela", "Otro país"]
 POSICIONES = ["Empleado particular", "Empleado del gobierno", "Empleado doméstico", "Cuenta propia",
               "Patrón o empleador", "Familiar sin remuneración", "Sin remuneración (otros hogares)",
               "Jornalero o peón", "Otro"]
@@ -681,6 +687,9 @@ CATEGORIAS = {
     "departamento": pd.CategoricalDtype(sorted(set(DEPARTAMENTOS.values()))),
     "condicion": pd.CategoricalDtype(CONDICIONES),
     "posicion_ocupacional": pd.CategoricalDtype(POSICIONES),
+    "lugar_nacimiento": pd.CategoricalDtype(LUGARES),
+    "residencia_hace_12_meses": pd.CategoricalDtype(["No había nacido", *LUGARES]),
+    "residencia_hace_5_anios": pd.CategoricalDtype(["No había nacido", *LUGARES]),
 }
 MARCOS = {
     "censo 2005": "proyecciones de población del censo 2005 y PET de 12 años o más (10 en la zona rural)",
@@ -751,8 +760,9 @@ def harmonize(df: pd.DataFrame, edad_minima_pet: int | None = None) -> pd.DataFr
         ``departamento``, ``zona``, ``condicion``, ``pet``, ``fuerza_trabajo``, ``ocupado``,
         ``desocupado``, ``inactivo``, ``formal``, ``formal_marco2005``, ``cotiza_pension``,
         ``ingreso_laboral``, ``smlv``,
-        ``ratio_smlv``, ``horas_semana``, ``posicion_ocupacional``, ``rama2d``, ``rama_rev`` y
-        ``nivel_educativo``.
+        ``ratio_smlv``, ``horas_semana``, ``posicion_ocupacional``, ``rama2d``, ``rama_rev``,
+        ``nivel_educativo``, ``ingreso_no_laboral``, ``lugar_nacimiento``, ``residencia_hace_12_meses`` y
+        ``residencia_hace_5_anios``.
 
     Véase también
     -------------
@@ -763,7 +773,8 @@ def harmonize(df: pd.DataFrame, edad_minima_pet: int | None = None) -> pd.DataFr
     -----
     La guía «Variables armonizadas» explica de qué variable del DANE sale cada una y cómo se define. Las
     variables de ocupados (``formal``, ``ingreso_laboral``, ``horas_semana``,
-    ``posicion_ocupacional``) quedan vacías para quien no está ocupado.
+    ``posicion_ocupacional``) quedan vacías para quien no está ocupado. ``ingreso_no_laboral`` sale del
+    módulo Otros ingresos (la PET; vacío de marzo a julio de 2020) y las de lugar, del de Migración (desde 2022).
 
     Ejemplos
     --------
@@ -818,6 +829,26 @@ def harmonize(df: pd.DataFrame, edad_minima_pet: int | None = None) -> pd.DataFr
     df["smlv"] = anio.map(SMLV)
     df["ratio_smlv"] = df["ingreso_laboral"] / df["smlv"]
     df["horas_semana"] = _num(df, "P6800").where(ocupado)
+
+    # Las fuentes no laborales que el DANE suma en la pobreza monetaria (MESEP: arriendos, pensiones, pensión
+    # alimenticia y ayudas de hogares, ayudas institucionales, intereses y dividendos); lo de 12 meses, por mes.
+    # Sin cesantías ni «otras fuentes» (loterías, venta de propiedades) y sin las imputaciones del DANE.
+    mes_pasado = pd.concat([_num(df, c) for c in _INGRESOS_MES], axis=1)
+    doce_meses = pd.concat([_num(df, c) for c in _INGRESOS_ANIO], axis=1)
+    # El DDI no lo dice, pero en los montos 98 y 99 son «no sabe» y «no informa», como el 9 de las preguntas sí/no
+    no_sabe = mes_pasado.isin([98, 99]).any(axis=1) | doce_meses.isin([98, 99]).any(axis=1)
+    respondio = _num(df, "P7495").notna() | _num(df, "P7505").notna()
+    total = mes_pasado.sum(axis=1) + doce_meses.sum(axis=1) / 12
+    df["ingreso_no_laboral"] = total.where(respondio & ~no_sabe)
+
+    # Migración: P3373 vale 1 (este municipio), 2 (otro) o 3 (otro país); P3384 y P3382, lo mismo corrido en
+    # uno, con 1 = no había nacido. El DDI no trae las categorías de P3373; salen de qué subpregunta se llena.
+    for col, nombre, corrido in (("P3373", "lugar_nacimiento", 0), ("P3384", "residencia_hace_12_meses", 1),
+                                 ("P3382", "residencia_hace_5_anios", 1)):
+        codigo = _num(df, col) - corrido
+        lugar = codigo.map({0: "No había nacido", 1: "Este municipio", 2: "Otro municipio", 3: "Otro país"})
+        lugar = lugar.mask((codigo == 3) & (_num(df, f"{col}S3") == 862), "Venezuela")  # 862: Venezuela en ISO 3166
+        df[nombre] = pd.Categorical(lugar, dtype=CATEGORIAS[nombre])
 
     pos = _num(df, "P6430")
     pos_map = dict(enumerate(POSICIONES, start=1))

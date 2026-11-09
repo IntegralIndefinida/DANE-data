@@ -123,6 +123,6 @@ Desde la terminal, `dane-data estado` muestra lo mismo resumido por año. Para l
 | Toda la serie principal 2007–2026 | 11 GB extraída |
 | Toda la EAM 1992–2024 | 330 MB |
 | Todas las Estadísticas Vitales | 3,6 GB extraídas (2,2 GB de nacimientos, 1,2 GB de defunciones), 1,6 GB de ZIP |
-| Caché de `dane-data` con toda la GEIH leída | 700 MB en `~/.cache/dane_data` |
+| Caché de `dane-data` con toda la GEIH leída | 800 MB en `~/.cache/dane_data` |
 
 La caché se puede borrar cuando se quiera con {dd}`geih.clear_cache()`; se vuelve a crear al leer los datos.

@@ -24,6 +24,9 @@ GLOSARIO = {
                                  "5 personas, salvo los del gobierno y los cuenta propia profesionales, sobre el "
                                  "total de ocupados × 100. El DANE la publicó para 13 y 23 ciudades.",
     "Ingreso laboral": "INGLABO: ingresos laborales mensuales (pesos corrientes) imputados por el DANE.",
+    "Ingreso no laboral": "Arriendos, pensiones, pensión alimenticia, ayudas de otros hogares y de instituciones, e "
+                          "intereses y dividendos, por mes (pesos corrientes): las fuentes que el DANE suma en la "
+                          "pobreza monetaria, pero sin sus imputaciones.",
 }
 _COLUMNAS = ["pet", "fuerza_trabajo", "ocupados", "desocupados", "inactivos", "tgp", "to", "td",
              "tasa_informalidad", "tasa_informalidad_marco2005", "ingreso_medio", "ingreso_mediano", "n_muestra"]
