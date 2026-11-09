@@ -54,6 +54,9 @@
 
 **Correcciones**
 
+* {dd}`tabla()`, {dd}`geih.serie_tabla()` y {dd}`geih.tabla_de_frecuencias()` con `estadistico="media"` o `"mediana"`
+  y `por` fallaban con un `TypeError` si nadie tenía la variable, por ejemplo `ingreso_laboral` en 2007, que no trae
+  `INGLABO`; en la aplicación, *Tablas y microdatos* se caía. Ahora devuelven una tabla vacía.
 * {dd}`geih.download()` reconoce los archivos con la misma lista de nombres que {dd}`geih.load()`; antes eran dos
   listas que había que corregir a la vez. Con `modules=["desocupados"]`, desde 2022 no extraía «No ocupados», que
   trae a los desocupados y a los inactivos juntos, y avisaba que faltaba el módulo; con `modules=["ocupados"]`

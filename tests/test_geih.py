@@ -447,6 +447,15 @@ def test_trimestre_movil_igual_a_juntar_los_tres_meses(geih_root, por):
         dd.geih.trimestre_movil(esperado)
 
 
+@pytest.mark.parametrize("estadistico", ["media", "mediana"])
+def test_media_por_grupo_sin_ningun_valor(estadistico):
+    """Sin nadie con la variable (ingreso_laboral en 2007) la tabla sale vacía; antes fallaba con un TypeError."""
+    df = pd.DataFrame({"anio": 2007, "mes": 1, "sexo": ["Hombre", "Mujer"], "ingreso": np.nan, "fex": [1.0, 2.0]})
+    assert dd.tabla(df, por="sexo", variable="ingreso", estadistico=estadistico).empty
+    f = df.assign(peso=df["fex"], n_muestra=1).dropna(subset=["ingreso"])   # lo que da serie_frecuencias
+    assert dd.geih.tabla_de_frecuencias(f, variable="ingreso", por="sexo", estadistico=estadistico).empty
+
+
 def test_trimestre_movil_no_cruza_el_cambio_de_marco():
     """Enero y febrero de 2022 juntarían la PET de 12+ del censo 2005 (2021) con la de 15+ del CNPV 2018; en el
     empalme, 2019 y 2020 son del mismo marco y el trimestre sí sigue. Una serie con meses repetidos es un error claro."""

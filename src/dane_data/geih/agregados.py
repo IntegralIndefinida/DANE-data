@@ -592,6 +592,8 @@ def tabla_de_frecuencias(f: pd.DataFrame, por: str | Iterable[str] | None = None
             return weighted_quantile(x[variable], x["peso"], 0.5)
     if not por:
         return pd.DataFrame({estadistico: [fn(f)], "n_muestra": [int(f["n_muestra"].sum())]})
+    if f.empty:  # nadie con la variable (ingreso_laboral en 2007): apply daría un DataFrame y rename fallaría
+        return pd.DataFrame(columns=[*por, estadistico, "n_muestra"])
     g = f.groupby(por, observed=True, dropna=False)
     stat = g[[variable, "peso"]].apply(fn).rename(estadistico)
     n = g["n_muestra"].sum().rename("n_muestra")

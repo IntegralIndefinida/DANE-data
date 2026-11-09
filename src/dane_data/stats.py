@@ -302,6 +302,8 @@ def tabla(
         fn = lambda x: weighted_quantile(x[variable], x["_w"], 0.5)  # noqa: E731
     if g is None:
         return pd.DataFrame({estadistico: [fn(d)], "n_muestra": [len(d)]})
+    if d.empty:  # nadie con la variable (ingreso_laboral en 2007): apply daría un DataFrame y rename fallaría
+        return pd.DataFrame(columns=[*por, estadistico, "n_muestra"])
     stat = g[[variable, "_w"]].apply(fn).rename(estadistico)
     n = g.size().rename("n_muestra")
     return _con_categorias(pd.concat([stat, n], axis=1).reset_index(), d, por)
