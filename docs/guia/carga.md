@@ -1,6 +1,6 @@
 # Cargar la GEIH
 
-{dd}`geih.load()` carga los microdatos: devuelve un `DataFrame` de pandas con **una fila por persona y
+{dd}`geih.load()` carga los {term}`microdatos`: devuelve un `DataFrame` de pandas con **una fila por persona y
 mes**, los módulos ya unidos y las {doc}`variables armonizadas <variables>`.
 
 ```python
@@ -68,7 +68,7 @@ Para cada mes:
 
 1. **Encuentra los archivos** ({dd}`geih.find_months()`): reconoce el mes en el nombre de la carpeta,
    busca en subcarpetas, clasifica cada archivo por módulo y dominio y se queda con el total nacional
-   (Cabecera + Resto).
+   ({term}`Cabecera` + {term}`Resto`).
 2. **Une los módulos** ({dd}`geih.load_month()`): parte de características generales (una fila por
    persona) y le agrega las columnas nuevas de los demás módulos con la llave de persona; vivienda se une
    con la llave de hogar. Detecta solo el separador, la codificación, la coma decimal y las celdas en

@@ -23,7 +23,7 @@ laborales, `dd.geih.VARIABLES_INDICADORES` tiene justo lo que necesita {dd}`geih
 | {dd}`geih.serie_tabla()` | `dd.tabla(filtrar(load(anios), filtros, poblacion), por, variable, estadistico)` |
 | {dd}`geih.serie_frecuencias()` | La distribución ponderada de una variable, de la que salen las dos anteriores |
 
-Dan **exactamente** el mismo resultado que el camino con los microdatos (las pruebas de `dane-data` lo
+Dan **exactamente** el mismo resultado que el camino con los {term}`microdatos` (las pruebas de `dane-data` lo
 comprueban), pero cargan un año a la vez y guardan el resultado de cada año en
 `~/.cache/dane_data/geih/<tipo>/`. Nunca hay más de un año de microdatos en memoria.
 
@@ -79,7 +79,7 @@ aplicación es la opción «Para abrir en Excel en español».
 
 | Necesito… | Use |
 |---|---|
-| Indicadores laborales (TD, TGP…) de muchos años, por sexo, zona, edad, educación o departamento | {dd}`geih.serie_indicadores()` |
+| Indicadores laborales ({term}`TD`, {term}`TGP`…) de muchos años, por sexo, zona, edad, educación o departamento | {dd}`geih.serie_indicadores()` |
 | Totales, porcentajes, medias o medianas de muchos años | {dd}`geih.serie_tabla()` |
 | Otros cuantiles o estadísticos de muchos años | {dd}`geih.serie_frecuencias()` |
 | Un análisis propio (regresiones, variables nuevas) | {dd}`geih.load()` con `variables` |

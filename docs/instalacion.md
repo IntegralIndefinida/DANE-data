@@ -61,7 +61,7 @@ python -c "import dane_data; print(dane_data.__version__)"
 
 ## Los datos
 
-`dane-data` no trae los microdatos: los descarga del ANDA del DANE la primera vez. Elija dónde guardarlos
+`dane-data` no trae los {term}`microdatos`: los descarga del {term}`ANDA` del DANE la primera vez. Elija dónde guardarlos
 (por defecto, `~/dane_data_datos/`) y descargue lo que necesite:
 
 ```python

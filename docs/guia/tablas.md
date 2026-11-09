@@ -1,7 +1,7 @@
 # Tablas ponderadas
 
 {dd}`tabla()` hace tablas expandidas de cualquier variable: cuántas personas hay en cada grupo, cómo se
-reparten, cuál es la media o la mediana de una variable numérica. Usa el factor de expansión y convierte
+reparten, cuál es la media o la mediana de una variable numérica. Usa el {term}`factor de expansión` y convierte
 los totales de varios meses en promedios mensuales (vea {doc}`ponderacion`).
 
 ```python

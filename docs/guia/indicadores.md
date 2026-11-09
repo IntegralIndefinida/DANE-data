@@ -92,7 +92,7 @@ noviembre a enero…). {dd}`geih.trimestre_movil()` lo calcula a partir de una s
 11  2025   12  64.7  59.7  7.7
 ```
 
-La fila de diciembre es el trimestre de octubre a diciembre. Da lo mismo que juntar los microdatos de los tres meses
+La fila de diciembre es el trimestre de octubre a diciembre. Da lo mismo que juntar los {term}`microdatos` de los tres meses
 con el factor de expansión dividido por 3, y sirve sobre todo para grupos con poca muestra, como los departamentos
 (`por="departamento"`), donde la tasa de un solo mes salta mucho. Algunas filas quedan vacías: las de los dos primeros
 meses de la serie, las que tocan un mes que falta y las que juntarían meses de dos marcos muestrales (en la serie
@@ -159,7 +159,7 @@ dd.geih.indicadores(df, por="posicion_ocupacional")
 
 Antes de comparar años, revise que tengan el mismo **marco muestral** ({doc}`encuestas`). La TGP, la TO y
 los niveles saltan entre 2021 y 2022 por el cambio de las proyecciones de población y de la edad mínima de
-la PET, no por el mercado laboral. Para series largas sin saltos use la serie de empalme (2010–2020) con
+la PET, no por el mercado laboral. Para series largas sin saltos use la {term}`serie de empalme` (2010–2020) con
 `empalme=True`.
 
 ```{seealso}

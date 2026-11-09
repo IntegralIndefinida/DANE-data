@@ -40,7 +40,7 @@ misma por nivel.
 | `fuerza_trabajo` | 1 si está ocupado o desocupado |
 | `ocupado` | 1 si está ocupado |
 | `desocupado` | 1 si está desocupado (y no ocupado) |
-| `inactivo` | 1 si está en la PET pero no en la fuerza de trabajo |
+| `inactivo` | 1 si está en la {term}`PET` pero no en la fuerza de trabajo |
 | `condicion` | `Ocupado`, `Desocupado`, `Inactivo` o `Fuera de la PET` |
 
 Las marcas salen de las variables del DANE `OCI` (ocupado), `DSI` (desocupado), `PET`, `PETI` e `INI`
@@ -75,7 +75,7 @@ Estas variables solo tienen valor para los **ocupados**; para los demás quedan 
 | `ratio_smlv` | Ingreso laboral en salarios mínimos | `ingreso_laboral / smlv` |
 | `horas_semana` | Horas que trabaja normalmente a la semana en el empleo principal | `P6800` |
 | `posicion_ocupacional` | Empleado particular, del gobierno, doméstico, cuenta propia, patrón… | `P6430` |
-| `rama2d` | Rama de actividad a 2 dígitos de la CIIU | `RAMA2D_R4` o `RAMA2D` |
+| `rama2d` | Rama de actividad a 2 dígitos de la {term}`CIIU` | `RAMA2D_R4` o `RAMA2D` |
 | `rama_rev` | Revisión de la CIIU de `rama2d`: 4 o 3 | La variable de origen |
 
 ### Informalidad
@@ -98,7 +98,7 @@ publicados (las pruebas de `dane-data` lo comprueban). Depende de la posición o
 
 Las preguntas de la medición llegaron con el cuestionario del marco 2018, en enero de 2022. Antes, `formal`
 y la `tasa_informalidad` de {dd}`geih.indicadores()` quedan vacías. La serie oficial del DANE empieza en
-2021, con la encuesta paralela, que no está en el ANDA. Para series largas, una aproximación por seguridad
+2021, con la encuesta paralela, que no está en el {term}`ANDA`. Para series largas, una aproximación por seguridad
 social (no la del DANE) es estar afiliado a salud y cotizar a pensión:
 
 ```python
