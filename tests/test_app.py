@@ -295,6 +295,18 @@ def test_aviso_si_falta_un_modulo_nuevo(geih_root, tmp_path, monkeypatch):
     assert any(i.value.startswith("Los datos de 2025 no traen el módulo Migración") for i in at.info)
 
 
+def test_edad_100_es_100_o_mas(geih_root, tmp_path, monkeypatch):
+    """La GEIH trae personas de hasta 108 años: el tope de la barra no las deja por fuera."""
+    monkeypatch.setitem(dd.config._session, "geih", geih_root)
+    monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
+    at = AppTest.from_file(str(PAGINAS / "geih_mercado.py"), default_timeout=60).run()
+    at.slider(key="geih_edad").set_value((65, 100)).run()
+    assert not at.exception
+    assert "'edad': (65, 120)" in at.code[0].value and "edad 65+" in at.caption[0].value
+    at.slider(key="geih_edad").set_value((18, 64)).run()
+    assert "'edad': (18, 64)" in at.code[0].value and "edad 18–64" in at.caption[0].value
+
+
 def test_no_pide_bajar_otros_ingresos_de_2020(geih_root, tmp_path, monkeypatch):
     """De marzo a julio de 2020 el DANE no publicó Otros ingresos: la página, como load, no pide volver a bajarlo."""
     import shutil

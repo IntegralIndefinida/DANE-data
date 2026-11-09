@@ -54,6 +54,8 @@
 
 **Correcciones**
 
+* En las páginas de la GEIH, el tope de 100 de la barra *Edad* es «100 o más»: antes, por ejemplo con 65 a 100, quedaban
+  por fuera las personas de más de 100 años (la GEIH trae hasta 108; en enero de 2024, unas 6100 personas expandidas).
 * {dd}`tabla()`, {dd}`geih.serie_tabla()` y {dd}`geih.tabla_de_frecuencias()` con `estadistico="media"` o `"mediana"`
   y `por` fallaban con un `TypeError` si nadie tenía la variable, por ejemplo `ingreso_laboral` en 2007, que no trae
   `INGLABO`; en la aplicación, *Tablas y microdatos* se caía. Ahora devuelven una tabla vacía.

@@ -556,8 +556,10 @@ def seleccion_geih(clave: str = "geih", varios_anios: bool = True, ayuda_anios: 
     for nombre, val in (("sexo", sexo), ("zona", zona), ("dpto", dptos)):
         if val:
             partes.append(f"{nombre}: {', '.join(val)}")
+    # El 100 de la barra es «100 o más»: la GEIH trae personas de hasta 108 años, y con 100 quedaban por fuera
+    rango_edad = (edad[0], 120 if edad[1] == 100 else edad[1])
     if edad != (0, 100):
-        partes.append(f"edad {edad[0]}–{edad[1]}")
+        partes.append(f"edad {edad[0]}+" if edad[1] == 100 else f"edad {edad[0]}–{edad[1]}")
 
     elegidos = av[av.anio.isin(anios)]
     seleccion = {
@@ -567,7 +569,7 @@ def seleccion_geih(clave: str = "geih", varios_anios: bool = True, ayuda_anios: 
         "filtrada": bool(meses or sexo or zona or dptos or edad != (0, 100)),
         # en el formato de dd.geih.filtrar
         "filtros": {k: v for k, v in (("sexo", list(sexo)), ("zona", list(zona)),
-                                      ("edad", tuple(edad) if edad != (0, 100) else None),
+                                      ("edad", rango_edad if edad != (0, 100) else None),
                                       ("departamento", list(dptos))) if v},
     }
     aviso_marcos(seleccion["anios"], empalme)
