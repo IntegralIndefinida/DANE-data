@@ -49,6 +49,10 @@
 
 **Correcciones**
 
+* La documentación de {dd}`weighted_quantile()` y {dd}`tabla()` decía que la mediana es la de `_pctile` de Stata. Lo
+  es salvo cuando la masa acumulada llega justo a la mitad: Stata promedia los dos valores del medio y `dane-data` se
+  queda con el menor (sin pesos, la mediana de 10, 20, 30 y 40 es 20, no 25). El cálculo no cambia; la documentación
+  ahora lo dice.
 * En octubre y noviembre de 2020 (y septiembre en el empalme), {dd}`geih.download()` no extraía «Desoucpados»,
   «Inativos» ni «Fuerzo de trabajo», con erratas del DANE en el nombre, y {dd}`geih.load()` no los leía: las variables de
   esos módulos quedaban vacías en esos meses. Los indicadores no cambian (se comprobó en esos meses), porque 2020

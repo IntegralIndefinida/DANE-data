@@ -96,8 +96,11 @@ $$
 q_p = \min \left\{ y_{(k)} : \sum_{j \le k} w_{(j)} \ge p \sum_i w_i \right\}.
 $$
 
-El cuantil es el menor valor que acumula la fracción $p$ del peso total, la misma definición de `_pctile`
-en Stata. Devuelve siempre un valor observado, sin interpolar. Eso importa con los ingresos, que se
+El cuantil es el menor valor que acumula la fracción $p$ del peso total. Coincide con `_pctile` de Stata
+salvo cuando la masa acumulada llega justo a $p$: Stata promedia ese valor y el siguiente, y `dane-data` se
+queda con el menor. Con los factores de expansión de la GEIH, que tienen decimales, casi nunca pasa; sin
+pesos y con un número par de valores, sí (la mediana de 10, 20, 30 y 40 es 20, no 25). Devuelve siempre un
+valor observado, sin interpolar. Eso importa con los ingresos, que se
 amontonan en valores redondos: la mediana del ingreso laboral de 2024 es exactamente el salario mínimo
 (1 300 000 pesos), porque una gran parte de los ocupados gana justo eso.
 

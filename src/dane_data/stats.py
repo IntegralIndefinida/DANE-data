@@ -93,8 +93,11 @@ def weighted_quantile(values, weights, q: float) -> float:
     """
     Cuantil ponderado.
 
-    Es el menor valor cuya masa acumulada alcanza la fracción ``q`` del peso total, la misma definición
-    de ``_pctile`` en Stata. Siempre devuelve uno de los valores observados (no interpola).
+    Es el menor valor cuya masa acumulada alcanza la fracción ``q`` del peso total. Siempre devuelve uno de
+    los valores observados (no interpola). Coincide con ``_pctile`` de Stata salvo cuando la masa acumulada
+    llega justo a esa fracción: ahí Stata promedia ese valor y el siguiente, y aquí queda el menor (con cuatro
+    valores de igual peso, la mediana es el segundo, no el promedio del segundo y el tercero). Con los factores
+    de expansión de la GEIH, que tienen decimales, eso casi nunca pasa; con ``peso=None`` o pesos enteros, sí.
 
     Parámetros
     ----------
@@ -123,6 +126,8 @@ def weighted_quantile(values, weights, q: float) -> float:
     20.0
     >>> dd.weighted_quantile([10, 20, 30], [5, 1, 1], 0.5)
     10.0
+    >>> dd.weighted_quantile([10, 20, 30, 40], [1, 1, 1, 1], 0.5)  # Stata: 25
+    20.0
     """
     v = np.asarray(values, dtype=float)
     w = np.asarray(weights, dtype=float)
@@ -132,7 +137,7 @@ def weighted_quantile(values, weights, q: float) -> float:
         return np.nan
     order = np.argsort(v, kind="stable")
     v, w = v[order], w[order]
-    # CDF inversa: el menor valor cuya masa acumulada alcanza q (como _pctile de Stata).
+    # CDF inversa: el menor valor cuya masa acumulada alcanza q (Stata promedia con el siguiente si la alcanza justo).
     cum = np.cumsum(w)
     return float(v[np.searchsorted(cum, q * cum[-1], side="left")])
 
@@ -227,7 +232,8 @@ def tabla(
     Con pocas observaciones las cifras expandidas no son confiables: revise ``n_muestra`` y desconfíe de
     los grupos con menos de unas 30 a 100 personas.
 
-    La mediana es la de ``weighted_quantile`` (el menor valor que acumula la mitad del peso).
+    La mediana es la de ``weighted_quantile`` (el menor valor que acumula la mitad del peso). Con
+    ``peso=None`` y un número par de valores es el menor de los dos del medio, no su promedio como en Stata.
 
     Ejemplos
     --------
