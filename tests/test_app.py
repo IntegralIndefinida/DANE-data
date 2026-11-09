@@ -365,6 +365,13 @@ def test_grupos_ordenados_en_un_solo_tono():
     assert [t.marker.color for t in _ui.barras(ocho, "x", "v", color="anio").data] == _ui.PALETA
 
 
+def test_lineas_con_el_rango_de_los_datos_y_barras_desde_cero():
+    from dane_data.app import _ui
+    df = pd.DataFrame({"t": [1, 2, 3], "v": [63.9, 64.5, 64.2]})
+    assert _ui.linea(df, "t", "v", pct=True).layout.yaxis.rangemode == "normal"
+    assert _ui.barras(df, "t", "v", pct=True).layout.yaxis.rangemode == "tozero"
+
+
 def test_marcadores_solo_con_pocos_puntos():
     from dane_data.app import _ui
     serie = lambda n: pd.DataFrame({"t": range(n), "v": range(n)})  # noqa: E731

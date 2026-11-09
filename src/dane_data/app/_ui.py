@@ -126,7 +126,7 @@ def fmt_grande(x: float) -> str:
 # --------------------------------------------------------------------------- #
 # Gráficos
 # --------------------------------------------------------------------------- #
-def _estilo(fig: go.Figure, pct: bool = False) -> go.Figure:
+def _estilo(fig: go.Figure, pct: bool = False, desde_cero: bool = True) -> go.Figure:
     fig.update_layout(
         separators=",.",  # decimales con coma y miles con punto (español)
         margin=dict(l=10, r=10, t=40, b=10),
@@ -135,8 +135,10 @@ def _estilo(fig: go.Figure, pct: bool = False) -> go.Figure:
         font=dict(size=13),
     )
     fig.update_xaxes(showgrid=False, title=None)
-    # Eje desde cero: evita que cambios de décimas parezcan enormes.
-    fig.update_yaxes(gridcolor="rgba(128,128,128,0.18)", zeroline=False, title=None, rangemode="tozero",
+    # Las barras desde cero: su largo es el valor. Las líneas, con el rango de los datos: desde cero, la participación
+    # (~64 %) quedaba plana contra el borde de arriba y no se veía cómo cambia.
+    fig.update_yaxes(gridcolor="rgba(128,128,128,0.18)", zeroline=False, title=None,
+                     rangemode="tozero" if desde_cero else "normal",
                      ticksuffix=" %" if pct else None, tickformat=",~f")
     return fig
 
@@ -159,7 +161,7 @@ def linea(df: pd.DataFrame, x: str, y: str, color: str | None = None, pct: bool 
     # Sin esto, el recuadro repetía la fecha y mostraba el nombre de la columna con seis decimales («td=7,977104 %»)
     fig.update_traces(line=dict(width=2), marker=dict(size=8),
                       hovertemplate=("%{fullData.name}: " if color else "") + _valor("y", pct) + "<extra></extra>")
-    fig = _estilo(fig, pct)
+    fig = _estilo(fig, pct, desde_cero=False)
     fig.update_layout(hovermode="x unified")
     if pd.api.types.is_integer_dtype(df[x]) or x == "anio":
         fig.update_xaxes(dtick=1 if df[x].nunique() <= 15 else None, tickformat="d")

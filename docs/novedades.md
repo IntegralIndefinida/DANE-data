@@ -67,6 +67,8 @@
   Cálculos con dane-data»); en las Estadísticas Vitales, que son hechos registrados sin ajuste por subregistro. Así la
   imagen que se descarga con el botón de la cámara sirve sola en una tesis o un informe, y sale con el triple de
   resolución. La barra de herramientas de las gráficas deja solo descargar y volver a la vista inicial.
+* Las gráficas de líneas ya no empiezan en cero: muestran el rango de los datos. Desde cero, la participación (~64 %)
+  quedaba como una línea plana contra el borde de arriba. Las de barras siguen empezando en cero.
 
 ## 0.4.0 (2 de noviembre de 2026)
 
