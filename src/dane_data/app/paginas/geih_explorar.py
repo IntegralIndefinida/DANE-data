@@ -7,7 +7,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 import dane_data as dd
-from dane_data.app._ui import (fmt_num, MAX_SERIES, PALETA, _barra, _estilo, args_py, barras, botones_descarga,
+from dane_data.app._ui import (fmt_num, MAX_SERIES, PALETA, _barra, grupos_posibles, _estilo, args_py, barras, botones_descarga,
                              codigo, fmt_pct, fmt_pesos, frecuencias_geih, grafico, muestra_geih, rutas_actuales,
                              seleccion_geih, tabla_geih)
 
@@ -107,7 +107,8 @@ with tab1:
         # educativo de Ninguno a Superior, no alfabético)
         g = t.astype({k: str for k in filter(None, [f, c])})
         if c and g[c].nunique() <= MAX_SERIES:
-            fig = barras(g, x=f, y=est, color=c, pct=est == "porcentaje", horizontal=g[f].nunique() > 8)
+            fig = barras(g, x=f, y=est, color=c, pct=est == "porcentaje", horizontal=g[f].nunique() > 8,
+                         orden=grupos_posibles(t[c]))
         else:
             fig = barras(g, x=f, y=est, pct=est == "porcentaje", horizontal=g[f].nunique() > 8)
         grafico(fig)

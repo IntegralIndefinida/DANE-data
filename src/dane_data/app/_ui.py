@@ -22,6 +22,42 @@ PALETA = ["#3987e5", "#d95926", "#199e70", "#c98500", "#d55181", "#008300", "#90
 MAX_SERIES = len(PALETA)
 
 
+def grupos_posibles(s: pd.Series) -> list[str]:
+    """Todos los grupos de una columna, en su orden: las categorías, aunque los filtros dejen solo algunas."""
+    if isinstance(s.dtype, pd.CategoricalDtype):
+        return [str(c) for c in s.cat.categories]
+    return [str(v) for v in sorted(s.dropna().unique())]
+
+
+def colores(grupos: list[str], universo: list[str]) -> dict[str, str]:
+    """
+    El color de cada grupo sigue al grupo, no a su posición: quitar Antioquia no pinta a Atlántico de otro color.
+    Si todos los grupos posibles (``universo``) caben en la paleta, cada uno lleva el de su lugar ahí. Si no caben
+    (33 departamentos), cada grupo guarda su color en la sesión mientras siga elegido, y uno nuevo toma el primero libre.
+    """
+    if len(universo) <= len(PALETA):
+        return {g: PALETA[universo.index(g)] for g in grupos}
+    memoria = st.session_state.setdefault("colores_grupos", {}).setdefault(tuple(universo), {})
+    for g in [g for g in memoria if g not in grupos]:
+        del memoria[g]
+    for g in grupos:
+        if g not in memoria:
+            memoria[g] = [c for c in PALETA if c not in memoria.values()][0]  # los llamadores eligen <= MAX_SERIES
+    return {g: memoria[g] for g in grupos}
+
+
+def _por_grupo(df: pd.DataFrame, color: str | None, orden: list | None) -> tuple[pd.DataFrame, dict]:
+    """``df`` con el grupo como texto, y los colores y el orden de la leyenda para px."""
+    if not color:
+        return df, {"color_discrete_sequence": PALETA}
+    universo = [str(g) for g in orden] if orden is not None else grupos_posibles(df[color])
+    df = df.assign(**{color: df[color].astype(str)})
+    presentes = set(df[color])
+    universo += [g for g in sorted(presentes) if g not in universo]
+    grupos = [g for g in universo if g in presentes]
+    return df, {"color_discrete_map": colores(grupos, universo), "category_orders": {color: grupos}}
+
+
 # --------------------------------------------------------------------------- #
 # Formato
 # --------------------------------------------------------------------------- #
@@ -83,8 +119,10 @@ def _estilo(fig: go.Figure, titulo_y: str | None = None, pct: bool = False) -> g
 
 
 def linea(df: pd.DataFrame, x: str, y: str, color: str | None = None, titulo_y: str | None = None,
-          pct: bool = False) -> go.Figure:
-    fig = px.line(df, x=x, y=y, color=color, markers=True, color_discrete_sequence=PALETA)
+          pct: bool = False, orden: list | None = None) -> go.Figure:
+    """``orden``: todos los grupos posibles de ``color``, si ``df`` ya no los tiene (p. ej. con el grupo como texto)."""
+    df, colores_px = _por_grupo(df, color, orden)
+    fig = px.line(df, x=x, y=y, color=color, markers=True, **colores_px)
     # Sin esto, el recuadro repetía la fecha y mostraba el nombre de la columna con seis decimales («td=7,977104 %»)
     valor = "%{y:,.1f} %" if pct else "%{y:,.2~f}"
     fig.update_traces(line=dict(width=2), marker=dict(size=8),
@@ -99,17 +137,17 @@ def linea(df: pd.DataFrame, x: str, y: str, color: str | None = None, titulo_y: 
 
 
 def barras(df: pd.DataFrame, x: str, y: str, color: str | None = None, titulo_y: str | None = None,
-           pct: bool = False, horizontal: bool = False) -> go.Figure:
+           pct: bool = False, horizontal: bool = False, orden: list | None = None) -> go.Figure:
+    df, colores_px = _por_grupo(df, color, orden)
     if horizontal:
-        fig = px.bar(df, y=x, x=y, color=color, orientation="h", barmode="group",
-                     color_discrete_sequence=PALETA)
+        fig = px.bar(df, y=x, x=y, color=color, orientation="h", barmode="group", **colores_px)
         fig.update_yaxes(categoryorder="total ascending", title=None)
         fig.update_xaxes(gridcolor="rgba(128,128,128,0.18)", title=titulo_y, ticksuffix=" %" if pct else None,
                          tickformat=",~f")
         fig.update_layout(separators=",.", margin=dict(l=10, r=10, t=40, b=10), legend=dict(orientation="h", y=1.02, title=None),
                           height=max(350, 24 * df[x].nunique() * (df[color].nunique() if color else 1)))
     else:
-        fig = px.bar(df, x=x, y=y, color=color, barmode="group", color_discrete_sequence=PALETA)
+        fig = px.bar(df, x=x, y=y, color=color, barmode="group", **colores_px)
         fig = _estilo(fig, titulo_y, pct)
     fig.update_traces(marker_line_width=0)
     fig.update_layout(bargap=0.25, bargroupgap=0.08)

@@ -44,6 +44,8 @@
   repetía la fecha y mostraba el nombre de la columna con seis decimales («td=7,977104 %»).
 * Detalles de la aplicación: la tabla ponderada nombra sus filas y columnas como los selectores («Sexo», no «sexo»), el eje
   de *Indicadores laborales* ya no repite «(%)» y las tres tarjetas de *Inicio* tienen la misma altura.
+* En las gráficas de la aplicación, cada grupo conserva su color: al quitar un departamento o un sector de la lista, los
+  demás ya no cambian de color.
 
 ## 0.4.0 (2 de noviembre de 2026)
 

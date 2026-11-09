@@ -308,6 +308,22 @@ def test_variacion_con_coma_decimal_y_cero_en_gris():
     assert variacion(float("nan"), 1, 2025) == {} == variacion(1, 0, 2025)
 
 
+def test_el_color_sigue_al_grupo(monkeypatch):
+    """Quitar un grupo no cambia el color de los demás (la regla de la skill dataviz), con pocos y con muchos grupos."""
+    from dane_data.app import _ui
+    monkeypatch.setattr(_ui.st, "session_state", {})
+    color = lambda fig: {t.name: t.line.color for t in fig.data}  # noqa: E731
+    d = pd.DataFrame({"anio": [2025, 2026] * 3, "v": range(6), "g": ["Antioquia"] * 2 + ["Atlántico"] * 2 + ["Bogotá"] * 2})
+    pocos = ["Antioquia", "Atlántico", "Bogotá"]
+    assert color(_ui.linea(d[d.g != "Antioquia"], "anio", "v", color="g", orden=pocos))["Atlántico"] == _ui.PALETA[1]
+    muchos = pocos + [f"Dpto {i}" for i in range(30)]              # no caben en la paleta: los recuerda la sesión
+    antes = color(_ui.linea(d, "anio", "v", color="g", orden=muchos))
+    despues = color(_ui.linea(d[d.g != "Antioquia"], "anio", "v", color="g", orden=muchos))
+    assert despues == {k: v for k, v in antes.items() if k != "Antioquia"}
+    nuevo = color(_ui.linea(d.replace({"Antioquia": "Dpto 7"}), "anio", "v", color="g", orden=muchos))
+    assert nuevo["Dpto 7"] == antes["Antioquia"]                   # el color que quedó libre
+
+
 def test_tabla_pivote_conserva_el_orden_de_las_categorias(geih_root, tmp_path, monkeypatch):
     """El nivel educativo va de Ninguno a Superior, no en orden alfabético."""
     monkeypatch.setitem(dd.config._session, "geih", geih_root)
