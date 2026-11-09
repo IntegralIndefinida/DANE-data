@@ -295,6 +295,23 @@ def test_aviso_si_falta_un_modulo_nuevo(geih_root, tmp_path, monkeypatch):
     assert any(i.value.startswith("Los datos de 2025 no traen el módulo Migración") for i in at.info)
 
 
+def test_no_pide_bajar_otros_ingresos_de_2020(geih_root, tmp_path, monkeypatch):
+    """De marzo a julio de 2020 el DANE no publicó Otros ingresos: la página, como load, no pide volver a bajarlo."""
+    import shutil
+    abril = geih_root / "datos_csv" / "2020" / "Abril"
+    shutil.copytree(geih_root / "datos_csv" / "2016" / "Enero", abril)
+    for f in abril.glob("* - Otros ingresos.csv"):
+        f.unlink()
+    monkeypatch.setitem(dd.config._session, "geih", geih_root)
+    monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
+    at = AppTest.from_file(str(PAGINAS / "geih_explorar.py"), default_timeout=60).run()
+    at.multiselect(key="exp_anios").set_value([2020]).run()
+    next(s for s in at.selectbox if s.label == "¿Qué quiere calcular?").set_value("Promedio de…").run()
+    next(s for s in at.selectbox if s.label == "Variable").set_value("Ingreso no laboral").run()
+    assert not at.exception
+    assert not any("Otros ingresos" in i.value for i in at.info)
+
+
 def test_aviso_cuando_los_anios_mezclan_marcos(geih_root, tmp_path, monkeypatch):
     monkeypatch.setitem(dd.config._session, "geih", geih_root)
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")

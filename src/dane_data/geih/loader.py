@@ -929,6 +929,33 @@ def _cache_path(mes: MesGEIH, columns, modules) -> Path:
     return config.CACHE_DIR / "geih" / f"{mes.anio}_{mes.mes:02d}_{digest}.parquet"
 
 
+# Módulos que dane-data no extraía antes, y el primer año en que el DANE los publica
+_MODULOS_NUEVOS = {"otros_ingresos": 2007, "migracion": 2022}
+
+
+def _modulos_por_anio(meses: list[MesGEIH]) -> dict[int, set]:
+    """Los módulos que trae algún mes de cada año."""
+    del_anio: dict[int, set] = {}
+    for m in meses:
+        del_anio.setdefault(m.anio, set()).update(m.archivos)
+    return del_anio
+
+
+def _modulos_sin_extraer(meses: list[MesGEIH], del_anio: dict[int, set]) -> dict[str, list[int]]:
+    """
+    ``{módulo: años}`` de los ``_MODULOS_NUEVOS`` que no trae ningún mes del año en disco (``del_anio``, de
+    ``_modulos_por_anio``), para los años de ``meses``: se bajaron con una versión de dane-data que no los extraía.
+    Lo usan ``load`` y la aplicación, para que avisen lo mismo.
+    """
+    sin: dict[str, set] = {}
+    for m in meses:
+        for modulo, desde in _MODULOS_NUEVOS.items():
+            if (m.anio >= desde and modulo not in del_anio.get(m.anio, ())
+                    and not (m.anio == 2020 and 3 <= m.mes <= 7)):  # el DANE no publicó Otros ingresos esos meses
+                sin.setdefault(modulo, set()).add(m.anio)
+    return {modulo: sorted(anios) for modulo, anios in sin.items()}
+
+
 def load(
     years: Iterable[int] | int,
     months: Iterable[int] | int | None = None,
@@ -1031,9 +1058,7 @@ def load(
     if variables is not None:
         conservar = list(dict.fromkeys(["anio", "mes", *([variables] if isinstance(variables, str) else variables)]))
     meses = find_months(years, empalme=empalme, root=root)
-    del_anio: dict[int, set] = {}  # módulos que trae algún mes de cada año en disco, antes de filtrar los meses
-    for m in meses:
-        del_anio.setdefault(m.anio, set()).update(m.archivos)
+    del_anio = _modulos_por_anio(meses)  # antes de filtrar los meses
     if months is not None:
         months = {int(m) for m in months}
         meses = [m for m in meses if m.mes in months]
@@ -1067,14 +1092,9 @@ def load(
                     "Características); en otro mes, vuelva a descargarlo con dane_data.geih.download(...).")
     # Años bajados antes de que dane-data extrajera Otros ingresos y Migración: no los trae ningún mes del año, así
     # que el aviso anterior no sale, y sus variables quedarían vacías sin explicación
-    sin_extraer: dict[str, set] = {}
-    for m in meses:
-        for modulo, desde in (("otros_ingresos", 2007), ("migracion", 2022)):
-            if (modulo in pedidos and m.anio >= desde and modulo not in del_anio[m.anio]
-                    and not (m.anio == 2020 and 3 <= m.mes <= 7)):  # el DANE no publicó Otros ingresos esos meses
-                sin_extraer.setdefault(modulo, set()).add(m.anio)
-    for modulo, anios in sin_extraer.items():
-        anios = sorted(anios)
+    for modulo, anios in _modulos_sin_extraer(meses, del_anio).items():
+        if modulo not in pedidos:
+            continue
         log.warning(f"Ningún mes de {', '.join(map(str, anios))} en disco trae el módulo {modulo}: sus variables quedan "
                     "vacías. Si se bajaron con una versión de dane-data que no lo extraía, vuelva a bajarlo con "
                     f"dane_data.geih.download({anios}, forzar=True, modules=['{modulo}']"
