@@ -181,7 +181,8 @@ with tab2:
         fig.update_xaxes(title="Ingreso laboral / salario mínimo del año")
         grafico(fig, "Ocupados por ingreso, hasta 4 salarios mínimos (%)", "geih", subtitulo)
         st.caption("Salario mínimo usado por año: " +
-                   ", ".join(f"{a}: {fmt_pesos(dd.SMLV.get(a))}" for a in anios))
+                   # «\$»: dos «$» en un texto de Streamlit se leen como fórmula y salía en verde y monoespaciado
+                   ", ".join(f"{a}: {fmt_pesos(dd.SMLV.get(a))}" for a in anios).replace("$", "\\$"))
         codigo(f'''
 import dane_data as dd
 

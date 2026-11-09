@@ -245,6 +245,16 @@ def test_la_grafica_lleva_titulo_y_fuente(geih_root, tmp_path, monkeypatch):
     assert config["toImageButtonOptions"]["scale"] == 3
 
 
+def test_salario_minimo_sin_formula(geih_root, tmp_path, monkeypatch):
+    """Dos «$» en un texto de Streamlit se leen como fórmula: hay que escaparlos."""
+    monkeypatch.setitem(dd.config._session, "geih", geih_root)
+    monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
+    at = AppTest.from_file(str(PAGINAS / "geih_explorar.py"), default_timeout=60).run()
+    assert not at.exception
+    texto = next(c.value for c in at.caption if c.value.startswith("Salario mínimo usado"))
+    assert texto.count("\\$") == texto.count("$") > 0
+
+
 def test_aviso_cuando_los_anios_mezclan_marcos(geih_root, tmp_path, monkeypatch):
     monkeypatch.setitem(dd.config._session, "geih", geih_root)
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")

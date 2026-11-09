@@ -51,6 +51,8 @@
   («2025 · Hombre: 58,5 %», antes «anio=2025, sexo=Hombre, porcentaje=58.4567»).
 * Detalles de la aplicación: la tabla ponderada nombra sus filas y columnas como los selectores («Sexo», no «sexo»), el eje
   de *Indicadores laborales* ya no repite «(%)» y las tres tarjetas de *Inicio* tienen la misma altura.
+* En *Ingresos y salario mínimo*, la línea «Salario mínimo usado por año» se lee bien: los dos «$» se tomaban como una
+  fórmula y parte del texto salía en verde y monoespaciado.
 * En las gráficas de la aplicación, cada grupo conserva su color: al quitar un departamento o un sector de la lista, los
   demás ya no cambian de color.
 * Los grupos que tienen un orden (edades, niveles educativos, años) se dibujan en un solo azul, de claro a oscuro, para que
