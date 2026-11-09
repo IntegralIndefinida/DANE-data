@@ -79,6 +79,26 @@ dd.geih.indicadores(df, por="grupo_edad", anual=False)
 El DANE publica también trimestres. Un trimestre es el promedio de sus tres meses: cargue esos meses y use
 `anual=True`, como en el ejemplo de arriba (enero a marzo de 2024).
 
+Cada mes, el boletín del DANE publica además el **trimestre móvil**: el mes y los dos anteriores (octubre a diciembre,
+noviembre a enero…). {dd}`geih.trimestre_movil()` lo calcula a partir de una serie mensual:
+
+```python
+>>> mensual = dd.geih.serie_indicadores(2025, anual=False)
+>>> dd.geih.trimestre_movil(mensual)[["anio", "mes", "tgp", "to", "td"]].round(1).tail(4)
+    anio  mes   tgp    to   td
+8   2025    9  64.1  58.7  8.5
+9   2025   10  64.3  58.9  8.3
+10  2025   11  64.5  59.5  7.8
+11  2025   12  64.7  59.7  7.7
+```
+
+La fila de diciembre es el trimestre de octubre a diciembre. Da lo mismo que juntar los microdatos de los tres meses
+con el factor de expansión dividido por 3, y sirve sobre todo para grupos con poca muestra, como los departamentos
+(`por="departamento"`), donde la tasa de un solo mes salta mucho. Algunas filas quedan vacías: las de los dos primeros
+meses de la serie, las que tocan un mes que falta y las que juntarían meses de dos marcos muestrales (en la serie
+principal, enero y febrero de 2020, 2021 y 2022). `n_muestra` suma los tres meses, y `ingreso_medio` e
+`ingreso_mediano` quedan vacíos, porque no se pueden sacar de los resultados de cada mes.
+
 ## Muchos años: `serie_indicadores`
 
 Para series largas, {dd}`geih.serie_indicadores()` da exactamente el mismo resultado sin cargar todos los
