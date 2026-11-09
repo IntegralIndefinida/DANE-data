@@ -480,7 +480,7 @@ def load_month(mes: MesGEIH, columns="core", modules: Iterable[str] | None = Non
     >>> mes = dd.geih.find_months(2024)[0]  # doctest: +SKIP
     >>> crudo = dd.geih.load_month(mes)  # doctest: +SKIP
     >>> crudo.shape  # doctest: +SKIP
-    (70648, 29)
+    (70648, 46)
     """
     columns, modules = _lista_columnas(columns), _lista(modules)
     if columns == "all":

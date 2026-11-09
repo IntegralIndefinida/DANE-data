@@ -112,6 +112,6 @@ Las piezas de `load` también son públicas, por si se necesita controlar cada p
 (2024, 1, ['caracteristicas', 'fuerza', 'migracion', 'no_ocupados', 'ocupados', 'otras', 'otros_ingresos', 'vivienda'])
 >>> crudo = dd.geih.load_month(meses[0])     # variables del DANE, sin armonizar
 >>> crudo.shape
-(70648, 29)
+(70648, 46)
 >>> df = dd.geih.harmonize(crudo)            # + variables armonizadas
 ```
