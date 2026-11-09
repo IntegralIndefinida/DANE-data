@@ -1,32 +1,43 @@
-## Novedades de la versión 0.4.0
+## Novedades de la versión 0.5.0
 
-Llegan las Estadísticas Vitales: los nacimientos y las defunciones de Colombia desde 1979, con tasas calculadas
-como las calcula el DANE y las proyecciones de población incluidas. La lista completa está en
+Dos módulos de la GEIH que antes se descartaban, Otros ingresos y Migración, con sus variables armonizadas; el
+trimestre móvil del DANE; gráficas listas para una tesis y modo oscuro en la aplicación; y una ronda de
+correcciones en las descargas, las tablas y los lanzadores. La lista completa está en
 [Novedades](https://integralindefinida.github.io/DANE-data/novedades.html).
 
 **Nuevo**
-- Estadísticas Vitales (`dd.eevv`): los certificados de defunción (1979–2025), de nacimiento y de defunción
-  fetal (1998–2025), descargados, armonizados y comprobados contra los cuadros del DANE. En la aplicación, la
-  página *Nacimientos y defunciones*; en la terminal, `dane-data descargar eevv`.
-- `dd.eevv.tasas` y `dd.eevv.tasas_especificas`: natalidad, mortalidad, fecundidad, mortalidad infantil,
-  neonatal, perinatal y materna, con las fórmulas de las fichas técnicas del DANE. Son de hechos registrados,
-  sin ajustar por subregistro.
-- `dd.poblacion`: las proyecciones de población del DANE por departamento, sexo, edad simple y área. Vienen con
-  la librería, sin descargar nada.
-- Los diccionarios oficiales de los tres certificados, en `describir`, `buscar_variable` y la página
-  *Diccionario* de la aplicación.
+- Los módulos **Otros ingresos** y **Migración** de la GEIH, con cuatro variables armonizadas:
+  `ingreso_no_laboral` (arriendos, pensiones, ayudas e intereses, por mes y sin imputar), `lugar_nacimiento`,
+  `residencia_hace_12_meses` y `residencia_hace_5_anios` (desde 2022). En la aplicación, en *Tablas y microdatos*.
+- `dd.geih.trimestre_movil`: el trimestre móvil como lo publica el DANE, útil para grupos con poca muestra como
+  los departamentos. En la aplicación, la frecuencia *Trimestre móvil* de *Indicadores laborales*.
+- Cada gráfica de la aplicación lleva adentro su título, el período, los filtros y la fuente, y se descarga con el
+  triple de resolución: la imagen sirve sola en una tesis o un informe. La aplicación tiene modo oscuro.
+- Ejemplo nuevo en la documentación, *Recetas para investigar*: ecuación de Mincer, descomposición de
+  Oaxaca-Blinder y tablas para LaTeX.
 
 **Al actualizar**
-- La caché de cada mes de la GEIH se vuelve a crear una vez. Desde ahora se rehace sola cuando cambia el código
-  que lee los archivos.
-- dane-data ya no depende de `beautifulsoup4`.
+- Los meses ya descargados no traen los módulos nuevos. Si sus ZIP siguen en `raw_zips/`, la próxima descarga los
+  saca de ahí sin bajar nada; si no, `dd.geih.download(años, forzar=True, modules=["otros_ingresos", "migracion"])`,
+  o en la aplicación *Descargar datos* → *Opciones avanzadas*. `dd.geih.load` y la página *Tablas y microdatos*
+  avisan qué años faltan.
+- La caché de cada mes de la GEIH se vuelve a crear una vez.
+- `dd.geih.MODULE_PATTERNS` ya no existe; los módulos que se pueden pedir siguen en `dd.geih.DEFAULT_MODULES`.
+- Mac y Linux: si instaló uv con el lanzador de la 0.4.0 o anterior, uv pudo agregar una línea a `~/.zshrc` o
+  `~/.bashrc`; la sección *Desinstalar* de la documentación dice cómo quitarla. El lanzador nuevo ya no la agrega.
 
 **Correcciones**
-- `dd.eam.download(delete_zips=True)` (en la terminal `--borrar-zips`) ya borra los ZIP de los años que se
-  extraen bien; en la 0.3.2 solo borraba los de los años que fallaban.
-- `download(root="~/...")` descarga en la carpeta personal, donde `load` la busca, y no en una carpeta llamada
-  `~` dentro de la carpeta actual.
-- `dd.tabla` con un estadístico mal escrito dice cuáles son los válidos.
+- En octubre y noviembre de 2020 no se extraían ni leían tres archivos con erratas del DANE en el nombre
+  («Desoucpados», «Inativos», «Fuerzo de trabajo»). Los indicadores no cambian.
+- `dd.geih.download(modules=["desocupados"])` no extraía «No ocupados» desde 2022.
+- `dd.tabla` y `dd.geih.serie_tabla` con la media o la mediana por grupo ya no fallan cuando nadie tiene la
+  variable (por ejemplo, el ingreso laboral en 2007); la página *Tablas y microdatos* se caía.
+- Las descargas devuelven como fallo los años que no están en el ANDA, y `dane-data descargar` termina con error.
+- Con `forzar=True`, la descarga del empalme ya no borra un mes que el paquete nuevo del DANE no trae.
+- En la aplicación, el tope de 100 de la barra *Edad* es «100 o más»; las cifras van con coma decimal; los meses de
+  las gráficas, en español; y cada grupo conserva su color al quitar otros.
+- Lanzadores: `Abrir dane-data.exe` busca uv solo en el `PATH`, el zip trae `LEEME.txt`, y el lanzador de Mac y
+  Linux avisa si se abre sin descomprimir el zip.
 
 ---
 

@@ -20,7 +20,7 @@ from .proyecciones import poblacion
 from .referencias import DEPARTAMENTOS, MESES, SMLV, buscar_variable, describir, diccionario
 from .stats import tabla, weighted_mean, weighted_quantile
 
-__version__ = "0.4.0"
+__version__ = "0.5.0"
 
 __all__ = [
     "geih", "eam", "eevv", "set_paths", "get_path", "show_paths", "tabla", "weighted_mean",
