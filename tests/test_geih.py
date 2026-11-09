@@ -360,6 +360,27 @@ def test_serie_indicadores_igual_a_indicadores(geih_root, tmp_path, monkeypatch,
     pd.testing.assert_frame_equal(serie, esperado)
 
 
+@pytest.mark.parametrize("por", [None, "sexo"])
+def test_trimestre_movil_igual_a_juntar_los_tres_meses(geih_root, por):
+    """Lo que hace el DANE: los microdatos de los tres meses juntos, con el factor de expansión dividido por 3."""
+    enero = dd.geih.load(2025, months=1, root=geih_root, cache=False)
+    paso = np.linspace(0.5, 1.5, len(enero))  # otro peso por persona: las tasas cambian de un mes a otro
+    tres = pd.concat([enero, enero.assign(mes=2, fex=enero["fex"] * paso), enero.assign(mes=3, fex=enero["fex"] * paso[::-1])],
+                     ignore_index=True)
+    tres.attrs = {}                                                       # que cuente 3 meses, no los 2 de load
+    movil = dd.geih.trimestre_movil(dd.geih.indicadores(tres, por=por, anual=False))
+    esperado = dd.geih.indicadores(tres, por=por, anual=True)
+    columnas = ["pet", "fuerza_trabajo", "ocupados", "desocupados", "inactivos", "tgp", "to", "td",
+                "tasa_informalidad", "n_muestra"]
+    mensual = dd.geih.indicadores(tres, por=por, anual=False)
+    assert mensual["td"].nunique() > 1                                    # si no, promediar las tasas también pasaría
+    marzo = movil[movil["mes"] == 3].reset_index(drop=True)
+    pd.testing.assert_frame_equal(marzo[columnas], esperado[columnas], check_dtype=False)
+    assert movil.loc[movil["mes"] < 3, "td"].isna().all() and movil["ingreso_mediano"].isna().all()
+    with pytest.raises(ValueError, match="mensual"):
+        dd.geih.trimestre_movil(esperado)
+
+
 def test_serie_indicadores_sin_grupo_vacio(geih_root, tmp_path, monkeypatch):
     """
     Por defecto serie_indicadores deja fuera la fila de nivel educativo vacío (en los datos reales, los

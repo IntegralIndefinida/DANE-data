@@ -188,3 +188,67 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, anual:
 
     res = _con_categorias(res.replace([np.inf, -np.inf], np.nan).reset_index(), df, por)
     return res[keys + _COLUMNAS]
+
+
+def trimestre_movil(serie: pd.DataFrame) -> pd.DataFrame:
+    """
+    Trimestre móvil de una serie mensual de indicadores, como lo publica el DANE.
+
+    Cada mes junta ese mes y los dos anteriores: los niveles son el promedio de los tres y las tasas salen
+    de esos promedios. Es lo mismo que calcular los indicadores con los microdatos de los tres meses juntos y
+    el factor de expansión dividido por 3, que es como el DANE arma el trimestre móvil. Sirve para grupos con
+    poca muestra, como los departamentos, donde la tasa de un solo mes salta mucho.
+
+    Parámetros
+    ----------
+    serie
+        Resultado mensual de ``indicadores(..., anual=False)`` o ``serie_indicadores(..., anual=False)``.
+
+    Devuelve
+    --------
+    DataFrame
+        Las mismas filas y columnas. La fila de cada mes es el trimestre que termina en ese mes, y queda vacía
+        si falta alguno de los dos meses anteriores (los dos primeros de la serie, o junto a un mes que no
+        está). ``n_muestra`` suma los tres meses. ``ingreso_medio`` e ``ingreso_mediano`` quedan vacíos: no
+        se pueden sacar de los resultados de cada mes.
+
+    Lanza
+    -----
+    ValueError
+        Si ``serie`` no es mensual (no tiene la columna ``mes``).
+
+    Véase también
+    -------------
+    serie_indicadores : La serie mensual, con ``anual=False``.
+
+    Ejemplos
+    --------
+    >>> import dane_data as dd
+    >>> mensual = dd.geih.serie_indicadores([2025, 2026], por="departamento", anual=False)  # doctest: +SKIP
+    >>> dd.geih.trimestre_movil(mensual)  # doctest: +SKIP
+    """
+    if "mes" not in serie.columns:
+        raise ValueError("trimestre_movil necesita una serie mensual: use anual=False.")
+    grupos = [c for c in serie.columns if c not in ("anio", "mes", *_COLUMNAS)]
+    niveles = ["pet", "fuerza_trabajo", "ocupados", "desocupados", "inactivos"]
+    informalidad = ["tasa_informalidad", "tasa_informalidad_marco2005"]
+    d = serie.assign(_periodo=serie["anio"] * 12 + serie["mes"] - 1,
+                     **{f"_inf_{c}": serie[c] / 100 * serie["ocupados"] for c in informalidad})
+    sumas = [*niveles, "n_muestra", *(f"_inf_{c}" for c in informalidad)]
+    partes = []
+    for _, g in (d.groupby(grupos, observed=True, dropna=False, sort=False) if grupos else [(None, d)]):
+        s = g.set_index("_periodo")[sumas].astype("float64").sort_index()
+        s = s.reindex(range(s.index.min(), s.index.max() + 1))  # un mes que falta corta los trimestres que lo tocan
+        partes.append(s.rolling(3, min_periods=3).sum().reindex(g["_periodo"]).set_axis(g.index))
+    t = pd.concat(partes).reindex(serie.index)
+
+    res = serie.copy()
+    res[niveles] = t[niveles] / 3
+    res["n_muestra"] = t["n_muestra"]
+    res["tgp"] = 100 * t["fuerza_trabajo"] / t["pet"]
+    res["to"] = 100 * t["ocupados"] / t["pet"]
+    res["td"] = 100 * t["desocupados"] / t["fuerza_trabajo"]
+    for c in informalidad:  # informales sobre ocupados, como en indicadores
+        res[c] = 100 * t[f"_inf_{c}"] / t["ocupados"]
+    res["ingreso_medio"] = res["ingreso_mediano"] = np.nan
+    return res.replace([np.inf, -np.inf], np.nan)

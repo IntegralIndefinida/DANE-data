@@ -48,6 +48,7 @@ Vea {doc}`../guia/indicadores`.
 
    indicadores
    serie_indicadores
+   trimestre_movil
 ```
 
 ## Tablas y distribuciones de muchos años

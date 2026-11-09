@@ -2,6 +2,12 @@
 
 ## Sin publicar
 
+**Nuevo**
+
+* {dd}`geih.trimestre_movil()`: el trimestre móvil de una serie mensual de indicadores, como lo publica el DANE (cada
+  mes junta ese mes y los dos anteriores). Da lo mismo que juntar los microdatos de los tres meses con el factor de
+  expansión dividido por 3. Sirve para grupos con poca muestra, como los departamentos.
+
 **Mejoras**
 
 * {dd}`tabla()` copia solo las columnas que usa, no todo el DataFrame: con `dd.geih.load(..., columns="all")` ya no
