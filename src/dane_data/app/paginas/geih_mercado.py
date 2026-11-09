@@ -80,13 +80,20 @@ nombre_ind = c1.selectbox("Indicador", list(INDICADORES))
 nombre_por = c2.selectbox("Desagregar por", list(DESAGREGAR))
 col, es_pct = INDICADORES[nombre_ind]
 por = DESAGREGAR[nombre_por]
-# El trimestre móvil no puede dar la mediana ni la media del ingreso con los resultados de cada mes
-frecuencias = ["Anual", "Mensual"] + ([] if col in ("ingreso_medio", "ingreso_mediano") else ["Trimestre móvil"])
+# El trimestre móvil no puede dar la mediana ni la media del ingreso con los resultados de cada mes, y con solo
+# algunos meses le faltan los dos anteriores: la gráfica quedaba vacía
+movil_posible = col not in ("ingreso_medio", "ingreso_mediano") and not sel["meses"]
+frecuencias = ["Anual", "Mensual"] + (["Trimestre móvil"] if movil_posible else [])
 # Con pocos años, la serie anual son 2 o 3 puntos casi en línea recta: por defecto, la mensual; por departamento, el
 # trimestre móvil, porque un departamento en un solo mes tiene poca muestra y la tasa salta mucho
 defecto = ("Anual" if len(sel["anios"]) > 3 else
-           "Trimestre móvil" if por == "departamento" and "Trimestre móvil" in frecuencias else "Mensual")
-frecuencia = c3.radio("Frecuencia", frecuencias, horizontal=True, index=frecuencias.index(defecto))
+           "Trimestre móvil" if por == "departamento" and movil_posible else "Mensual")
+# Lo que la persona eligió se mantiene al cambiar el indicador o la desagregación; sin elección, el defecto. Sin
+# esto, Streamlit volvía al defecto cada vez que cambiaban las opciones o el índice.
+elegida = st.session_state.get("geih_frecuencia_elegida")
+st.session_state["geih_frecuencia"] = elegida if elegida in frecuencias else defecto
+frecuencia = c3.radio("Frecuencia", frecuencias, horizontal=True, key="geih_frecuencia",
+                      on_change=lambda: st.session_state.update(geih_frecuencia_elegida=st.session_state["geih_frecuencia"]))
 anual = frecuencia == "Anual"
 movil = frecuencia == "Trimestre móvil"
 if col == "tasa_informalidad" and min(sel["anios"]) < 2022:

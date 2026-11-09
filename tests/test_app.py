@@ -232,6 +232,22 @@ def test_por_departamento_abre_en_trimestre_movil(geih_root, tmp_path, monkeypat
     assert "Trimestre móvil" not in next(r for r in at.radio if r.label == "Frecuencia").options
 
 
+def test_la_frecuencia_elegida_se_mantiene(geih_root, tmp_path, monkeypatch):
+    """La frecuencia elegida no vuelve al defecto al cambiar la desagregación o el indicador; con solo algunos
+    meses no hay trimestre móvil, porque le faltan los dos meses anteriores y la gráfica quedaba vacía."""
+    monkeypatch.setitem(dd.config._session, "geih", geih_root)
+    monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
+    at = AppTest.from_file(str(PAGINAS / "geih_mercado.py"), default_timeout=60).run()
+    frecuencia = lambda: next(r for r in at.radio if r.label == "Frecuencia")  # noqa: E731
+    frecuencia().set_value("Anual").run()
+    for etiqueta, valor in (("Desagregar por", "Departamento"), ("Indicador", "Ingreso laboral mediano"),
+                            ("Indicador", "Tasa de desocupación (TD)")):
+        next(s for s in at.selectbox if s.label == etiqueta).set_value(valor).run()
+        assert not at.exception and frecuencia().value == "Anual"
+    next(t for t in at.toggle if t.label == "Todos los meses").set_value(False).run()
+    assert not at.exception and "Trimestre móvil" not in frecuencia().options
+
+
 def test_la_grafica_lleva_titulo_y_fuente(geih_root, tmp_path, monkeypatch):
     """La imagen que se descarga (botón de la cámara) debe servir sola en una tesis: título, período y fuente."""
     monkeypatch.setitem(dd.config._session, "geih", geih_root)
