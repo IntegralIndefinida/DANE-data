@@ -46,7 +46,7 @@ with tab1:
                 "**microagregados** (el promedio de su grupo, no los propios). Sirven para sumas; para análisis "
                 "por establecimiento, exclúyalos o contrólelos con la columna `microagregado`.", icon=":material/info:")
     c = st.columns(3)
-    c[0].metric("Establecimientos", f"{n_est:,}".replace(",", "."))
+    c[0].metric("Establecimientos", fmt_num(n_est))
     c[1].metric("Años", pan.index.get_level_values("anio").nunique())
     c[2].metric("Observaciones", f"{fmt_num(len(pan))}")
     por_anio = pan.reset_index().groupby("anio").size().rename("establecimientos").reset_index()
