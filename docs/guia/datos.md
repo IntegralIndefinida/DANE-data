@@ -66,6 +66,10 @@ los ZIP y extraen los módulos. Las descargas son **incrementales**:
   antes se conserva. Con `modules`, se reemplazan solo esos módulos y los demás quedan como estaban.
 * Para bajar solo algunos módulos, `modules=["caracteristicas", "ocupados"]`; los nombres están en
   `dd.geih.DEFAULT_MODULES`.
+* Si un mes ya descargado no tiene un módulo que se pide ahora (por ejemplo `otros_ingresos` o `migracion`,
+  que antes no se extraían) y su ZIP sigue en `<raíz>/raw_zips/`, la descarga lo saca de ese ZIP sin bajar
+  nada. Si el ZIP se borró, hace falta `forzar=True`; con `modules=["otros_ingresos", "migracion"]` se
+  reemplazan solo esos dos.
 
 Las tres funciones devuelven lo que no se pudo bajar o extraer (un ZIP que no se descargó tras tres intentos,
 un año sin enlaces en el ANDA, un ZIP que no trae un módulo); la lista vacía quiere decir que todo salió
@@ -115,10 +119,10 @@ Desde la terminal, `dane-data estado` muestra lo mismo resumido por año. Para l
 
 | | Tamaño aproximado |
 |---|---|
-| Un año de la GEIH extraído | 500 MB, más los ZIP si se conservan (`delete_zips=False`, el valor por defecto) |
+| Un año de la GEIH extraído | 600 MB, más los ZIP si se conservan (`delete_zips=False`, el valor por defecto) |
 | Toda la serie principal 2007–2026 | 11 GB extraída |
 | Toda la EAM 1992–2024 | 330 MB |
 | Todas las Estadísticas Vitales | 3,6 GB extraídas (2,2 GB de nacimientos, 1,2 GB de defunciones), 1,6 GB de ZIP |
-| Caché de `dane-data` con toda la GEIH leída | 700 MB en `~/.cache/dane_data` |
+| Caché de `dane-data` con toda la GEIH leída | 800 MB en `~/.cache/dane_data` |
 
 La caché se puede borrar cuando se quiera con {dd}`geih.clear_cache()`; se vuelve a crear al leer los datos.

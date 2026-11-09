@@ -164,7 +164,8 @@ MAYÚSCULA (GEIH) son las originales del DANE.
 **GEIH**: `anio`, `mes`, `fex`, `sexo`, `edad`, `grupo_edad`, `dpto`, `departamento`, `zona`,
 `condicion` (Ocupado / Desocupado / Inactivo / Fuera de la PET), `pet`, `fuerza_trabajo`, `ocupado`,
 `desocupado`, `inactivo`, `formal`, `formal_marco2005`, `cotiza_pension`, `ingreso_laboral`, `smlv`, `ratio_smlv`,
-`horas_semana`, `posicion_ocupacional`, `rama2d`, `rama_rev`, `nivel_educativo`, `jefe_hogar`.
+`horas_semana`, `posicion_ocupacional`, `rama2d`, `rama_rev`, `nivel_educativo`, `jefe_hogar`,
+`ingreso_no_laboral`, `lugar_nacimiento`, `residencia_hace_12_meses`, `residencia_hace_5_anios`.
 
 **EAM**: todas las columnas en minúscula, más `anio`, `ciiu`, `ciiu_rev`, `division`, `sector`,
 `departamento`, `microagregado`, `grupo_microagregacion`.
@@ -185,7 +186,9 @@ MAYÚSCULA (GEIH) son las originales del DANE.
 | Sexo en `P6020` o `P3271`, educación en `P6210` o `P3042`, rama en `RAMA2D` o `RAMA2D_R4` | Unificados fila a fila (sirve al juntar años de distintas épocas) |
 | 2007 sin marcas `OCI`/`DSI`; 2020 y empalme con marcas en Características | La condición se deduce del módulo en que aparece cada persona |
 | Archivos en subcarpetas (`CSV 13/No ocupados.CSV`) | Búsqueda recursiva |
+| Nombres con erratas: «Deocupados» (2013), «Desoucpados», «Inativos» (octubre de 2020; septiembre en el empalme), «Fuerzo de trabajo» (noviembre de 2020) | Se reconocen igual |
 | Meses a los que les falta un módulo | Se omiten con aviso (si no, el desempleo saldría 0 %); `incluir_incompletos=True` los carga |
+| Marzo–julio de 2020 sin Vivienda, Otras actividades, Otros ingresos ni (serie principal) Desocupados e Inactivos: formulario telefónico | Se cargan con un aviso: las variables de esos módulos quedan vacías en esos meses |
 | Varios meses juntos | Niveles = promedio mensual, como el DANE |
 | EAM: `CIIU2N4`, `ciiu2`, `CIIU`, `ciiu3`, `ciiu4`, `ciiu_4`, códigos a 2–3 dígitos | `ciiu`, `ciiu_rev`, `division`, `sector` |
 | EAM: valores reemplazados por el promedio de un grupo de establecimientos | Marcados en `microagregado`; `dd.eam.panel(..., excluir_microagregados=True)` |
@@ -222,7 +225,8 @@ comparar.
   Las dos mediciones no son comparables entre sí.
 - **Serie principal vs. empalme**: para series largas 2010–2020 comparables con 2021+, use `empalme=True`.
 - **PET**: desde 2022 son las personas de 15 años o más; antes, 12+ (urbano) y 10+ (rural).
-- **Ingresos**: `INGLABO` en pesos corrientes; la GEIH 2007 no lo trae.
+- **Ingresos**: `INGLABO` en pesos corrientes; la GEIH 2007 no lo trae. `ingreso_no_laboral` suma, sin
+  imputar, las fuentes no laborales que el DANE cuenta en la pobreza monetaria, así que no da sus cifras.
 - **EAM**: los montos vienen en miles de pesos corrientes. Según los propios archivos, la CIIU es
   Rev. 2 hasta 2000, Rev. 3 en 2001–2011 y Rev. 4 desde 2012 (la documentación del ANDA dice otra
   cosa; vea las diferencias con la documentación del DANE); los sectores no se comparan entre revisiones sin una
@@ -266,6 +270,8 @@ el DANE, así que en estos casos no coincide con las variables armonizadas.
 | Variable | Qué dice el ANDA | Qué muestran los datos y qué hace `dane-data` |
 |---|---|---|
 | `P6430`, `P6870`, `OFICIO` → `formal_marco2005` (2007–2021) | La metodología de informalidad de 2009 cuenta como informales a todos los empleados domésticos, trabajadores sin remuneración y jornaleros, y a los cuenta propia de empresas de hasta 5 personas «excepto los independientes profesionales», sin decir cómo se identifican. | Lo publicado por el DANE (anexo de octubre a diciembre de 2021, trimestres móviles de 2007–2019 y 2021) solo coincide si domésticos, trabajadores sin remuneración y jornaleros son informales cuando también están en empresas de hasta 5 personas, como dice la presentación de la nueva medición (julio de 2022), y si los profesionales son los oficios 1 a 20 de la CNO (profesionales, técnicos y directivos; el 0 no). `dane-data` sigue lo publicado: coincide en todos los trimestres en las 13 ciudades y en las 23 salvo febrero de 2008, con 134 informales menos de unos 4,6 millones (Tunja, Quibdó, Riohacha y Armenia; no se encontró el registro). |
+| `P7500S1A1`–`P7510S5A1` → `ingreso_no_laboral` | El DDI presenta los montos como «Valor $», sin códigos especiales. | En todos los años hay montos de 98 y 99 que no son pesos sino «no sabe» y «no informa», como el 9 de las preguntas sí/no (en enero de 2024, 448 personas de la PET tienen alguno). `dane-data` deja vacío su `ingreso_no_laboral`. Deducido de los datos; el DANE no lo dice. |
+| `P3373` → `lugar_nacimiento` (desde 2022) | El DDI no trae categorías para «¿Dónde nació?». | Toma los valores 1, 2 y 3. Con el 2 se llenan el departamento y el municipio (`P3373S1`, `P3373S2`) y con el 3 el país (`P3373S3`), así que son este municipio, otro municipio y otro país, en el orden de `P3384`, que sí las trae (corridas en uno por «No había nacido»). `dane-data` las etiqueta así. Deducido de los datos. |
 | `P3068` → `formal` (desde 2023) | El DDI da tres categorías: 1 = sí, 2 = no y 9 = no sabe, no informa. | En 2022 los datos usan el 9. Desde enero de 2023 el 9 no aparece y viene en su lugar un 3, que el DDI no trae (de 1 a 8 personas encuestadas en casi todos los meses). El código SAS del anexo de informalidad del DANE trata el 3 como el 9 («se agrega la opción 3 ya que esta reemplaza al 9 desde 2023»), y `dane-data` también: en esa regla los dos cuentan como informales. |
 | `OFICIO_C8` → `formal` (desde 2022) | El código SAS del anexo de informalidad toma los dos primeros caracteres del código de oficio, de 4 dígitos (`SUBSTR(OFICIO_C8,1,2)`), y cuenta como formales a los independientes de los grupos 00 a 20. El DDI no describe la variable. | Los archivos del ANDA lo traen como número, sin el cero inicial: `110` es el código `0110`, y `0` es `0000` (en junio de 2024, 34 de unos 30 000 ocupados encuestados). Sin completarlo, los dos primeros caracteres de `110` serían `11` y el `0` no quedaría en ningún grupo. `dane-data` lo completa a 4 dígitos antes de tomar los dos primeros; así los formales e informales de cada mes de 2022 a 2026 coinciden con el anexo. Deducido de los datos; el DANE no lo dice. |
 | `P6430` → `posicion_ocupacional` (desde 2022) | El DDI de 2022 (catálogo 771) y el de 2025 (catálogo 853) repiten las 9 categorías del cuestionario anterior: 7 = trabajador sin remuneración en negocios de otros hogares, 8 = jornalero o peón, 9 = otro. | Desde enero de 2022 el código 7 es "jornalero o peón" (100 % agropecuario y casi todos con ingreso), el 8 es "otro" y el 9 ya no aparece. Hasta 2021, y en el empalme, se usan las etiquetas anteriores, que sí coinciden con los datos. El código 6 se sigue llamando "familiar sin remuneración"; desde 2022 podría incluir también el trabajo sin remuneración en negocios de otros hogares (sin confirmar). El código de informalidad que publica el DANE también trata el 7 como asalariado, junto al 1. |

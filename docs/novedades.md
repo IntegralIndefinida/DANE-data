@@ -10,6 +10,21 @@
 
 **Mejoras**
 
+* {dd}`geih.download()` y {dd}`geih.load()` incluyen dos módulos de la GEIH que antes se descartaban: `otros_ingresos`
+  (ingresos no laborales: arriendos, pensiones, ayudas de otros hogares y del gobierno, intereses, cesantías y, desde
+  2022, impuestos) y `migracion` (lugar de nacimiento y de residencia hace 12 meses y hace 5 años, desde 2022). Sus
+  variables se piden con `columns`, por ejemplo `dd.geih.load(2024, columns=["P7495", "P3373"])`. No se exigen: de marzo
+  a julio de 2020 el DANE no publicó Otros ingresos, y Migración empieza en 2022. En los meses ya descargados cuyo ZIP sigue en `raw_zips/`, la próxima descarga los
+  saca de ese ZIP sin bajar nada; si los ZIP se borraron, use `forzar=True` con `modules=["otros_ingresos",
+  "migracion"]`. Cada año ocupa unos 100 a 160 MB más. La caché de cada mes se vuelve a crear una vez.
+* Variables armonizadas nuevas en {dd}`geih.load()`: `ingreso_no_laboral` (arriendos, pensiones, pensión alimenticia,
+  ayudas de hogares y de instituciones, e intereses y dividendos, por mes y sin imputar: las fuentes que el DANE cuenta en
+  la pobreza monetaria), `lugar_nacimiento`, `residencia_hace_12_meses` y `residencia_hace_5_anios` (este municipio,
+  otro municipio, Venezuela u otro país; desde 2022). `load` lee 15 variables más del DANE: el primer trimestre de 2024
+  pasa de 80 a 105 MB con las variables por defecto.
+* {dd}`geih.load()` avisa cuando un mes no trae un módulo que sí traen los demás meses de su año, porque las
+  variables de ese módulo quedan vacías en ese mes. Pasa de marzo a julio de 2020, con el formulario reducido del operativo
+  telefónico del DANE, y con meses bajados antes de que dane-data extrajera un módulo.
 * {dd}`tabla()` copia solo las columnas que usa, no todo el DataFrame: con `dd.geih.load(..., columns="all")` ya no
   duplica la memoria.
 * {dd}`geih.download()` y {dd}`eam.download()` ya no bajan la ficha metodológica del ANDA a `<raíz>/metadata/`: nada la
@@ -26,6 +41,11 @@
 
 **Correcciones**
 
+* En octubre y noviembre de 2020 (y septiembre en el empalme), {dd}`geih.download()` no extraía «Desoucpados»,
+  «Inativos» ni «Fuerzo de trabajo», con erratas del DANE en el nombre, y {dd}`geih.load()` no los leía: las variables de
+  esos módulos quedaban vacías en esos meses. Los indicadores no cambian (se comprobó en esos meses), porque 2020
+  trae las marcas de ocupado, desocupado e inactivo en Características. Para tener esos archivos:
+  `dd.geih.download(2020, forzar=True, modules=["desocupados", "inactivos", "fuerza_trabajo"])`, también con `empalme=True`.
 * {dd}`geih.download()`, {dd}`eam.download()` y {dd}`eevv.download()` devuelven como fallo los años que no están en el
   ANDA, y `dane-data descargar` termina con error. Antes solo avisaban en el registro, devolvían una lista vacía y decían
   «finalizada exitosamente» sin haber bajado nada.

@@ -52,7 +52,11 @@ _COMPACTAS = (
     "P6870", "OFICIO",
     "OFICIO_C8", "P3045S1", "P3046", "P3069", "P6765", "P3065", "P3066", "P3067", "P3067S1", "P3067S2",
     "P6775", "P3068", "P6100", "P6110", "P6450", "P6930", "P6940",
+    "P7495", "P7505", "P3373", "P3382", "P3384",
 )
+# Montos de Otros ingresos que entran en ingreso_no_laboral: los del mes pasado y los de los últimos 12 meses
+_INGRESOS_MES = ("P7500S1A1", "P7500S2A1", "P7500S3A1")      # arriendos, pensiones, pensión alimenticia
+_INGRESOS_ANIO = ("P7510S1A1", "P7510S2A1", "P7510S3A1", "P7510S5A1")  # hogares, exterior, instituciones, intereses
 # Variables originales que se leen siempre (si existen) para poder armonizar.
 CORE_RAW = [
     *KEYS_PERSONA, "HOGAR", "MES", "PERIODO", "DPTO", "AREA", "CLASE",
@@ -61,19 +65,22 @@ CORE_RAW = [
     "OCI", "DSI", "INI", "FFT", "FT", "PET", "PETI",
     "INGLABO", "P6090", "P6920", "P6430", "P6800",
     "RAMA2D", "RAMA2D_R4", "P6210", "P3042",
+    *_INGRESOS_MES, *_INGRESOS_ANIO, "P3373S3", "P3382S3", "P3384S3",
     *_COMPACTAS,
 ]
 
-MODULOS = ("caracteristicas", "fuerza", "ocupados", "no_ocupados", "otras", "vivienda")
+MODULOS = ("caracteristicas", "fuerza", "ocupados", "no_ocupados", "otras", "vivienda", "otros_ingresos", "migracion")
 _MESES_PREFIJO = {
     "ene": 1, "feb": 2, "mar": 3, "abr": 4, "may": 5, "jun": 6, "jul": 7,
     "ago": 8, "sep": 9, "set": 9, "oct": 10, "nov": 11, "dic": 12,
 }
 # Nombres de módulo con plural opcional: el DANE publica "No ocupado.CSV" (marzo 2024),
-# "No ocupados.CSV", "Desocupados", la errata "Deocupados", "Ocupados04.csv" (2013), etc.
+# "No ocupados.CSV", "Desocupados", la errata "Deocupados", "Ocupados04.csv" (2013), etc. Octubre y noviembre
+# de 2020 (y septiembre en el empalme) traen además "Desoucpados", "Inativos" y "Fuerzo de trabajo".
 _RE_NO_OCU = re.compile(r"\bno ocupados?(?![a-z])")
-_RE_DESOCU = re.compile(r"\bd(?:e|es)ocupados?(?![a-z])")
-_RE_INACT = re.compile(r"\binactivos?(?![a-z])")
+_RE_DESOCU = re.compile(r"\bd(?:e|es)o(?:cu|uc)pados?(?![a-z])")
+_RE_INACT = re.compile(r"\binac?tivos?(?![a-z])")
+_RE_FUERZA = re.compile(r"\bfuerz[ao] de trabajo")
 _RE_OCU = re.compile(r"\bocupados?(?![a-z])")
 # Formatos de los microdatos. Se baja el CSV salvo donde el del ANDA está dañado (ver
 # CSV_DANADOS en el descargador); dentro de una carpeta se prefiere el formato alterno.
@@ -95,12 +102,16 @@ def classify_file(filename: str) -> tuple[str | None, str | None]:
         modulo = "no_ocupados"
     elif _RE_OCU.search(n):
         modulo = "ocupados"
-    elif "fuerza de trabajo" in n:
+    elif _RE_FUERZA.search(n):
         modulo = "fuerza"
     elif "caracter" in n or "personas" in n:
         modulo = "caracteristicas"
     elif "hogar" in n or "vivienda" in n:
         modulo = "vivienda"
+    elif "otros ingresos" in n:
+        modulo = "otros_ingresos"
+    elif "migracion" in n:
+        modulo = "migracion"
     elif "otras" in n:
         modulo = "otras"
     else:
@@ -297,7 +308,7 @@ def find_months(years: Iterable[int] | int | None = None, empalme: bool = False,
     >>> meses[0].anio, meses[0].mes, meses[0].completo  # doctest: +SKIP
     (2024, 1, True)
     >>> meses[0].modulos  # doctest: +SKIP
-    ['caracteristicas', 'fuerza', 'no_ocupados', 'ocupados', 'otras', 'vivienda']
+    ['caracteristicas', 'fuerza', 'migracion', 'no_ocupados', 'ocupados', 'otras', 'otros_ingresos', 'vivienda']
     """
     base = _csv_dir(_root(empalme, root))
     if not base.is_dir():
@@ -414,11 +425,11 @@ def _markers(path: Path) -> dict[str, int]:
     las variables OCI/DSI/INI: estar en el archivo de Ocupados es ser ocupado.
     """
     n = strip_accents(path.name)
-    if "fuerza de trabajo" in n:
+    if _RE_FUERZA.search(n):
         return {"_EN_FT": 1}
     if _RE_DESOCU.search(n):
         return {"_EN_DSI": 1}
-    if "inactivos" in n:
+    if _RE_INACT.search(n):
         return {"_EN_INI": 1}
     if _RE_OCU.search(n) and not _RE_NO_OCU.search(n):
         return {"_EN_OCU": 1}
@@ -476,7 +487,7 @@ def load_month(mes: MesGEIH, columns="core", modules: Iterable[str] | None = Non
     >>> mes = dd.geih.find_months(2024)[0]  # doctest: +SKIP
     >>> crudo = dd.geih.load_month(mes)  # doctest: +SKIP
     >>> crudo.shape  # doctest: +SKIP
-    (70648, 29)
+    (70648, 61)
     """
     columns, modules = _lista_columnas(columns), _lista(modules)
     if columns == "all":
@@ -490,15 +501,12 @@ def load_month(mes: MesGEIH, columns="core", modules: Iterable[str] | None = Non
         raise FileNotFoundError(f"{mes.carpeta}: falta el módulo de características generales")
     base = _read_module(mes.archivos["caracteristicas"], selector)
 
-    for modulo in ("fuerza", "ocupados", "no_ocupados", "otras"):
+    # Una columna que está en varios módulos sale del primero: los nuevos (otros ingresos, migración) van al final
+    for modulo in ("fuerza", "ocupados", "no_ocupados", "otras", "vivienda", "otros_ingresos", "migracion"):
         if modulo not in mes.archivos or modulo not in modules:
             continue
         df = _read_module(mes.archivos[modulo], selector)
-        base = _merge_new_columns(base, df, KEYS_PERSONA)
-
-    if "vivienda" in mes.archivos and "vivienda" in modules:
-        df = _read_module(mes.archivos["vivienda"], selector)
-        base = _merge_new_columns(base, df, KEYS_HOGAR)
+        base = _merge_new_columns(base, df, KEYS_HOGAR if modulo == "vivienda" else KEYS_PERSONA)
 
     for c in set(_COMPACTAS) & set(base.columns):
         if pd.api.types.is_float_dtype(base[c]) or pd.api.types.is_integer_dtype(base[c]):
@@ -667,6 +675,7 @@ _EDUC_P6210 = {1: "Ninguno", 2: "Ninguno", 3: "Primaria", 4: "Secundaria", 5: "M
 NIVELES_EDUC = ["Ninguno", "Primaria", "Secundaria", "Media", "Superior"]
 CONDICIONES = ["Ocupado", "Desocupado", "Inactivo", "Fuera de la PET"]
 GRUPOS_EDAD = ["0–14", "15–24", "25–34", "35–44", "45–54", "55–64", "65+"]
+LUGARES = ["Este municipio", "Otro municipio", "Venezuela", "Otro país"]
 POSICIONES = ["Empleado particular", "Empleado del gobierno", "Empleado doméstico", "Cuenta propia",
               "Patrón o empleador", "Familiar sin remuneración", "Sin remuneración (otros hogares)",
               "Jornalero o peón", "Otro"]
@@ -680,6 +689,9 @@ CATEGORIAS = {
     "departamento": pd.CategoricalDtype(sorted(set(DEPARTAMENTOS.values()))),
     "condicion": pd.CategoricalDtype(CONDICIONES),
     "posicion_ocupacional": pd.CategoricalDtype(POSICIONES),
+    "lugar_nacimiento": pd.CategoricalDtype(LUGARES),
+    "residencia_hace_12_meses": pd.CategoricalDtype(["No había nacido", *LUGARES]),
+    "residencia_hace_5_anios": pd.CategoricalDtype(["No había nacido", *LUGARES]),
 }
 MARCOS = {
     "censo 2005": "proyecciones de población del censo 2005 y PET de 12 años o más (10 en la zona rural)",
@@ -750,8 +762,9 @@ def harmonize(df: pd.DataFrame, edad_minima_pet: int | None = None) -> pd.DataFr
         ``departamento``, ``zona``, ``condicion``, ``pet``, ``fuerza_trabajo``, ``ocupado``,
         ``desocupado``, ``inactivo``, ``formal``, ``formal_marco2005``, ``cotiza_pension``,
         ``ingreso_laboral``, ``smlv``,
-        ``ratio_smlv``, ``horas_semana``, ``posicion_ocupacional``, ``rama2d``, ``rama_rev`` y
-        ``nivel_educativo``.
+        ``ratio_smlv``, ``horas_semana``, ``posicion_ocupacional``, ``rama2d``, ``rama_rev``,
+        ``nivel_educativo``, ``ingreso_no_laboral``, ``lugar_nacimiento``, ``residencia_hace_12_meses`` y
+        ``residencia_hace_5_anios``.
 
     Véase también
     -------------
@@ -762,7 +775,8 @@ def harmonize(df: pd.DataFrame, edad_minima_pet: int | None = None) -> pd.DataFr
     -----
     La guía «Variables armonizadas» explica de qué variable del DANE sale cada una y cómo se define. Las
     variables de ocupados (``formal``, ``ingreso_laboral``, ``horas_semana``,
-    ``posicion_ocupacional``) quedan vacías para quien no está ocupado.
+    ``posicion_ocupacional``) quedan vacías para quien no está ocupado. ``ingreso_no_laboral`` sale del
+    módulo Otros ingresos (la PET; vacío de marzo a julio de 2020) y las de lugar, del de Migración (desde 2022).
 
     Ejemplos
     --------
@@ -817,6 +831,26 @@ def harmonize(df: pd.DataFrame, edad_minima_pet: int | None = None) -> pd.DataFr
     df["smlv"] = anio.map(SMLV)
     df["ratio_smlv"] = df["ingreso_laboral"] / df["smlv"]
     df["horas_semana"] = _num(df, "P6800").where(ocupado)
+
+    # Las fuentes no laborales que el DANE suma en la pobreza monetaria (MESEP: arriendos, pensiones, pensión
+    # alimenticia y ayudas de hogares, ayudas institucionales, intereses y dividendos); lo de 12 meses, por mes.
+    # Sin cesantías ni «otras fuentes» (loterías, venta de propiedades) y sin las imputaciones del DANE.
+    mes_pasado = pd.concat([_num(df, c) for c in _INGRESOS_MES], axis=1)
+    doce_meses = pd.concat([_num(df, c) for c in _INGRESOS_ANIO], axis=1)
+    # El DDI no lo dice, pero en los montos 98 y 99 son «no sabe» y «no informa», como el 9 de las preguntas sí/no
+    no_sabe = mes_pasado.isin([98, 99]).any(axis=1) | doce_meses.isin([98, 99]).any(axis=1)
+    respondio = _num(df, "P7495").notna() | _num(df, "P7505").notna()
+    total = mes_pasado.sum(axis=1) + doce_meses.sum(axis=1) / 12
+    df["ingreso_no_laboral"] = total.where(respondio & ~no_sabe)
+
+    # Migración: P3373 vale 1 (este municipio), 2 (otro) o 3 (otro país); P3384 y P3382, lo mismo corrido en
+    # uno, con 1 = no había nacido. El DDI no trae las categorías de P3373; salen de qué subpregunta se llena.
+    for col, nombre, corrido in (("P3373", "lugar_nacimiento", 0), ("P3384", "residencia_hace_12_meses", 1),
+                                 ("P3382", "residencia_hace_5_anios", 1)):
+        codigo = _num(df, col) - corrido
+        lugar = codigo.map({0: "No había nacido", 1: "Este municipio", 2: "Otro municipio", 3: "Otro país"})
+        lugar = lugar.mask((codigo == 3) & (_num(df, f"{col}S3") == 862), "Venezuela")  # 862: Venezuela en ISO 3166
+        df[nombre] = pd.Categorical(lugar, dtype=CATEGORIAS[nombre])
 
     pos = _num(df, "P6430")
     pos_map = dict(enumerate(POSICIONES, start=1))
@@ -873,7 +907,7 @@ def _firma_lectura() -> str:
     from .. import __version__
 
     partes = [repr((CORE_RAW, _COMPACTAS, KEYS_PERSONA, KEYS_HOGAR, MODULOS, EXTENSIONES,
-                    _RE_NO_OCU, _RE_DESOCU, _RE_INACT, _RE_OCU))]
+                    _RE_NO_OCU, _RE_DESOCU, _RE_INACT, _RE_OCU, _RE_FUERZA))]
     for codigo in (_io, classify_file, _pick_files, _markers, _read_module, _merge_new_columns, load_month):
         try:
             partes.append(inspect.getsource(codigo))
@@ -963,6 +997,10 @@ def load(
     Un año completo tiene del orden de 800 000 registros. Con ``variables`` la memoria depende solo de las columnas
     que se conservan, porque cada mes se recorta antes de juntarlos.
 
+    Si un mes no trae un módulo que sí traen los demás meses de su año, se carga igual y se avisa: las
+    variables de ese módulo quedan vacías en ese mes. Pasa de marzo a julio de 2020, cuando el formulario
+    telefónico del DANE no traía vivienda, otras, otros_ingresos ni, en la serie principal, no_ocupados.
+
     La primera lectura de un mes tarda unos segundos; las siguientes salen de la caché
     (``~/.cache/dane_data/geih``). La caché se invalida sola si cambian los archivos del mes o el código de dane-data que los lee.
 
@@ -987,6 +1025,9 @@ def load(
     if variables is not None:
         conservar = list(dict.fromkeys(["anio", "mes", *([variables] if isinstance(variables, str) else variables)]))
     meses = find_months(years, empalme=empalme, root=root)
+    del_anio: dict[int, set] = {}  # módulos que trae algún mes de cada año en disco, antes de filtrar los meses
+    for m in meses:
+        del_anio.setdefault(m.anio, set()).update(m.archivos)
     if months is not None:
         months = {int(m) for m in months}
         meses = [m for m in meses if m.mes in months]
@@ -1003,6 +1044,17 @@ def load(
             f"No hay datos GEIH para años={years}, meses={months} en {_root(empalme, root)}. "
             "Descárguelos con dane_data.geih.download(...) o revise dane_data.set_paths(...)."
         )
+    # Un mes sin un módulo que sí traen los demás meses de su año queda con esas variables vacías
+    huecos: dict[tuple, list] = {}
+    for m in meses:
+        if faltan := sorted((del_anio[m.anio] & set(modules or MODULOS)) - set(m.archivos)):
+            huecos.setdefault(tuple(faltan), []).append(f"{MESES[m.mes]} {m.anio}")
+    if huecos:
+        detalle = "; ".join(f"{', '.join(mods)} en {', '.join(ms)}" for mods, ms in huecos.items())
+        log.warning(f"Meses sin módulos que sí traen los demás meses de su año; sus variables quedan vacías en esos "
+                    f"meses: {detalle}. De marzo a julio de 2020 es el formulario reducido del operativo telefónico del DANE "
+                    "(la condición de actividad sale igual, de las marcas de Características); en otro mes, vuelva a "
+                    "descargarlo con dane_data.geih.download(...).")
 
     frames = []
     for i, mes in enumerate(meses):

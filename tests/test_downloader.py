@@ -10,12 +10,12 @@ import pytest
 import dane_data as dd
 from dane_data.eam.downloader import EAM_TIC_CATALOGS, EAMDownloader
 from dane_data.eevv.downloader import EEVV_KNOWN_FILES, EEVVDownloader
-from dane_data.geih.downloader import MARCADOR, GEIHDownloader, faltantes_mes, mes_completo
+from dane_data.geih.downloader import MARCADOR, GEIHDownloader, faltantes_mes, is_target_csv, mes_completo
 
 CAR = "DIRECTORIO;SECUENCIA_P;ORDEN;P6040;FEX_C18\n1;1;1;30;10\n"
 MOD = "DIRECTORIO;SECUENCIA_P;ORDEN;FEX_C18\n1;1;1;10\n"
 TODOS = ("vivienda", "caracteristicas", "fuerza_trabajo", "ocupados", "desocupados", "inactivos",
-         "otras_formas_trabajo")
+         "otras_formas_trabajo", "otros_ingresos", "migracion")
 NOMBRES_MESES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre",
                  "Octubre", "Noviembre", "Diciembre"]
 
@@ -179,6 +179,31 @@ def test_marcador_registra_modulos(tmp_path):
     assert faltantes_mes(mes, TODOS) == []
     dl.process_year("2024", "819")                      # ahora sí se salta
     assert dl.descargas == ["Marzo 2024.zip"]
+
+
+def test_modulos_nuevos_salen_del_zip_guardado(tmp_path):
+    """Un mes extraído sin otros_ingresos ni migracion los saca del ZIP guardado; si el ZIP se borró, se salta."""
+    paquete = _mes_2024_con(**{"Otros ingresos e impuestos.CSV": MOD, "Migración.CSV": MOD})
+    antes = tuple(m for m in TODOS if m not in ("otros_ingresos", "migracion"))
+    for guardado in (True, False):
+        raiz = tmp_path / str(guardado)
+        FakeDownloader({"Marzo 2024.zip": paquete}, base_dir=raiz, keep_zips=guardado,
+                       modules=antes).process_year("2024", "819")
+        mes = raiz / "datos_csv" / "2024" / "Marzo 2024"
+        assert not (mes / "Migración.CSV").exists()
+        dl = FakeDownloader({"Marzo 2024.zip": paquete}, base_dir=raiz)
+        dl.process_year("2024", "819")
+        assert (mes / "Migración.CSV").exists() == (mes / "Otros ingresos e impuestos.CSV").exists() == guardado
+        assert dl.descargas == (["Marzo 2024.zip"] if guardado else [])  # el download_file real reutiliza el ZIP
+        dl.process_year("2024", "819")
+        assert len(dl.descargas) == guardado and dl.fallidos == []          # la segunda vez se salta
+
+
+@pytest.mark.parametrize("nombre", ["10.Octubre/Desoucpados.CSV", "10.Octubre/Inativos.CSV",
+                                    "11.Noviembre/Fuerzo de trabajo.CSV"])
+def test_erratas_de_2020_se_extraen(nombre):
+    """El DANE escribió mal estos nombres en octubre y noviembre de 2020; antes no se extraían."""
+    assert is_target_csv(nombre)
 
 
 def test_marcador_solo_si_el_mes_quedo_completo(tmp_path):

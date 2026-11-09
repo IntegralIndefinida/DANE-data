@@ -22,6 +22,12 @@ from dane_data.geih.loader import classify_file, month_from_folder
     ("No ocupado.CSV", ("no_ocupados", None)),                 # marzo 2024, en singular
     ("Area - Ocupados04.csv", ("ocupados", "area")),            # 2013, sufijo de mes
     ("Resto - Deocupados04.csv", ("no_ocupados", "resto")),
+    ("Cabecera - Otros ingresos.csv", ("otros_ingresos", "cabecera")),
+    ("Otros ingresos e impuestos.CSV", ("otros_ingresos", None)),
+    ("Migración.CSV", ("migracion", None)),
+    ("Desoucpados.CSV", ("no_ocupados", None)),                # erratas de octubre y noviembre de 2020
+    ("Inativos.CSV", ("no_ocupados", None)),
+    ("Fuerzo de trabajo.CSV", ("fuerza", None)),
 ])
 def test_classify_file(name, expected):
     assert classify_file(name) == expected
@@ -151,6 +157,44 @@ def test_new_era_and_nested_folder(geih_root):
     assert cond[(11, 1)] == "Inactivo"
     assert df.loc[df.ORDEN.eq(1) & df.DIRECTORIO.eq(10), "ratio_smlv"].item() == pytest.approx(1.0)
     assert "P5000" in df.columns  # módulo hogar fusionado por DIRECTORIO + SECUENCIA_P
+
+
+def test_otros_ingresos_y_migracion(geih_root):
+    """Los dos módulos se unen por persona (hasta 2021, Cabecera + Resto) y de ellos salen las variables nuevas."""
+    df = dd.geih.load([2016, 2025], root=geih_root, cache=False)
+    p = df.set_index(["anio", "DIRECTORIO", "ORDEN"])
+    assert p["ingreso_no_laboral"].dropna().to_dict() == {
+        (2016, 1, 1): 800000, (2016, 2, 1): 0, (2016, 3, 1): 150000, (2025, 10, 1): 0, (2025, 11, 1): 100000}
+    assert p["lugar_nacimiento"].dropna().astype(str).to_dict() == {
+        (2025, 10, 1): "Este municipio", (2025, 10, 2): "Venezuela", (2025, 11, 1): "Otro municipio"}
+
+
+def test_aviso_de_modulos_que_faltan_en_un_mes(geih_root, caplog):
+    """Un mes sin módulos que sí traen otros meses de su año se avisa, aunque se cargue solo; con modules, solo esos."""
+    with caplog.at_level("WARNING", logger="dane_data.geih"):
+        dd.geih.load(2025, months=2, root=geih_root, cache=False, incluir_incompletos=True)
+    assert "migracion, no_ocupados, otros_ingresos, vivienda en Febrero 2025" in caplog.text
+    caplog.clear()
+    with caplog.at_level("WARNING", logger="dane_data.geih"):
+        dd.geih.load(2025, root=geih_root, cache=False)                              # enero los trae todos
+        dd.geih.load(2025, months=2, root=geih_root, cache=False, incluir_incompletos=True,
+                      modules=["caracteristicas", "fuerza", "ocupados"])
+    assert "Meses sin módulos" not in caplog.text
+
+
+def test_ingreso_no_laboral_y_lugares():
+    """Lo de 12 meses va por mes; 98 y 99 son «no sabe» y «no informa»; las residencias corren los códigos en uno."""
+    df = pd.DataFrame({"anio": 2024, "mes": 1, "P7495": [1, 2, 1, None, 2], "P7505": [1, 2, 2, None, 1],
+                       "P7500S2A1": [1_000_000, None, 98, None, None], "P7510S3A1": [1_200_000, None, None, None, 99],
+                       "P7510S7A1": [5_000_000, None, None, None, None],     # «otras fuentes»: no cuenta
+                       "P3373": [1, 2, 3, 3, None], "P3373S3": [".", ".", "862", "840", None],
+                       "P3384": [1, 2, 4, 3, None], "P3384S3": [".", ".", "862", ".", None]})
+    h = dd.geih.harmonize(df)
+    assert h["ingreso_no_laboral"].tolist()[:2] == [1_100_000, 0] and h["ingreso_no_laboral"][2:].isna().all()
+    assert h["lugar_nacimiento"].tolist()[:4] == ["Este municipio", "Otro municipio", "Venezuela", "Otro país"]
+    assert h["residencia_hace_12_meses"].tolist()[:4] == ["No había nacido", "Este municipio", "Venezuela",
+                                                          "Otro municipio"]
+    assert h["residencia_hace_5_anios"].isna().all()                    # sin P3382: vacía, sin error
 
 
 def test_posicion_ocupacional_cambia_en_2022():

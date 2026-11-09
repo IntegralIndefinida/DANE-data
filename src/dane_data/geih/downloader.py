@@ -31,6 +31,8 @@ _MODULO_CARGADOR = {
     "vivienda": "vivienda", "caracteristicas": "caracteristicas", "fuerza_trabajo": "fuerza",
     "ocupados": "ocupados", "desocupados": "desocupados", "inactivos": None,  # se deduce de PET
     "otras_formas_trabajo": "otras",
+    # No se exigen: de marzo a julio de 2020 no viene Otros ingresos, y Migración empieza en 2022
+    "otros_ingresos": None, "migracion": None,
 }
 
 
@@ -121,11 +123,14 @@ EMPALME_CATALOGS = {
 MODULE_PATTERNS = {
     "vivienda": ("vivienda", "hogar"),
     "caracteristicas": ("caracteristica", "caracterica", "personas"),
-    "fuerza_trabajo": ("fuerza de trabajo",),
+    # Erratas del DANE en septiembre (empalme), octubre y noviembre de 2020: "Fuerzo de trabajo", "Desoucpados", "Inativos"
+    "fuerza_trabajo": ("fuerza de trabajo", "fuerzo de trabajo"),
     "ocupados": ("ocupados",),
-    "desocupados": ("desocupados", "deocupados"),
-    "inactivos": ("inactivos", "no ocupado"),
+    "desocupados": ("desocupados", "deocupados", "desoucpados"),
+    "inactivos": ("inactivos", "no ocupado", "inativos"),
     "otras_formas_trabajo": ("otras formas de trabajo", "otras actividades"),
+    "otros_ingresos": ("otros ingresos",),
+    "migracion": ("migracion",),
 }
 DEFAULT_MODULES = tuple(MODULE_PATTERNS)
 
@@ -137,7 +142,7 @@ CSV_DANADOS = {
     "2011": {None: "txt"},
     "2021": {9: "dta"},     # separado por espacios, y el texto libre también los tiene
 }
-EXCLUDE_MODULE_PATTERNS = ("otros ingresos", "migracion", "tipo de investigacion")
+EXCLUDE_MODULE_PATTERNS = ("tipo de investigacion",)
 
 # Enlaces a un catálogo en las páginas de búsqueda del ANDA: (id, título, que puede traer etiquetas adentro)
 _RE_CATALOGO = re.compile(r"""<a\b[^>]*\bhref=["'][^"']*/catalog/(\d+)["'][^>]*>(.*?)</a>""", re.S | re.I)
@@ -165,8 +170,8 @@ def _formato(nombre: str) -> str | None:
 def is_target_csv(filename: str, modules=DEFAULT_MODULES, extensiones=(".csv",)) -> bool:
     """
     Si ``filename``, un archivo dentro del ZIP, tiene una de las ``extensiones`` y es de uno de los ``modules`` pedidos
-    (según los patrones de ``MODULE_PATTERNS``). Los módulos que no se usan (``EXCLUDE_MODULE_PATTERNS``: otros ingresos,
-    migración...) nunca cuentan.
+    (según los patrones de ``MODULE_PATTERNS``). Los módulos que no se usan (``EXCLUDE_MODULE_PATTERNS``: tipo de
+    investigación) nunca cuentan.
     """
     if not filename.lower().endswith(tuple(extensiones)):
         return False
@@ -467,7 +472,8 @@ class GEIHDownloader(DescargadorANDA):
                 meses = [d for d in year_csv_dir.iterdir() if d.is_dir() and month_from_folder(d.name)] \
                     if year_csv_dir.is_dir() else []
                 if not self.forzar and (_marcador_cubre(year_csv_dir, self.modules) or (
-                        len(meses) >= 12 and all(mes_completo(d, self.modules) for d in meses))):
+                        len(meses) >= 12 and all(mes_completo(d, self.modules) for d in meses))) \
+                        and not self._reextraer(zip_dest, year_csv_dir):
                     log.info(f"Año {year} de Empalme ya está completo. Saltando.")
                     continue
 
@@ -481,11 +487,11 @@ class GEIHDownloader(DescargadorANDA):
                 # Se salta solo si una extracción anterior de estos mismos módulos terminó
                 # (marcador) o, si no, si ya están todos los módulos pedidos. Contar archivos no
                 # basta: así se colaron meses sin "No ocupados" (p. ej. marzo 2024).
-                if not self.forzar and mes_completo(month_csv_dir, self.modules):
+                if not self.forzar and mes_completo(month_csv_dir, self.modules) \
+                        and not self._reextraer(zip_dest, month_csv_dir):
                     log.info(f"Mes {month_stem} ({year}) ya está completo. Saltando.")
                     continue
-                if not self.forzar and month_csv_dir.is_dir():
-                    falta = faltantes_mes(month_csv_dir, self.modules)
+                if not self.forzar and month_csv_dir.is_dir() and (falta := faltantes_mes(month_csv_dir, self.modules)):
                     log.warning(f"Mes {month_stem} ({year}) incompleto (falta: {', '.join(falta)}). Se vuelve a extraer.")
                     # Un ZIP ya en disco puede ser el que produjo la extracción incompleta:
                     # se reutiliza (download_file lo salta) y se re-extrae con la lógica corregida.
@@ -498,6 +504,16 @@ class GEIHDownloader(DescargadorANDA):
                                   (f".{item.get('formato', 'csv')}",))
 
             time.sleep(1)
+
+    def _reextraer(self, zip_dest: Path, carpeta: Path) -> bool:
+        """
+        Hay un ZIP guardado y no consta que de él se extrajeran todos los módulos pedidos (p. ej. se extrajo antes de
+        que existieran ``otros_ingresos`` y ``migracion``): se vuelve a extraer de él, sin bajar nada.
+        """
+        if zip_dest.exists() and not _marcador_cubre(carpeta, self.modules):
+            log.info(f"{carpeta.name}: se extraen del ZIP guardado los módulos pedidos que no se habían extraído.")
+            return True
+        return False
 
     def _faltantes(self, carpeta: Path) -> list[str]:
         """Lo que falta de los módulos pedidos en un mes, o en el empalme, en cada mes del año."""

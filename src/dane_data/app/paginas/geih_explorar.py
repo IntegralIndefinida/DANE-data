@@ -28,10 +28,13 @@ CATEGORICAS = {
     "Formal (DANE, desde 2022)": "formal",
     "Formal (DANE, medición anterior, hasta 2021)": "formal_marco2005", "Jefe de hogar": "jefe_hogar",
     "Rama de actividad (2 díg.)": "rama2d",
+    "Lugar de nacimiento (desde 2022)": "lugar_nacimiento",
+    "Dónde vivía hace 12 meses (desde 2022)": "residencia_hace_12_meses",
+    "Dónde vivía hace 5 años (desde 2022)": "residencia_hace_5_anios",
 }
 NUMERICAS = {
     "Ingreso laboral": "ingreso_laboral", "Ingreso / salario mínimo": "ratio_smlv",
-    "Horas trabajadas por semana": "horas_semana", "Edad": "edad",
+    "Horas trabajadas por semana": "horas_semana", "Edad": "edad", "Ingreso no laboral": "ingreso_no_laboral",
 }
 
 # Variables DANE adicionales: las del diccionario 2025 y las que dane-data lee siempre (CORE_RAW)
