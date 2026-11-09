@@ -166,6 +166,19 @@ def test_otros_ingresos_y_migracion(geih_root):
         (2025, 10, 1): "Este municipio", (2025, 10, 2): "Venezuela", (2025, 11, 1): "Otro municipio"}
 
 
+def test_aviso_de_modulos_que_faltan_en_un_mes(geih_root, caplog):
+    """Un mes sin módulos que sí traen otros meses de su año se avisa, aunque se cargue solo; con modules, solo esos."""
+    with caplog.at_level("WARNING", logger="dane_data.geih"):
+        dd.geih.load(2025, months=2, root=geih_root, cache=False, incluir_incompletos=True)
+    assert "migracion, no_ocupados, otros_ingresos, vivienda en Febrero 2025" in caplog.text
+    caplog.clear()
+    with caplog.at_level("WARNING", logger="dane_data.geih"):
+        dd.geih.load(2025, root=geih_root, cache=False)                              # enero los trae todos
+        dd.geih.load(2025, months=2, root=geih_root, cache=False, incluir_incompletos=True,
+                      modules=["caracteristicas", "fuerza", "ocupados"])
+    assert "Meses sin módulos" not in caplog.text
+
+
 def test_ingreso_no_laboral_y_lugares():
     """Lo de 12 meses va por mes; 98 y 99 son «no sabe» y «no informa»; las residencias corren los códigos en uno."""
     df = pd.DataFrame({"anio": 2024, "mes": 1, "P7495": [1, 2, 1, None, 2], "P7505": [1, 2, 2, None, 1],

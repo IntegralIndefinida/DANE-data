@@ -16,6 +16,9 @@
   la pobreza monetaria), `lugar_nacimiento`, `residencia_hace_12_meses` y `residencia_hace_5_anios` (este municipio,
   otro municipio, Venezuela u otro país; desde 2022). `load` lee 15 variables más del DANE: el primer trimestre de 2024
   pasa de 80 a 105 MB con las variables por defecto.
+* {dd}`geih.load()` avisa cuando un mes no trae un módulo que sí traen los demás meses de su año, porque las
+  variables de ese módulo quedan vacías en ese mes. Pasa de marzo a julio de 2020, con el formulario reducido del operativo
+  telefónico del DANE, y con meses bajados antes de que dane-data extrajera un módulo.
 * {dd}`tabla()` copia solo las columnas que usa, no todo el DataFrame: con `dd.geih.load(..., columns="all")` ya no
   duplica la memoria.
 * {dd}`geih.download()` y {dd}`eam.download()` ya no bajan la ficha metodológica del ANDA a `<raíz>/metadata/`: nada la

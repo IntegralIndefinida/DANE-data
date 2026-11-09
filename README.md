@@ -187,6 +187,7 @@ MAYÚSCULA (GEIH) son las originales del DANE.
 | 2007 sin marcas `OCI`/`DSI`; 2020 y empalme con marcas en Características | La condición se deduce del módulo en que aparece cada persona |
 | Archivos en subcarpetas (`CSV 13/No ocupados.CSV`) | Búsqueda recursiva |
 | Meses a los que les falta un módulo | Se omiten con aviso (si no, el desempleo saldría 0 %); `incluir_incompletos=True` los carga |
+| Marzo–julio de 2020 sin Vivienda, Otras actividades, Otros ingresos ni (serie principal) Desocupados e Inactivos: formulario telefónico | Se cargan con un aviso: las variables de esos módulos quedan vacías en esos meses |
 | Varios meses juntos | Niveles = promedio mensual, como el DANE |
 | EAM: `CIIU2N4`, `ciiu2`, `CIIU`, `ciiu3`, `ciiu4`, `ciiu_4`, códigos a 2–3 dígitos | `ciiu`, `ciiu_rev`, `division`, `sector` |
 | EAM: valores reemplazados por el promedio de un grupo de establecimientos | Marcados en `microagregado`; `dd.eam.panel(..., excluir_microagregados=True)` |

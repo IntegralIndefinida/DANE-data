@@ -995,6 +995,10 @@ def load(
     Un año completo tiene del orden de 800 000 registros. Con ``variables`` la memoria depende solo de las columnas
     que se conservan, porque cada mes se recorta antes de juntarlos.
 
+    Si un mes no trae un módulo que sí traen los demás meses de su año, se carga igual y se avisa: las
+    variables de ese módulo quedan vacías en ese mes. Pasa de marzo a julio de 2020, cuando el formulario
+    telefónico del DANE no traía vivienda, otras, otros_ingresos ni, en la serie principal, no_ocupados.
+
     La primera lectura de un mes tarda unos segundos; las siguientes salen de la caché
     (``~/.cache/dane_data/geih``). La caché se invalida sola si cambian los archivos del mes o el código de dane-data que los lee.
 
@@ -1019,6 +1023,9 @@ def load(
     if variables is not None:
         conservar = list(dict.fromkeys(["anio", "mes", *([variables] if isinstance(variables, str) else variables)]))
     meses = find_months(years, empalme=empalme, root=root)
+    del_anio: dict[int, set] = {}  # módulos que trae algún mes de cada año en disco, antes de filtrar los meses
+    for m in meses:
+        del_anio.setdefault(m.anio, set()).update(m.archivos)
     if months is not None:
         months = {int(m) for m in months}
         meses = [m for m in meses if m.mes in months]
@@ -1035,6 +1042,17 @@ def load(
             f"No hay datos GEIH para años={years}, meses={months} en {_root(empalme, root)}. "
             "Descárguelos con dane_data.geih.download(...) o revise dane_data.set_paths(...)."
         )
+    # Un mes sin un módulo que sí traen los demás meses de su año queda con esas variables vacías
+    huecos: dict[tuple, list] = {}
+    for m in meses:
+        if faltan := sorted((del_anio[m.anio] & set(modules or MODULOS)) - set(m.archivos)):
+            huecos.setdefault(tuple(faltan), []).append(f"{MESES[m.mes]} {m.anio}")
+    if huecos:
+        detalle = "; ".join(f"{', '.join(mods)} en {', '.join(ms)}" for mods, ms in huecos.items())
+        log.warning(f"Meses sin módulos que sí traen los demás meses de su año; sus variables quedan vacías en esos "
+                    f"meses: {detalle}. De marzo a julio de 2020 es el formulario reducido del operativo telefónico del DANE "
+                    "(la condición de actividad sale igual, de las marcas de Características); en otro mes, vuelva a "
+                    "descargarlo con dane_data.geih.download(...).")
 
     frames = []
     for i, mes in enumerate(meses):
