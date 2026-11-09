@@ -9,6 +9,9 @@
 
 **Nuevo**
 
+* Ejemplo nuevo en la documentación, {doc}`Recetas para investigar <ejemplos/recetas>`: una ecuación de Mincer
+  ponderada con el factor de expansión, la descomposición de Oaxaca-Blinder de la brecha de ingresos entre hombres y
+  mujeres y una tabla para LaTeX, solo con numpy y pandas.
 * {dd}`geih.trimestre_movil()`: el trimestre móvil de una serie mensual de indicadores, como lo publica el DANE (cada
   mes junta ese mes y los dos anteriores). Da lo mismo que juntar los microdatos de los tres meses con el factor de
   expansión dividido por 3. Sirve para grupos con poca muestra, como los departamentos. Un trimestre no cruza un
