@@ -135,7 +135,9 @@ total_txt = "Total de la selección" if sel["filtrada"] else "Total nacional"
 subtitulo = f"{'Por ' + nombre_por.lower() if por else total_txt}, {frecuencia.lower()} · {sel['descripcion']}"
 if res_graf[x].nunique() > 1:
     fig = linea(res_graf, x=x, y=col, color=por, pct=es_pct)
-    if por:  # el total en gris, para leer cada grupo contra algo
+    # El total en gris, para leer cada grupo contra algo; no en los niveles (ocupados...), donde es la suma de los
+    # grupos y aplastaba sus líneas contra el eje
+    if por and (es_pct or col.startswith("ingreso")):
         nacional = serie(None)
         if not anual:
             nacional["periodo"] = pd.to_datetime(dict(year=nacional["anio"], month=nacional["mes"], day=1))

@@ -248,6 +248,18 @@ def test_la_frecuencia_elegida_se_mantiene(geih_root, tmp_path, monkeypatch):
     assert not at.exception and "Trimestre móvil" not in frecuencia().options
 
 
+def test_total_en_gris_solo_en_tasas_e_ingresos(geih_root, tmp_path, monkeypatch):
+    """En los niveles el total es la suma de los grupos: dibujado, aplastaba sus líneas contra el eje."""
+    monkeypatch.setitem(dd.config._session, "geih", geih_root)
+    monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
+    at = AppTest.from_file(str(PAGINAS / "geih_mercado.py"), default_timeout=60).run()
+    next(s for s in at.selectbox if s.label == "Desagregar por").set_value("Sexo").run()
+    nombres = lambda: [t.get("name") for t in json.loads(at.get("plotly_chart")[0].proto.spec)["data"]]  # noqa: E731
+    assert "Total nacional" in nombres()
+    next(s for s in at.selectbox if s.label == "Indicador").set_value("Ocupados (personas)").run()
+    assert not at.exception and "Total nacional" not in nombres()
+
+
 def test_la_grafica_lleva_titulo_y_fuente(geih_root, tmp_path, monkeypatch):
     """La imagen que se descarga (botón de la cámara) debe servir sola en una tesis: título, período y fuente."""
     monkeypatch.setitem(dd.config._session, "geih", geih_root)
