@@ -54,7 +54,7 @@ jobs:
       - name: Subir el lanzador sin firmar
         id: sin-firmar
         if: vars.SIGNPATH_ORGANIZATION_ID != ''
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
         with:
           name: lanzador-sin-firmar
           path: build/Abrir dane-data.exe
@@ -80,7 +80,7 @@ jobs:
         run: mv "build/firmado/Abrir dane-data.exe" "build/Abrir dane-data.exe"
 
       - name: Guardar el lanzador para el zip
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
         with:
           name: lanzador
           path: build/Abrir dane-data.exe
