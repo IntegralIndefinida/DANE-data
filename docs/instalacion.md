@@ -71,9 +71,11 @@ dd.set_paths(geih="D:/datos/GEIH", eam="D:/datos/EAM", eevv="D:/datos/EEVV", sav
 dd.geih.download(2025)
 dd.eam.download(range(2014, 2025))
 dd.eevv.download(2025)
+dd.emicron.download(2024)
 ```
 
-Un año de la GEIH ocupa unos 600 MB, toda la EAM unos 330 MB y todas las Estadísticas Vitales unos 3,6 GB. Los detalles están en
+Un año de la GEIH ocupa unos 600 MB, toda la EAM unos 330 MB, todas las Estadísticas Vitales unos 3,6 GB y toda la EMICRON
+unos 480 MB. Los detalles están en
 {doc}`guia/datos`.
 
 ## Actualizar

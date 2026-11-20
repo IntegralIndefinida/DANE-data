@@ -21,6 +21,13 @@ Los indicadores de {dd}`eevv.indicadores()` y las tasas de {dd}`eevv.tasas()` (v
 ```{include} _generado/glosario_eevv.md
 ```
 
+## Micronegocios (EMICRON)
+
+Los indicadores de {dd}`emicron.indicadores()` (vienen de `dd.emicron.GLOSARIO`).
+
+```{include} _generado/glosario_emicron.md
+```
+
 ## Términos de las encuestas
 
 ```{glossary}

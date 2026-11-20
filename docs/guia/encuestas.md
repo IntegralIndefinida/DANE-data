@@ -1,8 +1,9 @@
 # Las encuestas
 
-`dane-data` trabaja con tres operaciones estadísticas del DANE cuyos {term}`microdatos` se publican en el
+`dane-data` trabaja con cuatro operaciones estadísticas del DANE cuyos {term}`microdatos` se publican en el
 [Archivo Nacional de Datos (ANDA)](https://microdatos.dane.gov.co): la Gran Encuesta Integrada de Hogares
-(GEIH), la Encuesta Anual Manufacturera (EAM) y las Estadísticas Vitales (EEVV).
+(GEIH), la Encuesta Anual Manufacturera (EAM), las Estadísticas Vitales (EEVV) y la Encuesta de Micronegocios
+(EMICRON).
 
 ## GEIH: Gran Encuesta Integrada de Hogares
 
@@ -109,10 +110,18 @@ defunción fetal (desde 1998). Cada registro es un hecho: no hay factor de expan
 sexo, lugar de residencia y de ocurrencia hasta el municipio, y causa básica de muerte, peso al nacer, semanas de gestación
 y tipo de parto. Vea {doc}`eevv`.
 
+## EMICRON: Encuesta de Micronegocios
+
+Encuesta **anual** (2019–2025) a los negocios de hasta 9 personas ocupadas de los patrones y los trabajadores por cuenta
+propia que encuentra la GEIH: cada registro es un micronegocio, con la clave de su propietario en la GEIH. Trae la
+actividad, el sitio, el personal ocupado, el RUT y el registro mercantil, el uso de TIC, la inclusión financiera, los
+costos, las ventas y el valor agregado. El {term}`factor de expansión` es anual. 2019–2024 cubren el total nacional y
+2025 solo las 24 ciudades. Vea {doc}`emicron`.
+
 ## Los diccionarios oficiales
 
-`dane-data` trae los diccionarios de variables (DDI) que publica el ANDA: el de la GEIH 2025, el de la EAM 2024 y los tres
-de las Estadísticas Vitales 2025. Sirven para encontrar variables sin salir de Python:
+`dane-data` trae los diccionarios de variables (DDI) que publica el ANDA: el de la GEIH 2025, el de la EAM 2024, el de la
+EMICRON 2024 y los tres de las Estadísticas Vitales 2025. Sirven para encontrar variables sin salir de Python:
 
 ```python
 >>> dd.buscar_variable("arriendo")["variable"].tolist()

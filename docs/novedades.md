@@ -1,5 +1,21 @@
 # Novedades
 
+## Sin publicar
+
+**Nuevo**
+
+* {doc}`Micronegocios <guia/emicron>` con `dd.emicron`: la Encuesta de Micronegocios (EMICRON, 2019–2025), los negocios de
+  hasta 9 personas ocupadas de los dueños que encuentra la GEIH. {dd}`emicron.download()` baja los módulos del ANDA,
+  {dd}`emicron.load()` los une en una fila por micronegocio con las variables armonizadas y el factor de la serie vigente,
+  y {dd}`emicron.indicadores()` da el cuadro I.1 del DANE (micronegocios, personal ocupado, ventas, valor agregado,
+  ingreso mixto) y la informalidad empresarial (RUT, Cámara de Comercio, salud y pensión). Comprobada contra 8 507 cifras
+  de los anexos. {dd}`emicron.load_personal()` carga el detalle de los trabajadores, socios y familiares.
+* El diccionario de la EMICRON en {dd}`diccionario()`, {dd}`buscar_variable()` y {dd}`describir()`
+  (`encuesta="emicron"`) y en la página de diccionario de la aplicación.
+* La EMICRON en la aplicación (Descargar, Inicio y Cómo citar) y en la terminal: `dane-data descargar emicron`,
+  `dane-data config --emicron`.
+* {dd}`set_paths()` acepta `emicron=`.
+
 ## 0.5.0 (9 de noviembre de 2026)
 
 **Al actualizar**

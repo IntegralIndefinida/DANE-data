@@ -5,7 +5,7 @@ hacen dos tipos de comprobaciones.
 
 ## Con datos sintéticos
 
-`tests/conftest.py` construye carpetas de la GEIH, la EAM y las Estadísticas Vitales con las rarezas de cada época: archivos partidos
+`tests/conftest.py` construye carpetas de la GEIH, la EAM, las Estadísticas Vitales y la EMICRON con las rarezas de cada época: archivos partidos
 en Área, {term}`Cabecera` y {term}`Resto`; separadores `;` con coma decimal; codificación Latin-1; módulos en subcarpetas;
 meses incompletos; archivos de texto tabulados. Las pruebas revisan que la carga, la armonización y los
 cálculos den lo esperado en cada caso, que las funciones `serie_*` den exactamente lo mismo que el cálculo
@@ -71,6 +71,18 @@ años faltantes y saltos anuales de más de 10 % fuera de los conocidos.
 
 **Antes de 2008 no hay contraste externo:** el DANE no publica esos cuadros en su página. Esos años solo tienen la revisión de
 conteos y saltos, además de las rarezas que están en {doc}`diferencias`.
+
+## EMICRON
+
+Con los datos reales, las pruebas recalculan 8 507 cifras de los anexos anuales vigentes del DANE (nacional 2019–2024 y 24
+ciudades 2019–2025): los cuadros A1.10 (situación en el empleo), A1.12 (sexo), B.1 (actividad), D.1 (sitio), E.1.1
+(aporte a salud y pensión), F.1 (RUT), F.6 (Cámara de Comercio) e I.1 (micronegocios, personal ocupado, ventas,
+consumo intermedio, valor agregado, remuneraciones, ingreso mixto y coeficiente técnico), para el total nacional, las
+cabeceras, los centros poblados y rural disperso, las 24 ciudades juntas y cada una. Coinciden con una tolerancia
+relativa de una milmillonésima, salvo tres diferencias de 2019 que los microdatos no permiten reproducir y que están
+en {doc}`diferencias`: los montos que no trae, unos 48 549 micronegocios que el anexo clasifica en servicios y los
+trabajadores remunerados (0,2 %). Las cifras están en `tests/datos/dane_emicron_publicado.csv`; las trimestrales no se
+comparan, porque usan factores trimestrales que no vienen en los microdatos.
 
 Las proyecciones de población se comprueban al generarlas: las áreas suman el total del archivo, los departamentos suman el
 total nacional en cada año y la serie no salta entre los archivos del DANE.

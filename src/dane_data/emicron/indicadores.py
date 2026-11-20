@@ -14,19 +14,19 @@ GLOSARIO = {
     "Micronegocio": "Unidad económica con hasta 9 personas ocupadas que desarrolla una actividad productiva de bienes o "
                     "servicios para obtener un ingreso, como propietario o arrendatario de los medios de producción. La "
                     "EMICRON entrevista a los dueños, patrones o trabajadores por cuenta propia encontrados en la GEIH.",
-    "Personal ocupado": "El propietario más los trabajadores remunerados, los socios y los trabajadores o familiares sin "
+    "Personal ocupado de un micronegocio": "El propietario más los trabajadores remunerados, los socios y los trabajadores o familiares sin "
                         "remuneración (preguntas P3032_1 a P3032_3).",
     "Ventas o ingresos": "Ventas de mercancías y productos, ingresos por servicios y otros ingresos del mes de referencia "
                          "(VENTAS_MES_ANTERIOR). En los indicadores, anuales: el mes por 12.",
-    "Consumo intermedio": "Bienes y servicios consumidos en la producción (materias primas, mercancías para la venta, "
+    "Consumo intermedio de un micronegocio": "Bienes y servicios consumidos en la producción (materias primas, mercancías para la venta, "
                           "arriendo, servicios públicos, transporte y otros gastos).",
-    "Valor agregado": "Ventas o ingresos menos consumo intermedio.",
+    "Valor agregado de un micronegocio": "Ventas o ingresos menos consumo intermedio.",
     "Ingreso mixto": "Valor agregado menos la remuneración del personal ocupado: lo que le queda al propietario, que es a la "
                      "vez trabajador y dueño del capital.",
     "Coeficiente técnico": "Consumo intermedio sobre ventas o ingresos, en %.",
     "Informalidad empresarial": "La EMICRON la aproxima con la tenencia de RUT, el registro en una Cámara de Comercio y el "
                                 "aporte del propietario a salud y pensión.",
-    "Factor de expansión": "fex: cuántos micronegocios representa cada registro en el año. Es anual: la suma de los 12 "
+    "Factor de expansión de la EMICRON": "fex: cuántos micronegocios representa cada registro en el año. Es anual: la suma de los 12 "
                            "meses es el total del año. fex_dpto es el de las cifras por departamento.",
 }
 
