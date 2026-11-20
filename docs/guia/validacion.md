@@ -7,7 +7,8 @@ hacen dos tipos de comprobaciones.
 
 `tests/conftest.py` construye carpetas de la GEIH, la EAM y las Estadísticas Vitales con las rarezas de cada época: archivos partidos
 en Área, {term}`Cabecera` y {term}`Resto`; separadores `;` con coma decimal; codificación Latin-1; módulos en subcarpetas;
-meses incompletos; archivos de texto tabulados. Las pruebas revisan que la carga, la armonización y los
+meses incompletos; archivos de texto tabulados. Las de la pobreza monetaria están en `tests/test_pobreza.py`, con las rarezas
+de cada año (el departamento numerado de 2014, el dominio con tildes de 2017, el nombre del departamento en 2025). Las pruebas revisan que la carga, la armonización y los
 cálculos den lo esperado en cada caso, que las funciones `serie_*` den exactamente lo mismo que el cálculo
 con los {term}`microdatos`, y que los ejemplos de esta documentación funcionen. Corren en cada versión que se
 publica.
@@ -71,6 +72,21 @@ años faltantes y saltos anuales de más de 10 % fuera de los conocidos.
 
 **Antes de 2008 no hay contraste externo:** el DANE no publica esos cuadros en su página. Esos años solo tienen la revisión de
 conteos y saltos, además de las rarezas que están en {doc}`diferencias`.
+
+## Pobreza monetaria
+
+Con los datos reales (en `$DANE_DATA_TEST_POBREZA` o la carpeta configurada), las pruebas calculan la serie empalmada
+2012–2025 y la comparan con los anexos del boletín de pobreza monetaria del 12 de junio de 2026
+(`tests/datos/dane_pobreza_publicado.csv`): las **5 644** cifras comparables coinciden.
+
+| Qué | Años |
+|---|---|
+| Incidencia, brecha y severidad de la pobreza y la pobreza extrema, Gini, ingreso per cápita, líneas, población y pobres: nacional, cabeceras, rural, 13 ciudades, otras cabeceras y 23 ciudades | 2012–2025 |
+| Lo mismo para los 23 departamentos y Bogotá (con `departamental=True`) | 2021–2025 |
+
+Las tolerancias son las del redondeo publicado: 0,08 puntos en los porcentajes (publicados con un decimal), 0,0006 en el Gini,
+2 pesos en el ingreso y las líneas y mil personas en la población. No se comparan las capitales que el DANE publica sin su área
+metropolitana desde 2022, porque los microdatos solo traen el dominio con el área.
 
 Las proyecciones de población se comprueban al generarlas: las áreas suman el total del archivo, los departamentos suman el
 total nacional en cada año y la serie no salta entre los archivos del DANE.

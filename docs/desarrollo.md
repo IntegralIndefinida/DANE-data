@@ -26,6 +26,7 @@ src/dane_data/
 ├── geih/              downloader.py · loader.py · indicadores.py · agregados.py
 ├── eam/               downloader.py · loader.py · indicadores.py
 ├── eevv/              downloader.py · loader.py · indicadores.py · agregados.py
+├── pobreza/           downloader.py · loader.py · indicadores.py · agregados.py · union.py
 ├── cli.py             comando dane-data
 └── app/               aplicación Streamlit (Inicio.py + paginas/)
 ```
@@ -38,6 +39,7 @@ variables armonizadas van en minúscula y las originales del DANE en mayúscula.
 * `tests/conftest.py` construye carpetas **sintéticas** de la GEIH, la EAM y las Estadísticas Vitales con las rarezas de cada
   época.
   Cuando aparezca una rareza nueva en los archivos del DANE, agréguela a estos datos.
+  Las de la pobreza monetaria se arman en `tests/test_pobreza.py` (fixture `pobreza_root`).
 * Las pruebas de los descargadores usan ZIP en memoria: nunca se conectan a internet.
 * GitHub Actions (`.github/workflows/pruebas.yml`) corre todas las pruebas en cada push a `main` y en cada
   pull request, con Python 3.10 (pandas 2) y 3.12 (las versiones de `uv.lock`).
@@ -59,6 +61,14 @@ variables armonizadas van en minúscula y las originales del DANE en mayúscula.
   uv run --extra app python tests/datos/actualizar_eevv_causas.py
   uv run python tests/datos/actualizar_eevv_diccionario.py
   uv run --extra app python tests/datos/actualizar_proyecciones.py
+  ```
+
+* La pobreza monetaria se compara con los anexos del DANE si hay datos en `$DANE_DATA_TEST_POBREZA` o en la carpeta
+  configurada. Cuando el DANE publica un año nuevo, agregue su catálogo a `_CATALOGOS` en `pobreza/downloader.py`, cambie las
+  URL de `ANEXOS` en el script y actualice las cifras:
+
+  ```bash
+  uv run --extra app python tests/datos/actualizar_pobreza_publicado.py
   ```
 
 ## Documentación

@@ -1024,6 +1024,7 @@ def load(
     serie_indicadores : Indicadores de muchos años sin cargarlos en memoria.
     dane_data.tabla : Tablas ponderadas.
     available : Qué meses hay en disco.
+    dane_data.pobreza.unir_geih : Pegar a cada persona la pobreza monetaria de su hogar.
 
     Notas
     -----

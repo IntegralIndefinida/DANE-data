@@ -21,6 +21,13 @@ Los indicadores de {dd}`eevv.indicadores()` y las tasas de {dd}`eevv.tasas()` (v
 ```{include} _generado/glosario_eevv.md
 ```
 
+## Pobreza monetaria
+
+Los indicadores de {dd}`pobreza.indicadores()` (vienen de `dd.pobreza.GLOSARIO`).
+
+```{include} _generado/glosario_pobreza.md
+```
+
 ## Términos de las encuestas
 
 ```{glossary}

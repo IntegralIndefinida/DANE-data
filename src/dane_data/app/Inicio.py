@@ -18,6 +18,9 @@ paginas = {
         st.Page("paginas/eam_industria.py", title="Indicadores industriales", icon=":material/factory:"),
         st.Page("paginas/eam_microdatos.py", title="Panel y microdatos", icon=":material/dataset:"),
     ],
+    "Pobreza monetaria": [
+        st.Page("paginas/pobreza.py", title="Pobreza monetaria", icon=":material/savings:"),
+    ],
     "Estadísticas Vitales": [
         st.Page("paginas/eevv_vitales.py", title="Nacimientos y defunciones", icon=":material/child_care:"),
     ],

@@ -1,5 +1,22 @@
 # Novedades
 
+## 0.6.0 (20 de noviembre de 2026)
+
+**Nuevo**
+
+* {doc}`Pobreza monetaria <guia/pobreza>` con `dd.pobreza`: los microdatos de la Medición de Pobreza Monetaria y Desigualdad
+  2012–2025, con el ingreso per cápita de la unidad de gasto, las líneas de pobreza y quién es pobre, ya calculados por el
+  DANE. {dd}`pobreza.download()`, {dd}`pobreza.load()` y `dane-data descargar pobreza`.
+* `empalme=True` reproduce la serie empalmada del DANE, comparable en 2012–2025: el factor de empalme al marco 2018, las
+  líneas actualizadas de 2012–2018 y el ingreso empalmado de 2021.
+* {dd}`pobreza.indicadores()` y {dd}`pobreza.serie_indicadores()`: incidencia, brecha y severidad de la pobreza y la pobreza
+  extrema, Gini e ingreso per cápita, nacional, por dominio y, con `departamental=True`, por departamento. Coinciden con los
+  anexos del DANE.
+* {dd}`pobreza.unir_geih()` pega a cada persona de la GEIH la pobreza de su hogar.
+* La aplicación tiene una página *Pobreza monetaria*, con la serie empalmada y las cifras departamentales, y la pobreza en *Descargar datos* e *Inicio*.
+* {dd}`weighted_gini()`: el coeficiente de Gini ponderado.
+* {dd}`set_paths()` acepta `pobreza=` y `dane-data config` acepta `--pobreza`.
+
 ## 0.5.0 (9 de noviembre de 2026)
 
 **Al actualizar**

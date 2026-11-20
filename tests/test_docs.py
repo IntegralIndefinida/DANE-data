@@ -23,6 +23,7 @@ API = Path(__file__).parent.parent / "docs" / "api"
     (dd.geih, "geih.md", ""),
     (dd.eam, "eam.md", ""),
     (dd.eevv, "eevv.md", ""),
+    (dd.pobreza, "pobreza.md", ""),
 ])
 def test_referencia_cubre_all(modulo, pagina, prefijo):
     texto = (API / pagina).read_text(encoding="utf-8")
@@ -47,6 +48,8 @@ def test_referencia_cubre_all(modulo, pagina, prefijo):
     "dane_data.geih", "dane_data.geih.loader", "dane_data.geih.indicadores", "dane_data.geih.agregados",
     "dane_data.eam", "dane_data.eam.loader", "dane_data.eam.indicadores",
     "dane_data.eevv", "dane_data.eevv.loader", "dane_data.eevv.indicadores", "dane_data.eevv.agregados",
+    "dane_data.pobreza", "dane_data.pobreza.loader", "dane_data.pobreza.indicadores",
+    "dane_data.pobreza.agregados", "dane_data.pobreza.union",
 ])
 def test_ejemplos_de_los_docstrings(modulo):
     mod = importlib.import_module(modulo)
