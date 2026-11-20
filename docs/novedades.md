@@ -1,6 +1,6 @@
 # Novedades
 
-## Sin publicar
+## 0.6.0 (20 de noviembre de 2026)
 
 **Nuevo**
 
