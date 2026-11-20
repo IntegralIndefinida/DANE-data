@@ -214,6 +214,8 @@ FUENTES = {
     "eevv": "Fuente: DANE, Estadísticas Vitales: hechos registrados,<br>sin ajuste por subregistro. Cálculos con dane-data.",
     "tasas": "Fuente: DANE, Estadísticas Vitales y proyecciones de población:<br>hechos registrados, sin ajuste por "
              "subregistro. Cálculos con dane-data.",
+    "ecv": "Fuente: DANE, Encuesta Nacional de Calidad de Vida (ECV). Cálculos con dane-data.",
+    "ipm": "Fuente: DANE, ECV. Índice de Pobreza Multidimensional (metodología del DANE)<br>calculado con dane-data.",
 }
 
 
@@ -338,6 +340,28 @@ def tasas_eevv(anios, por: str | None, rutas: tuple) -> pd.DataFrame:
     return res
 
 
+# La ECV, como las Estadísticas Vitales: año por año con dd.ecv.serie_*, en disco. Sus avisos (capítulos que faltan, IPM de
+# 2020) se muestran en la página.
+@st.cache_data(max_entries=50, show_spinner=False)
+def indicadores_ecv(anios, por: str | None, rutas: tuple) -> pd.DataFrame:
+    barra, progreso = _barra("Preparando indicadores…")
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+        res = dd.ecv.serie_indicadores(anios, por=por, progress=progreso)
+    barra.empty()
+    return res
+
+
+@st.cache_data(max_entries=50, show_spinner=False)
+def ipm_ecv(anios, por: str | None, rutas: tuple) -> pd.DataFrame:
+    barra, progreso = _barra("Calculando el IPM…")
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+        res = dd.ecv.serie_ipm(anios, por=por, progress=progreso)
+    barra.empty()
+    return res
+
+
 def rutas_actuales() -> tuple:
     """Parte de la llave de caché: si el usuario cambia de carpeta, se recarga."""
     return tuple(sorted(dd.show_paths().items()))
@@ -356,6 +380,11 @@ def disponibles_eam(rutas: tuple) -> pd.DataFrame:
 @st.cache_data(ttl=30, show_spinner=False)
 def disponibles_eevv(rutas: tuple) -> pd.DataFrame:
     return dd.eevv.available()
+
+
+@st.cache_data(ttl=30, show_spinner=False)
+def disponibles_ecv(rutas: tuple) -> pd.DataFrame:
+    return dd.ecv.available()
 
 
 # --------------------------------------------------------------------------- #
@@ -619,6 +648,48 @@ def seleccion_eevv(clave: str = "eevv") -> dict:
 
 
 TITULOS_CERTIFICADO = {v: k for k, v in CERTIFICADOS.items()}
+
+
+def serie_anual(res: pd.DataFrame, columna: str, por: str | None, tipo_valor: str, titulo: str, subtitulo: str,
+                fuente: str) -> None:
+    """Gráfico de la variable por año, o por grupo en el único año elegido."""
+    g = res[res[columna].notna()].copy()
+    todos = None
+    if por:
+        g = g[g[por].notna()]
+        todos = g[por]  # antes del texto: con las categorías, un filtro no cambia los colores y se sabe si hay orden
+        g[por] = g[por].astype(str)
+    if g.empty:
+        st.info("Esta variable no existe en los años elegidos.")
+        return
+    if por and g["anio"].nunique() == 1:
+        grafico(barras(g, x=por, y=columna, pct=tipo_valor == "pct", horizontal=True),
+                f"{titulo}, {g['anio'].iloc[0]}", fuente, subtitulo)
+        return
+    if por and g[por].nunique() > MAX_SERIES:
+        orden = g.groupby(por)[columna].sum().sort_values(ascending=False).index.tolist()
+        elegidos = st.multiselect(f"Hay {len(orden)} grupos; elija hasta {MAX_SERIES}", orden, default=orden[:5],
+                                  max_selections=MAX_SERIES, placeholder="Elija los grupos")
+        g = g[g[por].isin(elegidos)]
+    grafico(linea(g, x="anio", y=columna, color=por, pct=tipo_valor == "pct", todos=todos), titulo, fuente, subtitulo)
+
+
+# --------------------------------------------------------------------------- #
+# Selector de la ECV (barra lateral)
+# --------------------------------------------------------------------------- #
+def seleccion_ecv(clave: str = "ecv") -> dict:
+    """Dibuja la barra lateral de la ECV y devuelve los años elegidos, sin cargar datos."""
+    av = disponibles_ecv(rutas_actuales())
+    av = av[av["modulo"] == "caracteristicas"]  # sin Características no hay personas ni hogares
+    if av.empty:
+        sin_datos("ECV")
+    with st.sidebar:
+        st.header("ECV")
+        anios_disp = sorted(int(a) for a in av["anio"])
+        lo, hi = st.select_slider("Años", options=anios_disp, value=(anios_disp[0], anios_disp[-1]),
+                                  key=f"{clave}_rango", help=AYUDA_ANIOS) if len(anios_disp) > 1 else (anios_disp[0],) * 2
+    anios = [a for a in anios_disp if lo <= a <= hi]
+    return {"anios": anios, "descripcion": f"ECV {lo}–{hi}" if lo != hi else f"ECV {lo}"}
 
 
 # --------------------------------------------------------------------------- #

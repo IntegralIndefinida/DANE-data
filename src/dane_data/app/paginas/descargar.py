@@ -4,8 +4,8 @@ import threading
 import streamlit as st
 
 import dane_data as dd
-from dane_data.app._ui import (CERTIFICADOS, LogEnPantalla, args_py, disponibles_eam, disponibles_eevv, disponibles_geih,
-                               fmt_num, rutas_actuales)
+from dane_data.app._ui import (CERTIFICADOS, LogEnPantalla, args_py, disponibles_eam, disponibles_ecv, disponibles_eevv,
+                               disponibles_geih, fmt_num, rutas_actuales)
 
 st.title("Descargar datos del DANE")
 st.markdown(
@@ -13,8 +13,8 @@ st.markdown(
     "La descarga es **incremental**: si se interrumpe, al repetirla continúa donde iba."
 )
 
-encuesta = st.radio("Encuesta", ["GEIH (hogares, mensual)", "EAM (industria, anual)", "Estadísticas Vitales (nacimientos y defunciones)"],
-                    horizontal=True)
+encuesta = st.radio("Encuesta", ["GEIH (hogares, mensual)", "EAM (industria, anual)", "Estadísticas Vitales (nacimientos y defunciones)",
+                                 "ECV (calidad de vida y pobreza multidimensional)"], horizontal=True)
 rutas = rutas_actuales()
 
 if encuesta.startswith("GEIH"):
@@ -82,6 +82,34 @@ elif encuesta.startswith("Estadísticas"):
     lanzar = lambda prog, stop: dd.eevv.download(anios, tipos=tipos, delete_zips=borrar, progress=prog,  # noqa: E731
                                                  should_stop=stop, forzar=forzar)
     codigo_py = f"dd.eevv.download({anios!r}, tipos={tipos!r}" + args_py(delete_zips=borrar, forzar=forzar) + ")"
+elif encuesta.startswith("ECV"):
+    ya = disponibles_ecv(rutas)
+    tiene = set(ya.anio.unique()) if len(ya) else set()
+    anios = st.multiselect("Años", dd.ecv.ANIOS_DISPONIBLES, default=[dd.ecv.ANIOS_DISPONIBLES[-1]], placeholder="Elija los años",
+                           format_func=lambda a: f"{a} ✓" if a in tiene else str(a))
+    st.caption("✓ = ya descargado (total o parcialmente).")
+    CAPITULOS = {
+        "caracteristicas": "Características y composición del hogar", "vivienda": "Datos de la vivienda",
+        "servicios": "Servicios del hogar", "tenencia": "Tenencia y financiación de la vivienda",
+        "condiciones": "Condiciones de vida del hogar (internet, percepción de pobreza)", "salud": "Salud",
+        "primera_infancia": "Atención a menores de 5 años", "educacion": "Educación", "fuerza_trabajo": "Fuerza de trabajo",
+        "tic": "Tecnologías de información y comunicación", "trabajo_infantil": "Trabajo infantil",
+    }
+    with st.expander("Opciones avanzadas"):
+        modulos = st.multiselect("Capítulos", list(CAPITULOS), default=list(CAPITULOS), format_func=CAPITULOS.get,
+                                 placeholder="Elija los capítulos",
+                                 help="Los indicadores usan todos menos trabajo infantil; el IPM, vivienda, servicios, "
+                                      "condiciones, salud, primera infancia, educación y fuerza de trabajo.")
+        borrar = st.toggle("Borrar los ZIP después de extraer", value=True)
+        forzar = st.toggle("Volver a bajar lo que ya está descargado",
+                           help="Solo si el DANE corrigió o volvió a publicar esos años: reemplaza lo que hay.")
+    # Los ZIP de 2024 y 2025 pesan mucho más: unos 1,4 GB con los once capítulos, contra 150 MB de los años anteriores
+    peso = sum(1.4 if a >= 2024 else 0.15 for a in anios) * len(modulos) / len(CAPITULOS)
+    st.info(f"Tamaño aproximado de la descarga: **{fmt_num(peso, 1)} GB** · destino: `{dd.get_path('ecv')}`")
+    lanzar = lambda prog, stop: dd.ecv.download(anios, modulos=modulos, delete_zips=borrar, progress=prog,  # noqa: E731
+                                                should_stop=stop, forzar=forzar)
+    codigo_py = f"dd.ecv.download({anios!r}" + args_py(
+        modulos=modulos if set(modulos) != set(CAPITULOS) else None, delete_zips=borrar, forzar=forzar) + ")"
 else:
     ya = disponibles_eam(rutas)
     tiene = set(ya.anio.unique()) if len(ya) else set()
@@ -105,7 +133,7 @@ else:
                                                 progress=prog, should_stop=stop, forzar=forzar)
     codigo_py = f"dd.eam.download({anios!r}" + args_py(include_tic=tic, delete_zips=borrar, forzar=forzar) + ")"
 
-sin_modulos = encuesta.startswith("GEIH") and not modulos  # sin módulos, la librería no sabe qué bajar
+sin_modulos = encuesta.startswith(("GEIH", "ECV")) and not modulos  # sin módulos, la librería no sabe qué bajar
 if sin_modulos:
     st.warning("Elija al menos un módulo en las opciones avanzadas.")
 sin_certificados = encuesta.startswith("Estadísticas") and not tipos
