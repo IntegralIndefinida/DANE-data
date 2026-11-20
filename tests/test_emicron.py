@@ -157,6 +157,57 @@ def test_load_personal_con_la_clave_corrida(emicron_root):
 
 
 # ---------------------------------------------------------------------------------------------------- #
+# Indicadores
+# ---------------------------------------------------------------------------------------------------- #
+def test_indicadores_como_el_cuadro_i1(emicron_root):
+    e = _load(emicron_root, 2024)
+    r = dd.emicron.indicadores(e).iloc[0]
+    w = e["fex"]
+    assert r["micronegocios"] == w.sum() == 1750.5
+    assert r["personal_ocupado"] == (e["personal_ocupado"] * w).sum() == 1000.5 * 3 + 500 + 250 * 3
+    # Montos: el mes de referencia por 12, en miles de pesos
+    assert r["ventas"] == pytest.approx((e["ventas_mes_anterior"] * w).sum() * 12 / 1000)
+    assert r["valor_agregado"] == pytest.approx((3e6 * 1000.5 + 5e5 * 500 + 2e5 * 250) * 12 / 1000)
+    # Cociente de sumas, no promedio de cocientes
+    assert r["coeficiente_tecnico"] == pytest.approx(100 * (2e6 * 1000.5 + 3e5 * 500 + 1e5 * 250)
+                                                    / (5e6 * 1000.5 + 8e5 * 500 + 3e5 * 250))
+    assert r["pct_rut"] == pytest.approx(100 * (1000.5 + 250) / 1750.5)
+    assert r["pct_camara_comercio"] == pytest.approx(100 * 1000.5 / 1750.5)
+    assert r["pct_salud_pension"] == pytest.approx(100 * 1000.5 / 1750.5)  # «Solo pensión» no cuenta
+    assert r["n_muestra"] == 3
+
+
+def test_indicadores_por_grupo_peso_y_dropna(emicron_root):
+    e = _load(emicron_root, 2024)
+    r = dd.emicron.indicadores(e, por=["anio", "clase"]).set_index("clase")
+    assert r["micronegocios"].to_dict() == {"Cabeceras municipales": 1500.5, "Centros poblados y rural disperso": 250.0}
+    assert r.index.dtype == dd.emicron.CATEGORIAS["clase"]
+    por_ciudad = dd.emicron.indicadores(e, por="ciudad")
+    assert por_ciudad["micronegocios"].sum() == 1500.5  # sin el de fuera de las 24 ciudades
+    assert dd.emicron.indicadores(e, por="ciudad", dropna=False)["micronegocios"].sum() == 1750.5
+    assert dd.emicron.indicadores(e, peso="fex_dpto")["micronegocios"].iloc[0] == 990 + 510 + 240
+    with pytest.raises(KeyError, match="nada"):
+        dd.emicron.indicadores(e, por="nada")
+
+
+def test_indicadores_2019_sin_derivadas_son_vacios(emicron_root):
+    e = _load(emicron_root, [2019, 2024])
+    with pytest.warns(UserWarning, match="EMICRON 2019: sin consumo intermedio"):
+        r = dd.emicron.indicadores(e).set_index("anio")
+    assert r.loc[2019, "ventas"] > 0
+    assert r.loc[2019, ["consumo_intermedio", "valor_agregado", "coeficiente_tecnico", "pct_rut"]].isna().all()
+    assert r.loc[2024, "valor_agregado"] > 0
+
+
+def test_indicadores_sin_separar_anios_avisa(emicron_root):
+    e = _load(emicron_root, [2021, 2024])
+    with pytest.warns(UserWarning) as avisos:
+        r = dd.emicron.indicadores(e, por=None)
+    assert any("varios años" in str(a.message) for a in avisos)
+    assert len(r) == 1 and r["n_muestra"].iloc[0] == 6
+
+
+# ---------------------------------------------------------------------------------------------------- #
 # Datos reales (se saltan sin la EMICRON descargada)
 # ---------------------------------------------------------------------------------------------------- #
 REAL = Path(os.environ.get("DANE_DATA_TEST_EMICRON", dd.get_path("emicron")))

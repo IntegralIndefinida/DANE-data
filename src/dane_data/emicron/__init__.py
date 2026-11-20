@@ -6,6 +6,7 @@ import numbers
 from typing import Iterable
 
 from .downloader import EMICRON_KNOWN_FILES, EMICRONDownloader
+from .indicadores import GLOSARIO, a_miles_anuales, indicadores
 from .loader import (CATEGORIAS, CIUDADES, CLAVE, CORE, ETIQUETAS, FACTORES, MODULOS, MONTOS, _modulo_valido, _root,
                      available, find_files, harmonize, load, load_personal)
 
@@ -91,6 +92,7 @@ def download(
 
 
 __all__ = [
-    "download", "available", "find_files", "load", "load_personal", "harmonize", "MODULOS", "FACTORES", "CORE",
+    "download", "available", "find_files", "load", "load_personal", "harmonize", "indicadores", "a_miles_anuales",
+    "GLOSARIO", "MODULOS", "FACTORES", "CORE",
     "ETIQUETAS", "CATEGORIAS", "CIUDADES", "CLAVE", "MONTOS", "ANIOS_DISPONIBLES",
 ]
