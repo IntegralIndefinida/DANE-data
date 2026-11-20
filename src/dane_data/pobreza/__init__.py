@@ -6,7 +6,9 @@ import numbers
 from typing import Iterable
 
 from .downloader import ARCHIVOS, ARCHIVOS_EMPALME, POBREZA_KNOWN_FILES, PobrezaDownloader
-from .loader import CATEGORIAS, CORE, DOMINIOS, ETIQUETAS, METODOLOGIAS, _root, available, find_files, harmonize, load
+from .indicadores import GLOSARIO, indicadores
+from .loader import (CATEGORIAS, CORE, DOMINIOS, ETIQUETAS, GRUPOS_DOMINIO, METODOLOGIAS, TRECE_CIUDADES, _root,
+                     available, find_files, harmonize, load)
 
 ANIOS_DISPONIBLES = sorted({a for a, _ in POBREZA_KNOWN_FILES if a != "empalme"})
 
@@ -89,5 +91,6 @@ def download(
 
 __all__ = [
     "download", "available", "find_files", "load", "harmonize", "ARCHIVOS", "ARCHIVOS_EMPALME", "ANIOS_DISPONIBLES",
-    "CORE", "ETIQUETAS", "CATEGORIAS", "DOMINIOS", "METODOLOGIAS",
+    "indicadores", "CORE", "ETIQUETAS", "CATEGORIAS", "DOMINIOS", "GRUPOS_DOMINIO", "TRECE_CIUDADES", "METODOLOGIAS",
+    "GLOSARIO",
 ]

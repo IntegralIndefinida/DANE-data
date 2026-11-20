@@ -60,6 +60,10 @@ DOMINIOS = {
     "SINCELEJO": "Sincelejo", "TUNJA": "Tunja", "VALLEDUPAR": "Valledupar", "VILLAVICENCIO": "Villavicencio",
     "RESTO URBANO": "Resto urbano", "RURAL": "Rural",
 }
+# Los grandes dominios del DANE: las 13 ciudades con su área metropolitana, el resto de las cabeceras y la zona rural
+TRECE_CIUDADES = ("Bogotá", "Medellín", "Cali", "Barranquilla", "Bucaramanga", "Manizales", "Pasto", "Pereira", "Cúcuta",
+                  "Ibagué", "Montería", "Cartagena", "Villavicencio")
+GRUPOS_DOMINIO = ("13 ciudades y áreas metropolitanas", "Otras cabeceras", "Centros poblados y rural disperso")
 # En 2014 el departamento del archivo de hogares es un número de 1 a 24 (el de personas sí trae el código). Se deduce de
 # las ciudades capitales; el 24, el único sin capital entre los dominios, es Cundinamarca.
 _DPTO_2014 = {1: 15, 2: 41, 3: 18, 4: 76, 5: 17, 6: 20, 7: 66, 8: 52, 9: 68, 10: 50, 11: 63, 12: 54, 13: 73, 14: 13,
@@ -71,6 +75,7 @@ CATEGORIAS = {
     "zona": _CATEGORIAS_GEIH["zona"],
     "departamento": _CATEGORIAS_GEIH["departamento"],
     "dominio": pd.CategoricalDtype(list(DOMINIOS.values())),
+    "grupo_dominio": pd.CategoricalDtype(list(GRUPOS_DOMINIO)),
     "metodologia": pd.CategoricalDtype(list(METODOLOGIAS)),
 }
 
@@ -79,7 +84,9 @@ ETIQUETAS = {
     "mes": "Mes de la encuesta (MES)",
     "zona": "Urbano (cabecera) o rural (centros poblados y disperso) (CLASE)",
     "dominio": "Dominio de la medición: 23 ciudades con su área metropolitana, resto urbano y rural (DOMINIO)",
-    "departamento": "Departamento (DPTO; 24 departamentos y Bogotá)",
+    "grupo_dominio": "Gran dominio del DANE: 13 ciudades y áreas metropolitanas, otras cabeceras o centros poblados y rural "
+                     "disperso",
+    "departamento": "Departamento (DPTO; 23 departamentos y Bogotá)",
     "personas": "Personas del hogar, también las que no son de la unidad de gasto (NPER)",
     "personas_ug": "Personas de la unidad de gasto: sin servicio doméstico ni pensionistas (NPERSUG)",
     "ingreso_ug": "Ingreso total de la unidad de gasto, pesos al mes (INGTOTUG)",
@@ -92,7 +99,7 @@ ETIQUETAS = {
     "fex": "Factor de expansión del hogar (FEX_C; con empalme, FEX_C × FEX_G)",
     "fex_dpto": "Factor de expansión departamental del hogar (FEX_DPTO, FEX_DPTO_C)",
     "metodologia": "Metodología de las líneas: 'mesep' (2012–2018) o 'actualizacion' (desde 2019 y con empalme)",
-    "empalmado": "Si el año está empalmado al marco 2018 (load con empalme=True)",
+    "empalmado": "Si es la serie empalmada al marco 2018 (load con empalme=True), comparable en toda 2012–2025",
 }
 
 
@@ -262,6 +269,10 @@ def harmonize(df: pd.DataFrame, anio: int) -> pd.DataFrame:
     df["zona"] = pd.Categorical(clase.map({1: "Urbano (cabecera)", 2: "Rural (centros poblados y disperso)"}),
                                 dtype=CATEGORIAS["zona"])
     df["dominio"] = _dominio(df, anio)
+    df["grupo_dominio"] = pd.Categorical(
+        np.where(df["zona"].eq("Rural (centros poblados y disperso)"), GRUPOS_DOMINIO[2],
+                 np.where(df["dominio"].isin(TRECE_CIUDADES), GRUPOS_DOMINIO[0], GRUPOS_DOMINIO[1])),
+        dtype=CATEGORIAS["grupo_dominio"])
     df["departamento"] = _departamento(df, anio)
     for nombre, original in (("personas", "NPER"), ("personas_ug", "NPERSUG")):
         conteo = _numero(df, original)
@@ -457,6 +468,7 @@ def load(
         d = harmonize(crudo, anio)
         if empalme and anio <= 2021:
             d = _empalmar(d, anio, fuentes)
+        d["empalmado"] = empalme  # desde 2022 ya está en el marco 2018: con empalme=True es la misma serie
         if columns != "all":
             d = d[[*LLAVES, *ETIQUETAS, *[c for c in extras if c in d.columns and c not in LLAVES]]]
         partes.append(d)

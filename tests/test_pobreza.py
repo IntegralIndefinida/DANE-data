@@ -190,3 +190,69 @@ def test_find_files_y_available(pobreza_root):
     assert set(av.loc[av.anio.isna(), "archivo"]) == {"empalme_2012_2020", "lineas_2012_2018", "hogares_empalmado_2021"}
     with pytest.raises(FileNotFoundError, match="download"):
         dd.pobreza.load(2030, root=pobreza_root)
+
+
+# ---------------------------------------------------------------------------------------------------- #
+# Gini e indicadores
+def test_weighted_gini():
+    assert dd.weighted_gini([3, 1, 2], [2, 1, 1]) == pytest.approx(dd.weighted_gini([1, 2, 3, 3], [1, 1, 1, 1]))
+    assert dd.weighted_gini([1, np.nan, 3], [1, 1, 1]) == pytest.approx(dd.weighted_gini([1, 3], [1, 1]))
+    assert dd.weighted_gini([1, 2], [0, 5]) == 0.0  # peso 0: no cuenta
+    assert np.isnan(dd.weighted_gini([], [])) and np.isnan(dd.weighted_gini([0, 0], [1, 1]))
+    with pytest.raises(ValueError, match="negativos"):
+        dd.weighted_gini([-1, 2], [1, 1])
+    # Contra la fórmula de diferencias absolutas entre todos los pares, con pesos enteros
+    rng = np.random.default_rng(0)
+    y, w = rng.integers(0, 1000, 50).astype(float), rng.integers(1, 5, 50)
+    r = np.repeat(y, w)
+    pares = np.abs(r[:, None] - r[None, :]).sum() / (2 * len(r) ** 2 * r.mean())
+    assert dd.weighted_gini(y, w) == pytest.approx(pares)
+
+
+def _hogares_ind(**kw):
+    base = {"anio": 2025, "ingreso_pc": [100.0, 150.0, 400.0], "linea_pobreza": 200.0, "linea_pobreza_extrema": 120.0,
+            "fex": [10.0, 20.0, 10.0], "personas": [3, 2, 1], "zona": ["a", "a", "b"]}
+    df = pd.DataFrame({**base, **kw})
+    return df.assign(pobre=df.ingreso_pc < df.linea_pobreza, pobre_extremo=df.ingreso_pc < df.linea_pobreza_extrema)
+
+
+def test_indicadores_a_mano():
+    r = dd.pobreza.indicadores(_hogares_ind()).iloc[0]
+    # pesos de personas: 30, 40, 10
+    assert r.personas == 80 and r.hogares == 40 and r.hogares_muestra == 3
+    assert r.pobres == 70 and r.incidencia == pytest.approx(87.5)
+    assert r.pobres_extremos == 30 and r.incidencia_extrema == pytest.approx(37.5)
+    assert r.brecha == pytest.approx((30 * 0.5 + 40 * 0.25) / 80 * 100)
+    assert r.severidad == pytest.approx((30 * 0.25 + 40 * 0.0625) / 80 * 100)
+    assert r.brecha_extrema == pytest.approx(30 * (20 / 120) / 80 * 100)
+    assert r.ingreso_pc == pytest.approx((30 * 100 + 40 * 150 + 10 * 400) / 80)
+    assert r.gini == pytest.approx(dd.weighted_gini([100, 150, 400], [30, 40, 10]))
+    # Justo en la línea no es pobre
+    assert dd.pobreza.indicadores(_hogares_ind(ingreso_pc=[200.0, 200.0, 200.0])).incidencia[0] == 0
+
+
+def test_indicadores_por_grupo_y_contexto():
+    df = _hogares_ind()
+    r = dd.pobreza.indicadores(df, por="zona")
+    assert r.zona.tolist() == ["a", "b"] and r.personas.tolist() == [70, 10]
+    dos = pd.concat([df, df.assign(anio=2024)])
+    with pytest.raises(ValueError, match="'anio' a por"):
+        dd.pobreza.indicadores(dos)
+    assert len(dd.pobreza.indicadores(dos, por=["anio", "zona"])) == 4
+    with pytest.raises(ValueError, match="'empalmado' a por"):
+        dd.pobreza.indicadores(pd.concat([df.assign(empalmado=False), df.assign(empalmado=True)]))
+    with pytest.raises(ValueError, match="Hogares sin dato"):
+        dd.pobreza.indicadores(df.assign(fex=[1.0, np.nan, 1.0]))
+    with pytest.raises(ValueError, match="harmonize_vars"):
+        dd.pobreza.indicadores(df.drop(columns="pobre"))
+
+
+def test_indicadores_con_load(pobreza_root):
+    df = dd.pobreza.load(2025, root=pobreza_root)
+    assert df.grupo_dominio.tolist() == ["13 ciudades y áreas metropolitanas", "13 ciudades y áreas metropolitanas",
+                                         "Centros poblados y rural disperso"]
+    r = dd.pobreza.indicadores(df, por="grupo_dominio")
+    assert r.grupo_dominio.dtype == dd.pobreza.CATEGORIAS["grupo_dominio"] and len(r) == 2
+    emp = dd.pobreza.load([2019, 2025], root=pobreza_root, empalme=True)
+    assert emp.empalmado.all()
+    assert list(dd.pobreza.indicadores(emp, por="anio").anio) == [2019, 2025]
