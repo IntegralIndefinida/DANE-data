@@ -312,3 +312,43 @@ def test_serie_avisa_una_vez_aun_desde_la_cache(pobreza_root, cache_tmp):
     assert len(avisos) == 1 and "empalme=True" in str(avisos[0].message)
     with pytest.raises(FileNotFoundError, match="download"):
         dd.pobreza.serie_indicadores(2030, root=pobreza_root)
+
+
+# ---------------------------------------------------------------------------------------------------- #
+# Unión con la GEIH
+def _personas_geih(**kw):
+    # Hogar 1 (Bogotá, 2 personas), hogar 2 (Medellín, 1 persona) y una persona de San Andrés, que la pobreza no mide
+    base = {"anio": 2025, "mes": [1, 1, 1, 1], "DIRECTORIO": [1, 1, 2, 9], "SECUENCIA_P": [1, 1, 1, 1],
+            "ORDEN": [1, 2, 1, 1], "sexo": ["Mujer", "Hombre", "Mujer", "Mujer"], "fex": [5.0, 5.0, 5.0, 5.0],
+            "departamento": ["Bogotá D.C.", "Bogotá D.C.", "Antioquia", "San Andrés"]}
+    df = pd.DataFrame({**base, **kw})
+    df.attrs["meses_omitidos"] = []
+    return df
+
+
+def test_unir_geih(pobreza_root):
+    per = dd.pobreza.unir_geih(_personas_geih(), root=pobreza_root)
+    assert per.pobre.tolist()[:3] == [True, True, False] and pd.isna(per.pobre.iloc[3])
+    assert per.fex_pobreza.tolist()[:3] == [10.0, 10.0, 20.0] and per.fex.tolist() == [5.0] * 4  # el de la GEIH no cambia
+    assert per.dominio.tolist()[:3] == ["Bogotá", "Bogotá", "Medellín"]
+    cob = per.attrs["union_pobreza"]
+    assert cob["personas"] == 1.0 and cob["departamentos_no_medidos"] == ["San Andrés"]
+    assert per.attrs["meses_omitidos"] == []  # se conservan los de la GEIH
+    # Con los hogares ya cargados, y solo algunas variables
+    hog = dd.pobreza.load(2025, root=pobreza_root)
+    solo = dd.pobreza.unir_geih(_personas_geih(), hogares=hog, variables=["ingreso_pc"])
+    assert list(solo.columns[-2:]) == ["ingreso_pc", "fex_pobreza"]
+
+
+def test_unir_geih_avisa_y_falla(pobreza_root):
+    with pytest.warns(UserWarning, match="Solo 66.7%"):
+        dd.pobreza.unir_geih(_personas_geih(DIRECTORIO=[1, 1, 7, 9]), root=pobreza_root)  # el hogar 7 no está
+    with pytest.raises(ValueError, match="Ninguna persona"):
+        dd.pobreza.unir_geih(_personas_geih(mes=[5, 5, 5, 5]), root=pobreza_root)
+    with pytest.raises(ValueError, match="ya tiene"):
+        dd.pobreza.unir_geih(_personas_geih(pobre=True), root=pobreza_root)
+    with pytest.raises(ValueError, match="agregue 'DIRECTORIO'"):
+        dd.pobreza.unir_geih(_personas_geih().drop(columns="DIRECTORIO"), root=pobreza_root)
+    hog = dd.pobreza.load(2025, root=pobreza_root)
+    with pytest.raises(ValueError, match="repiten llave"):
+        dd.pobreza.unir_geih(_personas_geih(), hogares=pd.concat([hog, hog]))

@@ -48,7 +48,7 @@ def test_referencia_cubre_all(modulo, pagina, prefijo):
     "dane_data.eam", "dane_data.eam.loader", "dane_data.eam.indicadores",
     "dane_data.eevv", "dane_data.eevv.loader", "dane_data.eevv.indicadores", "dane_data.eevv.agregados",
     "dane_data.pobreza", "dane_data.pobreza.loader", "dane_data.pobreza.indicadores",
-    "dane_data.pobreza.agregados",
+    "dane_data.pobreza.agregados", "dane_data.pobreza.union",
 ])
 def test_ejemplos_de_los_docstrings(modulo):
     mod = importlib.import_module(modulo)
