@@ -210,6 +210,16 @@ def test_indicadores_2019_sin_derivadas_son_vacios(emicron_root):
     assert r.loc[2024, "valor_agregado"] > 0
 
 
+def test_indicadores_sin_micronegocios(emicron_root):
+    """Un filtro que no deja a nadie da cero micronegocios, no un error."""
+    vacio = _load(emicron_root, 2024).iloc[0:0]
+    r = dd.emicron.indicadores(vacio, por=None)
+    assert len(r) == 1 and r[["micronegocios", "n_muestra"]].values.tolist() == [[0.0, 0]]
+    assert r[["ventas", "pct_rut"]].isna().all(axis=None)
+    por_clase = dd.emicron.indicadores(vacio, por="clase")
+    assert por_clase.empty and "n_muestra" in por_clase.columns
+
+
 def test_indicadores_sin_separar_anios_avisa(emicron_root):
     e = _load(emicron_root, [2021, 2024])
     with pytest.warns(UserWarning) as avisos:

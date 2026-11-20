@@ -158,6 +158,8 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = "anio", peso
     res["coeficiente_tecnico"] = 100 * res["consumo_intermedio"] / res["ventas"].where(res["ventas"] > 0)
     for nombre in ("pct_rut", "pct_camara_comercio", "pct_salud_pension"):
         res[nombre] = 100 * res.pop(f"_{nombre}_si") / res.pop(f"_{nombre}_con").where(lambda s: s > 0)
+    # Sin filas (un filtro que no deja a nadie), la suma de nada es cero micronegocios, no vacío
+    res[["micronegocios", "n_muestra"]] = res[["micronegocios", "n_muestra"]].fillna(0.0)
     res["n_muestra"] = res["n_muestra"].astype("int64")
     if "anio" in df.columns and "valor_agregado" in df.columns:
         vacio = pd.to_numeric(df["valor_agregado"], errors="coerce").isna().groupby(df["anio"]).all()
