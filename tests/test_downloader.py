@@ -11,6 +11,7 @@ import dane_data as dd
 from dane_data.eam.downloader import EAM_TIC_CATALOGS, EAMDownloader
 from dane_data.eevv.downloader import EEVV_KNOWN_FILES, EEVVDownloader
 from dane_data.geih.downloader import MARCADOR, GEIHDownloader, faltantes_mes, is_target_csv, mes_completo
+from dane_data.pobreza.downloader import POBREZA_KNOWN_FILES, PobrezaDownloader
 
 CAR = "DIRECTORIO;SECUENCIA_P;ORDEN;P6040;FEX_C18\n1;1;1;30;10\n"
 MOD = "DIRECTORIO;SECUENCIA_P;ORDEN;FEX_C18\n1;1;1;10\n"
@@ -990,3 +991,133 @@ def test_eevv_available(tmp_path):
     assert tabla[["tipo", "anio", "archivo"]].values.tolist() == [["fetales", 2020, "fetal2020.csv"]]
     assert list(dd.eevv.find_files(2020, tipo="fetales", root=tmp_path)) == [2020]
     assert dd.eevv.find_files(2020, tipo="nacimientos", root=tmp_path) == {}
+
+
+# ---------------------------------------------------------------------------------------------------- #
+# Pobreza monetaria
+
+HOG = "Directorio;Secuencia_p;Mes;Ingpcug\n1;1;1;100,5\n"
+PER = "Directorio;Secuencia_p;Orden;Mes\n1;1;1;1\n"
+
+
+class FakePobrezaDownloader(PobrezaDownloader):
+    pausa = 0
+
+    def __init__(self, paquetes: dict, **kw):
+        super().__init__(**kw)
+        self.paquetes = paquetes
+        self.descargas = []
+
+    def download_file(self, url, dest_path, max_retries=3):
+        self.descargas.append(url)
+        if url not in self.paquetes:
+            return False
+        dest_path.write_bytes(self.paquetes[url])
+        return True
+
+
+def _url_pob(anio, archivo):
+    return POBREZA_KNOWN_FILES[anio, archivo][2]
+
+
+def _baja_pob(tmp_path, paquetes, anios, **kw):
+    opciones = {k: kw.pop(k) for k in ("archivos", "empalme") if k in kw}
+    dl = FakePobrezaDownloader(paquetes, base_dir=tmp_path, **kw)
+    return dl, dl.run_pipeline(target_years=anios, **opciones)
+
+
+def test_pobreza_tabla_cubre_la_serie():
+    anios = sorted({a for a, _ in POBREZA_KNOWN_FILES if a != "empalme"})
+    assert anios == list(range(2012, 2026))
+    assert dd.pobreza.ANIOS_DISPONIBLES == anios
+    assert POBREZA_KNOWN_FILES[2015, "personas"][1] == "Personas_2015.zip"
+    assert POBREZA_KNOWN_FILES[2018, "hogares"][2].endswith("/catalog/608/download/11190")
+    # Desde 2023, un solo ZIP con los dos archivos
+    assert POBREZA_KNOWN_FILES[2025, "hogares"] == POBREZA_KNOWN_FILES[2025, "personas"]
+    assert POBREZA_KNOWN_FILES["empalme", "empalme_2012_2020"][2].endswith("/catalog/842/download/23713")
+
+
+def test_pobreza_prefiere_csv_y_renombra(tmp_path):
+    paquete = _zip_eevv({"Hogares 2018.sav": "spss", "Hogares 2018.csv": HOG, "Hogares 2018.dta": "stata"})
+    dl, fallidos = _baja_pob(tmp_path, {_url_pob(2018, "hogares"): paquete}, [2018], archivos=("hogares",))
+    assert fallidos == []
+    carpeta = tmp_path / "datos" / "2018"
+    assert sorted(f.name for f in carpeta.iterdir()) == ["hogares.csv", "origen.json"]
+    assert (carpeta / "hogares.csv").read_text() == HOG
+    origen = json.loads((carpeta / "origen.json").read_text())["hogares"]
+    assert origen["miembro"] == "Hogares 2018.csv" and origen["catalogo"] == "608"
+
+
+def test_pobreza_txt_si_no_hay_csv(tmp_path):
+    paquete = _zip_eevv({"HOGARES 2012.sav": "spss", "HOGARES 2012.txt": HOG.replace(";", "\t")})
+    _baja_pob(tmp_path, {_url_pob(2012, "hogares"): paquete}, [2012], archivos=("hogares",))
+    assert (tmp_path / "datos" / "2012" / "hogares.txt").exists()
+
+
+def test_pobreza_zip_conjunto_se_baja_una_vez(tmp_path):
+    """Desde 2023 hogares, personas (y víctimas, que no se usa) vienen en un solo ZIP, a veces en una carpeta."""
+    paquete = _zip_eevv({"BD/Hogares.csv": HOG, "BD/Personas.csv": PER, "BD/Victimas.csv": "x", "BD/Hogares.dta": "s"})
+    dl, fallidos = _baja_pob(tmp_path, {_url_pob(2024, "hogares"): paquete}, [2024], keep_zips=False)
+    assert fallidos == []
+    assert dl.descargas == [_url_pob(2024, "hogares")]
+    carpeta = tmp_path / "datos" / "2024"
+    assert (carpeta / "hogares.csv").read_text() == HOG and (carpeta / "personas.csv").read_text() == PER
+    assert not list((tmp_path / "raw_zips").rglob("*.zip"))  # keep_zips=False, después del último archivo
+
+
+def test_pobreza_falla_si_el_zip_no_trae_el_archivo_o_trae_dos(tmp_path):
+    url = _url_pob(2019, "hogares")
+    _, fallidos = _baja_pob(tmp_path, {url: _zip_eevv({"otra cosa.csv": HOG})}, [2019], archivos=("hogares",))
+    assert len(fallidos) == 1 and "otra cosa.csv" in fallidos[0]
+    _, fallidos = _baja_pob(tmp_path, {url: _zip_eevv({"Hogares.csv": HOG, "a/Hogares.csv": HOG})}, [2019],
+                            archivos=("hogares",))
+    assert len(fallidos) == 1 and "2 candidatos" in fallidos[0]
+    assert not (tmp_path / "datos" / "2019" / "hogares.csv").exists()
+
+
+def test_pobreza_un_archivo_no_borra_el_otro_y_es_incremental(tmp_path):
+    paquetes = {_url_pob(2020, "hogares"): _zip_eevv({"Hogares.csv": HOG}),
+                _url_pob(2020, "personas"): _zip_eevv({"Personas.csv": PER})}
+    _baja_pob(tmp_path, paquetes, [2020], archivos=("personas",))
+    _baja_pob(tmp_path, paquetes, [2020], archivos=("hogares",))
+    carpeta = tmp_path / "datos" / "2020"
+    assert (carpeta / "personas.csv").exists() and (carpeta / "hogares.csv").exists()
+    assert set(json.loads((carpeta / "origen.json").read_text())) == {"hogares", "personas"}
+    dl, fallidos = _baja_pob(tmp_path, paquetes, [2020])
+    assert fallidos == [] and dl.descargas == []  # ya estaba todo
+    dl, _ = _baja_pob(tmp_path, paquetes, [2020], forzar=True)
+    assert len(dl.descargas) == 2
+
+
+def test_pobreza_forzar_cambia_de_formato(tmp_path):
+    url = _url_pob(2013, "hogares")
+    _baja_pob(tmp_path, {url: _zip_eevv({"hogares_2013.txt": HOG})}, [2013], archivos=("hogares",))
+    _baja_pob(tmp_path, {url: _zip_eevv({"hogares_2013.csv": HOG})}, [2013], archivos=("hogares",), forzar=True)
+    assert sorted(f.name for f in (tmp_path / "datos" / "2013").glob("hogares.*")) == ["hogares.csv"]
+
+
+def test_pobreza_anio_desconocido_y_lista_vacia(tmp_path):
+    dl, fallidos = _baja_pob(tmp_path, {}, [2011, 2030])
+    assert len(fallidos) == 1 and "2011, 2030" in fallidos[0] and dl.descargas == []
+    dl, fallidos = _baja_pob(tmp_path, {}, [])
+    assert fallidos == [] and dl.descargas == []
+
+
+def test_pobreza_empalme_en_su_carpeta(tmp_path):
+    paquetes = {
+        _url_pob("empalme", "empalme_2012_2020"): _zip_eevv({
+            "Empalme de la medición de Pobreza y Desigualdad (2012-2020)/Empalme 2012-2020.csv": "a;b\n1;2\n",
+            "Empalme de la medición de Pobreza y Desigualdad (2012-2020)/Empalme 2012-2020.sav": "spss"}),
+        _url_pob("empalme", "hogares_empalmado_2021"): _zip_eevv({"Hogares_empalmado.csv": HOG}),
+        _url_pob("empalme", "hogares_empalmado_dpto_2021"): _zip_eevv({"hogares_empalmado_dpto.csv": HOG}),
+        _url_pob("empalme", "lineas_2012_2018"): _zip_eevv({"lineas_2012_2018.csv": "a\n1\n"}),
+    }
+    dl, fallidos = _baja_pob(tmp_path, paquetes, [], empalme=True)
+    assert fallidos == []
+    assert sorted(f.name for f in (tmp_path / "datos" / "empalme").glob("*.csv")) == [
+        "empalme_2012_2020.csv", "hogares_empalmado_2021.csv", "hogares_empalmado_dpto_2021.csv", "lineas_2012_2018.csv"]
+
+
+def test_pobreza_download_valida_archivos(tmp_path):
+    with pytest.raises(ValueError, match="viviendas"):
+        dd.pobreza.download(2024, archivos="viviendas", root=tmp_path)
