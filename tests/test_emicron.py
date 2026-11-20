@@ -303,11 +303,19 @@ def test_cli_config(tmp_path, monkeypatch):
 # Datos reales (se saltan sin la EMICRON descargada)
 # ---------------------------------------------------------------------------------------------------- #
 REAL = Path(os.environ.get("DANE_DATA_TEST_EMICRON", dd.get_path("emicron")))
-hay_datos_reales = pytest.mark.skipif(not (REAL / "datos" / "2024").is_dir(), reason="sin datos reales de la EMICRON")
+# Los módulos que usan load(columns="core") e indicadores
+_PARA_INDICADORES = ("identificacion", "caracteristicas", "propietario", "sitio", "costos", "ventas")
 
 
-@hay_datos_reales
+def _reales(anio: int, *modulos: str) -> None:
+    """Salta la prueba si en los datos reales falta el año o alguno de los módulos que usa."""
+    tiene = dd.emicron.find_files(anio, root=REAL).get(anio, {})
+    if faltan := [m for m in modulos if m not in tiene]:
+        pytest.skip(f"sin la EMICRON {anio} real ({', '.join(faltan)})")
+
+
 def test_real_2025_sin_factor_departamental():
+    _reales(2025, "identificacion")
     with pytest.warns(UserWarning, match="24 ciudades"):
         e = dd.emicron.load(2025, modulos=[], root=REAL)
     assert e["fex_dpto"].isna().all() and e["fex"].notna().all()
@@ -315,8 +323,8 @@ def test_real_2025_sin_factor_departamental():
         dd.emicron.indicadores(e, peso="fex_dpto")
 
 
-@hay_datos_reales
 def test_real_load_2024():
+    _reales(2024, "identificacion", "caracteristicas", "propietario", "sitio")
     e = dd.emicron.load(2024, root=REAL)
     assert len(e) == 78_501
     assert e["fex"].sum() == pytest.approx(5_297_251.5562481, abs=1e-3)
@@ -382,10 +390,19 @@ def _calculado(e: pd.DataFrame, variables_i1, peso: str = "fex") -> pd.DataFrame
     return pd.DataFrame(filas, columns=["dominio", "variable", "categoria", "calculado"])
 
 
-@hay_datos_reales
+def test_reales_se_saltan_si_falta_un_anio_o_un_modulo(emicron_root, monkeypatch):
+    monkeypatch.setitem(globals(), "REAL", emicron_root)  # el sintético: 2019, 2021, 2024 y 2025, con pocos módulos
+    _reales(2024, *_PARA_INDICADORES)  # 2024 los tiene todos: no se salta
+    with pytest.raises(pytest.skip.Exception, match="2019 real \\(caracteristicas"):
+        _reales(2019, *_PARA_INDICADORES)
+    with pytest.raises(pytest.skip.Exception, match="2020 real"):
+        _reales(2020, "identificacion")
+
+
 @pytest.mark.parametrize("anio", range(2019, 2026))
 def test_real_coincide_con_los_anexos(anio):
     """Cuadros A1.10, A1.12, B.1, D.1, E.1.1, F.1, F.6 e I.1: nacional, cabeceras, centros poblados y 24 ciudades."""
+    _reales(anio, *_PARA_INDICADORES, *(["fex_ajustado"] if anio <= 2021 else []))
     pub = _publicado().query("anio == @anio")
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", UserWarning)
@@ -416,10 +433,10 @@ def test_errata_del_anexo_departamental_2023():
     assert a["sueldos"] + a["prestaciones"] - a["remuneracion"] == pytest.approx(100, abs=1e-3)
 
 
-@hay_datos_reales
 @pytest.mark.parametrize("anio", range(2020, 2025))
 def test_real_coincide_con_los_anexos_departamentales(anio):
     """Los mismos cuadros para los 24 departamentos y Bogotá, con el factor departamental (fex_dpto)."""
+    _reales(anio, *_PARA_INDICADORES, "fex_dpto")
     pub = pd.read_csv(DATOS / "dane_emicron_departamentos.csv", keep_default_na=False).query("anio == @anio")
     assert pub["dominio"].nunique() == 26
     with warnings.catch_warnings():
