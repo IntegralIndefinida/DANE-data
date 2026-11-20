@@ -41,6 +41,14 @@ establecimientos.
 
 Estadísticas Vitales: descarga, carga armonizada, indicadores y tasas de natalidad, mortalidad y fecundidad.
 :::
+
+:::{grid-item-card} `dd.pobreza`
+:link: pobreza
+:link-type: doc
+
+Pobreza monetaria y desigualdad: descarga, carga con el empalme del DANE, incidencia, brecha, severidad, Gini y unión
+con la GEIH.
+:::
 ::::
 
 ```{toctree}
@@ -50,4 +58,5 @@ general
 geih
 eam
 eevv
+pobreza
 ```

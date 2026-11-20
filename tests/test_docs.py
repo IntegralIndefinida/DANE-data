@@ -23,6 +23,7 @@ API = Path(__file__).parent.parent / "docs" / "api"
     (dd.geih, "geih.md", ""),
     (dd.eam, "eam.md", ""),
     (dd.eevv, "eevv.md", ""),
+    (dd.pobreza, "pobreza.md", ""),
 ])
 def test_referencia_cubre_all(modulo, pagina, prefijo):
     texto = (API / pagina).read_text(encoding="utf-8")
