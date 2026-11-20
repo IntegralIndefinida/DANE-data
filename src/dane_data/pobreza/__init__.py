@@ -3,17 +3,12 @@
 from __future__ import annotations
 
 import numbers
-from pathlib import Path
 from typing import Iterable
 
-from .. import config
 from .downloader import ARCHIVOS, ARCHIVOS_EMPALME, POBREZA_KNOWN_FILES, PobrezaDownloader
+from .loader import CATEGORIAS, CORE, DOMINIOS, ETIQUETAS, METODOLOGIAS, _root, available, find_files, harmonize, load
 
 ANIOS_DISPONIBLES = sorted({a for a, _ in POBREZA_KNOWN_FILES if a != "empalme"})
-
-
-def _root(root) -> Path:
-    return Path(root).expanduser() if root is not None else config.get_path("pobreza")
 
 
 def download(
@@ -92,4 +87,7 @@ def download(
     return dl.run_pipeline(target_years=years, archivos=tuple(archivos), empalme=empalme)
 
 
-__all__ = ["download", "ARCHIVOS", "ARCHIVOS_EMPALME", "ANIOS_DISPONIBLES"]
+__all__ = [
+    "download", "available", "find_files", "load", "harmonize", "ARCHIVOS", "ARCHIVOS_EMPALME", "ANIOS_DISPONIBLES",
+    "CORE", "ETIQUETAS", "CATEGORIAS", "DOMINIOS", "METODOLOGIAS",
+]
