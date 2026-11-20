@@ -17,6 +17,11 @@
   `dane-data config --emicron`.
 * {dd}`set_paths()` acepta `emicron=`.
 
+**Mejoras**
+
+* {dd}`tabla()` deja fuera las filas con el peso vacío, con un aviso que dice cuántas y de qué años, en vez de sumarlas
+  como cero y contarlas en `n_muestra`. Si ninguna fila tiene peso, es un error.
+
 ## 0.5.0 (9 de noviembre de 2026)
 
 **Al actualizar**

@@ -475,3 +475,27 @@ def test_cli_app_sin_streamlit(monkeypatch, capsys):
     monkeypatch.setattr("dane_data.cli.subprocess.Popen", lambda *a, **k: pytest.fail("no debía arrancar"))
     assert cli_main(["app", "--no-browser"]) == 1
     assert 'pip install "dane-data[app]"' in capsys.readouterr().err
+
+
+def test_tabla_deja_fuera_las_filas_sin_peso():
+    """Un peso vacío no es cero: la fila no cuenta ni en total ni en n_muestra (la EMICRON 2025 no tiene fex_dpto)."""
+    df = pd.DataFrame({"anio": [2024, 2024, 2025], "sexo": ["Mujer", "Hombre", "Mujer"], "x": [1.0, 3.0, 5.0],
+                       "fex": [10.0, 30.0, None]})
+    with pytest.warns(UserWarning, match="Sin fex: se dejan fuera 1 de 2025"):
+        r = dd.tabla(df, por=["anio", "sexo"])
+    assert r[["anio", "sexo", "total", "n_muestra"]].values.tolist() == [[2024, "Hombre", 30.0, 1], [2024, "Mujer", 10.0, 1]]
+    with pytest.warns(UserWarning):
+        assert dd.tabla(df, variable="x", estadistico="media")["n_muestra"].iloc[0] == 2
+    df["fex"] = df["fex"].astype(object).where(df["fex"].notna(), "")  # texto vacío: igual de vacío
+    with pytest.warns(UserWarning):
+        assert dd.tabla(df)["total"].iloc[0] == 40.0
+    with pytest.raises(ValueError, match="use peso='fex'"):
+        dd.tabla(df.assign(fex_dpto=None), peso="fex_dpto")
+
+
+def test_tabla_sin_peso_conserva_el_divisor_de_meses():
+    """El peso se calcula antes de quitar las filas sin peso: el promedio mensual sigue dividiendo por los meses anotados."""
+    df = pd.DataFrame({"anio": 2024, "mes": [1, 2, 3], "fex": [30.0, 60.0, None]})
+    df.attrs["meses_por_anio"], df.attrs["meses_por_anio_filas"] = {2024: 3}, 3
+    with pytest.warns(UserWarning):
+        assert dd.tabla(df)["total"].iloc[0] == 30.0  # (30 + 60) / 3, no (30 + 60) / 2

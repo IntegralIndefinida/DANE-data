@@ -280,8 +280,8 @@ anexo. Las trimestrales no: usan factores trimestrales que no vienen en los micr
   2008. `T_GES` agrupa «de 28 a 37» semanas, que mezcla prematuros con nacidos a término.
 - **EMICRON, cobertura**: 2019–2024 cubren el total nacional (sin Amazonas, Arauca, Casanare, Guainía, Guaviare,
   Putumayo, Vaupés ni Vichada) y 2025 solo las 24 ciudades: para una serie con 2025, use las 24 ciudades en todos los
-  años. 2025 no trae factor departamental (`fex_dpto`); `dd.emicron.indicadores` deja fuera esos registros, pero
-  `dd.tabla(..., peso="fex_dpto")` los sumaría como cero.
+  años. 2025 no trae factor departamental (`fex_dpto`): `dd.emicron.indicadores` y `dd.tabla` dejan fuera esos
+  registros con un aviso, en vez de contarlos como cero.
 - **EMICRON, montos**: son mensuales y en pesos corrientes; `dd.emicron.indicadores` los da anuales y en miles de pesos,
   como el DANE. 2019 solo trae las ventas: consumo intermedio, valor agregado, ingreso mixto y remuneraciones quedan
   vacíos. El factor de expansión es anual (la suma del año es el total), y por eso el mes se llama `mes_ref`: con una

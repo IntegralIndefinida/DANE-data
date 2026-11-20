@@ -76,8 +76,8 @@ Hombre Trabajador por cuenta propia 3033153.5      43989        88.7
 `fex` es el de la serie vigente del DANE. En 2019–2021 es el factor «ajustado» de 2023, que viene en un archivo aparte,
 porque el `F_EXP` que traen los módulos de esos años es el de la serie anterior. Desde 2022 es el `F_EXP` de la
 identificación. Con él los totales coinciden con los anexos vigentes. Para cifras por departamento el DANE usa otro
-factor, `fex_dpto`, que no existe en 2025: {dd}`emicron.indicadores()` deja fuera esos registros con un aviso, pero
-`dd.tabla(..., peso="fex_dpto")` los sumaría como cero.
+factor, `fex_dpto`, que no existe en 2025: {dd}`emicron.indicadores()` y {dd}`tabla()` dejan fuera esos registros con
+un aviso, en vez de contarlos como cero.
 
 ## Indicadores
 
