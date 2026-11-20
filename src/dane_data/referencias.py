@@ -41,7 +41,7 @@ def strip_accents(text: str) -> str:
     return "".join(c for c in unicodedata.normalize("NFD", text) if unicodedata.category(c) != "Mn").lower()
 
 
-_DICCIONARIOS = {"geih": "geih_diccionario.json", "eam": "eam_diccionario.json",
+_DICCIONARIOS = {"geih": "geih_diccionario.json", "eam": "eam_diccionario.json", "emicron": "emicron_diccionario.json",
                  **{f"eevv_{t}": f"eevv_{t}_diccionario.json" for t in ("defunciones", "nacimientos", "fetales")}}
 
 
@@ -50,13 +50,14 @@ def diccionario(encuesta: str) -> dict:
     """
     Diccionario oficial de variables de una encuesta.
 
-    Es el diccionario DDI del ANDA, tal como lo publica el DANE: el de la GEIH 2025, el de la EAM 2024 o el de las
-    Estadísticas Vitales 2025. Viene con la librería, así que no necesita descargar nada.
+    Es el diccionario DDI del ANDA, tal como lo publica el DANE: el de la GEIH 2025, el de la EAM 2024, el de la
+    EMICRON 2024 o el de las Estadísticas Vitales 2025. Viene con la librería, así que no necesita descargar nada.
 
     Parámetros
     ----------
     encuesta
-        ``"geih"``, ``"eam"``, ``"eevv_defunciones"``, ``"eevv_nacimientos"`` o ``"eevv_fetales"``.
+        ``"geih"``, ``"eam"``, ``"emicron"``, ``"eevv_defunciones"``, ``"eevv_nacimientos"`` o
+        ``"eevv_fetales"``.
 
     Devuelve
     --------
@@ -97,7 +98,8 @@ def describir(variable: str, encuesta: str = "geih") -> str:
     variable
         Nombre de la variable del DANE, en mayúscula o minúscula.
     encuesta
-        ``"geih"``, ``"eam"``, ``"eevv_defunciones"``, ``"eevv_nacimientos"`` o ``"eevv_fetales"``.
+        ``"geih"``, ``"eam"``, ``"emicron"``, ``"eevv_defunciones"``, ``"eevv_nacimientos"`` o
+        ``"eevv_fetales"``.
 
     Devuelve
     --------
@@ -135,7 +137,8 @@ def buscar_variable(texto: str, encuesta: str = "geih"):
     texto
         Texto a buscar, por ejemplo ``"arriendo"`` o ``"P64"``.
     encuesta
-        ``"geih"``, ``"eam"``, ``"eevv_defunciones"``, ``"eevv_nacimientos"`` o ``"eevv_fetales"``.
+        ``"geih"``, ``"eam"``, ``"emicron"``, ``"eevv_defunciones"``, ``"eevv_nacimientos"`` o
+        ``"eevv_fetales"``.
 
     Devuelve
     --------

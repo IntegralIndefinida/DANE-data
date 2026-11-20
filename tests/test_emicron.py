@@ -209,6 +209,21 @@ def test_indicadores_sin_separar_anios_avisa(emicron_root):
 
 
 # ---------------------------------------------------------------------------------------------------- #
+# Diccionario
+# ---------------------------------------------------------------------------------------------------- #
+def test_diccionario():
+    d = dd.diccionario("emicron")
+    assert d["P35"]["categorias"] == {"1": "Hombre", "2": "Mujer"}
+    assert dd.describir("valor_agregado", encuesta="emicron") == "Valor agregado mensual"
+    assert "P1633" in dd.buscar_variable("tributario", "emicron")["variable"].tolist()
+    assert len(d["F_EXP"]["modulos"]) > 5  # la repiten los módulos: una sola entrada con todos
+    assert all(etiqueta for v in d.values() for etiqueta in v["categorias"].values())
+    # Las variables de CORE que vienen del DANE están en el diccionario
+    origenes = {o.upper() for _, o, _ in dd.emicron.loader._ARMONIZADAS.values()} | {m.upper() for m in dd.emicron.MONTOS}
+    assert origenes <= set(d)
+
+
+# ---------------------------------------------------------------------------------------------------- #
 # Datos reales (se saltan sin la EMICRON descargada)
 # ---------------------------------------------------------------------------------------------------- #
 REAL = Path(os.environ.get("DANE_DATA_TEST_EMICRON", dd.get_path("emicron")))
