@@ -48,6 +48,12 @@ Nacimientos, defunciones y causas de muerte, con tasas sobre la población.
 * {doc}`eevv`
 :::
 
+:::{grid-item-card} {octicon}`home` Calidad de vida
+La Encuesta Nacional de Calidad de Vida: servicios, salud, educación y el Índice de Pobreza Multidimensional.
+
+* {doc}`ecv`
+:::
+
 :::{grid-item-card} {octicon}`terminal` Línea de comandos
 Descargar los datos, ver el estado y abrir la aplicación desde la terminal.
 
@@ -108,6 +114,13 @@ eam
 :caption: Estadísticas Vitales
 
 eevv
+```
+
+```{toctree}
+:hidden:
+:caption: Calidad de vida
+
+ecv
 ```
 
 ```{toctree}

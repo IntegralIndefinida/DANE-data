@@ -21,6 +21,13 @@ Los indicadores de {dd}`eevv.indicadores()` y las tasas de {dd}`eevv.tasas()` (v
 ```{include} _generado/glosario_eevv.md
 ```
 
+## Calidad de vida
+
+Los indicadores de {dd}`ecv.indicadores()` (vienen de `dd.ecv.GLOSARIO`). El IPM se explica en {doc}`guia/ecv`.
+
+```{include} _generado/glosario_ecv.md
+```
+
 ## Términos de las encuestas
 
 ```{glossary}

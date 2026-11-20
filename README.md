@@ -3,7 +3,8 @@
 [Documentación](https://integralindefinida.github.io/DANE-data/) · [PyPI](https://pypi.org/project/dane-data/)
 
 Microdatos del DANE listos para analizar: la Gran Encuesta Integrada de Hogares (GEIH, 2007–2026), la
-Encuesta Anual Manufacturera (EAM, 1992–2024) y las Estadísticas Vitales (nacimientos y defunciones, 1979–2025).
+Encuesta Anual Manufacturera (EAM, 1992–2024), las Estadísticas Vitales (nacimientos y defunciones, 1979–2025) y la
+Encuesta Nacional de Calidad de Vida (ECV, 2018–2025), con el Índice de Pobreza Multidimensional.
 
 [![Tasa de desocupación mensual y promedio de 12 meses, total nacional, 2007–2026, calculada con dane-data](https://raw.githubusercontent.com/IntegralIndefinida/DANE-data/main/docs/_static/galeria/desempleo.png)](https://integralindefinida.github.io/DANE-data/ejemplos/desempleo.html)
 
@@ -80,6 +81,7 @@ dane-data app          # o doble clic en el lanzador; el navegador se abre solo
 | Indicadores industriales | Producción, valor agregado, empleo, productividad y participación laboral por sector o departamento |
 | Panel y microdatos EAM | Panel de establecimientos (balanceado o no), supervivencia, exportación |
 | Nacimientos y defunciones | Indicadores de los tres certificados, tasas sobre la población y causas de muerte |
+| Calidad de vida y pobreza | Indicadores de la ECV (servicios, internet, salud, educación, TIC) y el Índice de Pobreza Multidimensional, por área, región, departamento o sexo del jefe |
 | Diccionario | Buscador de variables con las etiquetas y categorías oficiales del DANE |
 
 Cada tabla se descarga en CSV, Excel o Stata, y cada página muestra el código Python equivalente, que se
@@ -138,7 +140,13 @@ dd.eevv.indicadores(nac, por="edad_madre")               # bajo peso, prematuros
 dd.eevv.tasas(range(2015, 2026), por="departamento")     # natalidad, mortalidad, fecundidad, mortalidad infantil
 dd.poblacion(2025, sexo="Mujer", edades=(15, 49))        # las proyecciones del DANE, sin descargar nada
 
-# 8. Diccionario oficial
+# 8. ECV e Índice de Pobreza Multidimensional
+dd.ecv.download(2025)                                    # los once capítulos del cuestionario
+df = dd.ecv.load(2025, modulos=["salud", "educacion"])   # una persona por fila, capítulos unidos
+dd.ecv.serie_indicadores(range(2018, 2026), por="area")  # servicios, internet, salud, educación… como el DANE
+dd.ecv.serie_ipm(range(2018, 2026), por="departamento")  # incidencia, intensidad, IPM y las 15 privaciones
+
+# 9. Diccionario oficial
 dd.buscar_variable("pensión")
 dd.describir("P6920")
 ```
@@ -150,7 +158,8 @@ dane-data estado                               # rutas y años/meses disponibles
 dane-data descargar geih --anios 2024 2025
 dane-data descargar geih --anios 2016 --empalme
 dane-data descargar eam --anios 2022 2023 2024
-dane-data config --geih RUTA --empalme RUTA --eam RUTA
+dane-data descargar ecv --anios 2025 --modulos caracteristicas salud
+dane-data config --geih RUTA --empalme RUTA --eam RUTA --ecv RUTA
 ```
 
 Vea [`examples/01_primeros_pasos.ipynb`](https://github.com/IntegralIndefinida/DANE-data/blob/main/examples/01_primeros_pasos.ipynb)
@@ -214,6 +223,11 @@ En las Estadísticas Vitales, el total y el sexo de los tres certificados en 200
 coinciden exactamente con los cuadros definitivos del DANE. Antes de 2008 no hay cuadros en la página del DANE con qué
 comparar.
 
+En la ECV, los 27 indicadores de la serie 2018–2025 del DANE coinciden exactamente en el total nacional y por área, y a menos
+de 0,1 puntos por departamento. Las 15 privaciones del IPM coinciden hogar por hogar con la base oficial del DANE en 2018,
+2019, 2023, 2024 y 2025 (el IPM nacional de 2025 da 9,9 % y 0,040, como lo publicado); 2020 no, porque el DANE armó la
+inasistencia escolar con el SIMAT.
+
 ## Advertencias metodológicas
 
 - **Informalidad**: `formal` replica la medición oficial del DANE (17.ª CIET) con el código que el DANE
@@ -240,6 +254,8 @@ comparar.
   la mitad del valor agregado o más, son el promedio de un grupo de establecimientos (casi siempre 3), no los
   propios. Sirven para agregados; para productividad, funciones de producción o paneles por planta,
   excluya o controle los registros `microagregado` (`dd.eam.panel(..., excluir_microagregados=True)`).
+- **ECV, IPM de 2020**: el DANE armó la inasistencia escolar de 2020 con el SIMAT, que no está en los microdatos; con la
+  ECV sola, la incidencia de 2020 da 14,8 % y no 18,1 %. Los demás años reproducen la base oficial del DANE.
 - **Estadísticas Vitales, tasas**: `dd.eevv.tasas` usa hechos registrados, sin ajustar por subregistro, así que no tiene por
   qué coincidir con los indicadores demográficos del DANE, que salen de un modelo. Los años antiguos salen más bajos que los
   reales. Por departamento y área se usa la residencia, y quedan por fuera los residentes en el extranjero y quienes no
@@ -307,6 +323,21 @@ el DANE, así que en estos casos no coincide con las variables armonizadas.
 | `PESO_NAC` → `mortinato`, `mortalidad_perinatal` (fetales, toda la serie) | La ficha técnica de la tasa de mortalidad perinatal del DANE (2026) cuenta como mortinato la defunción fetal de 22 semanas o más **o** de 500 gramos o más. | Los microdatos agrupan el peso desde «menos de 1.000 gramos» (los cuadros del DANE sí separan de 300 a 999), así que con menos de 22 semanas, o sin gestación, no se puede saber si pesaba 500 gramos. `mortinato` es True con 22 semanas o más o con 1.000 gramos o más, False con menos de 22 semanas y de 1.000 gramos (el DANE contaría las de 500 a 999), y vacío sin gestación y con menos de 1.000 gramos: 2 309 de las 19 620 defunciones fetales de 2025. Por eso `mortalidad_perinatal` puede quedar algo por debajo de la del DANE. |
 | Defunciones fetales antes de 1998 | La ficha metodológica V10 (DSO-EEVV-FME-001) dice que hay microdatos anonimizados de defunciones fetales desde 1992. | En el ANDA, los catálogos de 1992–1996 (397) y 1997 (398) solo traen `Defun1992.zip` a `Defun1997.zip`, y esos archivos no tienen `TIPO_DEFUN` ni grupos de edad fetales: son solo defunciones no fetales. `dane-data` ofrece las fetales desde 1998, el primer año que hay en el ANDA. |
 
+### ECV
+
+| Variable | Qué dice el DANE | Qué muestran los datos y qué hace `dane-data` |
+|---|---|---|
+| `FEX_C` de 2018 (catálogo 607) | Los capítulos traen su factor de expansión. | Es anterior al CNPV 2018: da 50,0 millones de personas, y la serie oficial 2018–2025, 48,6. El DANE publicó aparte `Factores de expansion 2018 basados en el CNPV 2018.zip` (un factor por vivienda). `dane-data` lo baja y lo usa; el original queda en `FEX_C_ORIGINAL`. |
+| `REGION` (2020, catálogo 718) | El DDI de 2020 no la trae. | Tampoco los datos. `region` sale del departamento, con la parte rural de Bogotá en Oriental, como en los años que sí la traen. |
+| Llaves de las tablas de hogar | La *Estructura de la base de datos* lo dice: en una tabla de hogar el hogar es `SECUENCIA_ENCUESTA` y `SECUENCIA_P` es 1. | Así es. `load` pasa el hogar a `SECUENCIA_P`, como en las tablas de personas, para que todas tengan las mismas llaves. |
+| Algoritmo del IPM | El *Algoritmo para la construcción del IPM* da las definiciones de las 15 privaciones. | No dice cómo se cuentan los años de educación, ni el corte exacto del desempleo de larga duración, ni la asistencia virtual. `dane-data` los ajustó hasta reproducir la base oficial `BDATOS-IPM` hogar por hogar: la media cuenta hasta 11 y la superior desde 11 (16 en posgrado) más el año aprobado; 52 semanas o más; desde 2021, un niño que estudia solo de forma virtual es inasistente si el hogar no tiene internet o él no tuvo contacto con sus maestros. |
+| `P4005` (paredes) en 2020 | El formulario de 2020 separa guadua (7), caña y otro vegetal (8), zinc y desechos (9) y sin paredes (10). | La base del IPM de 2020 no priva a los hogares con el 10, como si siguiera con los códigos de 2018–2019 (donde el 9 era «sin paredes»). `dane-data` hace lo mismo en 2020. |
+| Inasistencia escolar del IPM 2020 | La nota del anexo: «integra información del SIMAT – C600 – ECV». | El SIMAT no está en los microdatos de la ECV, así que el IPM de 2020 no se puede reproducir: con la ECV sola da 14,8 % y no 18,1 %. `ipm` y la aplicación lo avisan. |
+| Inasistencia escolar del IPM 2021 | — | 21 de 89.203 hogares están privados en la base del DANE sin que las variables publicadas digan por qué (niños en clases virtuales con internet y sin computador, que en otros hogares iguales no se privan). La incidencia de Casanare y de Magdalena difiere en 0,1 puntos. |
+| Uso de celular, Chocó y Córdoba (anexo de series 2025, año 2024) | Chocó 88,8 % y Córdoba 70,9 %. | Están intercambiados: los datos dan 70,9 % en Chocó y 88,8 % en Córdoba, y así quedan en `dane-data`. |
+| Privaciones en los anexos del IPM | «Privaciones por hogar según variable». | Son porcentajes de hogares, no de personas, aunque la incidencia sí es de personas. `ipm` da las dos cosas así. |
+| Educación 2021 (catálogo 734) | — | El ZIP está comprimido en Deflate64, que la librería estándar de Python no lee. `dane-data` lo descomprime con `inflate64`. |
+
 ## Estructura
 
 ```
@@ -321,6 +352,7 @@ src/dane_data/
 ├── geih/              downloader.py · loader.py · indicadores.py · agregados.py (serie_*, exportar)
 ├── eam/               downloader.py · loader.py · indicadores.py
 ├── eevv/              downloader.py · loader.py · indicadores.py · agregados.py (serie_*, tasas)
+├── ecv/               downloader.py · loader.py · indicadores.py · ipm.py · agregados.py (serie_*)
 ├── cli.py             comando `dane-data`
 └── app/               aplicación Streamlit (Inicio.py + paginas/)
 ```

@@ -67,13 +67,15 @@ python -c "import dane_data; print(dane_data.__version__)"
 ```python
 import dane_data as dd
 
-dd.set_paths(geih="D:/datos/GEIH", eam="D:/datos/EAM", eevv="D:/datos/EEVV", save=True)   # opcional
+dd.set_paths(geih="D:/datos/GEIH", eam="D:/datos/EAM", eevv="D:/datos/EEVV", ecv="D:/datos/ECV", save=True)   # opcional
 dd.geih.download(2025)
 dd.eam.download(range(2014, 2025))
 dd.eevv.download(2025)
+dd.ecv.download(2025)
 ```
 
-Un año de la GEIH ocupa unos 600 MB, toda la EAM unos 330 MB y todas las Estadísticas Vitales unos 3,6 GB. Los detalles están en
+Un año de la GEIH ocupa unos 600 MB, toda la EAM unos 330 MB, todas las Estadísticas Vitales unos 3,6 GB y un año de
+la ECV unos 250 MB (la descarga de 2024 o 2025 es de 1,4 GB). Los detalles están en
 {doc}`guia/datos`.
 
 ## Actualizar

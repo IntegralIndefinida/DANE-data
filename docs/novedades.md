@@ -1,5 +1,23 @@
 # Novedades
 
+## Sin publicar
+
+**Nuevo**
+
+* `dd.ecv`: la **Encuesta Nacional de Calidad de Vida** 2018–2025 (vea {doc}`guia/ecv`). {dd}`ecv.download()` baja del ANDA
+  los once capítulos del cuestionario de cada año y, en 2018, los factores de expansión del CNPV 2018; {dd}`ecv.load()` los
+  une en una fila por persona o por hogar, con variables armonizadas en minúscula; {dd}`ecv.indicadores()` y
+  {dd}`ecv.serie_indicadores()` dan los 27 indicadores de la serie del DANE, iguales a los publicados.
+* El **Índice de Pobreza Multidimensional**: {dd}`ecv.privaciones()`, {dd}`ecv.ipm()` y {dd}`ecv.serie_ipm()`. Reproduce la base
+  oficial del DANE hogar por hogar (IPM 2025: 9,9 % y 0,040), salvo 2020, que el DANE armó con el SIMAT.
+* La ECV en la aplicación (página *Calidad de vida y pobreza*, Descargar datos, Inicio, Diccionario y Cómo citar), en la
+  línea de comandos (`dane-data descargar ecv`, `dane-data config --ecv`) y en {dd}`diccionario()` (`"ecv"`).
+
+**Mejoras**
+
+* Las descargas del ANDA leen los ZIP comprimidos en Deflate64 (Educación 2021 de la ECV), con la dependencia nueva
+  `inflate64`.
+
 ## 0.5.0 (9 de noviembre de 2026)
 
 **Al actualizar**

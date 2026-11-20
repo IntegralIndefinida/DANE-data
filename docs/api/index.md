@@ -41,6 +41,14 @@ establecimientos.
 
 Estadísticas Vitales: descarga, carga armonizada, indicadores y tasas de natalidad, mortalidad y fecundidad.
 :::
+
+:::{grid-item-card} `dd.ecv`
+:link: ecv
+:link-type: doc
+
+Encuesta Nacional de Calidad de Vida: descarga, carga armonizada, indicadores de la serie del DANE e Índice de
+Pobreza Multidimensional.
+:::
 ::::
 
 ```{toctree}
@@ -50,4 +58,5 @@ general
 geih
 eam
 eevv
+ecv
 ```

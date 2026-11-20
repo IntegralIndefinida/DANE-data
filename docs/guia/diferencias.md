@@ -25,5 +25,12 @@
 
 ```{include} ../../README.md
 :start-after: "### Estadísticas Vitales"
+:end-before: "### ECV"
+```
+
+## ECV
+
+```{include} ../../README.md
+:start-after: "### ECV"
 :end-before: "## Estructura"
 ```
