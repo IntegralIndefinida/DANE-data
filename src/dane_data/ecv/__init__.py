@@ -1,13 +1,14 @@
-"""Encuesta Nacional de Calidad de Vida (ECV), 2018–2025."""
+"""Encuesta Nacional de Calidad de Vida (ECV), 2018–2025, y su Índice de Pobreza Multidimensional (IPM)."""
 
 from __future__ import annotations
 
 import numbers
 from typing import Iterable
 
-from .agregados import clear_cache, serie_indicadores
+from .agregados import clear_cache, serie_indicadores, serie_ipm
 from .downloader import _CATALOGOS, ECVDownloader
 from .indicadores import GLOSARIO, indicadores
+from .ipm import COLUMNAS_IPM, MODULOS_IPM, PRIVACIONES, ipm, privaciones
 from .loader import (CATEGORIAS, ETIQUETAS, KEYS_HOGAR, KEYS_PERSONA, MODULOS, NIVELES, UNIDADES, _root, available,
                      find_files, harmonize, load)
 
@@ -97,7 +98,8 @@ def download(
 
 
 __all__ = [
-    "download", "available", "find_files", "load", "harmonize", "indicadores", "serie_indicadores", "clear_cache",
-    "MODULOS", "UNIDADES", "NIVELES", "KEYS_HOGAR",
-    "KEYS_PERSONA", "ETIQUETAS", "CATEGORIAS", "GLOSARIO", "ANIOS_DISPONIBLES",
+    "download", "available", "find_files", "load", "harmonize", "indicadores", "serie_indicadores", "privaciones", "ipm",
+    "serie_ipm", "clear_cache", "MODULOS", "UNIDADES", "NIVELES", "KEYS_HOGAR",
+    "KEYS_PERSONA", "ETIQUETAS", "CATEGORIAS", "GLOSARIO", "PRIVACIONES", "MODULOS_IPM", "COLUMNAS_IPM",
+    "ANIOS_DISPONIBLES",
 ]

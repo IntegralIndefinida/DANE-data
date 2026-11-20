@@ -1,5 +1,5 @@
 """
-Indicadores de la ECV calculados año por año y guardados en disco.
+Indicadores y privaciones del IPM de la ECV calculados año por año y guardados en disco.
 
 Un año de la ECV con los capítulos que piden los indicadores pasa de 230 000 personas y 200 columnas: así no hace falta
 tener la serie en memoria. La caché vive en ``~/.cache/dane_data/ecv/`` y se invalida sola si cambian los archivos o el
@@ -23,12 +23,13 @@ from ..eevv.loader import _unir
 from ..geih.agregados import _clave_json, _firma_codigo, _mascara
 from ..geih.loader import _borrar_cache, _guardar_parquet, _usado
 from .indicadores import _lista, indicadores
+from .ipm import COLUMNAS_IPM, MODULOS_IPM, ipm, privaciones
 from .loader import _EDUCACION, _FACTORES, MODULOS, _root, find_files, load
 
 log = logging.getLogger("dane_data.ecv")
 
 # Lo que produce los resultados (para _firma_codigo)
-_CODIGO = ("ecv/loader.py", "ecv/indicadores.py", "ecv/agregados.py", "_io.py", "referencias.py", "stats.py",
+_CODIGO = ("ecv/loader.py", "ecv/indicadores.py", "ecv/ipm.py", "ecv/agregados.py", "_io.py", "referencias.py", "stats.py",
            "geih/agregados.py", "eevv/loader.py")
 # Capítulos y variables del DANE que necesitan los indicadores
 _MODULOS_INDICADORES = ("vivienda", "servicios", "tenencia", "condiciones", "salud", "educacion", "tic")
@@ -177,3 +178,86 @@ def serie_indicadores(
     if progress:
         progress(1.0, "Listo")
     return _unir(partes).sort_values(llaves, ignore_index=True)
+
+
+def serie_ipm(
+    anios: Iterable[int] | int | None = None,
+    por: str | Iterable[str] | None = None,
+    muestra: str | None = None,
+    dropna: bool = True,
+    root=None,
+    progress=None,
+) -> pd.DataFrame:
+    """
+    El IPM por año, sin tener toda la serie en memoria.
+
+    Da lo mismo que ``ipm(load(anios, modulos=MODULOS_IPM), por=["anio", *por])``, pero lee un año a la vez, solo las
+    columnas necesarias, y guarda en disco las privaciones de cada hogar: otra desagregación del mismo año no vuelve a
+    leer los datos.
+
+    Parámetros
+    ----------
+    anios
+        Año o lista de años. ``None`` para todos los descargados.
+    por
+        Columna o lista de columnas para desagregar, además del año: ``"area"``, ``"region"``, ``"departamento"`` o
+        ``"sexo_jefe"``.
+    muestra
+        ``"nacional"`` o ``"completa"``; por defecto, como el DANE (vea :func:`ipm`).
+    dropna
+        Quitar los hogares sin dato en ``por``.
+    root
+        Carpeta raíz. Por defecto, la configurada.
+    progress
+        Función ``progress(fraccion, mensaje)`` que recibe el avance.
+
+    Devuelve
+    --------
+    DataFrame
+        Las columnas de :func:`ipm`, con ``anio`` y las de ``por``.
+
+    Lanza
+    -----
+    FileNotFoundError
+        Si no hay datos para esos años.
+    ValueError
+        Si a un año le falta un capítulo que necesita el IPM.
+
+    Véase también
+    -------------
+    ipm : Lo mismo sobre unos datos ya cargados.
+    privaciones : Las privaciones de cada hogar.
+
+    Ejemplos
+    --------
+    >>> import dane_data as dd
+    >>> dd.ecv.serie_ipm([2018, 2025])[["anio", "incidencia", "ipm"]].round(3)  # doctest: +SKIP
+       anio  incidencia    ipm
+    0  2018      19.120  0.080
+    1  2025       9.912  0.040
+    >>> dd.ecv.serie_ipm(2025, por="departamento")  # doctest: +SKIP
+    """
+    anios = _anios_lista(anios)
+    archivos = find_files(anios, modulo="caracteristicas", root=root)
+    if not archivos:
+        raise FileNotFoundError(f"No hay datos de la ECV para años={anios} en {_root(root)}. "
+                                "Descárguelos con dane_data.ecv.download(...) o revise dane_data.set_paths(...).")
+    codigo = _firma_codigo(_CODIGO)
+    partes = []
+    for i, anio in enumerate(sorted(archivos)):
+        if progress:
+            progress(i / len(archivos), f"Calculando el IPM {anio} (solo la primera vez)")
+        faltan = [m for m in MODULOS_IPM if anio not in find_files(anio, modulo=m, root=root)]
+        if faltan:
+            raise ValueError(f"Al IPM de {anio} le faltan los capítulos {faltan}: bájelos con "
+                             f"dd.ecv.download({anio}, modulos={faltan}).")
+        digest = hashlib.sha1("|".join([codigo, _firma_anio(anio, root)]).encode()).hexdigest()[:16]
+
+        def calcular(a=anio) -> pd.DataFrame:
+            return privaciones(load(a, modulos=MODULOS_IPM, columns=COLUMNAS_IPM, root=root))
+
+        partes.append(_desde_cache(config.CACHE_DIR / "ecv" / "privaciones" / f"{anio}_{digest}.parquet", calcular))
+    if progress:
+        progress(1.0, "Listo")
+    llaves = ["anio", *_lista(por)]
+    return ipm(_unir(partes), por=llaves, muestra=muestra, dropna=dropna).sort_values(llaves, ignore_index=True)

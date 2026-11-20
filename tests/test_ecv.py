@@ -1,4 +1,4 @@
-"""Encuesta Nacional de Calidad de Vida: carpetas, carga, armonización e indicadores."""
+"""Encuesta Nacional de Calidad de Vida: carpetas, carga, armonización, indicadores e IPM."""
 
 import json
 import warnings
@@ -214,3 +214,105 @@ def test_serie_indicadores_con_cache(ecv_root, tmp_path, monkeypatch):
     assert dd.ecv.clear_cache() == 3
     with pytest.raises(FileNotFoundError):
         dd.ecv.serie_indicadores(2019, root=ecv_root)
+
+
+# ---------------------------------------------------------------------------------------------------- #
+# IPM
+# ---------------------------------------------------------------------------------------------------- #
+# Una persona sin ninguna privación: adulto que trabaja y cotiza, sabe leer, con media completa y salud; vivienda urbana
+# con acueducto, alcantarillado, piso de baldosa, paredes de ladrillo y dos cuartos.
+_NADA = dict(anio=2025, DIRECTORIO=1, SECUENCIA_P=1, fex=10.0, edad=40, area="Cabecera", region="Bogotá D.C.",
+             departamento="Bogotá D.C.", sexo="Mujer", parentesco="Jefe(a) del hogar", P8586=2, P8587=5, P8587S1=11,
+             P6211=np.nan, P1088=np.nan, P1088S1=np.nan, P6160=1, P6090=1, P5665=2, P8563=np.nan, P51=np.nan,
+             P55=np.nan, P774=np.nan, P6180=np.nan, P6240=1, P6250=np.nan, P6260=np.nan, P6270=np.nan, P6351=np.nan,
+             P7250=np.nan, P6920=1, P8520S5=1, P8520S3=1, P8530=1, P8526=1, P4015=4, P4005=1, P5010=2, P3336S1=np.nan,
+             P3336S2=np.nan, P3336S3=np.nan, P3337=np.nan, P1075=1)
+_HIJO = dict(parentesco="Hijo(a) o hijastro(a)", P6240=np.nan, P6920=np.nan, P8587=np.nan, P8587S1=np.nan)
+
+
+def _hogar(*personas, **del_hogar):
+    """Un hogar: cada persona son los cambios sobre _NADA; del_hogar cambia a todas (la vivienda, el año)."""
+    return pd.DataFrame([{**_NADA, **del_hogar, **p} for p in (personas or ({},))])
+
+
+def _priv(*personas, **del_hogar) -> pd.Series:
+    fila = dd.ecv.privaciones(_hogar(*personas, **del_hogar)).iloc[0]
+    return fila[[p for p in dd.ecv.PRIVACIONES if fila[p]]].index.tolist()
+
+
+def test_privaciones_de_educacion_y_ninez():
+    assert _priv() == []
+    assert _priv({"P8587S1": 10}, {**_HIJO, "edad": 20, "P8587": 4, "P8587S1": 7}) == ["logro_educativo"]  # (10+7)/2 < 9
+    # la media cuenta hasta 11: (5 + 11) / 2 < 9; con el 13 de la normal serían 9
+    assert _priv({"P8587": 3, "P8587S1": 5}, {**_HIJO, "edad": 18, "P8587": 5, "P8587S1": 13}) == ["logro_educativo"]
+    # la superior suma el año aprobado a 11, y a 16 en posgrado: (3 + 14) / 2 < 9, (3 + 17) / 2 >= 9
+    assert _priv({"P8587": 3, "P8587S1": 3}, {**_HIJO, "edad": 23, "P8586": 1, "P1088": 7, "P1088S1": 4}) == ["logro_educativo"]
+    assert _priv({"P8587": 3, "P8587S1": 3}, {**_HIJO, "edad": 30, "P8587": 13, "P8587S1": 1}) == []
+    assert _priv({"P6160": 2}) == ["analfabetismo"]
+    assert _priv({"edad": 14, "P8586": 1, "P1088": 3, "P1088S1": 9, "P6240": 3, "P6920": np.nan}) == [
+        "logro_educativo", "analfabetismo", "desempleo_larga_duracion", "empleo_formal"]  # sin mayores de 15 ni PEA
+    nino = {**_HIJO, "edad": 10, "P8586": 1, "P1088": 2, "P1088S1": 5}
+    deserto = {**nino, "P8586": 2, "P1088": np.nan, "P1088S1": np.nan, "P8587": 3, "P8587S1": 2}  # aprobó 2.º
+    assert _priv({}, deserto) == ["inasistencia_escolar", "rezago_escolar"]
+    virtual = {**nino, "P3336S1": 2, "P3336S2": 1, "P3336S3": 2, "P3337": 1}
+    assert _priv({}, virtual) == []
+    assert _priv({}, virtual, P1075=2) == ["inasistencia_escolar"]  # solo virtual y sin internet
+    assert _priv({}, {**virtual, "P3337": 2}) == ["inasistencia_escolar"]  # sin contacto con los maestros
+    assert _priv({}, {**nino, "P1088S1": 2}) == ["rezago_escolar"]  # a los 10 años, 1 año aprobado
+    assert _priv({}, {**_HIJO, "edad": 3, "P6090": 2}) == ["atencion_integral"]
+    assert _priv({}, {**_HIJO, "edad": 3, "P51": 7}) == ["atencion_integral"]  # en casa solo
+    assert _priv({}, {**_HIJO, "edad": 3, "P51": 1, "P55": 1, "P774": 2}) == []  # jardín con comida por pago simbólico
+    assert _priv({}, {**_HIJO, "edad": 3, "P51": 1, "P55": 1, "P774": 1}) == ["atencion_integral"]
+    assert _priv({}, {**_HIJO, "edad": 5, "P8586": 1, "P1088": 1}) == []  # sin el dato de la comida en el colegio
+    assert _priv({}, {**_HIJO, "edad": 5, "P8586": 1, "P1088": 1, "P6180": 2}) == ["atencion_integral"]
+    assert _priv({}, {**nino, "edad": 15, "P1088": 3, "P1088S1": 10, "P6240": 1}) == ["trabajo_infantil"]
+
+
+def test_privaciones_de_trabajo_salud_y_vivienda():
+    buscando = {"P6240": 2, "P6250": 2, "P6260": 2, "P6270": 2, "P6351": 1, "P6920": np.nan}
+    assert _priv({}, {**_HIJO, "edad": 30, **buscando, "P7250": 51}) == ["empleo_formal"]
+    assert _priv({}, {**_HIJO, "edad": 30, **buscando, "P7250": 52}) == ["desempleo_larga_duracion"]  # 52 semanas o más
+    assert _priv({"P6920": 2}) == ["empleo_formal"]
+    assert _priv({"P6240": 5, "P6920": 3}) == ["desempleo_larga_duracion"]  # solo pensionados: no es informal
+    assert _priv({"P6090": 9}) == ["aseguramiento_salud"]  # «no sabe»
+    assert _priv({"P5665": 1, "P8563": 6}) == ["barreras_acceso_salud"]
+    assert _priv({"P5665": 1, "P8563": 1}) == []
+    assert _priv(P8520S5=2) == ["acueducto"]
+    assert _priv(area="Centros poblados y rural disperso", P8520S5=2, P8520S3=2, P8526=2) == []  # en lo rural, la fuente
+    assert _priv(area="Centros poblados y rural disperso", P8530=4, P8526=3) == ["acueducto", "alcantarillado"]
+    assert _priv(P4015=7) == ["pisos"]
+    assert _priv(P4005=5) == ["paredes"] and _priv(P4005=5, area="Centros poblados y rural disperso") == []
+    assert _priv(P4005=10) == ["paredes"] and _priv(P4005=10, anio=2018) == []  # 2018: 9 es «sin paredes»
+    assert _priv(P4005=9, anio=2018) == ["paredes"]
+    tres = ({}, {**_HIJO, "edad": 41, "P6240": 1, "P6920": 1}, {**_HIJO, "edad": 42, "P6240": 1, "P6920": 1})
+    assert _priv(*tres, P5010=1) == ["hacinamiento"]  # 3 por cuarto
+    assert _priv(*tres, P5010=1, area="Centros poblados y rural disperso") == []  # en lo rural, más de 3
+
+
+def test_umbral_y_agregados_del_ipm():
+    pobre = _hogar({"P6160": 2, "P6090": 2, "P8587S1": 5}, P4015=7)  # 0,1 + 0,1 + 0,1 + 0,04 = 0,34
+    casi = _hogar({"P6160": 2, "P6090": 2, "P8587S1": 5}, DIRECTORIO=2)  # 0,3
+    lejos = _hogar({}, {**_HIJO, "edad": 30, "P6240": 1, "P6920": 1}, DIRECTORIO=3, fex=5.0, departamento="Vaupés",
+                   area="Centros poblados y rural disperso", P6160=2, P6090=2, P8587S1=5, P4015=7)
+    h = dd.ecv.privaciones(pd.concat([pobre, casi, lejos], ignore_index=True))
+    assert h.pobre.tolist() == [True, False, True]
+    assert h.puntaje.round(2).tolist() == [0.34, 0.3, 0.34] and h.personas.tolist() == [1, 1, 2]
+    r = dd.ecv.ipm(h).iloc[0]  # nacional: sin lo rural de Vaupés
+    assert (r.personas, r.personas_pobres, r.incidencia) == (20, 10, 50)
+    assert r.intensidad == pytest.approx(34) and r.ipm == pytest.approx(0.17)
+    assert r.pct_pisos == 50 and r.pct_aseguramiento_salud == 100
+    assert dd.ecv.ipm(h, muestra="completa").personas.tolist() == [30]
+    por_dpto = dd.ecv.ipm(h, por="departamento")  # con departamento, toda la muestra
+    assert por_dpto.set_index("departamento").incidencia.to_dict() == {"Bogotá D.C.": 50, "Vaupés": 100}
+    assert dd.ecv.ipm(pd.concat([pobre, casi], ignore_index=True), por="sexo_jefe").sexo_jefe.tolist() == ["Mujer"]
+    with pytest.raises(ValueError, match="Muestra desconocida"):
+        dd.ecv.ipm(h, muestra="rural")
+    with pytest.raises(ValueError, match="MODULOS_IPM"):
+        dd.ecv.privaciones(pobre.drop(columns="P6160"))
+
+
+def test_serie_ipm_pide_los_capitulos(ecv_root):
+    with pytest.raises(ValueError, match="le faltan los capítulos"):
+        dd.ecv.serie_ipm(2025, root=ecv_root)
+    with pytest.raises(FileNotFoundError):
+        dd.ecv.serie_ipm(2019, root=ecv_root)
