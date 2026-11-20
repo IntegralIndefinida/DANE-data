@@ -25,5 +25,12 @@
 
 ```{include} ../../README.md
 :start-after: "### Estadísticas Vitales"
+:end-before: "### Pobreza monetaria"
+```
+
+## Pobreza monetaria
+
+```{include} ../../README.md
+:start-after: "### Pobreza monetaria"
 :end-before: "## Estructura"
 ```

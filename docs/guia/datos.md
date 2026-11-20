@@ -54,11 +54,13 @@ dd.eam.download(range(2014, 2025))      # EAM
 dd.eam.download()                       # toda la EAM, 1992–2024
 dd.eevv.download(2025)                  # los tres certificados de las Estadísticas Vitales
 dd.eevv.download(tipos="defunciones")   # todas las defunciones, 1979–2025
+dd.pobreza.download(empalme=True)       # pobreza monetaria 2012–2025 y el empalme al marco 2018
 ```
 
 {dd}`geih.download()` y {dd}`eam.download()` buscan los archivos en el catálogo del {term}`ANDA` de cada año, bajan
 los ZIP y extraen los módulos. {dd}`eevv.download()` no busca en el ANDA: tiene una tabla fija con los archivos de cada
-año y certificado (los años están en `dd.eevv.ANIOS_DISPONIBLES`). Las descargas son **incrementales**:
+año y certificado (los años están en `dd.eevv.ANIOS_DISPONIBLES`); {dd}`pobreza.download()` también, por año
+(`dd.pobreza.ANIOS_DISPONIBLES`). Las descargas son **incrementales**:
 
 * Al terminar un mes se escribe un marcador (`.dane_data_ok`) que registra qué módulos se extrajeron. Una
   descarga posterior salta los meses que ya tienen esos módulos. Si al mes le falta algo (el ZIP del DANE no
@@ -118,7 +120,8 @@ Name: completo, dtype: int64
 
 {dd}`geih.available()` trae una fila por mes con los módulos que encontró, si está completo y qué le falta.
 Desde la terminal, `dane-data estado` muestra lo mismo resumido por año. Para la EAM,
-{dd}`eam.available()`, y para las Estadísticas Vitales, {dd}`eevv.available()`.
+{dd}`eam.available()`, para las Estadísticas Vitales, {dd}`eevv.available()`, y para la pobreza,
+{dd}`pobreza.available()`.
 
 ## Espacio en disco
 
@@ -128,6 +131,7 @@ Desde la terminal, `dane-data estado` muestra lo mismo resumido por año. Para l
 | Toda la serie principal 2007–2026 | 11 GB extraída |
 | Toda la EAM 1992–2024 | 330 MB |
 | Todas las Estadísticas Vitales | 3,6 GB extraídas (2,2 GB de nacimientos, 1,2 GB de defunciones), 1,6 GB de ZIP |
+| Toda la pobreza monetaria 2012–2025 | 3,7 GB extraída (0,5 GB de hogares, 3,1 GB de personas, 0,1 GB del empalme), 1,4 GB de ZIP |
 | Caché de `dane-data` con toda la GEIH leída | 800 MB en `~/.cache/dane_data` |
 
 La caché se puede borrar cuando se quiera con {dd}`geih.clear_cache()`; se vuelve a crear al leer los datos.

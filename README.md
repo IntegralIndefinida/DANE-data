@@ -3,7 +3,8 @@
 [Documentación](https://integralindefinida.github.io/DANE-data/) · [PyPI](https://pypi.org/project/dane-data/)
 
 Microdatos del DANE listos para analizar: la Gran Encuesta Integrada de Hogares (GEIH, 2007–2026), la
-Encuesta Anual Manufacturera (EAM, 1992–2024) y las Estadísticas Vitales (nacimientos y defunciones, 1979–2025).
+Encuesta Anual Manufacturera (EAM, 1992–2024), las Estadísticas Vitales (nacimientos y defunciones, 1979–2025) y la
+Medición de Pobreza Monetaria y Desigualdad (2012–2025).
 
 [![Tasa de desocupación mensual y promedio de 12 meses, total nacional, 2007–2026, calculada con dane-data](https://raw.githubusercontent.com/IntegralIndefinida/DANE-data/main/docs/_static/galeria/desempleo.png)](https://integralindefinida.github.io/DANE-data/ejemplos/desempleo.html)
 
@@ -138,7 +139,14 @@ dd.eevv.indicadores(nac, por="edad_madre")               # bajo peso, prematuros
 dd.eevv.tasas(range(2015, 2026), por="departamento")     # natalidad, mortalidad, fecundidad, mortalidad infantil
 dd.poblacion(2025, sexo="Mujer", edades=(15, 49))        # las proyecciones del DANE, sin descargar nada
 
-# 8. Diccionario oficial
+# 8. Pobreza monetaria: la serie empalmada 2012–2025 del DANE
+dd.pobreza.download(empalme=True)
+dd.pobreza.serie_indicadores(range(2012, 2026), empalme=True)   # incidencia, brecha, severidad, Gini
+hog = dd.pobreza.load(2025)                              # un hogar por fila: ingreso per cápita, líneas, pobre
+dd.pobreza.indicadores(hog, por="departamento", departamental=True)
+per = dd.pobreza.unir_geih(dd.geih.load(2025))           # la pobreza del hogar en cada persona de la GEIH
+
+# 9. Diccionario oficial
 dd.buscar_variable("pensión")
 dd.describir("P6920")
 ```
@@ -213,6 +221,10 @@ las cifras publicadas (`tests/datos/dane_publicado.csv`) y buscan huecos o salto
 En las Estadísticas Vitales, el total y el sexo de los tres certificados en 2008–2025 y los 33 departamentos en 2019–2025
 coinciden exactamente con los cuadros definitivos del DANE. Antes de 2008 no hay cuadros en la página del DANE con qué
 comparar.
+
+En la pobreza monetaria, la serie empalmada 2012–2025 coincide con los anexos del boletín de junio de 2026: las 6 656 cifras
+que se pueden comparar (incidencia, brecha y severidad de la pobreza y la pobreza extrema, Gini, ingreso per cápita, líneas,
+población y pobres, nacional, por grandes dominios, 23 ciudades y 24 departamentos) quedan dentro del redondeo publicado.
 
 ## Advertencias metodológicas
 
@@ -307,6 +319,19 @@ el DANE, así que en estos casos no coincide con las variables armonizadas.
 | `PESO_NAC` → `mortinato`, `mortalidad_perinatal` (fetales, toda la serie) | La ficha técnica de la tasa de mortalidad perinatal del DANE (2026) cuenta como mortinato la defunción fetal de 22 semanas o más **o** de 500 gramos o más. | Los microdatos agrupan el peso desde «menos de 1.000 gramos» (los cuadros del DANE sí separan de 300 a 999), así que con menos de 22 semanas, o sin gestación, no se puede saber si pesaba 500 gramos. `mortinato` es True con 22 semanas o más o con 1.000 gramos o más, False con menos de 22 semanas y de 1.000 gramos (el DANE contaría las de 500 a 999), y vacío sin gestación y con menos de 1.000 gramos: 2 309 de las 19 620 defunciones fetales de 2025. Por eso `mortalidad_perinatal` puede quedar algo por debajo de la del DANE. |
 | Defunciones fetales antes de 1998 | La ficha metodológica V10 (DSO-EEVV-FME-001) dice que hay microdatos anonimizados de defunciones fetales desde 1992. | En el ANDA, los catálogos de 1992–1996 (397) y 1997 (398) solo traen `Defun1992.zip` a `Defun1997.zip`, y esos archivos no tienen `TIPO_DEFUN` ni grupos de edad fetales: son solo defunciones no fetales. `dane-data` ofrece las fetales desde 1998, el primer año que hay en el ANDA. |
 
+### Pobreza monetaria
+
+| Variable | Qué dice el ANDA | Qué muestran los datos y qué hace `dane-data` |
+|---|---|---|
+| `DPTO` (hogares 2016, 2017 y 2019) | El DDI no trae el departamento en el archivo de hogares. | Sí está, como `DPTO` o `DEPTO`. `departamento` lo usa. |
+| `DPTO` (hogares 2014, catálogo 334) | Código DANE del departamento. | Es un número de 1 a 24 (el archivo de personas sí trae el código). Se traduce por las ciudades capitales de cada número; el 24, sin capital, es Cundinamarca. Coincide con el archivo de personas en todos los hogares. |
+| `DPTO` (hogares 2025, catálogo 908) | Código del departamento. | Viene el nombre («Antioquia»). Se traduce al mismo `departamento` de los demás años. |
+| `DPTO` 11 en la zona rural (2012 y 2022–2024) | Bogotá. | Son unos 235 hogares por año. Los demás años y los anexos del DANE los cuentan en Cundinamarca: la Bogotá de las cifras departamentales es su cabecera. `departamento` hace lo mismo. |
+| `DOMINIO` (2017, catálogo 545) | El nombre del dominio. | Con tildes y en tipo título («Bogotá»), los demás años en mayúscula sin tildes. `dominio` los iguala. |
+| `INGTOTUGARR` (desde 2023) | — | Se llama `INGTOTARR`. `ingreso_ug_arriendo` usa la que venga. |
+| Documentos de los catálogos 2019–2025 | Adjuntan los algoritmos de la MESEP 2002–2010 (ingreso per cápita y líneas). | Esas bases usan la metodología actualizada (líneas de la ENPH 2016–2017), documentada en dane.gov.co. |
+| Departamentos | — | La medición cubre 23 departamentos y Bogotá; los otros nueve de la GEIH no están. `unir_geih` los deja vacíos y no los cuenta en la cobertura. |
+
 ## Estructura
 
 ```
@@ -321,6 +346,7 @@ src/dane_data/
 ├── geih/              downloader.py · loader.py · indicadores.py · agregados.py (serie_*, exportar)
 ├── eam/               downloader.py · loader.py · indicadores.py
 ├── eevv/              downloader.py · loader.py · indicadores.py · agregados.py (serie_*, tasas)
+├── pobreza/           downloader.py · loader.py (empalme) · indicadores.py · agregados.py · union.py (unir_geih)
 ├── cli.py             comando `dane-data`
 └── app/               aplicación Streamlit (Inicio.py + paginas/)
 ```
@@ -353,7 +379,8 @@ Para desinstalar, vea [Desinstalar](https://integralindefinida.github.io/DANE-da
 ## Licencia y cita
 
 Código: MIT. Datos: DANE, Archivo Nacional de Datos (ANDA). Cite como
-*DANE. Gran Encuesta Integrada de Hogares (GEIH) [microdatos]* / *Encuesta Anual Manufacturera (EAM) [microdatos]*.
+*DANE. Gran Encuesta Integrada de Hogares (GEIH) [microdatos]* / *Encuesta Anual Manufacturera (EAM) [microdatos]* /
+*Medición de Pobreza Monetaria y Desigualdad [microdatos]*.
 
 Si `dane-data` le sirvió en un trabajo, cítelo también, con la versión que usó (`dd.__version__`):
 
