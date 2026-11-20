@@ -225,7 +225,7 @@ comparar.
 
 En la ECV, los 27 indicadores de la serie 2018–2025 del DANE coinciden exactamente en el total nacional y por área, y a menos
 de 0,1 puntos por departamento. Las 15 privaciones del IPM coinciden hogar por hogar con la base oficial del DANE en 2018,
-2019, 2023, 2024 y 2025, y en 2020–2022 salvo 4, 21 y 3 hogares (el IPM nacional de 2025 da 9,9 % y 0,040, y el de 2020,
+2019, 2023, 2024 y 2025, y en 2020–2022 salvo 5, 25 y 3 hogares (el IPM nacional de 2025 da 9,9 % y 0,040, y el de 2020,
 18,1 %, como lo publicado).
 
 ## Advertencias metodológicas
@@ -386,17 +386,18 @@ Para desinstalar, vea [Desinstalar](https://integralindefinida.github.io/DANE-da
 ## Licencia y cita
 
 Código: MIT. Datos: DANE, Archivo Nacional de Datos (ANDA). Cite como
-*DANE. Gran Encuesta Integrada de Hogares (GEIH) [microdatos]* / *Encuesta Anual Manufacturera (EAM) [microdatos]*.
+*DANE. Gran Encuesta Integrada de Hogares (GEIH) [microdatos]* / *Encuesta Anual Manufacturera (EAM) [microdatos]* /
+*Estadísticas Vitales (EEVV) [microdatos]* / *Encuesta Nacional de Calidad de Vida (ECV) [microdatos]*.
 
 Si `dane-data` le sirvió en un trabajo, cítelo también, con la versión que usó (`dd.__version__`):
 
-> Ramírez, L. (2026). *dane-data: microdatos del DANE (GEIH, EAM y Estadísticas Vitales) listos para analizar* (versión X.Y.Z)
+> Ramírez, L. (2026). *dane-data: microdatos del DANE (GEIH, EAM, Estadísticas Vitales y ECV) listos para analizar* (versión X.Y.Z)
 > [software]. https://github.com/IntegralIndefinida/DANE-data
 
 ```bibtex
 @software{dane_data,
   author  = {Ramírez, Luis},
-  title   = {dane-data: microdatos del DANE (GEIH, EAM y Estadísticas Vitales) listos para analizar},
+  title   = {dane-data: microdatos del DANE (GEIH, EAM, Estadísticas Vitales y ECV) listos para analizar},
   version = {X.Y.Z},
   year    = {2026},
   url     = {https://github.com/IntegralIndefinida/DANE-data},

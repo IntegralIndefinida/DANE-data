@@ -24,7 +24,7 @@ from ..geih.agregados import _clave_json, _firma_codigo, _mascara
 from ..geih.loader import _borrar_cache, _guardar_parquet, _usado
 from .indicadores import _lista, indicadores
 from .ipm import COLUMNAS_IPM, MODULOS_IPM, ipm, privaciones
-from .loader import _EDUCACION, _INTERNOS, MODULOS, _root, find_files, load
+from .loader import _COMPLEMENTARIA, _EDUCACION, _FACTORES, _INTERNOS, MODULOS, _root, find_files, load
 
 log = logging.getLogger("dane_data.ecv")
 
@@ -89,6 +89,18 @@ def _desde_cache(ruta: Path, calcular: Callable[[], pd.DataFrame]) -> pd.DataFra
     return tabla
 
 
+def _faltan_internos(anios, root, ipm: bool) -> None:
+    """
+    Error si faltan los factores de 2018 o, para el IPM, la base complementaria de 2020: sin ellos las cifras no son las
+    oficiales, y un aviso se perdería en la caché (que no avisa de nuevo) y en la aplicación.
+    """
+    pedidos = [(2018, _FACTORES)] + ([(2020, _COMPLEMENTARIA)] if ipm else [])
+    faltan = [f"{m} de {a}" for a, m in pedidos if a in anios and a not in find_files(a, modulo=m, root=root)]
+    if faltan:
+        raise ValueError(f"Faltan {' y '.join(faltan)}, que el DANE publica aparte: sin ellos las cifras no son las "
+                         f"oficiales. Bájelos con dd.ecv.download({sorted({a for a, _ in pedidos if a in anios})}).")
+
+
 def _anios_lista(anios) -> list[int] | None:
     if anios is None:
         return None
@@ -146,8 +158,8 @@ def serie_indicadores(
     >>> r = dd.ecv.serie_indicadores([2018, 2025])  # doctest: +SKIP
     >>> r[["anio", "hogares", "pct_internet_hogar", "pct_afiliados"]].round(1)  # doctest: +SKIP
        anio     hogares  pct_internet_hogar  pct_afiliados
-    0  2018  15403086.0                52.3           93.6
-    1  2025  18952206.0                73.9           97.2
+    0  2018  15402515.5                52.3           93.6
+    1  2025  18952290.4                73.9           97.2
     >>> dd.ecv.serie_indicadores(2025, por="departamento")  # doctest: +SKIP
     """
     anios = _anios_lista(anios)
@@ -156,6 +168,7 @@ def serie_indicadores(
     if not archivos:
         raise FileNotFoundError(f"No hay datos de la ECV para años={anios} en {_root(root)}. "
                                 "Descárguelos con dane_data.ecv.download(...) o revise dane_data.set_paths(...).")
+    _faltan_internos(archivos, root, ipm=False)
     solicitud = json.dumps(_clave_json({"por": llaves, "filtros": filtros, "dropna": dropna}), sort_keys=True,
                            default=str, ensure_ascii=False)
     codigo = _firma_codigo(_CODIGO)
@@ -233,8 +246,8 @@ def serie_ipm(
     >>> import dane_data as dd
     >>> dd.ecv.serie_ipm([2018, 2025])[["anio", "incidencia", "ipm"]].round(3)  # doctest: +SKIP
        anio  incidencia    ipm
-    0  2018      19.120  0.080
-    1  2025       9.912  0.040
+    0  2018      19.121  0.080
+    1  2025       9.913  0.040
     >>> dd.ecv.serie_ipm(2025, por="departamento")  # doctest: +SKIP
     """
     anios = _anios_lista(anios)
@@ -247,6 +260,7 @@ def serie_ipm(
     for i, anio in enumerate(sorted(archivos)):
         if progress:
             progress(i / len(archivos), f"Calculando el IPM {anio} (solo la primera vez)")
+        _faltan_internos([anio], root, ipm=True)
         faltan = [m for m in MODULOS_IPM if anio not in find_files(anio, modulo=m, root=root)]
         if faltan:
             raise ValueError(f"Al IPM de {anio} le faltan los capítulos {faltan}: bájelos con "

@@ -4,7 +4,8 @@
 Metodología de Alkire y Foster adaptada por el DNP: 15 privaciones en 5 dimensiones de igual peso (y las privaciones de
 cada dimensión también de igual peso). Un hogar es pobre si su puntaje (la suma ponderada de sus privaciones) es de 5/15 o
 más, y todas sus personas lo son. Las definiciones siguen el *Algoritmo para la construcción del IPM* del DANE, ajustadas
-para que den exactamente la base oficial del IPM (``BDATOS-IPM``) hogar por hogar en 2018 y 2025; donde el algoritmo no
+para reproducir la base oficial del IPM (``BDATOS-IPM``) hogar por hogar (exacta en 2018, 2019 y 2023–2025; en 2020–2022
+difieren 5, 25 y 3 de unos 89.000 hogares); donde el algoritmo no
 dice todo, el comentario lo indica.
 """
 
@@ -284,13 +285,19 @@ def ipm(df: pd.DataFrame, por: str | Iterable[str] | None = None, muestra: str |
     0       9.912      40.379  0.040
     """
     llaves = _lista(por)
-    if muestra is None:
+    automatica = muestra is None
+    if automatica:
         muestra = "completa" if {"departamento", "region_ipm", "region"} & set(llaves) else "nacional"
     if muestra not in MUESTRAS:
         raise ValueError(f"Muestra desconocida {muestra!r}. Opciones: {list(MUESTRAS)}")
     hogares = df if "puntaje" in df.columns else privaciones(df)
     if muestra == "nacional":
-        hogares = hogares[_muestra_nacional(hogares)]
+        nacional = _muestra_nacional(hogares)
+        if automatica and len(hogares) and (~nacional).mean() > 0.5:  # p. ej. solo hogares de Arauca: casi todo es rural
+            warnings.warn(f"La muestra nacional deja fuera {(~nacional).sum()} de {len(hogares)} hogares (la parte rural de "
+                          "los departamentos de la Orinoquía-Amazonía). Para un solo departamento use por=\"departamento\" "
+                          "o muestra=\"completa\".", UserWarning, stacklevel=2)
+        hogares = hogares[nacional]
     if llaves and dropna:
         hogares = hogares.dropna(subset=llaves)
     grupos = [hogares[k] for k in llaves] if llaves else [pd.Series(0, index=hogares.index)]

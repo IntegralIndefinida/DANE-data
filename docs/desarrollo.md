@@ -71,6 +71,10 @@ variables armonizadas van en minúscula y las originales del DANE en mayúscula.
   uv run python tests/datos/actualizar_ecv_diccionario.py
   ```
 
+  Las reglas del IPM se infirieron de la base oficial del DANE: `tests/test_ecv.py` las compara hogar por hogar con ella si
+  `$DANE_DATA_TEST_IPM` apunta a una carpeta con una subcarpeta por año y, adentro, el CSV de hogares departamental de
+  `BDATOS-IPM` (catálogos del IPM en el ANDA). Corra esa prueba al cambiar `ecv/ipm.py` o al agregar un año.
+
 ## Documentación
 
 ```bash

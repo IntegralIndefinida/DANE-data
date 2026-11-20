@@ -58,7 +58,11 @@ vista = st.radio("Vista", ["Indicadores", "Pobreza multidimensional (IPM)"], hor
 
 # ---------------------------------------------------------------- Indicadores
 if vista == "Indicadores":
-    total = indicadores_ecv(anios, None, rutas)
+    try:
+        total = indicadores_ecv(anios, None, rutas)
+    except ValueError as e:  # faltan los factores de 2018
+        st.warning(f"{e} También se puede en Descargar datos.")
+        st.stop()
     u = total.iloc[-1]
     st.markdown(f"##### Resumen {int(u['anio'])}")
     k = st.columns(4)

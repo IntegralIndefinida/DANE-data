@@ -81,7 +81,7 @@ de la ECV del DANE, y el IPM con los anexos de pobreza multidimensional:
 |---|---|
 | Indicadores de la ECV, total nacional y por área (cabecera y centros poblados y rural disperso), 2018–2025 | Exactos |
 | Indicadores de la ECV por departamento | A menos de 0,1 puntos; 5 cifras de 2023 y 2024 difieren entre 0,004 y 0,08 puntos |
-| Las 15 privaciones y la condición de pobre, hogar por hogar, contra la base oficial del IPM (`BDATOS-IPM`) | Exactas en 2018, 2019, 2023, 2024 y 2025; en 2020, 2021 y 2022 difieren 4, 21 y 3 hogares de unos 89.000 |
+| Las 15 privaciones y la condición de pobre, hogar por hogar, contra la base oficial del IPM (`BDATOS-IPM`) | Exactas en 2018, 2019, 2023, 2024 y 2025; en 2020, 2021 y 2022 difieren 5, 25 y 3 hogares de unos 89.000 |
 | Incidencia, IPM y privaciones de los anexos: nacional, área, región y departamento | Iguales al redondeo del anexo; en 2020 y 2021, a menos de 0,15 puntos (abajo) |
 
 **Diferencias conocidas:**

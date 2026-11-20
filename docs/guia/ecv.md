@@ -116,7 +116,7 @@ dd.ecv.serie_ipm(range(2018, 2026), por="departamento")   # año por año, con c
    anio  incidencia  intensidad    ipm
 0  2018      19.121      41.724  0.080
 1  2019      17.452      41.373  0.072
-2  2020      14.828      40.817  0.061
+2  2020      18.118      41.366  0.075
 3  2021      15.966      40.809  0.065
 4  2022      12.923      40.265  0.052
 5  2023      12.134      40.083  0.049
@@ -124,6 +124,8 @@ dd.ecv.serie_ipm(range(2018, 2026), por="departamento")   # año por año, con c
 7  2025       9.913      40.380  0.040
 ```
 
+* Las cifras no traen errores estándar ni coeficientes de variación: en departamentos con poca muestra (Vaupés, Guainía,
+  Vichada) compárelas con los intervalos de los anexos del DANE.
 * La **incidencia** (H) es el % de personas pobres; la **intensidad** (A), el puntaje promedio de los pobres; el **IPM**,
   H × A. Las privaciones (`pct_<privación>`) son % de **hogares**, como en los anexos del DANE.
 * **La muestra cambia con la desagregación, como en el DANE.** Las cifras nacionales y por área van sin la parte rural de

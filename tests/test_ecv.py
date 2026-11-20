@@ -427,3 +427,48 @@ def test_cli_descargar_ecv(monkeypatch, capsys):
     assert cli.main(["descargar", "geih", "--modulos", "salud"]) == 2
     assert cli.main(["descargar", "ecv", "--tipos", "fetales"]) == 2
     assert "no aplica" in capsys.readouterr().err
+
+
+def test_series_exigen_los_archivos_internos(ecv_root, tmp_path, monkeypatch):
+    """Sin los factores de 2018 las cifras no son las oficiales: error, no un aviso que la caché tapa después."""
+    monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
+    (ecv_root / "datos" / "2018" / "factores" / "Factores de expansión 2018 basados en el CNPV 2018.csv").unlink()
+    with pytest.raises(ValueError, match="factores de 2018"):
+        dd.ecv.serie_indicadores(2018, root=ecv_root)
+    with pytest.raises(ValueError, match="factores de 2018"):
+        dd.ecv.serie_ipm(2018, root=ecv_root)
+
+
+def test_muestra_nacional_avisa_si_bota_casi_todo():
+    vaupes = _hogar({}, departamento="Vaupés", area="Centros poblados y rural disperso")
+    h = dd.ecv.privaciones(vaupes)
+    with pytest.warns(UserWarning, match="deja fuera 1 de 1"):
+        dd.ecv.ipm(h)
+    assert dd.ecv.ipm(h, muestra="completa").personas.tolist() == [10]
+
+
+# La especificación de las reglas inferidas del IPM: la base oficial del DANE hogar por hogar. $DANE_DATA_TEST_IPM es una
+# carpeta con una subcarpeta por año y, adentro, el CSV de hogares departamental de BDATOS-IPM (catálogos del IPM del ANDA).
+BDATOS = os.environ.get("DANE_DATA_TEST_IPM")
+_DIFERENCIAS_IPM = {2020: 5, 2021: 25, 2022: 3}  # hogares con alguna privación distinta, sin explicación en lo publicado
+
+
+@pytest.mark.skipif(not BDATOS or not (REAL / "datos").is_dir(), reason="sin $DANE_DATA_TEST_IPM o sin la ECV real")
+@pytest.mark.parametrize("anio", range(2018, 2026))
+def test_real_ipm_hogar_por_hogar(anio):
+    from dane_data import _io
+
+    archivos = [f for f in (Path(BDATOS) / str(anio)).rglob("*") if f.suffix.lower() == ".csv"
+                and "hogar" in f.name.lower() and ("dep" in f.name.lower() or "dpto" in f.name.lower())]
+    if not archivos:
+        pytest.skip(f"sin la base de hogares del IPM {anio}")
+    dane = _io.read_table(archivos[0]).rename(columns={"ALFABETISMO": "ANALFABETISMO",
+                                                       "INANSISTENCIA_ESCOLAR": "INASISTENCIA_ESCOLAR"})
+    if (dane["SECUENCIA_P"] == 1).all():  # algunos años guardan el hogar en SECUENCIA_ENCUESTA
+        dane["SECUENCIA_P"] = dane["SECUENCIA_ENCUESTA"]
+    hogares = dd.ecv.privaciones(dd.ecv.load(anio, modulos=dd.ecv.MODULOS_IPM, columns=dd.ecv.COLUMNAS_IPM, root=REAL))
+    x = hogares.merge(dane, on=["DIRECTORIO", "SECUENCIA_P"])
+    assert len(x) == len(dane) == len(hogares)
+    distintos = (x[[p for p in dd.ecv.PRIVACIONES]].to_numpy() != x[[p.upper() for p in dd.ecv.PRIVACIONES]].to_numpy()).any(axis=1)
+    assert distintos.sum() <= _DIFERENCIAS_IPM.get(anio, 0)
+    assert (x["pobre"].astype(int) != x["POBRE"]).sum() <= _DIFERENCIAS_IPM.get(anio, 0)
