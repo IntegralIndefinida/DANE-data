@@ -97,10 +97,6 @@ else:
     except ValueError as e:  # le falta un capítulo a algún año
         st.warning(f"{e} También se puede en Descargar datos.")
         st.stop()
-    if 2020 in anios:
-        st.warning("En 2020 el DANE armó la inasistencia escolar con el SIMAT, que no está en los microdatos: con la ECV sola, "
-                   "el IPM de 2020 da menos que el publicado (14,8 % y no 18,1 % de incidencia nacional).",
-                   icon=":material/warning:")
     u = total.iloc[-1]
     st.markdown(f"##### Resumen {int(u['anio'])}")
     k = st.columns(4)

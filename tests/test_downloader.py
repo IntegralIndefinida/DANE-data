@@ -1025,6 +1025,8 @@ def test_ecv_tabla_cubre_2018_a_2025():
     for anio in range(2018, 2026):
         assert {m for a, m in ECV_KNOWN_FILES if a == anio} >= set(dd.ecv.MODULOS)
     assert {a for a, m in ECV_KNOWN_FILES if m == "factores"} == {2018}
+    assert ECV_KNOWN_FILES[2020, "complementaria"] == (
+        "679", "Base_complementaria.zip", "https://microdatos.dane.gov.co/index.php/catalog/679/download/20574")
     assert len({url for _, _, url in ECV_KNOWN_FILES.values()}) == len(ECV_KNOWN_FILES)  # sin números repetidos
     assert ECV_KNOWN_FILES[2018, "vivienda"] == (
         "607", "Datos de la vivienda.zip", "https://microdatos.dane.gov.co/index.php/catalog/607/download/11195")
@@ -1059,30 +1061,31 @@ def test_ecv_2018_baja_tambien_los_factores(tmp_path):
 
 
 def test_ecv_incremental_y_forzar(tmp_path):
-    url = _url_ecv(2020, "salud")
+    url = _url_ecv(2019, "salud")
     paquetes = {url: _zip_eevv({"Salud.csv": "DIRECTORIO\n1\n"})}
-    dl, _ = _baja_ecv(tmp_path, paquetes, [2020])
+    dl, _ = _baja_ecv(tmp_path, paquetes, [2019])
     assert dl.descargas == [url]
-    dl, _ = _baja_ecv(tmp_path, paquetes, [2020])
+    dl, _ = _baja_ecv(tmp_path, paquetes, [2019])
     assert dl.descargas == []  # ya estaba
     paquetes[url] = _zip_eevv({"Salud corregida.csv": "DIRECTORIO\n1\n"})
-    dl, _ = _baja_ecv(tmp_path, paquetes, [2020], forzar=True)
+    dl, _ = _baja_ecv(tmp_path, paquetes, [2019], forzar=True)
     assert dl.descargas == [url]
-    assert [f.name for f in (tmp_path / "datos" / "2020" / "salud").iterdir()] == ["Salud corregida.csv"]
+    assert [f.name for f in (tmp_path / "datos" / "2019" / "salud").iterdir()] == ["Salud corregida.csv"]
 
 
 def test_ecv_forzar_conserva_lo_anterior_si_falla(tmp_path):
-    url = _url_ecv(2020, "salud")
-    _baja_ecv(tmp_path, {url: _zip_eevv({"Salud.csv": "DIRECTORIO\n1\n"})}, [2020])
-    _, fallidos = _baja_ecv(tmp_path, {url: _zip_eevv({"Salud.sav": "spss"})}, [2020], forzar=True)
-    assert len(fallidos) == 1 and "salud 2020" in fallidos[0] and "Se conserva" in fallidos[0]
-    assert (tmp_path / "datos" / "2020" / "salud" / "Salud.csv").exists()
+    url = _url_ecv(2019, "salud")
+    _baja_ecv(tmp_path, {url: _zip_eevv({"Salud.csv": "DIRECTORIO\n1\n"})}, [2019])
+    _, fallidos = _baja_ecv(tmp_path, {url: _zip_eevv({"Salud.sav": "spss"})}, [2019], forzar=True)
+    assert len(fallidos) == 1 and "salud 2019" in fallidos[0] and "Se conserva" in fallidos[0]
+    assert (tmp_path / "datos" / "2019" / "salud" / "Salud.csv").exists()
 
 
 def test_ecv_reporta_fallos_y_sigue(tmp_path):
     bueno = {_url_ecv(2021, "salud"): _zip_eevv({"Salud.csv": "DIRECTORIO\n1\n"}), _url_ecv(2021, "tic"): b"no es un zip"}
     _, fallidos = _baja_ecv(tmp_path, bueno, [2020, 2021], modulos=("salud", "tic"))
-    assert sorted(f.split(":")[0] for f in fallidos) == ["salud 2020", "tic 2020", "tic 2021"]
+    # 2020 también pide la base complementaria del IPM, que estos paquetes no traen
+    assert sorted(f.split(":")[0] for f in fallidos) == ["complementaria 2020", "salud 2020", "tic 2020", "tic 2021"]
     assert (tmp_path / "datos" / "2021" / "salud" / "Salud.csv").exists()
 
 

@@ -37,6 +37,10 @@ MODULOS = ("vivienda", "servicios", "tenencia", "condiciones", "caracteristicas"
            "educacion", "fuerza_trabajo", "tic", "trabajo_infantil")
 # Los factores de expansión de 2018 basados en el CNPV 2018, que el DANE publicó aparte: no son un capítulo
 _FACTORES = "factores"
+# La base complementaria del IPM 2020 (catálogo del IPM, no de la ECV): estrategias de estudio en casa de cada niño que
+# estudia, con las que el DANE armó la inasistencia escolar de 2020 («integra información del SIMAT»)
+_COMPLEMENTARIA = "complementaria"
+_INTERNOS = (_FACTORES, _COMPLEMENTARIA)
 EXTENSIONES = (".csv", ".dta")
 
 UNIDADES = {"vivienda": "vivienda", "servicios": "hogar", "tenencia": "hogar", "condiciones": "hogar",
@@ -127,7 +131,7 @@ def _root(root) -> Path:
 
 
 def _modulo_valido(modulo: str) -> str:
-    if modulo not in (*MODULOS, _FACTORES):
+    if modulo not in (*MODULOS, *_INTERNOS):
         raise ValueError(f"Módulo desconocido {modulo!r}. Opciones: {list(MODULOS)}")
     return modulo
 
@@ -189,7 +193,7 @@ def available(root=None) -> pd.DataFrame:
     --------
     pandas.DataFrame
         Una fila por año y capítulo: ``anio``, ``modulo``, ``archivo`` y ``tamano_mb``. En 2018 aparecen también los
-        ``factores`` de expansión basados en el CNPV 2018.
+        ``factores`` de expansión basados en el CNPV 2018, y en 2020 la base ``complementaria`` del IPM.
 
     Véase también
     -------------
@@ -204,7 +208,7 @@ def available(root=None) -> pd.DataFrame:
     1  2025  servicios  Servicios del hogar.CSV       20.9
     """
     filas = [{"anio": anio, "modulo": modulo, "archivo": f.name, "tamano_mb": round(f.stat().st_size / 1e6, 1)}
-             for modulo in (*MODULOS, _FACTORES) for anio, f in find_files(modulo=modulo, root=root).items()]
+             for modulo in (*MODULOS, *_INTERNOS) for anio, f in find_files(modulo=modulo, root=root).items()]
     tabla = pd.DataFrame(filas, columns=["anio", "modulo", "archivo", "tamano_mb"])
     return tabla.sort_values("anio", kind="stable").reset_index(drop=True)
 
@@ -223,6 +227,11 @@ def _modulos_validos(modulos, nivel: str) -> tuple[str, ...]:
             raise ValueError(f"{m!r} es un capítulo de personas: cárguelo con nivel=\"persona\".")
     # La base primero y la vivienda al final: su geografía se agrega aparte
     return tuple(dict.fromkeys([_BASE[nivel], *modulos]))
+
+
+# Las variables de la base complementaria de 2020 (P1075 y P1077Sx también están en Condiciones de vida)
+_COLUMNAS_COMPLEMENTARIA = ("ESTRATEGIAS", "EST_RADIO", "EST_TELEVISION", "EST_PLATAFORMAS", "EST_GUIAS", "EST_VISITA",
+                            "EST_LLAMADA", "ESCUCHA_RADIO", "P1077S7", "P1077S8", "CELULAR_INTELIGENTE", "P5305", "CELULAR")
 
 
 def _leer(ruta: Path, modulo: str, columns) -> pd.DataFrame:
@@ -466,6 +475,14 @@ def load(
             df = _unir_capitulo(df, _leer(vivienda, "vivienda", cols_viv), ["DIRECTORIO"])
         if anio == 2018:
             df = _factores_2018(df, root)
+        if anio == 2020 and nivel == "persona" and (columns is None and "educacion" in modulos
+                                                     or columns is not None and set(columns) & set(_COLUMNAS_COMPLEMENTARIA)):
+            if (complementaria := find_files(2020, modulo=_COMPLEMENTARIA, root=root).get(2020)) is None:
+                faltan.setdefault(_COMPLEMENTARIA, []).append(2020)
+            else:
+                pedidas = None if columns is None else ["DIRECTORIO", "SECUENCIA_P", "ORDEN", *columns]
+                extra = read_table(complementaria, columns=pedidas).rename(columns={"ORDEN": "SECUENCIA_ENCUESTA"})
+                df = _unir_capitulo(df, extra, KEYS_PERSONA)
         # concat y no assign: tras unir varios capítulos, insertar una columna fragmenta la tabla
         partes.append(harmonize(pd.concat([df, pd.Series(np.int16(anio), index=df.index, name="anio")], axis=1)))
     if faltan:

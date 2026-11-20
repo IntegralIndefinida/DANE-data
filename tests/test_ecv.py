@@ -238,7 +238,9 @@ def _hogar(*personas, **del_hogar):
 
 
 def _priv(*personas, **del_hogar) -> pd.Series:
-    fila = dd.ecv.privaciones(_hogar(*personas, **del_hogar)).iloc[0]
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)  # 2020 sin la base complementaria
+        fila = dd.ecv.privaciones(_hogar(*personas, **del_hogar)).iloc[0]
     return fila[[p for p in dd.ecv.PRIVACIONES if fila[p]]].index.tolist()
 
 
@@ -268,6 +270,26 @@ def test_privaciones_de_educacion_y_ninez():
     assert _priv({}, {**_HIJO, "edad": 5, "P8586": 1, "P1088": 1}) == []  # sin el dato de la comida en el colegio
     assert _priv({}, {**_HIJO, "edad": 5, "P8586": 1, "P1088": 1, "P6180": 2}) == ["atencion_integral"]
     assert _priv({}, {**nino, "edad": 15, "P1088": 3, "P1088S1": 10, "P6240": 1}) == ["trabajo_infantil"]
+
+
+def test_inasistencia_de_2020_con_la_base_complementaria():
+    """En 2020, con los colegios cerrados, la inasistencia sale de las estrategias de estudio en casa."""
+    nino = {**_HIJO, "edad": 10, "P8586": 1, "P1088": 2, "P1088S1": 5, "P1077S21": 2, "P1077S22": 2, "P1077S23": 2,
+            "CELULAR_INTELIGENTE": 2, "CELULAR": 1, "P5305": 2, "EST_PLATAFORMAS": 2, "EST_GUIAS": 2, "EST_LLAMADA": 2,
+            "EST_VISITA": 2}
+    en_2020 = dict(anio=2020, P4005=1)
+
+    def priv(**cambios):
+        return _priv({}, {**nino, **cambios}, **en_2020)
+
+    assert priv(ESTRATEGIAS=1, EST_PLATAFORMAS=1, CELULAR_INTELIGENTE=1) == []       # plataformas, internet y celular
+    assert priv(ESTRATEGIAS=1, EST_PLATAFORMAS=1) == ["inasistencia_escolar"]          # plataformas sin equipo
+    assert priv(ESTRATEGIAS=1, EST_GUIAS=1, EST_LLAMADA=1) == []                       # guías y llamadas
+    assert priv(ESTRATEGIAS=1, EST_GUIAS=1) == ["inasistencia_escolar"]                # solo guías
+    assert priv(ESTRATEGIAS=1, EST_LLAMADA=1) == ["inasistencia_escolar"]              # solo llamadas
+    assert priv(ESTRATEGIAS=2, P1077S22=1) == []                                       # sin estrategias, pero conectado
+    assert priv(ESTRATEGIAS=2, P1077S22=1, P1075=2) == ["inasistencia_escolar"]
+    assert _priv({}, {**nino, "ESTRATEGIAS": 1, "EST_GUIAS": 1}) == []  # en 2025 la regla de 2020 no aplica
 
 
 def test_privaciones_de_trabajo_salud_y_vivienda():
@@ -312,8 +334,8 @@ def test_umbral_y_agregados_del_ipm():
     assert dd.ecv.ipm(pd.concat([pobre, casi], ignore_index=True), por="sexo_jefe").sexo_jefe.tolist() == ["Mujer"]
     with pytest.raises(ValueError, match="Muestra desconocida"):
         dd.ecv.ipm(h, muestra="rural")
-    with pytest.warns(UserWarning, match="SIMAT"):
-        dd.ecv.ipm(h.assign(anio=2020))
+    with pytest.warns(UserWarning, match="base complementaria"):
+        dd.ecv.privaciones(pobre.assign(anio=2020))
     with pytest.raises(ValueError, match="MODULOS_IPM"):
         dd.ecv.privaciones(pobre.drop(columns="P6160"))
 
@@ -368,21 +390,19 @@ def test_real_indicadores_coinciden_con_la_serie_del_dane():
 
 @hay_datos_reales
 def test_real_ipm_coincide_con_los_anexos_del_dane():
-    """Incidencia, IPM y privaciones de los anexos del IPM, salvo 2020 (inasistencia con el SIMAT) y 21 hogares de 2021."""
+    """Incidencia, IPM y privaciones de los anexos del IPM, nacional, por área, región y departamento, en 2018–2025."""
     publicado = pd.read_csv(DATOS / "dane_ipm_publicado.csv")
     anios = sorted(set(publicado.anio) & set(dd.ecv.available(root=REAL).anio))
     publicado = publicado[publicado.anio.isin(anios)]
     with warnings.catch_warnings():
-        warnings.simplefilter("ignore", UserWarning)  # el de 2020
+        warnings.simplefilter("ignore", UserWarning)
         partes = [dd.ecv.serie_ipm(anios, root=REAL)] + [
             dd.ecv.serie_ipm(anios, por=k, root=REAL).rename(columns={k: "dominio"})
             for k in ("area", "region_ipm", "departamento")]
     x = _comparar(publicado, partes, "dominio")
-    # 2020: el DANE armó la inasistencia escolar con el SIMAT, que no está en los microdatos; lo demás de 2020 sí coincide
-    x = x[(x.anio != 2020) | ~x.indicador.isin(["incidencia", "ipm", "pct_inasistencia_escolar"])]
     assert x.calculado.notna().all(), x[x.calculado.isna()].head()
-    # Los anexos redondean a 0,1 (el IPM a 0,001); 2021 tiene 21 hogares con otra inasistencia escolar
-    tolerancia = np.where(x.indicador == "ipm", 0.00051, np.where(x.anio == 2021, 0.15, 0.051))
+    # Los anexos redondean a 0,1 (el IPM a 0,001); en 2020 4 hogares y en 2021 21 tienen otra inasistencia escolar
+    tolerancia = np.where(x.indicador == "ipm", 0.00051, np.where(x.anio.isin([2020, 2021]), 0.15, 0.051))
     malos = x[(x.calculado - x.valor).abs() > tolerancia]
     assert malos.empty, malos.head(10)
 

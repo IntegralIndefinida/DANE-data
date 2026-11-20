@@ -9,7 +9,8 @@
   une en una fila por persona o por hogar, con variables armonizadas en minúscula; {dd}`ecv.indicadores()` y
   {dd}`ecv.serie_indicadores()` dan los 27 indicadores de la serie del DANE, iguales a los publicados.
 * El **Índice de Pobreza Multidimensional**: {dd}`ecv.privaciones()`, {dd}`ecv.ipm()` y {dd}`ecv.serie_ipm()`. Reproduce la base
-  oficial del DANE hogar por hogar (IPM 2025: 9,9 % y 0,040), salvo 2020, que el DANE armó con el SIMAT.
+  oficial del DANE hogar por hogar (IPM 2025: 9,9 % y 0,040; 2020, con la base complementaria de estudio en casa,
+  18,1 %).
 * La ECV en la aplicación (página *Calidad de vida y pobreza*, Descargar datos, Inicio, Diccionario y Cómo citar), en la
   línea de comandos (`dane-data descargar ecv`, `dane-data config --ecv`) y en {dd}`diccionario()` (`"ecv"`).
 

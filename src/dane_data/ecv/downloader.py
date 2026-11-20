@@ -7,7 +7,8 @@ CSV, o el Stata si no hay CSV, a ``<raíz>/datos/<año>/<módulo>/``. Los nombre
 así que la tabla tiene el nombre y el número de descarga de cada uno. Un año nuevo se agrega a ``_CATALOGOS``.
 
 En 2018 se baja además ``Factores de expansion 2018 basados en el CNPV 2018.zip``, que el DANE publicó aparte en 2020: el
-``FEX_C`` de los capítulos de ese año es anterior al CNPV 2018.
+``FEX_C`` de los capítulos de ese año es anterior al CNPV 2018. En 2020, ``Base_complementaria.zip`` del catálogo del IPM
+2020: las estrategias de estudio en casa con las que el DANE armó la inasistencia escolar del IPM ese año.
 """
 
 from __future__ import annotations
@@ -18,7 +19,7 @@ import zipfile
 from pathlib import Path
 
 from .._hooks import DescargadorANDA, archivos_datos, extraer_aparte, extraer_miembro, sanitize_member_name
-from .loader import _FACTORES, EXTENSIONES, MODULOS
+from .loader import _COMPLEMENTARIA, _FACTORES, _INTERNOS, EXTENSIONES, MODULOS
 
 log = logging.getLogger("dane_data.ecv")
 
@@ -89,6 +90,8 @@ _URL = "https://microdatos.dane.gov.co/index.php/catalog/{c}/download/{d}"
 ECV_KNOWN_FILES = {(anio, modulo): (catalogo, nombre, _URL.format(c=catalogo, d=descarga))
                    for anio, (catalogo, archivos) in _CATALOGOS.items()
                    for modulo, (nombre, descarga) in archivos.items()}
+# Del catálogo del IPM 2020 (679), no del de la ECV
+ECV_KNOWN_FILES[2020, _COMPLEMENTARIA] = ("679", "Base_complementaria.zip", _URL.format(c="679", d=20574))
 
 
 class ECVDownloader(DescargadorANDA):
@@ -133,8 +136,9 @@ class ECVDownloader(DescargadorANDA):
 
     def run_pipeline(self, target_years=None, modulos=MODULOS) -> list[str]:
         """Descarga los años y capítulos pedidos. Devuelve lo que no se pudo bajar o extraer."""
-        # Los factores del CNPV 2018 van con cualquier capítulo: sin ellos 2018 no se puede expandir como el DANE hoy
-        modulos = {*modulos, _FACTORES} if modulos else set()
+        # Los factores del CNPV 2018 y la base complementaria de 2020 van con cualquier capítulo: sin ellos 2018 no se expande
+        # como el DANE hoy y el IPM de 2020 no es el publicado
+        modulos = {*modulos, *_INTERNOS} if modulos else set()
         pedidos = sorted(k for k in ECV_KNOWN_FILES if k[1] in modulos)
         self.fallidos = []
         if target_years is not None:  # [] es "ningún año", no "todos"

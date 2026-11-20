@@ -131,8 +131,9 @@ dd.ecv.serie_ipm(range(2018, 2026), por="departamento")   # año por año, con c
   la muestra. {dd}`ecv.ipm()` lo decide por `por=`, y `muestra="nacional"` o `"completa"` lo fuerza.
 * `region_ipm` son las seis regiones de los anexos del IPM (Caribe, Oriental, Central, Pacífica, Orinoquía-Amazonía y
   Bogotá cabecera), que no son las de la ECV: la parte rural de Bogotá va en Oriental y San Andrés no tiene región.
-* **2020 no es el publicado:** el DANE armó la inasistencia escolar con el SIMAT, el registro de matrícula, que no está en
-  los microdatos. Con la ECV sola, 2020 da 14,8 % y no 18,1 %; `ipm` avisa.
+* **2020, con los colegios cerrados:** el DANE armó la inasistencia escolar con su base complementaria del IPM 2020
+  (estrategias de estudio en casa, con información del SIMAT), que no es de la ECV. {dd}`ecv.download()` la baja con 2020 y
+  {dd}`ecv.privaciones()` la usa; sin ella, 2020 da 14,8 % y no 18,1 %, y se avisa.
 
 Las definiciones siguen el *Algoritmo para la construcción del IPM* del DANE. Donde el algoritmo no lo dice todo, se
 ajustaron hasta reproducir la base oficial del IPM (`BDATOS-IPM`, en el ANDA) hogar por hogar; vea {dd}`ecv.privaciones()`:
@@ -145,6 +146,9 @@ ajustaron hasta reproducir la base oficial del IPM (`BDATOS-IPM`, en el ANDA) ho
   contacto con sus maestros la semana pasada.
 * Las paredes de guadua, caña, zinc y desechos cambian de código en 2020, pero el DANE siguió con los códigos viejos ese
   año.
+* En 2020, un niño que estudia es inasistente si no recibió estrategias de estudio en casa y el hogar no tiene internet y un
+  equipo, o si las recibió, pero no por plataformas con internet y un equipo ni por guías con llamadas o visitas del
+  colegio.
 
 ## Lo que cambia con los años
 
@@ -154,6 +158,7 @@ ajustaron hasta reproducir la base oficial del IPM (`BDATOS-IPM`, en el ANDA) ho
 | Departamento | `DPTO` en 2018, `P1_DEPARTAMENTO` desde 2019 | `departamento` con los dos |
 | Región | 2020 no trae `REGION` | `region` sale del departamento ese año |
 | Paredes (`P4005`) | Siete materiales hasta 2019; guadua y caña separados desde 2020 | `paredes` del IPM con los códigos de cada año (los viejos también en 2020, como el DANE) |
+| Estrategias de estudio en casa | 2020, en la base complementaria del IPM (catálogo 679) | Se baja con 2020 y entra en la inasistencia escolar del IPM |
 | Modalidad de estudio (`P3336`, `P3337`) | Desde 2021 | Entra en la inasistencia escolar del IPM |
 | Nombres de los ZIP | Cambian en 2023, 2024 y 2025 | Tabla fija de catálogos y descargas (`dd.ecv.ANIOS_DISPONIBLES`) |
 | Educación 2021 | ZIP en Deflate64, que Python no lee | Se descomprime con `inflate64` |

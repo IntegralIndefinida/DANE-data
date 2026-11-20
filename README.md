@@ -225,8 +225,8 @@ comparar.
 
 En la ECV, los 27 indicadores de la serie 2018–2025 del DANE coinciden exactamente en el total nacional y por área, y a menos
 de 0,1 puntos por departamento. Las 15 privaciones del IPM coinciden hogar por hogar con la base oficial del DANE en 2018,
-2019, 2023, 2024 y 2025 (el IPM nacional de 2025 da 9,9 % y 0,040, como lo publicado); 2020 no, porque el DANE armó la
-inasistencia escolar con el SIMAT.
+2019, 2023, 2024 y 2025, y en 2020–2022 salvo 4, 21 y 3 hogares (el IPM nacional de 2025 da 9,9 % y 0,040, y el de 2020,
+18,1 %, como lo publicado).
 
 ## Advertencias metodológicas
 
@@ -254,8 +254,9 @@ inasistencia escolar con el SIMAT.
   la mitad del valor agregado o más, son el promedio de un grupo de establecimientos (casi siempre 3), no los
   propios. Sirven para agregados; para productividad, funciones de producción o paneles por planta,
   excluya o controle los registros `microagregado` (`dd.eam.panel(..., excluir_microagregados=True)`).
-- **ECV, IPM de 2020**: el DANE armó la inasistencia escolar de 2020 con el SIMAT, que no está en los microdatos; con la
-  ECV sola, la incidencia de 2020 da 14,8 % y no 18,1 %. Los demás años reproducen la base oficial del DANE.
+- **ECV, IPM de 2020**: con los colegios cerrados, el DANE armó la inasistencia escolar de 2020 con su base
+  complementaria (estrategias de estudio en casa). `dd.ecv.download(2020)` la baja; sin ella, la incidencia de 2020 sale
+  14,8 % y no 18,1 %, y `privaciones` avisa.
 - **Estadísticas Vitales, tasas**: `dd.eevv.tasas` usa hechos registrados, sin ajustar por subregistro, así que no tiene por
   qué coincidir con los indicadores demográficos del DANE, que salen de un modelo. Los años antiguos salen más bajos que los
   reales. Por departamento y área se usa la residencia, y quedan por fuera los residentes en el extranjero y quienes no
@@ -332,7 +333,7 @@ el DANE, así que en estos casos no coincide con las variables armonizadas.
 | Llaves de las tablas de hogar | La *Estructura de la base de datos* lo dice: en una tabla de hogar el hogar es `SECUENCIA_ENCUESTA` y `SECUENCIA_P` es 1. | Así es. `load` pasa el hogar a `SECUENCIA_P`, como en las tablas de personas, para que todas tengan las mismas llaves. |
 | Algoritmo del IPM | El *Algoritmo para la construcción del IPM* da las definiciones de las 15 privaciones. | No dice cómo se cuentan los años de educación, ni el corte exacto del desempleo de larga duración, ni la asistencia virtual. `dane-data` los ajustó hasta reproducir la base oficial `BDATOS-IPM` hogar por hogar: la media cuenta hasta 11 y la superior desde 11 (16 en posgrado) más el año aprobado; 52 semanas o más; desde 2021, un niño que estudia solo de forma virtual es inasistente si el hogar no tiene internet o él no tuvo contacto con sus maestros. |
 | `P4005` (paredes) en 2020 | El formulario de 2020 separa guadua (7), caña y otro vegetal (8), zinc y desechos (9) y sin paredes (10). | La base del IPM de 2020 no priva a los hogares con el 10, como si siguiera con los códigos de 2018–2019 (donde el 9 era «sin paredes»). `dane-data` hace lo mismo en 2020. |
-| Inasistencia escolar del IPM 2020 | La nota del anexo: «integra información del SIMAT – C600 – ECV». | El SIMAT no está en los microdatos de la ECV, así que el IPM de 2020 no se puede reproducir: con la ECV sola da 14,8 % y no 18,1 %. `ipm` y la aplicación lo avisan. |
+| Inasistencia escolar del IPM 2020 | La nota del anexo: «integra información del SIMAT – C600 – ECV». | La información está en `Base_complementaria.zip` del catálogo del IPM 2020 (679), no en la ECV: las estrategias de estudio en casa de cada niño que estudia. La regla no está publicada; la que reproduce la base del DANE (salvo 4 de 88.310 hogares) es: inasistente si no recibió estrategias y el hogar no tiene internet y un equipo (computador, tableta o celular inteligente), o si las recibió, pero no por plataformas con internet y un equipo ni por guías con llamadas (y teléfono) o visitas. `download` baja la base con 2020 y `privaciones` la usa; la incidencia de 2020 da 18,1 %, como lo publicado. |
 | Inasistencia escolar del IPM 2021 | — | 21 de 89.203 hogares están privados en la base del DANE sin que las variables publicadas digan por qué (niños en clases virtuales con internet y sin computador, que en otros hogares iguales no se privan). La incidencia de Casanare y de Magdalena difiere en 0,1 puntos. |
 | Uso de celular, Chocó y Córdoba (anexo de series 2025, año 2024) | Chocó 88,8 % y Córdoba 70,9 %. | Están intercambiados: los datos dan 70,9 % en Chocó y 88,8 % en Córdoba, y así quedan en `dane-data`. |
 | Privaciones en los anexos del IPM | «Privaciones por hogar según variable». | Son porcentajes de hogares, no de personas, aunque la incidencia sí es de personas. `ipm` da las dos cosas así. |

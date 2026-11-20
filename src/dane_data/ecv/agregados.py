@@ -24,7 +24,7 @@ from ..geih.agregados import _clave_json, _firma_codigo, _mascara
 from ..geih.loader import _borrar_cache, _guardar_parquet, _usado
 from .indicadores import _lista, indicadores
 from .ipm import COLUMNAS_IPM, MODULOS_IPM, ipm, privaciones
-from .loader import _EDUCACION, _FACTORES, MODULOS, _root, find_files, load
+from .loader import _EDUCACION, _INTERNOS, MODULOS, _root, find_files, load
 
 log = logging.getLogger("dane_data.ecv")
 
@@ -66,7 +66,7 @@ def clear_cache(dias: float | None = None) -> int:
 def _firma_anio(anio: int, root) -> str:
     """Nombre, tamaño y fecha de cada archivo del año: si el DANE corrige uno, el resultado se recalcula."""
     partes = []
-    for modulo in (*MODULOS, _FACTORES):
+    for modulo in (*MODULOS, *_INTERNOS):
         if (ruta := find_files(anio, modulo=modulo, root=root).get(anio)) is not None:
             estado = ruta.stat()
             partes.append(f"{modulo}|{ruta.name}|{estado.st_size}|{estado.st_mtime_ns}")

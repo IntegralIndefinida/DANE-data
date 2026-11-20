@@ -827,7 +827,6 @@ def test_ecv_ipm(app_ecv):
     _seleccionar(at, "Variable", "Hogares con privación: material inadecuado de pisos (%)")
     _seleccionar(at, "Desagregar por", "Región (como el DANE)")
     assert any("dd.ecv.serie_ipm([2025], por='region_ipm')" in c.value for c in at.code)
-    assert not any("SIMAT" in w.value for w in at.warning)
 
 
 def test_ecv_ipm_sin_los_capitulos(ecv_root, tmp_path, monkeypatch):

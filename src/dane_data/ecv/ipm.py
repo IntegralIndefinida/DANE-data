@@ -43,9 +43,13 @@ UMBRAL = 5 / 15
 MODULOS_IPM = ("vivienda", "servicios", "condiciones", "salud", "primera_infancia", "educacion", "fuerza_trabajo")
 COLUMNAS_IPM = ("P4005", "P4015", "P8520S3", "P8520S5", "P5010", "P8526", "P8530", "P1075", "P6090", "P5665", "P8563",
                 "P51", "P55", "P774", "P6160", "P8586", "P8587", "P8587S1", "P1088", "P1088S1", "P6180", "P3336S1",
-                "P3336S2", "P3336S3", "P3337", "P6240", "P6250", "P6260", "P6270", "P6351", "P7250", "P6920")
-# Las que existen en todos los años (P1075, P3336Sx y P3337 son de la asistencia virtual, desde 2021)
-_NECESARIAS = tuple(c for c in COLUMNAS_IPM if c not in ("P1075", "P3336S1", "P3336S2", "P3336S3", "P3337"))
+                "P3336S2", "P3336S3", "P3337", "P6240", "P6250", "P6260", "P6270", "P6351", "P7250", "P6920",
+                "P1077S21", "P1077S22", "P1077S23", "ESTRATEGIAS", "EST_PLATAFORMAS", "EST_GUIAS", "EST_LLAMADA",
+                "EST_VISITA", "CELULAR_INTELIGENTE", "CELULAR", "P5305")
+# Las de la asistencia virtual (desde 2021) y las de la base complementaria de 2020 no están en todos los años
+_DE_ALGUNOS_ANIOS = ("P1075", "P3336S1", "P3336S2", "P3336S3", "P3337", "P1077S21", "P1077S22", "P1077S23", "ESTRATEGIAS",
+                     "EST_PLATAFORMAS", "EST_GUIAS", "EST_LLAMADA", "EST_VISITA", "CELULAR_INTELIGENTE", "CELULAR", "P5305")
+_NECESARIAS = tuple(c for c in COLUMNAS_IPM if c not in _DE_ALGUNOS_ANIOS)
 # El DANE calcula las cifras nacionales y por área sin la parte rural de estos departamentos (las regionales y las
 # departamentales, con toda la muestra)
 _SIN_RURAL_EN_LO_NACIONAL = ("Arauca", "Casanare", "Putumayo", "Amazonas", "Guainía", "Guaviare", "Vaupés", "Vichada")
@@ -109,8 +113,11 @@ def privaciones(df: pd.DataFrame) -> pd.DataFrame:
 
     Notas
     -----
-    En 2020 el DANE armó la inasistencia escolar con el SIMAT (el registro de matrícula del Ministerio de Educación), que no
-    está en los microdatos: con la ECV sola, ese año la incidencia nacional da 14,8 % y no el 18,1 % publicado.
+    En 2020, con los colegios cerrados, el DANE armó la inasistencia escolar con la base complementaria del IPM 2020
+    (estrategias de estudio en casa, con información del SIMAT), que ``download`` baja con 2020 y ``load`` une: un niño
+    que estudia cuenta como inasistente si no recibió estrategias y el hogar no tiene internet y un equipo, o si las
+    recibió, pero no por plataformas con internet y un equipo ni por guías con llamadas (y teléfono) o visitas. Sin esa
+    base, la incidencia de 2020 sale 14,8 % y no 18,1 %, y se avisa.
 
     Lo que no dice el algoritmo publicado y se ajustó a la base oficial: los años de educación (vea ``_anios_ipm``); el
     desempleo de larga duración es de 52 semanas o más; un hogar sin personas de 15 años y más se priva por logro
@@ -130,6 +137,10 @@ def privaciones(df: pd.DataFrame) -> pd.DataFrame:
     if faltan:
         raise ValueError(f"Faltan variables para el IPM: {faltan}. Cargue los datos con dd.ecv.load(años, "
                          "modulos=dd.ecv.MODULOS_IPM).")
+    if df["anio"].eq(2020).any() and ("ESTRATEGIAS" not in df or df.loc[df["anio"].eq(2020), "ESTRATEGIAS"].isna().all()):
+        warnings.warn("IPM 2020 sin la base complementaria del DANE (estrategias de estudio en casa): la inasistencia escolar "
+                      "y la incidencia salen más bajas que las publicadas. Bájela con dd.ecv.download(2020).", UserWarning,
+                      stacklevel=2)
 
     def num(columna: str) -> pd.Series:
         if columna not in df.columns:
@@ -158,6 +169,16 @@ def privaciones(df: pd.DataFrame) -> pd.DataFrame:
     # Niñez y juventud
     virtual = num("P3336S1").eq(2) & num("P3336S2").eq(1) & num("P3336S3").eq(2)
     sin_clase = virtual & (num("P1075").eq(2) | num("P3337").eq(2))
+    # 2020, con la base complementaria: estudiar en casa cuenta si hubo plataformas con internet y un equipo, o guías con
+    # llamadas (y teléfono) o visitas del colegio; sin estrategias, si el hogar tiene internet y un equipo
+    equipo = (num("P1077S21").eq(1) | num("P1077S22").eq(1) | num("P1077S23").eq(1)
+              | num("CELULAR_INTELIGENTE").eq(1))
+    conectado = num("P1075").eq(1) & equipo
+    telefono = num("CELULAR").eq(1) | num("P5305").eq(1)
+    atendido = (num("EST_PLATAFORMAS").eq(1) & conectado) | (num("EST_GUIAS").eq(1) & (
+        (num("EST_LLAMADA").eq(1) & telefono) | num("EST_VISITA").eq(1)))
+    en_casa = (num("ESTRATEGIAS").eq(2) & ~conectado) | (num("ESTRATEGIAS").eq(1) & ~atendido)
+    sin_clase = sin_clase | (df["anio"].eq(2020) & en_casa)
     p["inasistencia_escolar"] = alguno(edad.between(6, 16) & (num("P8586").eq(2) | sin_clase))
     p["rezago_escolar"] = alguno(edad.between(7, 17) & (anios < edad - 6))
     asegurado = num("P6090").eq(1)  # «no sabe» es no asegurado
@@ -268,10 +289,6 @@ def ipm(df: pd.DataFrame, por: str | Iterable[str] | None = None, muestra: str |
     if muestra not in MUESTRAS:
         raise ValueError(f"Muestra desconocida {muestra!r}. Opciones: {list(MUESTRAS)}")
     hogares = df if "puntaje" in df.columns else privaciones(df)
-    if hogares["anio"].eq(2020).any():
-        warnings.warn("IPM 2020: el DANE armó la inasistencia escolar con el SIMAT, que no está en los microdatos de la "
-                      "ECV; con la ECV sola la incidencia nacional da 14,8 % y no el 18,1 % publicado.", UserWarning,
-                      stacklevel=2)
     if muestra == "nacional":
         hogares = hogares[_muestra_nacional(hogares)]
     if llaves and dropna:
