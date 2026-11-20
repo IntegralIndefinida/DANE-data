@@ -81,8 +81,14 @@ consumo intermedio, valor agregado, remuneraciones, ingreso mixto y coeficiente 
 cabeceras, los centros poblados y rural disperso, las 24 ciudades juntas y cada una. Coinciden con una tolerancia
 relativa de una milmillonésima, salvo tres diferencias de 2019 que los microdatos no permiten reproducir y que están
 en {doc}`diferencias`: los montos que no trae, unos 48 549 micronegocios que el anexo clasifica en servicios y los
-trabajadores remunerados (0,2 %). Las cifras están en `tests/datos/dane_emicron_publicado.csv`; las trimestrales no se
-comparan, porque usan factores trimestrales que no vienen en los microdatos.
+trabajadores remunerados (0,2 %). Las cifras están en `tests/datos/dane_emicron_publicado.csv`.
+
+Los mismos cuadros de los anexos departamentales de 2020–2024 (los 24 departamentos y Bogotá, con `fex_dpto`): 5 330
+cifras en `tests/datos/dane_emicron_departamentos.csv`, que coinciden todas salvo una errata del propio anexo (las
+prestaciones de Atlántico en 2023 no cuadran con su remuneración). El DANE no publica anexos departamentales de 2019
+ni de 2025.
+
+Las cifras trimestrales no se pueden reproducir: usan factores de expansión trimestrales que no vienen en los microdatos.
 
 Las proyecciones de población se comprueban al generarlas: las áreas suman el total del archivo, los departamentos suman el
 total nacional en cada año y la serie no salta entre los archivos del DANE.

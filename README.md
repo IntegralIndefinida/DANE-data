@@ -233,7 +233,9 @@ comparar.
 En la EMICRON, 8 507 cifras de los anexos anuales vigentes (nacional 2019–2024 y 24 ciudades 2019–2025: micronegocios por
 situación en el empleo, sexo, actividad, sitio, salud y pensión, RUT y Cámara de Comercio, y el cuadro I.1 con el
 personal ocupado, las ventas, el valor agregado y el ingreso mixto) coinciden con una tolerancia relativa de una
-milmillonésima, salvo tres diferencias de 2019 que están abajo, en las diferencias con la documentación del DANE.
+milmillonésima, salvo tres diferencias de 2019 que están abajo, en las diferencias con la documentación del DANE. También
+las 5 330 de los anexos departamentales de 2020–2024 (24 departamentos y Bogotá, con `fex_dpto`), salvo una errata del
+anexo. Las trimestrales no: usan factores trimestrales que no vienen en los microdatos.
 
 ## Advertencias metodológicas
 
@@ -346,6 +348,7 @@ el DANE, así que en estos casos no coincide con las variables armonizadas.
 | `P3032_1` → `trabajadores_remunerados` (2019, catálogo 681) | El cuadro I.1 del anexo de 2019 da 1 187 591 trabajadores remunerados. | `P3032_1` da 1 185 069 (0,2 % menos), y el anexo coincide con las filas del módulo de personal ocupado (`load_personal`). Desde 2020 las dos fuentes coinciden. `dane-data` usa `P3032_1`, que está en la fila de cada micronegocio; el personal ocupado de 2019 queda 0,03 % por debajo. |
 | Montos de 2019 (catálogo 681) | El cuadro I.1 del anexo de 2019 trae consumo intermedio, valor agregado, remuneraciones e ingreso mixto. | Los módulos de 2019 no traen esas variables calculadas (sí `VENTAS_MES_ANTERIOR`, que coincide con el anexo), y el DANE no publica cómo se arman con las preguntas. `dane-data` las deja vacías en 2019; `indicadores` lo avisa. |
 | Factor departamental → `fex_dpto` (2019–2024) | Un archivo de factores departamentales por año. | Se llama `FEX_MICRO_DPTO` en 2019–2022 y `FEX_C` en 2023–2024 (el mismo nombre que el factor ajustado de 2019–2021). En 2019–2022 trae miles de registros que no están en ningún módulo (9 411 en 2019) y en 2020 una clave repetida con el factor vacío. `dane-data` lo une a los micronegocios de los módulos y deja fuera lo demás. 2025 no tiene. |
+| Prestaciones sociales de Atlántico, 2023 (anexo departamental, cuadro I.1_25D) | 147 202 380 miles de pesos. | Los sueldos más las prestaciones del mismo cuadro no dan su remuneración del personal (826 458 979): con 147 202 280, que es lo que dan los microdatos, sí. Es una errata del anexo, de un dígito. `dane-data` da 147 202 280. |
 
 ## Estructura
 

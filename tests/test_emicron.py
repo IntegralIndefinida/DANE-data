@@ -346,16 +346,19 @@ def test_publicado_completo():
     assert set(pub["categoria"]) <= categorias
 
 
-def _calculado(e: pd.DataFrame, variables_i1) -> pd.DataFrame:
-    dominios = {"total": e, "24 ciudades": e[e["ciudad"].notna()]}
-    dominios |= {str(c): g for c, g in e.groupby("clase", observed=True)}
-    dominios |= {str(c): g for c, g in e.groupby("ciudad", observed=True)}
+def _calculado(e: pd.DataFrame, variables_i1, peso: str = "fex") -> pd.DataFrame:
+    if peso == "fex":
+        dominios = {"total": e, "24 ciudades": e[e["ciudad"].notna()]}
+        dominios |= {str(c): g for c, g in e.groupby("clase", observed=True)}
+        dominios |= {str(c): g for c, g in e.groupby("ciudad", observed=True)}
+    else:
+        dominios = {"25 departamentos": e} | {str(c): g for c, g in e.groupby("departamento", observed=True)}
     filas = []
     for dominio, g in dominios.items():
         for v in _VARIABLES:
-            s = g.groupby(g[v].astype("string"))["fex"].sum()
-            filas += [(dominio, v, k, x) for k, x in s.items()] + [(dominio, v, "Total", g["fex"].sum())]
-        ind = dd.emicron.indicadores(g, por=None).iloc[0]
+            s = g.groupby(g[v].astype("string"))[peso].sum()
+            filas += [(dominio, v, k, x) for k, x in s.items()] + [(dominio, v, "Total", g[peso].sum())]
+        ind = dd.emicron.indicadores(g, por=None, peso=peso).iloc[0]
         filas += [(dominio, v, "", ind[v]) for v in variables_i1]
     return pd.DataFrame(filas, columns=["dominio", "variable", "categoria", "calculado"])
 
@@ -378,3 +381,34 @@ def test_real_coincide_con_los_anexos(anio):
     malas = m[~m["ok"] & ~conocida]
     assert malas.empty, malas[["dominio", "cuadro", "variable", "categoria", "valor", "calculado"]].head(20).to_string()
     assert (~conocida).sum() >= 900  # que las conocidas no tapen la comparación: cada año compara más de 900 cifras
+
+
+# Erratas de los anexos departamentales: la cifra publicada no cuadra con las demás del mismo anexo
+CONOCIDAS_DEPARTAMENTOS = {
+    (2023, "Atlántico", "I.1", "prestaciones"): "el anexo trae 147.202.380 y sus sueldos más prestaciones no dan su "
+                                                "remuneración (826.458.979); con 147.202.280 sí, que es lo que da dd.emicron",
+}
+
+
+def test_errata_del_anexo_departamental_2023():
+    """La errata existe en el propio anexo: sueldos + prestaciones publicados no dan la remuneración publicada."""
+    pub = pd.read_csv(DATOS / "dane_emicron_departamentos.csv", keep_default_na=False)
+    a = pub.query("anio == 2023 and dominio == 'Atlántico' and cuadro == 'I.1'").set_index("variable")["valor"]
+    assert a["sueldos"] + a["prestaciones"] - a["remuneracion"] == pytest.approx(100, abs=1e-3)
+
+
+@hay_datos_reales
+@pytest.mark.parametrize("anio", range(2020, 2025))
+def test_real_coincide_con_los_anexos_departamentales(anio):
+    """Los mismos cuadros para los 24 departamentos y Bogotá, con el factor departamental (fex_dpto)."""
+    pub = pd.read_csv(DATOS / "dane_emicron_departamentos.csv", keep_default_na=False).query("anio == @anio")
+    assert pub["dominio"].nunique() == 26
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+        e = dd.emicron.load(anio, root=REAL)
+        calc = _calculado(e, pub.loc[pub["cuadro"] == "I.1", "variable"].unique(), peso="fex_dpto")
+    m = pub.merge(calc, on=["dominio", "variable", "categoria"], how="left")
+    m["calculado"] = pd.to_numeric(m["calculado"], errors="coerce").astype("float64").fillna(0.0)
+    errata = m.apply(lambda r: (anio, r["dominio"], r["cuadro"], r["variable"]) in CONOCIDAS_DEPARTAMENTOS, axis=1)
+    malas = m[~np.isclose(m["calculado"], m["valor"], rtol=1e-9, atol=1e-6) & ~errata]
+    assert malas.empty, malas[["dominio", "cuadro", "variable", "categoria", "valor", "calculado"]].head(20).to_string()
