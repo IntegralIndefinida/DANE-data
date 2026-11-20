@@ -422,13 +422,15 @@ def test_real_coincide_con_lo_publicado():
     if not hay_empalme:
         anios = [a for a in anios if a >= 2022]
     calculado = _calculado(anios, REAL)
-    publicado = publicado[publicado.anio.isin(anios)].set_index(["anio", "nivel", "dominio", "indicador"])
+    # Un NaN nunca supera la tolerancia: compararlo daría una coincidencia que no se verificó
+    publicado = publicado[publicado.anio.isin(anios) & publicado.valor.notna()].set_index(
+        ["anio", "nivel", "dominio", "indicador"])
     comparables = publicado.index.intersection(calculado.index)
     # No se comparan las capitales sin área metropolitana de 2022 en adelante ni el total del anexo departamental
     assert len(comparables) > 0.8 * len(publicado)
     problemas = []
     for clave in comparables:
         fila = publicado.loc[clave]
-        if abs(calculado[clave] - fila.valor) > _TOLERANCIA[fila.unidad] and clave not in _CONOCIDAS:
+        if not abs(calculado[clave] - fila.valor) <= _TOLERANCIA[fila.unidad] and clave not in _CONOCIDAS:  # NaN falla
             problemas.append(f"{clave}: calculado {calculado[clave]:.4f}, publicado {fila.valor}")
     assert not problemas, f"{len(problemas)} de {len(comparables)} cifras no coinciden:\n" + "\n".join(problemas[:40])

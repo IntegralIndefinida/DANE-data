@@ -77,7 +77,7 @@ conteos y saltos, además de las rarezas que están en {doc}`diferencias`.
 
 Con los datos reales (en `$DANE_DATA_TEST_POBREZA` o la carpeta configurada), las pruebas calculan la serie empalmada
 2012–2025 y la comparan con los anexos del boletín de pobreza monetaria del 12 de junio de 2026
-(`tests/datos/dane_pobreza_publicado.csv`): las **6 656** cifras comparables coinciden.
+(`tests/datos/dane_pobreza_publicado.csv`): las **5 644** cifras comparables coinciden.
 
 | Qué | Años |
 |---|---|

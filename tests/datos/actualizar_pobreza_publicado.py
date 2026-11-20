@@ -13,6 +13,7 @@ Si el DANE cambia las hojas o sus bloques, el script falla en vez de escribir un
 from __future__ import annotations
 
 import io
+import math
 import sys
 from pathlib import Path
 
@@ -43,12 +44,14 @@ NO_DOMINIO = ("Nota", "Fuente", "Fecha", "Cifras", "Personas en", "Brecha de", "
 
 
 def _numero(v) -> float | None:
+    """El número de una celda, o None si está vacía o no es un número (una celda vacía de Excel llega como NaN)."""
     if isinstance(v, str):
         v = v.strip().replace(",", ".")
     try:
-        return float(v)
+        numero = float(v)
     except (TypeError, ValueError):
         return None
+    return None if math.isnan(numero) else numero
 
 
 def _bloques(hoja: pd.DataFrame) -> list[tuple[list[int], list[tuple[str, list]]]]:

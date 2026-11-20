@@ -2,7 +2,7 @@
 
 La pobreza monetaria del DANE: los microdatos de la Medición de Pobreza Monetaria y Desigualdad 2012–2025, con la
 serie empalmada que publica el DANE y sus indicadores, en la librería, la línea de comandos y la aplicación. Con los
-microdatos reales, las 6 656 cifras comparables de los anexos del boletín de junio de 2026 coinciden. La lista completa
+microdatos reales, las 5 644 cifras comparables de los anexos del boletín de junio de 2026 coinciden. La lista completa
 está en [Novedades](https://integralindefinida.github.io/DANE-data/novedades.html).
 
 **Nuevo**

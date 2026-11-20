@@ -222,7 +222,7 @@ En las Estadísticas Vitales, el total y el sexo de los tres certificados en 200
 coinciden exactamente con los cuadros definitivos del DANE. Antes de 2008 no hay cuadros en la página del DANE con qué
 comparar.
 
-En la pobreza monetaria, la serie empalmada 2012–2025 coincide con los anexos del boletín de junio de 2026: las 6 656 cifras
+En la pobreza monetaria, la serie empalmada 2012–2025 coincide con los anexos del boletín de junio de 2026: las 5 644 cifras
 que se pueden comparar (incidencia, brecha y severidad de la pobreza y la pobreza extrema, Gini, ingreso per cápita, líneas,
 población y pobres, nacional, por grandes dominios, 23 ciudades y 24 departamentos) quedan dentro del redondeo publicado.
 
