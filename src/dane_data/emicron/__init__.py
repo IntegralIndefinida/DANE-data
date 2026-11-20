@@ -1,0 +1,92 @@
+"""Encuesta de Micronegocios (EMICRON) — unidades económicas de hasta 9 personas ocupadas."""
+
+from __future__ import annotations
+
+import numbers
+from typing import Iterable
+
+from .downloader import EMICRON_KNOWN_FILES, EMICRONDownloader
+from .loader import FACTORES, MODULOS, _modulo_valido, _root, available, find_files
+
+ANIOS_DISPONIBLES = sorted({a for a, _ in EMICRON_KNOWN_FILES})
+
+
+def download(
+    years: Iterable[int] | int | None = None,
+    modulos: Iterable[str] | str | None = None,
+    root=None,
+    delete_zips: bool = False,
+    progress=None,
+    should_stop=None,
+    forzar: bool = False,
+) -> list[str]:
+    """
+    Descarga los microdatos de la EMICRON del ANDA del DANE.
+
+    Un CSV por año y módulo en ``<carpeta>/datos/<año>/<módulo>.csv``. Es incremental: lo ya extraído se salta.
+
+    Parámetros
+    ----------
+    years
+        Año o lista de años entre 2019 y 2025. ``None`` descarga toda la serie (unos 300 MB de ZIP); una lista vacía,
+        ninguno. Los años que no están en el ANDA se saltan y quedan en la lista que se devuelve.
+    modulos
+        Módulo o lista de módulos (claves de ``MODULOS``). ``None`` para todos. La identificación y los factores de
+        expansión se bajan siempre: sin ellos no se puede cargar.
+    root
+        Carpeta de destino. Por defecto, la de ``dd.get_path("emicron")``.
+    delete_zips
+        Borrar cada ZIP después de extraerlo.
+    progress
+        Función ``progress(fraccion, mensaje)`` que recibe el avance.
+    should_stop
+        Función sin argumentos; si devuelve True, la descarga se detiene con ``DownloadCancelled``.
+    forzar
+        Volver a bajar y extraer aunque ya esté en disco, por ejemplo si el DANE corrigió los archivos. Un CSV se
+        reemplaza solo si el nuevo se extrajo completo; si no, se conserva el anterior.
+
+    Devuelve
+    --------
+    list[str]
+        Lo que no se pudo descargar o extraer, con el año, el módulo y el motivo; vacía si todo salió bien.
+
+    Lanza
+    -----
+    ValueError
+        Si algún módulo no es una clave de ``MODULOS``.
+    DownloadCancelled
+        Si ``should_stop()`` devolvió True.
+
+    Véase también
+    -------------
+    available : Qué años y módulos hay en disco.
+
+    Notas
+    -----
+    No todos los módulos existen todos los años: 2020 no trae inclusión financiera ni capital social, 2021 no trae
+    capital social y el módulo COVID solo existe en 2020. Pedir uno de ellos para esos años deja un aviso en el
+    registro. Los microdatos de 2025 solo cubren las 24 ciudades principales.
+
+    Ejemplos
+    --------
+    >>> import dane_data as dd
+    >>> dd.emicron.download(2024)  # doctest: +SKIP
+    >>> dd.emicron.download(range(2019, 2025), modulos=["ventas", "costos"])  # doctest: +SKIP
+    """
+    if isinstance(years, (numbers.Integral, str)):
+        years = [years]
+    if isinstance(modulos, str):
+        modulos = [modulos]
+    if modulos is not None:
+        modulos = [_modulo_valido(m) for m in modulos]
+    dl = EMICRONDownloader(
+        base_dir=_root(root),
+        keep_zips=not delete_zips,
+        progress=progress,
+        should_stop=should_stop,
+        forzar=forzar,
+    )
+    return dl.run_pipeline(target_years=years, modulos=modulos)
+
+
+__all__ = ["download", "available", "find_files", "MODULOS", "FACTORES", "ANIOS_DISPONIBLES"]
