@@ -5,6 +5,7 @@ import os
 import warnings
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -222,3 +223,77 @@ def test_real_load_2024():
     for c in ("clase", "sexo", "situacion_empleo", "actividad", "actividad12", "sitio", "salud_pension", "departamento"):
         assert e[c].notna().all(), c  # ningún código sin categoría
     assert e["ciudad"].notna().sum() == 52_430  # las 24 ciudades
+
+
+# ---------------------------------------------------------------------------------------------------- #
+# Validación contra los anexos del DANE (tests/datos/dane_emicron_publicado.csv)
+# ---------------------------------------------------------------------------------------------------- #
+DATOS = Path(__file__).parent / "datos"
+_VARIABLES = ["situacion_empleo", "sexo", "actividad", "sitio", "salud_pension", "rut", "camara_comercio"]
+_MONTOS_I1 = ["ventas", "consumo_intermedio", "valor_agregado", "remuneracion", "sueldos", "prestaciones",
+              "ingreso_mixto", "coeficiente_tecnico"]
+# Lo que dd.emicron no puede reproducir con los microdatos, con el motivo (ver docs/guia/diferencias.md): por cuadro y
+# variable, o solo en una categoría
+CONOCIDAS = {
+    **{(2019, "I.1", m): "los microdatos de 2019 no traen los montos calculados" for m in _MONTOS_I1[1:]},
+    **{(2019, "B.1", "actividad", c): "el anexo clasifica en servicios (alojamiento y comida) unos 48.549 micronegocios "
+                                      "que los microdatos traen como industria, y no traen el código CIIU para separarlos"
+       for c in ("Industria manufacturera", "Servicios")},
+    (2019, "I.1", "trabajadores_remunerados"): "el anexo cuenta las filas del módulo de personal, y P3032_1 da 0,2 % menos",
+    (2019, "I.1", "personal_ocupado"): "incluye a los trabajadores remunerados (ver arriba)",
+}
+
+
+def _publicado() -> pd.DataFrame:
+    return pd.read_csv(DATOS / "dane_emicron_publicado.csv", keep_default_na=False)
+
+
+def test_publicado_completo():
+    """El CSV que usan las pruebas reales: sin claves repetidas y con todos los años, cuadros y ciudades."""
+    pub = _publicado()
+    assert not pub.duplicated(["anio", "dominio", "cuadro", "variable", "categoria"]).any()
+    assert sorted(pub["anio"].unique()) == list(range(2019, 2026))
+    ciudades = set(dd.emicron.CIUDADES.values())
+    for anio, p in pub.groupby("anio"):
+        dominios = set(p["dominio"])
+        assert ciudades <= dominios, anio
+        nacional = {"total", "Cabeceras municipales", "Centros poblados y rural disperso"}
+        assert (nacional <= dominios) == (anio <= 2024), anio  # 2025 solo trae las 24 ciudades
+        assert set(p["cuadro"]) == {"A1.10", "A1.12", "B.1", "D.1", "E.1.1", "F.1", "F.6", "I.1"}, anio
+        assert dominios - ciudades - nacional == {"24 ciudades"}, anio  # nombres de ciudad traducidos
+    categorias = {str(c) for t in dd.emicron.CATEGORIAS.values() for c in t.categories} | {"True", "False", "Total", ""}
+    assert set(pub["categoria"]) <= categorias
+
+
+def _calculado(e: pd.DataFrame, variables_i1) -> pd.DataFrame:
+    dominios = {"total": e, "24 ciudades": e[e["ciudad"].notna()]}
+    dominios |= {str(c): g for c, g in e.groupby("clase", observed=True)}
+    dominios |= {str(c): g for c, g in e.groupby("ciudad", observed=True)}
+    filas = []
+    for dominio, g in dominios.items():
+        for v in _VARIABLES:
+            s = g.groupby(g[v].astype("string"))["fex"].sum()
+            filas += [(dominio, v, k, x) for k, x in s.items()] + [(dominio, v, "Total", g["fex"].sum())]
+        ind = dd.emicron.indicadores(g, por=None).iloc[0]
+        filas += [(dominio, v, "", ind[v]) for v in variables_i1]
+    return pd.DataFrame(filas, columns=["dominio", "variable", "categoria", "calculado"])
+
+
+@hay_datos_reales
+@pytest.mark.parametrize("anio", range(2019, 2026))
+def test_real_coincide_con_los_anexos(anio):
+    """Cuadros A1.10, A1.12, B.1, D.1, E.1.1, F.1, F.6 e I.1: nacional, cabeceras, centros poblados y 24 ciudades."""
+    pub = _publicado().query("anio == @anio")
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+        e = dd.emicron.load(anio, root=REAL)
+        calc = _calculado(e, pub.loc[pub["cuadro"] == "I.1", "variable"].unique())
+    m = pub.merge(calc, on=["dominio", "variable", "categoria"], how="left")
+    # Una categoría que nadie tiene en una ciudad: el anexo publica 0, la tabla no tiene la fila
+    m["calculado"] = pd.to_numeric(m["calculado"], errors="coerce").astype("float64").fillna(0.0)
+    m["ok"] = np.isclose(m["calculado"], m["valor"], rtol=1e-9, atol=1e-6)
+    conocida = m.apply(lambda r: (anio, r["cuadro"], r["variable"]) in CONOCIDAS
+                       or (anio, r["cuadro"], r["variable"], r["categoria"]) in CONOCIDAS, axis=1)
+    malas = m[~m["ok"] & ~conocida]
+    assert malas.empty, malas[["dominio", "cuadro", "variable", "categoria", "valor", "calculado"]].head(20).to_string()
+    assert (~conocida).sum() >= 900  # que las conocidas no tapen la comparación: cada año compara más de 900 cifras
