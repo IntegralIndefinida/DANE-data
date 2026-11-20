@@ -6,7 +6,8 @@ import numbers
 from typing import Iterable
 
 from .downloader import EMICRON_KNOWN_FILES, EMICRONDownloader
-from .loader import FACTORES, MODULOS, _modulo_valido, _root, available, find_files
+from .loader import (CATEGORIAS, CIUDADES, CLAVE, CORE, ETIQUETAS, FACTORES, MODULOS, MONTOS, _modulo_valido, _root,
+                     available, find_files, harmonize, load, load_personal)
 
 ANIOS_DISPONIBLES = sorted({a for a, _ in EMICRON_KNOWN_FILES})
 
@@ -89,4 +90,7 @@ def download(
     return dl.run_pipeline(target_years=years, modulos=modulos)
 
 
-__all__ = ["download", "available", "find_files", "MODULOS", "FACTORES", "ANIOS_DISPONIBLES"]
+__all__ = [
+    "download", "available", "find_files", "load", "load_personal", "harmonize", "MODULOS", "FACTORES", "CORE",
+    "ETIQUETAS", "CATEGORIAS", "CIUDADES", "CLAVE", "MONTOS", "ANIOS_DISPONIBLES",
+]

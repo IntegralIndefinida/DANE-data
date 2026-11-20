@@ -230,3 +230,60 @@ def eevv_root(tmp_path):
            "EDAD_MADRE,EST_CIVM,NIV_EDUM,C_BAS1,CAUSA_667,CAU_HOMOL\n"
            '"68","755","1","1","2025","12","1","68","755","1","2",4,"4",6,4,"6","09","P018","402","080"\n')
     return root
+
+
+@pytest.fixture
+def emicron_root(tmp_path):
+    """Tres micronegocios por año de la EMICRON, con las rarezas que tiene el real."""
+    root = tmp_path / "emicron"
+    d = root / "datos"
+    rep = "CLASE_TE,COD_DEPTO,AREA,F_EXP"  # lo que repiten los módulos
+
+    # --- 2019: punto y coma, coma decimal, CLASE (no CLASE_TE), meses con mayúsculas mezcladas, sin derivadas
+    _write(d / "2019" / "identificacion.csv",
+           "﻿DIRECTORIO;SECUENCIA_ENCUESTA;SECUENCIA_P;COD_DEPTO;AREA;CLASE;P35;P241;MES_REF;P3031;P3032_1;P3032_2;"
+           "P3032_3;P3033;P3034;GRUPOS4;GRUPOS12;F_EXP\n"
+           "1;1;1;76;76;1;1;40;ENERO;1;2; ; ;1;14;04;12;295,5\n"
+           "2;1;1;5; ;2;2;35;octubre;2;0;0;0;2;100;01;01;100,25\n"
+           "3;2;1;11;11;1;2;52;Diciembre;1;0;1;1;2;30;03;05;50\n")
+    _write(d / "2019" / "propietario.csv", "DIRECTORIO;SECUENCIA_ENCUESTA;SECUENCIA_P;P3088;P3089\n1;1;1;1;100000\n2;1;1;2; \n3;2;1;3;5000\n")
+    _write(d / "2019" / "ventas.csv", "DIRECTORIO;SECUENCIA_ENCUESTA;SECUENCIA_P;VENTAS_MES_ANTERIOR;P3057\n1;1;1;1000000;5\n2;1;1;500000,5;0\n3;2;1;0;0\n")
+    _write(d / "2019" / "fex_ajustado.csv", "DIRECTORIO,SECUENCIA_P,SECUENCIA_ENCUESTA,FEX_C\n1,1,1,250.0\n2,1,1,90.5\n3,1,2,45.0\n")
+    _write(d / "2019" / "fex_dpto.csv", "DIRECTORIO,SECUENCIA_P,SECUENCIA_ENCUESTA,FEX_MICRO_DPTO\n1,1,1,260\n2,1,1,95\n3,1,2,40\n9,1,1,7\n")
+
+    # --- 2021: inclusión financiera con FEX_C y sin uno de los micronegocios; factor departamental con una clave
+    # repetida y vacía (como 2020)
+    _write(d / "2021" / "identificacion.csv",
+           "DIRECTORIO;SECUENCIA_P;SECUENCIA_ENCUESTA;COD_DEPTO;AREA;CLASE_TE;P35;P241;MES_REF;P3031;P3032_1;P3032_2;"
+           "P3032_3;P3033;GRUPOS4;GRUPOS12;F_EXP\n"
+           "10;1;1;8;8;1;2;28;MARZO;1;1;0;0;1;03;05;300,0\n"
+           "11;1;1;13; ;2;1;61;JULIO;2; ; ; ;2;02;03;200,0\n"
+           "12;1;1;68;68;1;1;45;AGOSTO;2; ; ; ;2;04;07;100,0\n")
+    _write(d / "2021" / "inclusion_financiera.csv", "DIRECTORIO;SECUENCIA_P;SECUENCIA_ENCUESTA;P1765;CLASE_TE;FEX_C\n10;1;1;1;1;300\n11;1;1;2;2;200\n")
+    _write(d / "2021" / "fex_ajustado.csv", "DIRECTORIO,SECUENCIA_P,SECUENCIA_ENCUESTA,FEX_C\n10,1,1,260\n11,1,1,180\n12,1,1,90\n")
+    _write(d / "2021" / "fex_dpto.csv", "DIRECTORIO;SECUENCIA_P;SECUENCIA_ENCUESTA;FEX_MICRO_DPTO\n10;1;1;270\n11;1;1;170\n12;1;1;95\n99;1;1.0;\n99;1;1.0;\n")
+
+    # --- 2024: comas; FEX_C es el factor departamental; personal ocupado con la clave corrida
+    _write(d / "2024" / "identificacion.csv",
+           "DIRECTORIO,SECUENCIA_P,SECUENCIA_ENCUESTA,COD_DEPTO,AREA,CLASE_TE,P35,P241,MES_REF,P3031,P3032_1,P3032_2,"
+           "P3032_3,P3033,GRUPOS4,GRUPOS12,F_EXP\n"
+           "20,1,1,11,11,1,1,50,ENERO,1,1,1,0,1,04,10,1000.5\n"
+           "21,2,3,47,47,1,2,33,JUNIO,2,,,,2,03,05,500\n"
+           "22,1,1,52,,2,1,70,DICIEMBRE,1,0,0,2,2,01,01,250\n")
+    _write(d / "2024" / "caracteristicas.csv", f"DIRECTORIO,SECUENCIA_P,SECUENCIA_ENCUESTA,P1633,P1055,{rep}\n20,1,1,1,1,1,11,11,1000.5\n21,2,3,2,2,1,47,47,500\n22,1,1,1,2,2,52,,250\n")
+    _write(d / "2024" / "propietario.csv", f"DIRECTORIO,SECUENCIA_P,SECUENCIA_ENCUESTA,P3088,SUELDOS,PRESTACIONES,REMUNERACION_TOTAL,{rep}\n"
+                                           "20,1,1,1,1200000,300000,1500000,1,11,11,1000.5\n21,2,3,2,0,0,0,1,47,47,500\n22,1,1,4,0,0,0,2,52,,250\n")
+    _write(d / "2024" / "sitio.csv", f"DIRECTORIO,SECUENCIA_P,SECUENCIA_ENCUESTA,P3053,{rep}\n20,1,1,2,1,11,11,1000.5\n21,2,3,4,1,47,47,500\n22,1,1,7,2,52,,250\n")
+    _write(d / "2024" / "costos.csv", f"DIRECTORIO,SECUENCIA_P,SECUENCIA_ENCUESTA,CONSUMO_INTERMEDIO,{rep}\n20,1,1,2000000,1,11,11,1000.5\n21,2,3,300000,1,47,47,500\n22,1,1,100000,2,52,,250\n")
+    _write(d / "2024" / "ventas.csv", f"DIRECTORIO,SECUENCIA_P,SECUENCIA_ENCUESTA,VENTAS_MES_ANTERIOR,VALOR_AGREGADO,INGRESO_MIXTO,{rep}\n"
+                                      "20,1,1,5000000,3000000,1500000,1,11,11,1000.5\n21,2,3,800000,500000,500000,1,47,47,500\n22,1,1,300000,200000,200000,2,52,,250\n")
+    _write(d / "2024" / "personal_ocupado.csv", f"DIRECTORIO,SECUENCIA_PH,SECUENCIA_P,SECUENCIA_ENCUESTA,TIPO,P3077,{rep}\n"
+                                                "20,1,1,1,1,1,1,11,11,1000.5\n20,1,1,2,2,,1,11,11,1000.5\n22,1,1,1,3,,2,52,,250\n22,1,1,2,3,,2,52,,250\n")
+    _write(d / "2024" / "fex_dpto.csv", "DIRECTORIO,SECUENCIA_P,SECUENCIA_ENCUESTA,FEX_C\n20,1,1,990\n21,2,3,510\n22,1,1,240\n")
+
+    # --- 2025: solo las 24 ciudades
+    _write(d / "2025" / "identificacion.csv",
+           "DIRECTORIO,SECUENCIA_P,SECUENCIA_ENCUESTA,COD_DEPTO,AREA,CLASE_TE,P35,P241,MES_REF,P3032_1,P3032_2,P3032_3,"
+           "P3033,GRUPOS4,GRUPOS12,F_EXP,SEGMENTO,DOMINIO\n"
+           "30,1,1,5,5,1,2,44,MAYO,0,0,0,2,03,05,700,1,1\n")
+    return root
