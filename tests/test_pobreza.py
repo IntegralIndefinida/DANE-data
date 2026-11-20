@@ -9,6 +9,7 @@ import pandas as pd
 import pytest
 
 import dane_data as dd
+from dane_data import cli
 
 
 def test_carpeta_pobreza(tmp_path, monkeypatch):
@@ -352,3 +353,35 @@ def test_unir_geih_avisa_y_falla(pobreza_root):
     hog = dd.pobreza.load(2025, root=pobreza_root)
     with pytest.raises(ValueError, match="repiten llave"):
         dd.pobreza.unir_geih(_personas_geih(), hogares=pd.concat([hog, hog]))
+
+
+# ---------------------------------------------------------------------------------------------------- #
+# Línea de comandos
+def test_cli_descargar_pobreza(monkeypatch):
+    llamada = {}
+    monkeypatch.setattr(dd.pobreza, "download", lambda **kw: llamada.update(kw) or [])
+    monkeypatch.setattr(dd.eevv, "download", lambda **kw: pytest.fail("pobreza no debe ir a EEVV"))
+    assert cli.main(["descargar", "pobreza", "--anios", "2024", "2025", "--empalme", "--archivos", "hogares"]) == 0
+    assert llamada == {"years": [2024, 2025], "archivos": ["hogares"], "empalme": True, "delete_zips": False,
+                       "forzar": False}
+    assert cli.main(["descargar", "pobreza"]) == 0 and llamada["years"] is None and llamada["archivos"] is None
+    monkeypatch.setattr(dd.pobreza, "download", lambda **kw: ["hogares 2025: no se pudo descargar"])
+    assert cli.main(["descargar", "pobreza", "--anios", "2025"]) == 1
+
+
+@pytest.mark.parametrize("argumentos", [["descargar", "pobreza", "--tipos", "fetales"],
+                                        ["descargar", "pobreza", "--modulos", "ocupados"],
+                                        ["descargar", "eevv", "--archivos", "hogares"],
+                                        ["descargar", "geih", "--archivos", "personas"]])
+def test_cli_pobreza_opciones_de_otra_encuesta(argumentos, capsys):
+    assert cli.main(argumentos) == 2
+    assert "no aplica" in capsys.readouterr().err
+
+
+def test_cli_estado_pobreza(pobreza_root, tmp_path, monkeypatch, capsys):
+    monkeypatch.setitem(dd.config._session, "pobreza", pobreza_root)
+    assert cli.main(["estado"]) == 0
+    assert "Pobreza monetaria: 9 años (2012–2025); archivos del empalme 2012–2021: sí" in capsys.readouterr().out
+    monkeypatch.setitem(dd.config._session, "pobreza", tmp_path / "nada")
+    assert cli.main(["estado"]) == 0
+    assert "Pobreza monetaria: sin datos" in capsys.readouterr().out
