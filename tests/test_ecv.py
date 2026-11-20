@@ -385,3 +385,25 @@ def test_real_ipm_coincide_con_los_anexos_del_dane():
     tolerancia = np.where(x.indicador == "ipm", 0.00051, np.where(x.anio == 2021, 0.15, 0.051))
     malos = x[(x.calculado - x.valor).abs() > tolerancia]
     assert malos.empty, malos.head(10)
+
+
+# ---------------------------------------------------------------------------------------------------- #
+# Línea de comandos
+# ---------------------------------------------------------------------------------------------------- #
+def test_cli_estado_ecv(ecv_root, monkeypatch, capsys):
+    monkeypatch.setitem(dd.config._session, "ecv", ecv_root)
+    assert cli.main(["estado"]) == 0
+    salida = capsys.readouterr().out
+    assert "ECV:" in salida and "2025: 4 de 11 capítulos" in salida and "2018: 3 de 11 capítulos" in salida  # sin los factores
+
+
+def test_cli_descargar_ecv(monkeypatch, capsys):
+    llamada = {}
+    monkeypatch.setattr(dd.ecv, "download", lambda **kw: llamada.update(kw) or [])
+    assert cli.main(["descargar", "ecv", "--anios", "2024", "2025", "--modulos", "salud", "tic", "--borrar-zips"]) == 0
+    assert llamada == {"years": [2024, 2025], "modulos": ["salud", "tic"], "delete_zips": True, "forzar": False}
+    assert cli.main(["descargar", "ecv", "--modulos", "ocupados"]) == 2  # de la GEIH, no de la ECV
+    assert "ocupados no existen" in capsys.readouterr().err
+    assert cli.main(["descargar", "geih", "--modulos", "salud"]) == 2
+    assert cli.main(["descargar", "ecv", "--tipos", "fetales"]) == 2
+    assert "no aplica" in capsys.readouterr().err
