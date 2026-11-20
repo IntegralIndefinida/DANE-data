@@ -64,6 +64,12 @@ _PARENTESCO = {1: "Jefe(a) del hogar", 2: "Pareja o cónyuge", 3: "Hijo(a) o hij
                11: "Pariente del servicio doméstico", 12: "Trabajador(a)", 13: "Pensionista", 14: "Otro no pariente"}
 _ETNIA = {1: "Indígena", 2: "Gitano(a) o Rom", 3: "Raizal", 4: "Palenquero(a)",
           5: "Negro(a), mulato(a), afrodescendiente", 6: "Ningún grupo étnico"}
+_REGIMEN = {1: "Contributivo", 2: "Especial", 3: "Subsidiado", 9: "No sabe"}
+_TENENCIA = {1: "Propia, totalmente pagada", 2: "Propia, la están pagando", 3: "En arriendo o subarriendo",
+             4: "Usufructo (con permiso, sin pago)", 5: "Posesión sin título (ocupante de hecho)", 6: "Propiedad colectiva"}
+# Servicios de la vivienda (P8520Sx, Datos de la vivienda) y del hogar: (columna armonizada, variable del DANE)
+_SERVICIOS = (("energia", "P8520S1"), ("acueducto", "P8520S5"), ("alcantarillado", "P8520S3"),
+              ("recoleccion_basuras", "P8520S4"), ("gas_natural", "P5666"))
 
 # Tipos fijos: así se conservan al unir años con pd.concat
 CATEGORIAS = {
@@ -73,6 +79,8 @@ CATEGORIAS = {
     "sexo": _categoria(_SEXO.values()),
     "parentesco": _categoria(_PARENTESCO.values()),
     "etnia": _categoria(_ETNIA.values()),
+    "regimen_salud": _categoria(_REGIMEN.values()),
+    "tenencia_vivienda": _categoria(_TENENCIA.values()),
 }
 _COMUNES = {
     "anio": "Año de la encuesta",
@@ -82,12 +90,34 @@ _COMUNES = {
               "Valle del Cauca, San Andrés u Orinoquía-Amazonía",
     "departamento": "Departamento (P1_DEPARTAMENTO; DPTO en 2018)",
 }
-# Variables armonizadas de cada nivel y su contenido
+# Del hogar y de la vivienda: están en la tabla de hogares y, repetidas en cada miembro, en la de personas
+_DEL_HOGAR = {
+    "energia": "La vivienda tiene energía eléctrica (P8520S1; capítulo vivienda)",
+    "acueducto": "La vivienda tiene acueducto (P8520S5; vivienda)",
+    "alcantarillado": "La vivienda tiene alcantarillado (P8520S3; vivienda)",
+    "recoleccion_basuras": "La vivienda tiene recolección de basuras (P8520S4; vivienda)",
+    "gas_natural": "El hogar tiene gas natural conectado a red pública (P5666; servicios)",
+    "internet_hogar": "El hogar tiene conexión a internet (P1075; condiciones)",
+    "tenencia_vivienda": "La vivienda que ocupa el hogar es propia, en arriendo, etc. (P5095; tenencia)",
+    "se_considera_pobre": "El jefe o el cónyuge se considera pobre (P5230; condiciones)",
+}
+# Variables armonizadas de cada nivel y su contenido. Las que dependen de un capítulo aparecen si se carga.
 ETIQUETAS = {
     "persona": {**_COMUNES, "sexo": "Sexo al nacer (P6020)", "edad": "Años cumplidos (P6040)",
                 "parentesco": "Parentesco con el jefe o la jefa del hogar (P6051)",
-                "etnia": "Autorreconocimiento étnico (P6080)"},
-    "hogar": dict(_COMUNES),
+                "etnia": "Autorreconocimiento étnico (P6080)",
+                "afiliado_salud": "Afiliado(a) al sistema de seguridad social en salud (P6090; salud). «No sabe» cuenta "
+                                  "como no afiliado, como en el DANE",
+                "regimen_salud": "Régimen de los afiliados: contributivo, especial o subsidiado (P6100; salud)",
+                "asiste": "Actualmente estudia (P8586; educación, 5 años y más)",
+                "anios_educacion": "Años de educación aprobados, de primero de primaria en adelante (educación, 5 años y "
+                                   "más). Se cuentan como en el DANE; vea la guía",
+                "usa_computador": "Usa computador de escritorio, portátil o tableta (P1910, P1911, P1912; tic, 5 años y "
+                                  "más)",
+                "usa_internet": "Usa internet en cualquier lugar (P1084; tic)",
+                "usa_celular": "Tiene o usa teléfono celular (P1082, P5504; tic)",
+                **_DEL_HOGAR},
+    "hogar": {**_COMUNES, **_DEL_HOGAR},
 }
 NIVELES = tuple(ETIQUETAS)
 
@@ -232,13 +262,80 @@ def _categorica(codigos: pd.Series, mapa: dict, nombre: str) -> pd.Series:
     return pd.to_numeric(codigos, errors="coerce").map(mapa).astype(CATEGORIAS[nombre])
 
 
+def _num(df: pd.DataFrame, columna: str) -> pd.Series:
+    return pd.to_numeric(df[columna], errors="coerce")
+
+
+def _si(df: pd.DataFrame, columna: str, si=(1,)) -> pd.Series:
+    """True si la respuesta es una de ``si``; vacía donde no hay respuesta."""
+    valores = _num(df, columna)
+    return valores.isin(si).astype("boolean").mask(valores.isna())
+
+
+def anios_educacion(df: pd.DataFrame) -> pd.Series:
+    """
+    Años de educación aprobados, como los cuenta el DANE en la ECV (Cuadro 18 de la serie y el IPM).
+
+    Se cuenta desde primero de primaria. Quien no estudia: el grado aprobado de primaria, secundaria o media (P8587S1;
+    la media va de 10 a 13, con la normal) o, en la educación superior, 11 más los años aprobados en ella (P6211).
+    Quien estudia: el grado anterior al que cursa (P1088S1) o, en la superior, 11 más los años aprobados (P6216).
+    Ninguno y preescolar son 0. Vacía para quien no tiene el capítulo de educación (menores de 5 años).
+    """
+    estudia = _num(df, "P8586").eq(1)
+    nivel, grado = _num(df, "P8587"), _num(df, "P8587S1")
+    no_estudia = np.select([nivel.isin([1, 2]), nivel.between(3, 5), nivel >= 6],
+                           [0, grado, 11 + _num(df, "P6211").fillna(0)], np.nan)
+    matricula, cursa = _num(df, "P1088"), _num(df, "P1088S1")
+    estudiante = np.select([matricula.eq(1), matricula.between(2, 4), matricula >= 5],
+                           [0, cursa - 1, 11 + _num(df, "P6216").fillna(0)], np.nan)
+    return pd.Series(np.where(estudia, estudiante, no_estudia), index=df.index, dtype="float64")
+
+
+_EDUCACION = ("P8586", "P8587", "P8587S1", "P6211", "P1088", "P1088S1", "P6216")
+
+
+def _por_capitulo(df: pd.DataFrame) -> dict[str, pd.Series]:
+    """Las armonizadas de los capítulos distintos de Características, si están sus columnas."""
+    nuevas = {}
+    if "P6090" in df:
+        nuevas["afiliado_salud"] = _si(df, "P6090")
+        if "P6100" in df:
+            nuevas["regimen_salud"] = _categorica(df["P6100"].where(_num(df, "P6090").eq(1)), _REGIMEN, "regimen_salud")
+    if "P8586" in df:
+        nuevas["asiste"] = _si(df, "P8586")
+    if all(c in df for c in _EDUCACION):
+        nuevas["anios_educacion"] = anios_educacion(df)
+    if usos := [c for c in ("P1910", "P1911", "P1912") if c in df]:
+        frecuencias = pd.concat([_num(df, c) for c in usos], axis=1)  # 1 a 4: con alguna frecuencia; 5: no lo usa
+        nuevas["usa_computador"] = frecuencias.isin([1, 2, 3, 4]).any(axis=1).astype("boolean").mask(
+            frecuencias.isna().all(axis=1))
+    if "P1084" in df:
+        nuevas["usa_internet"] = _si(df, "P1084", si=(1, 2, 3, 4))
+    if "P1082" in df:
+        celular = _si(df, "P1082")
+        if "P5504" in df:  # no tiene celular, pero usa uno
+            celular = celular | _num(df, "P5504").eq(1)
+        nuevas["usa_celular"] = celular
+    for nombre, columna in _SERVICIOS:
+        if columna in df:
+            nuevas[nombre] = _si(df, columna)
+    if "P1075" in df:
+        nuevas["internet_hogar"] = _si(df, "P1075")
+    if "P5095" in df:
+        nuevas["tenencia_vivienda"] = _categorica(df["P5095"], _TENENCIA, "tenencia_vivienda")
+    if "P5230" in df:
+        nuevas["se_considera_pobre"] = _si(df, "P5230")
+    return nuevas
+
+
 def harmonize(df: pd.DataFrame) -> pd.DataFrame:
     """
     Agrega las variables armonizadas (en minúscula) a una tabla de la ECV con las variables originales del DANE.
 
-    Las que se pueden calcular con las columnas que hay: ``fex``, ``area``, ``region`` y ``departamento`` con la
-    geografía de la vivienda; ``sexo``, ``edad``, ``parentesco`` y ``etnia`` con Características. ``load`` la llama
-    sola; sirve para una tabla leída por fuera de ``load``.
+    Las que se pueden calcular con las columnas que hay (``dd.ecv.ETIQUETAS``): ``fex``, ``area``, ``region`` y
+    ``departamento`` con la geografía de la vivienda; ``sexo``, ``edad``, ``parentesco`` y ``etnia`` con Características;
+    y las de los demás capítulos si están sus columnas, como ``afiliado_salud`` (Salud) o ``anios_educacion``
+    (Educación). ``load`` la llama sola; sirve para una tabla leída por fuera de ``load``.
 
     Parámetros
     ----------
@@ -285,6 +382,7 @@ def harmonize(df: pd.DataFrame) -> pd.DataFrame:
         nuevas["parentesco"] = _categorica(df["P6051"], _PARENTESCO, "parentesco")
     if "P6080" in df:
         nuevas["etnia"] = _categorica(df["P6080"], _ETNIA, "etnia")
+    nuevas.update(_por_capitulo(df))
     return pd.concat([df, pd.DataFrame(nuevas, index=df.index)], axis=1)
 
 

@@ -5,7 +5,9 @@ from __future__ import annotations
 import numbers
 from typing import Iterable
 
+from .agregados import clear_cache, serie_indicadores
 from .downloader import _CATALOGOS, ECVDownloader
+from .indicadores import GLOSARIO, indicadores
 from .loader import (CATEGORIAS, ETIQUETAS, KEYS_HOGAR, KEYS_PERSONA, MODULOS, NIVELES, UNIDADES, _root, available,
                      find_files, harmonize, load)
 
@@ -95,6 +97,7 @@ def download(
 
 
 __all__ = [
-    "download", "available", "find_files", "load", "harmonize", "MODULOS", "UNIDADES", "NIVELES", "KEYS_HOGAR",
-    "KEYS_PERSONA", "ETIQUETAS", "CATEGORIAS", "ANIOS_DISPONIBLES",
+    "download", "available", "find_files", "load", "harmonize", "indicadores", "serie_indicadores", "clear_cache",
+    "MODULOS", "UNIDADES", "NIVELES", "KEYS_HOGAR",
+    "KEYS_PERSONA", "ETIQUETAS", "CATEGORIAS", "GLOSARIO", "ANIOS_DISPONIBLES",
 ]
