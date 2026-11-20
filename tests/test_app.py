@@ -789,6 +789,7 @@ def test_diccionario_eevv(encuesta):
 def test_las_paginas_estan_en_la_navegacion():
     inicio = (PAGINAS.parent / "Inicio.py").read_text(encoding="utf-8")
     assert "paginas/eevv_vitales.py" in inicio
+    assert "paginas/emicron_micronegocios.py" in inicio
 
 
 def test_descargar_emicron(tmp_path, monkeypatch):
@@ -832,3 +833,64 @@ def test_citar_incluye_la_emicron():
     assert "EMICRON" in at.code[0].value  # el título del software
     assert "Encuesta de Micronegocios (EMICRON) [microdatos]" in at.code[2].value
     assert "Estadísticas Vitales y EMICRON" in Path(dd.__file__).parents[2].joinpath("CITATION.cff").read_text(encoding="utf-8")
+
+
+# ---------------------------------------------------------------------------------------------------- #
+# EMICRON: página Micronegocios
+# ---------------------------------------------------------------------------------------------------- #
+@pytest.fixture
+def app_emicron(emicron_root, monkeypatch):
+    monkeypatch.setitem(dd.config._session, "emicron", emicron_root)
+    return AppTest.from_file(str(PAGINAS / "emicron_micronegocios.py"), default_timeout=60)
+
+
+def _indicadores_emicron(root, anios, ciudades=False):
+    import warnings
+    from dane_data.app._ui import fmt_num, fmt_pct
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        e = dd.emicron.load(anios, root=root)
+        e = e[e["ciudad"].notna()] if ciudades else e
+        r = dd.emicron.indicadores(e).iloc[-1]
+    return fmt_num(r["micronegocios"]), fmt_num(r["valor_agregado"] / 1e9, 1), fmt_pct(r["pct_rut"])
+
+
+def test_emicron_pagina_nacional(app_emicron, emicron_root):
+    at = app_emicron.run()
+    assert not at.exception
+    assert next(m for m in at.multiselect if m.label == "Años").value == [2019, 2021, 2024]  # sin 2025
+    metricas = {m.label: m.value for m in at.metric}
+    micronegocios, va, rut = _indicadores_emicron(emicron_root, [2019, 2021, 2024])
+    assert metricas["Micronegocios"] == micronegocios
+    assert metricas["Valor agregado (billones de $)"] == va  # de miles de pesos a billones
+    assert metricas["Con RUT"] == rut
+    assert next(m for m in at.metric if m.label == "Micronegocios").delta.endswith("% vs 2021")
+    assert not next(m for m in at.metric if m.label == "Con RUT").delta  # 2021 no trae el RUT: sin variación
+    # Los avisos de la carga se ven en la página, también después de la caché
+    assert any("2021: sin el módulo" in w.value or "2019" in w.value for w in [*at.main.warning, *at.main.info])
+    at.radio[1].set_value("Un año").run()
+    assert not at.exception
+    next(s for s in at.selectbox if s.label == "Variable").set_value("Ventas o ingresos").run()
+    next(s for s in at.selectbox if s.label == "Desagregar por").set_value("Sexo del propietario").run()
+    assert not at.exception
+    assert any("no publica este cruce" in c.value for c in at.caption)  # ventas por sexo: el DANE no lo publica
+
+
+def test_emicron_pagina_24_ciudades(app_emicron, emicron_root):
+    at = app_emicron.run()
+    at.radio[0].set_value("24 ciudades (2019–2025)").run()
+    assert not at.exception
+    assert next(m for m in at.multiselect if m.label == "Años").value == [2019, 2021, 2024, 2025]
+    assert next(m for m in at.metric if m.label == "Micronegocios").value == _indicadores_emicron(
+        emicron_root, [2019, 2021, 2024, 2025], ciudades=True)[0]
+    assert not any("24 ciudades principales" in w.value for w in at.main.warning)  # ya se eligió esa cobertura
+    assert 'emi = emi[emi["ciudad"].notna()]' in at.code[0].value
+    assert "Ciudad" in next(s for s in at.selectbox if s.label == "Desagregar por").options
+
+
+def test_emicron_pagina_sin_datos(tmp_path, monkeypatch):
+    monkeypatch.setitem(dd.config._session, "emicron", tmp_path / "nada")
+    monkeypatch.setattr("streamlit.page_link", lambda *a, **k: None)
+    at = AppTest.from_file(str(PAGINAS / "emicron_micronegocios.py"), default_timeout=60).run()
+    assert not at.exception
+    assert any("EMICRON" in w.value for w in at.main.warning)

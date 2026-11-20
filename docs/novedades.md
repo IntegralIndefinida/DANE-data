@@ -12,7 +12,8 @@
   de los anexos. {dd}`emicron.load_personal()` carga el detalle de los trabajadores, socios y familiares.
 * El diccionario de la EMICRON en {dd}`diccionario()`, {dd}`buscar_variable()` y {dd}`describir()`
   (`encuesta="emicron"`) y en la página de diccionario de la aplicación.
-* La EMICRON en la aplicación (Descargar, Inicio y Cómo citar) y en la terminal: `dane-data descargar emicron`,
+* La EMICRON en la aplicación: una página nueva, *Micronegocios*, con el total nacional (2019–2024) o las 24 ciudades
+  (2019–2025), y en Descargar, Inicio y Cómo citar. También en la terminal: `dane-data descargar emicron`,
   `dane-data config --emicron`.
 * {dd}`set_paths()` acepta `emicron=`.
 

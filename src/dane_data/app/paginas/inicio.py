@@ -53,7 +53,7 @@ st.subheader("¿Cómo empiezo?")
 st.markdown(
     "1. **Datos:** si aún no los tiene, vaya a **Descargar datos** (menú izquierdo). "
     "Si ya los descargó, indique la carpeta abajo.\n"
-    "2. **Explore:** abra **Indicadores laborales**, **Indicadores industriales** o **Nacimientos y defunciones**, "
+    "2. **Explore:** abra **Indicadores laborales**, **Indicadores industriales**, **Nacimientos y defunciones** o **Micronegocios**, "
     "elija años y filtros.\n"
     "3. **Exporte:** cada tabla se descarga en CSV, Excel o Stata. Cada página muestra el "
     "**código Python** equivalente para pasar a un notebook cuando esté listo."
