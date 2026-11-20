@@ -442,7 +442,8 @@ def load(
         )
     if isinstance(modulos, str):
         modulos = [modulos]
-    pedidos = None if modulos is None else [_modulo_valido(m) for m in modulos]
+    # Los factores se leen siempre y aparte (_factor quita sus filas vacías o repetidas): no se unen como un módulo
+    pedidos = None if modulos is None else [m for m in map(_modulo_valido, modulos) if m not in FACTORES]
     if pedidos is not None and "personal_ocupado" in pedidos:
         raise ValueError("personal_ocupado tiene una fila por persona: cárguelo con dane_data.emicron.load_personal.")
     if isinstance(columns, str) and columns not in ("core", "all"):

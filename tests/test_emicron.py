@@ -124,6 +124,15 @@ def test_columns_all_y_extras(emicron_root):
         _load(emicron_root, 2019, columns=["p9999"])
 
 
+def test_factores_pedidos_como_modulo_no_se_unen(emicron_root):
+    """Los factores se leen siempre aparte: pedirlos en modulos no los une como un módulo (2021 trae una clave repetida)."""
+    e = dd.emicron.load(2021, modulos=["fex_dpto", "fex_ajustado"], root=emicron_root)
+    assert e["fex_dpto"].tolist() == [270.0, 170.0, 95.0] and e["fex"].tolist() == [260.0, 180.0, 90.0]
+    assert list(e.columns) == dd.emicron.CORE
+    todo = dd.emicron.load(2021, modulos="fex_dpto", columns="all", root=emicron_root)
+    assert "fex_micro_dpto" not in todo.columns
+
+
 def test_load_errores(emicron_root, tmp_path):
     with pytest.raises(FileNotFoundError, match="dane_data.emicron.download"):
         dd.emicron.load(2020, root=emicron_root)
