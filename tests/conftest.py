@@ -1,4 +1,4 @@
-"""Datos sintéticos que imitan las rarezas de cada época de la GEIH, la EAM y las Estadísticas Vitales."""
+"""Datos sintéticos que imitan las rarezas de cada época de la GEIH, la EAM, las Estadísticas Vitales y la ECV."""
 
 from pathlib import Path
 
@@ -229,4 +229,40 @@ def eevv_root(tmp_path):
            "COD_DPTO,COD_MUNIC,A_DEFUN,SIT_DEFUN,ANO,MES,SEXO,CODPTORE,CODMUNRE,AREA_RES,REGSOCIALMADRE,T_GES,T_GES_AGRU_CIE,PESO_NAC,"
            "EDAD_MADRE,EST_CIVM,NIV_EDUM,C_BAS1,CAUSA_667,CAU_HOMOL\n"
            '"68","755","1","1","2025","12","1","68","755","1","2",4,"4",6,4,"6","09","P018","402","080"\n')
+    return root
+
+
+@pytest.fixture
+def ecv_root(tmp_path):
+    """
+    La ECV con las rarezas del ANDA: en las tablas de hogar el hogar es SECUENCIA_ENCUESTA; 2018 trae DPTO y los
+    factores del CNPV 2018 aparte; 2020 no trae REGION; 2025 con encabezados en minúscula y coma decimal.
+    """
+    root = tmp_path / "ecv"
+    d = root / "datos"
+    viv = "DIRECTORIO;SECUENCIA_ENCUESTA;SECUENCIA_P;ORDEN;{geo};FEX_C;CLASE;P4005;P4015\n"
+    hog = "DIRECTORIO;SECUENCIA_ENCUESTA;SECUENCIA_P;ORDEN;FEX_C;P5000;P5010\n"
+    per = "DIRECTORIO;SECUENCIA_ENCUESTA;SECUENCIA_P;ORDEN;FEX_C;P6020;P6040;P6051;P6080\n"
+
+    # --- 2025: la vivienda 1 (Bogotá, cabecera) tiene dos hogares; la 2 es de Antioquia, rural
+    _write(d / "2025" / "vivienda" / "Datos de la vivienda.csv", viv.format(geo="P1_DEPARTAMENTO;REGION").lower()
+           + "1;1;1;1;11;5;100,5;1;1;2\n2;1;1;1;5;6;20;2;3;1\n")
+    _write(d / "2025" / "servicios" / "Servicios del hogar.csv", hog.lower()
+           + "1;1;1;1;100,5;3;2\n1;2;1;1;100,5;1;1\n2;1;1;1;20;2;1\n")
+    _write(d / "2025" / "caracteristicas" / "Características y composición del hogar.csv", per.lower()
+           + "1;1;1;1;100,5;1;45;1;6\n1;2;1;2;100,5;2;8;3;6\n1;1;2;1;100,5;2;70;1;5\n"
+             "2;1;1;1;20;1;30;1;1\n2;2;1;2;20;2;29;2;1\n")
+    _write(d / "2025" / "salud" / "Salud.csv", "DIRECTORIO;SECUENCIA_ENCUESTA;SECUENCIA_P;ORDEN;FEX_C;P6090\n"
+           "1;1;1;1;100,5;1\n1;2;1;2;100,5;2\n1;1;2;1;100,5;1\n2;1;1;1;20;9\n")  # falta una persona
+
+    # --- 2018: DPTO, y el FEX_C de los capítulos no es el del CNPV 2018
+    _write(d / "2018" / "vivienda" / "Datos de la vivienda.csv", viv.format(geo="REGION;DPTO") + "7;1;1;1;2;11;9;2;2;3\n")
+    _write(d / "2018" / "servicios" / "Servicios del hogar.csv", hog + "7;1;1;1;9;2;1\n")
+    _write(d / "2018" / "caracteristicas" / "Caracteristicas y composicion del hogar.csv", per + "7;1;1;1;9;2;33;1;6\n")
+    _write(d / "2018" / "factores" / "Factores de expansión 2018 basados en el CNPV 2018.csv", "DIRECTORIO;FEX_C\n7;5,5\n")
+
+    # --- 2020: sin REGION; la parte rural de Bogotá es de la región Oriental
+    _write(d / "2020" / "vivienda" / "Datos de la vivienda.csv", viv.format(geo="P1_DEPARTAMENTO") + "9;1;1;1;11;4;2;1;1\n")
+    _write(d / "2020" / "servicios" / "Servicios del hogar.csv", hog + "9;1;1;1;4;1;1\n")
+    _write(d / "2020" / "caracteristicas" / "Caracteristicas y composicion del hogar.csv", per + "9;1;1;1;4;1;60;1;6\n")
     return root

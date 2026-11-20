@@ -6,7 +6,8 @@ import numbers
 from typing import Iterable
 
 from .downloader import _CATALOGOS, ECVDownloader
-from .loader import MODULOS, _root, available, find_files
+from .loader import (CATEGORIAS, ETIQUETAS, KEYS_HOGAR, KEYS_PERSONA, MODULOS, NIVELES, UNIDADES, _root, available,
+                     find_files, harmonize, load)
 
 ANIOS_DISPONIBLES = sorted(_CATALOGOS)
 
@@ -93,4 +94,7 @@ def download(
     return dl.run_pipeline(target_years=years, modulos=modulos)
 
 
-__all__ = ["download", "available", "find_files", "MODULOS", "ANIOS_DISPONIBLES"]
+__all__ = [
+    "download", "available", "find_files", "load", "harmonize", "MODULOS", "UNIDADES", "NIVELES", "KEYS_HOGAR",
+    "KEYS_PERSONA", "ETIQUETAS", "CATEGORIAS", "ANIOS_DISPONIBLES",
+]
