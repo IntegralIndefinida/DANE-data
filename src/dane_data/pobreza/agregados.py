@@ -62,7 +62,7 @@ def _usados(anio: int, ruta: Path, empalme: bool, root) -> list[Path]:
     usados = [ruta]
     if empalme and anio <= 2021:
         nombres = (["empalme_2012_2020"] if anio <= 2020 else []) + (["lineas_2012_2018"] if anio <= 2018 else []) \
-                  + (["hogares_empalmado_2021"] if anio == 2021 else [])
+                  + (["hogares_empalmado_2021", "hogares_empalmado_dpto_2021"] if anio == 2021 else [])
         carpeta = _root(root) / "datos" / "empalme"
         usados += [r for n in nombres if (r := _archivo(carpeta, n))]  # si falta, load lo reporta
     return usados
@@ -98,6 +98,7 @@ def serie_indicadores(
     dropna: bool = True,
     root=None,
     progress=None,
+    departamental: bool = False,
 ) -> pd.DataFrame:
     """
     Indicadores de pobreza por año sin tener toda la serie en memoria.
@@ -121,6 +122,8 @@ def serie_indicadores(
         Carpeta raíz. Por defecto, la configurada.
     progress
         Función ``progress(fraccion, mensaje)`` que recibe el avance.
+    departamental
+        Con el factor y el ingreso departamentales, como el anexo departamental del DANE (vea :func:`indicadores`).
 
     Devuelve
     --------
@@ -166,7 +169,8 @@ def serie_indicadores(
         if progress:
             progress(i / len(archivos), f"Pobreza {anio} (la primera vez lee los archivos del DANE)")
         d = _armonizado(anio, ruta, empalme, root)
-        partes.append(indicadores(d[_mascara(d, filtros)] if filtros else d, por=llaves, dropna=dropna))
+        partes.append(indicadores(d[_mascara(d, filtros)] if filtros else d, por=llaves, dropna=dropna,
+                                  departamental=departamental))
     if progress:
         progress(1.0, "Listo")
     return pd.concat(partes, ignore_index=True)

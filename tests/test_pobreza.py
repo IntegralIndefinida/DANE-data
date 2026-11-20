@@ -86,6 +86,9 @@ def pobreza_root(tmp_path):
     h21 = pd.DataFrame([(h[2], h[0], h[1], h[8], 1.0, 40.0, h[8] * 2) for h in _HOGARES],
                        columns=["MES", "DIRECTORIO", "SECUENCIA_P", "INGPCUG", "FAC_EMP", "FEX_C", "INGPCUG_EMP"])
     _escribir(emp / "hogares_empalmado_2021.csv", h21)
+    h21d = pd.DataFrame([(h[2], h[0], h[1], h[8], h[8] * 3, 7.0, 1.0, h[5]) for h in _HOGARES],
+                        columns=["MES", "DIRECTORIO", "SECUENCIA_P", "INGPCUG", "INGPUG_EMP", "FEX_DPTO", "FAC_EMP", "DPTO"])
+    _escribir(emp / "hogares_empalmado_dpto_2021.csv", h21d)
     return root
 
 
@@ -150,7 +153,8 @@ def test_empalme(pobreza_root):
     # 2022 en adelante no cambia
     pd.testing.assert_frame_equal(e.loc[2022].drop(columns="empalmado"), c.loc[2022].drop(columns="empalmado"))
     assert emp.loc[emp.anio <= 2021, "empalmado"].all() and (emp.metodologia == "actualizacion").all()
-    assert emp.loc[emp.anio <= 2021, "fex_dpto"].isna().all()  # sin empalme departamental validado
+    assert emp.loc[emp.anio <= 2020, "fex_dpto"].isna().all()  # el DANE no publica departamentos empalmados antes de 2021
+    assert (emp.loc[emp.anio == 2021, "fex_dpto"] == 7).all()
 
 
 def test_empalme_exige_todos_los_hogares_y_los_archivos(pobreza_root):
@@ -189,7 +193,7 @@ def test_find_files_y_available(pobreza_root):
     assert list(dd.pobreza.find_files([2014, 2030], root=pobreza_root)) == [2014]
     av = dd.pobreza.available(root=pobreza_root)
     assert av.anio.notna().sum() == 9 and not av.personas.any()
-    assert set(av.loc[av.anio.isna(), "archivo"]) == {"empalme_2012_2020", "lineas_2012_2018", "hogares_empalmado_2021"}
+    assert set(av.loc[av.anio.isna(), "archivo"]) == set(dd.pobreza.ARCHIVOS_EMPALME)
     with pytest.raises(FileNotFoundError, match="download"):
         dd.pobreza.load(2030, root=pobreza_root)
 
@@ -246,7 +250,7 @@ def test_indicadores_por_grupo_y_contexto():
     with pytest.raises(ValueError, match="Hogares sin dato"):
         dd.pobreza.indicadores(df.assign(fex=[1.0, np.nan, 1.0]))
     with pytest.raises(ValueError, match="harmonize_vars"):
-        dd.pobreza.indicadores(df.drop(columns="pobre"))
+        dd.pobreza.indicadores(df.drop(columns="ingreso_pc"))
 
 
 def test_indicadores_con_load(pobreza_root):
@@ -287,7 +291,8 @@ def test_serie_usa_la_cache_y_se_invalida(pobreza_root, cache_tmp, monkeypatch):
     monkeypatch.setattr(loader, "read_table", lambda ruta, **kw: lecturas.append(Path(ruta).name) or leer(ruta, **kw))
     primera = dd.pobreza.serie_indicadores([2019, 2021], empalme=True, root=pobreza_root)
     # 2019 y 2021 no usan las líneas de 2012–2018: no se leen
-    assert sorted(set(lecturas)) == ["empalme_2012_2020.csv", "hogares.csv", "hogares_empalmado_2021.csv"]
+    assert sorted(set(lecturas)) == ["empalme_2012_2020.csv", "hogares.csv", "hogares_empalmado_2021.csv",
+                                     "hogares_empalmado_dpto_2021.csv"]
     lecturas.clear()
     pd.testing.assert_frame_equal(dd.pobreza.serie_indicadores([2019, 2021], empalme=True, root=pobreza_root), primera)
     assert lecturas == []
@@ -385,3 +390,33 @@ def test_cli_estado_pobreza(pobreza_root, tmp_path, monkeypatch, capsys):
     monkeypatch.setitem(dd.config._session, "pobreza", tmp_path / "nada")
     assert cli.main(["estado"]) == 0
     assert "Pobreza monetaria: sin datos" in capsys.readouterr().out
+
+
+# ---------------------------------------------------------------------------------------------------- #
+# Cifras departamentales
+def test_indicadores_departamentales(pobreza_root):
+    df = dd.pobreza.load(2025, root=pobreza_root)
+    with pytest.warns(UserWarning, match="departamental=True"):
+        nacional = dd.pobreza.indicadores(df, por="departamento")
+    dpto = dd.pobreza.indicadores(df, por="departamento", departamental=True)
+    # fex_dpto = 1,1 × fex en los datos sintéticos
+    assert np.allclose(dpto.personas, nacional.personas * 1.1) and np.allclose(dpto.hogares, nacional.hogares * 1.1)
+
+
+def test_departamental_con_empalme(pobreza_root):
+    emp = dd.pobreza.load([2019, 2021, 2022], root=pobreza_root, empalme=True)
+    e = emp.set_index(["anio", "DIRECTORIO"])
+    # 2021: ingreso y factor del archivo departamental, distintos de los nacionales
+    assert (e.loc[2021, "fex_dpto"] == 7).all() and (e.loc[2021, "fex"] == 40).all()
+    assert np.allclose(e.loc[2021, "ingreso_pc_dpto"], e.loc[2021, "ingreso_pc"] / 2 * 3)
+    assert e.loc[2019, "fex_dpto"].isna().all() and e.loc[2022, "fex_dpto"].notna().all()
+    with pytest.raises(ValueError, match=r"\[2019\].*antes de 2021"):
+        dd.pobreza.indicadores(emp, por=["anio", "departamento"], departamental=True)
+    r = dd.pobreza.indicadores(emp[emp.anio == 2021], por="departamento", departamental=True)
+    # Todos pobres con la línea nacional? el ingreso departamental es 1,5 × el nacional empalmado
+    nac = dd.pobreza.indicadores(emp[emp.anio == 2021], por="anio")
+    assert r.personas.sum() == pytest.approx(7 * (4 + 2 + 3)) and nac.personas[0] == 40 * 9
+    # Sin el archivo departamental, 2021 queda sin factor departamental (el nacional funciona igual)
+    (pobreza_root / "datos" / "empalme" / "hogares_empalmado_dpto_2021.csv").unlink()
+    sin = dd.pobreza.load(2021, root=pobreza_root, empalme=True)
+    assert sin.fex_dpto.isna().all() and (sin.ingreso_pc_dpto == sin.ingreso_pc).all()

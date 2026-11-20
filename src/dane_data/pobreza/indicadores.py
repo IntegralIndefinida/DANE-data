@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import warnings
 from typing import Iterable
 
 import numpy as np
@@ -26,11 +27,13 @@ GLOSARIO = {
     "Coeficiente de Gini": "Desigualdad del ingreso per cápita entre las personas, de 0 (todos tienen lo mismo) a 1 (una "
                            "tiene todo).",
     "Peso de las personas": "Factor de expansión del hogar por sus personas (fex × personas). Las personas y los pobres "
-                            "están en personas, no en miles. Por departamento se usa el mismo factor: el departamental "
-                            "(fex_dpto) todavía no se usa.",
+                            "están en personas, no en miles.",
+    "Cifras departamentales": "Con departamental=True se usan el factor departamental (fex_dpto) y, en 2021 con empalme, "
+                              "el ingreso empalmado departamental (ingreso_pc_dpto), como el anexo departamental del DANE. "
+                              "El DANE no publica cifras departamentales empalmadas antes de 2021.",
 }
 
-_NECESARIAS = ("ingreso_pc", "linea_pobreza", "linea_pobreza_extrema", "pobre", "pobre_extremo", "fex", "personas")
+_NECESARIAS = ("ingreso_pc", "linea_pobreza", "linea_pobreza_extrema", "fex", "personas")
 # Lo que no se puede promediar entre sí: si hay más de un valor, tiene que estar en ``por``
 _CONTEXTO = ("anio", "metodologia", "empalmado")
 
@@ -41,16 +44,17 @@ def _fgt(y: np.ndarray, z: np.ndarray, w: np.ndarray, alfa: int) -> float:
     return float(np.sum(w[pobre] * ((z[pobre] - y[pobre]) / z[pobre]) ** alfa) / np.sum(w) * 100)
 
 
-def _grupo(d: pd.DataFrame) -> dict:
-    y, w = d["ingreso_pc"].to_numpy(float), (d["fex"] * d["personas"]).to_numpy(float)
+def _grupo(d: pd.DataFrame, ingreso: str, factor: str) -> dict:
+    # Todo sale del mismo ingreso, líneas y peso: así pobres e incidencia no pueden contradecirse
+    y, w = d[ingreso].to_numpy(float), (d[factor] * d["personas"]).to_numpy(float)
     z, zi = d["linea_pobreza"].to_numpy(float), d["linea_pobreza_extrema"].to_numpy(float)
     total = float(np.sum(w))
     return {
         "personas": total,
-        "hogares": float(d["fex"].sum()),
+        "hogares": float(d[factor].sum()),
         "hogares_muestra": len(d),
-        "pobres": float(np.sum(w * d["pobre"])),
-        "pobres_extremos": float(np.sum(w * d["pobre_extremo"])),
+        "pobres": float(np.sum(w[y < z])),
+        "pobres_extremos": float(np.sum(w[y < zi])),
         "incidencia": _fgt(y, z, w, 0),
         "incidencia_extrema": _fgt(y, zi, w, 0),
         "brecha": _fgt(y, z, w, 1),
@@ -64,7 +68,8 @@ def _grupo(d: pd.DataFrame) -> dict:
     }
 
 
-def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, dropna: bool = True) -> pd.DataFrame:
+def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, dropna: bool = True,
+                departamental: bool = False) -> pd.DataFrame:
     """
     Incidencia, brecha y severidad de la pobreza y la pobreza extrema, Gini e ingreso per cápita, por grupo.
 
@@ -80,6 +85,9 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, dropna
         sola fila.
     dropna
         Quitar los hogares sin dato en ``por``. Con False, los grupos suman el total.
+    departamental
+        Calcular como el anexo departamental del DANE: con el factor departamental (``fex_dpto``) y, en 2021 con empalme,
+        el ingreso empalmado departamental (``ingreso_pc_dpto``). Úselo al agrupar por ``departamento``.
 
     Devuelve
     --------
@@ -93,7 +101,13 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, dropna
     -----
     ValueError
         Si faltan las variables armonizadas, a un hogar le falta un dato, o ``df`` junta varios años, metodologías o
-        datos con y sin empalme sin que estén en ``por``: un promedio de ellos no es ninguna cifra publicada.
+        datos con y sin empalme sin que estén en ``por``: un promedio de ellos no es ninguna cifra publicada. Con
+        ``departamental=True``, si no hay factor departamental (con empalme, antes de 2021).
+
+    Avisos
+    ------
+    UserWarning
+        Si se agrupa por ``departamento`` sin ``departamental=True``.
 
     Véase también
     -------------
@@ -110,18 +124,26 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, dropna
     >>> import pandas as pd
     >>> import dane_data as dd
     >>> hog = pd.DataFrame({"anio": 2025, "ingreso_pc": [100.0, 300.0], "linea_pobreza": 200.0,
-    ...                     "linea_pobreza_extrema": 120.0, "pobre": [True, False], "pobre_extremo": [True, False],
-    ...                     "fex": [10.0, 10.0], "personas": [3, 1]})
+    ...                     "linea_pobreza_extrema": 120.0, "fex": [10.0, 10.0], "personas": [3, 1]})
     >>> dd.pobreza.indicadores(hog)[["personas", "incidencia", "brecha", "gini"]]
        personas  incidencia  brecha  gini
     0      40.0        75.0    37.5  0.25
     """
-    faltan = [c for c in _NECESARIAS if c not in df.columns]
+    ingreso, factor = ("ingreso_pc_dpto", "fex_dpto") if departamental else ("ingreso_pc", "fex")
+    necesarias = [ingreso if c == "ingreso_pc" else factor if c == "fex" else c for c in _NECESARIAS]
+    faltan = [c for c in necesarias if c not in df.columns]
     if faltan:
         raise ValueError(f"Faltan {faltan}: use dd.pobreza.load(...) con harmonize_vars=True.")
     llaves = _as_list(por)
+    if "departamento" in llaves and not departamental:
+        warnings.warn("Las cifras departamentales del DANE usan el factor departamental (fex_dpto): para compararlas use "
+                      "departamental=True. Aquí se usa el factor nacional (fex).", UserWarning, stacklevel=2)
     base = df.dropna(subset=llaves) if (llaves and dropna) else df
-    if (vacios := base[list(_NECESARIAS)].isna().sum()).any():
+    if departamental and base[factor].isna().any():
+        anios = sorted(base.loc[base[factor].isna(), "anio"].unique().tolist()) if "anio" in base else []
+        raise ValueError(f"No hay factor departamental (fex_dpto) en {anios or 'algunos hogares'}: el DANE no publica "
+                         "cifras departamentales empalmadas antes de 2021.")
+    if (vacios := base[necesarias].isna().sum()).any():
         raise ValueError(f"Hogares sin dato: {vacios[vacios > 0].to_dict()}.")
     for c in _CONTEXTO:
         if c not in base.columns or c in llaves:
@@ -132,8 +154,8 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, dropna
             raise ValueError(f"Los datos tienen varios valores de {c} ({sorted(base[c].unique().tolist())}): agregue "
                              f"{c!r} a por.")
     if not llaves:
-        return pd.DataFrame([_grupo(base)])
-    filas = {clave: _grupo(d) for clave, d in base.groupby(llaves, observed=True, dropna=False, sort=True)}
+        return pd.DataFrame([_grupo(base, ingreso, factor)])
+    filas = {clave: _grupo(d, ingreso, factor) for clave, d in base.groupby(llaves, observed=True, dropna=False, sort=True)}
     res = pd.DataFrame.from_dict(filas, orient="index")
     res.index = pd.MultiIndex.from_tuples([k if isinstance(k, tuple) else (k,) for k in res.index], names=llaves)
     return _con_categorias(res.reset_index(), base, llaves)

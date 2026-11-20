@@ -92,12 +92,13 @@ ETIQUETAS = {
     "ingreso_ug": "Ingreso total de la unidad de gasto, pesos al mes (INGTOTUG)",
     "ingreso_ug_arriendo": "Ingreso total de la unidad de gasto con arriendo imputado (INGTOTUGARR, INGTOTARR)",
     "ingreso_pc": "Ingreso per cápita de la unidad de gasto con arriendo imputado (INGPCUG)",
+    "ingreso_pc_dpto": "Ingreso per cápita para las cifras departamentales: el mismo, salvo 2021 con empalme (INGPUG_EMP)",
     "linea_pobreza": "Línea de pobreza monetaria del dominio y mes, pesos por persona al mes (LP)",
     "linea_pobreza_extrema": "Línea de pobreza monetaria extrema del dominio y mes (LI)",
     "pobre": "El hogar está en pobreza monetaria: ingreso_pc < linea_pobreza",
     "pobre_extremo": "El hogar está en pobreza monetaria extrema: ingreso_pc < linea_pobreza_extrema",
     "fex": "Factor de expansión del hogar (FEX_C; con empalme, FEX_C × FEX_G)",
-    "fex_dpto": "Factor de expansión departamental del hogar (FEX_DPTO, FEX_DPTO_C)",
+    "fex_dpto": "Factor de expansión departamental del hogar (FEX_DPTO, FEX_DPTO_C); con empalme, vacío antes de 2021",
     "metodologia": "Metodología de las líneas: 'mesep' (2012–2018) o 'actualizacion' (desde 2019 y con empalme)",
     "empalmado": "Si es la serie empalmada al marco 2018 (load con empalme=True), comparable en toda 2012–2025",
 }
@@ -280,6 +281,7 @@ def harmonize(df: pd.DataFrame, anio: int) -> pd.DataFrame:
     df["ingreso_ug"] = _numero(df, "INGTOTUG")
     df["ingreso_ug_arriendo"] = _numero(df, "INGTOTUGARR", "INGTOTARR")
     df["ingreso_pc"] = _numero(df, "INGPCUG")
+    df["ingreso_pc_dpto"] = df["ingreso_pc"]
     df["linea_pobreza"] = _numero(df, "LP")
     df["linea_pobreza_extrema"] = _numero(df, "LI")
     df["fex"] = _numero(df, "FEX_C")
@@ -348,10 +350,18 @@ def _empalmar(df: pd.DataFrame, anio: int, fuentes: dict) -> pd.DataFrame:
         df = _unir_1a1(df, emp, ["MES", *LLAVES], "los hogares empalmados de 2021", anio)
         df["ingreso_pc"] = pd.to_numeric(df.pop("_ing"))
         df["fex"] = pd.to_numeric(df.pop("_fex"))
+        # Las cifras departamentales de 2021 tienen su propio ingreso y factor empalmados (el anexo departamental)
+        if (dpto := fuentes.get("hogares_empalmado_dpto_2021")) is not None:
+            dpto = dpto[["MES", *LLAVES, "INGPUG_EMP", "FEX_DPTO"]].rename(columns={"INGPUG_EMP": "_ing", "FEX_DPTO": "_fex"})
+            df = _unir_1a1(df, dpto, ["MES", *LLAVES], "los hogares empalmados departamentales de 2021", anio)
+            df["ingreso_pc_dpto"] = pd.to_numeric(df.pop("_ing"))
+            df["fex_dpto"] = pd.to_numeric(df.pop("_fex"))
+        else:
+            df["ingreso_pc_dpto"], df["fex_dpto"] = df["ingreso_pc"], np.nan
+    if anio <= 2020:
+        # El DANE no publica cifras departamentales empalmadas antes de 2021: sin factor, nadie las calcula por error
+        df["ingreso_pc_dpto"], df["fex_dpto"] = df["ingreso_pc"], np.nan
     if anio <= 2021:
-        # shortcut: el factor departamental no tiene empalme validado contra el anexo departamental; se deja vacío
-        # para que nadie calcule cifras departamentales empalmadas con él.
-        df["fex_dpto"] = np.nan
         df["metodologia"] = pd.Categorical(["actualizacion"] * len(df), dtype=CATEGORIAS["metodologia"])
     df["empalmado"] = True
     return _clasificar(df, anio)
@@ -457,6 +467,8 @@ def load(
         necesarios = {"empalme_2012_2020": min(archivos) <= 2020, "lineas_2012_2018": min(archivos) <= 2018,
                       "hogares_empalmado_2021": 2021 in archivos}
         fuentes = {n: _leer_empalme(n, root) for n, hace_falta in necesarios.items() if hace_falta}
+        if 2021 in archivos and _archivo(_root(root) / "datos" / "empalme", "hogares_empalmado_dpto_2021"):
+            fuentes["hogares_empalmado_dpto_2021"] = _leer_empalme("hogares_empalmado_dpto_2021", root)  # opcional
 
     partes = []
     for i, (anio, ruta) in enumerate(sorted(archivos.items())):
