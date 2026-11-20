@@ -223,7 +223,7 @@ ETIQUETAS = {
     "familiares_sin_remuneracion": "Trabajadores o familiares sin remuneración",
     "personal_ocupado": "Personal ocupado: el propietario más trabajadores remunerados, socios y familiares",
     "fex": "Factor de expansión de la serie vigente (ajustado en 2019–2021)",
-    "fex_dpto": "Factor de expansión para cifras por departamento", "rut": "Tiene Registro Único Tributario (RUT)",
+    "fex_dpto": "Factor de expansión para cifras por departamento (vacío en 2025)", "rut": "Tiene Registro Único Tributario (RUT)",
     "camara_comercio": "Registrado en una Cámara de Comercio",
     "salud_pension": "Aporte del propietario a salud y pensión el mes anterior",
     "sitio": "Sitio o ubicación principal del negocio",
@@ -463,7 +463,7 @@ def load(
                          "Búsquelas con dane_data.diccionario('emicron').")
     if 2025 in files:
         warnings.warn("Los microdatos de la EMICRON 2025 solo cubren las 24 ciudades principales: sus totales no son "
-                      "nacionales.", UserWarning, stacklevel=2)
+                      "nacionales, y no traen factor departamental (fex_dpto queda vacío).", UserWarning, stacklevel=2)
     if columns == "all":
         return out
     return out[[*CORE, *[c for c in out.columns if c in extras and c not in CORE]]]

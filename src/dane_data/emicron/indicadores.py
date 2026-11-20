@@ -64,7 +64,8 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = "anio", peso
         Columna o lista de columnas para agrupar, por ejemplo ``["anio", "clase"]``. Por defecto, ``"anio"``: cada año
         es un total, y sumar años no tiene sentido. ``None`` da una sola fila.
     peso
-        ``"fex"`` (por defecto) o ``"fex_dpto"``, el factor de las cifras por departamento.
+        ``"fex"`` (por defecto) o ``"fex_dpto"``, el factor de las cifras por departamento. Los micronegocios sin peso
+        (todos los de 2025 con ``"fex_dpto"``) se dejan fuera, con un aviso.
     dropna
         Quitar los micronegocios sin dato en ``por``, como los de fuera de las 24 ciudades al agrupar por ``ciudad``.
         Con False, los grupos suman el total.
@@ -88,6 +89,8 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = "anio", peso
     -----
     KeyError
         Si falta ``peso`` o alguna columna de ``por``.
+    ValueError
+        Si ningún micronegocio tiene ``peso``.
 
     Véase también
     -------------
@@ -121,7 +124,17 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = "anio", peso
     if "anio" not in por and "anio" in df.columns and df["anio"].nunique() > 1:
         warnings.warn("Los datos tienen varios años y `por` no incluye 'anio': cada micronegocio se cuenta en cada año, "
                       "así que la suma no es un total.", UserWarning, stacklevel=2)
-    w = pd.to_numeric(df[peso], errors="coerce").fillna(0.0)
+    w = pd.to_numeric(df[peso], errors="coerce")
+    # Un factor ausente no es un peso cero: esas filas no se pueden expandir (fex_dpto no existe en 2025)
+    if (sin_peso := w.isna()).any():
+        donde = (df.loc[sin_peso, "anio"].value_counts().sort_index().items() if "anio" in df.columns else [("", sin_peso.sum())])
+        detalle = ", ".join(f"{n} de {a}" if a != "" else str(n) for a, n in donde)
+        if sin_peso.all():
+            raise ValueError(f"Ningún micronegocio tiene {peso} ({detalle}). La EMICRON 2025 no trae factor departamental: "
+                             "use peso='fex'. En otros años, vuelva a descargar con dane_data.emicron.download(...).")
+        warnings.warn(f"Sin {peso}: se dejan fuera {detalle} micronegocios. La EMICRON 2025 no trae factor departamental.",
+                      UserWarning, stacklevel=2)
+        df, w = df[~sin_peso], w[~sin_peso]
     d = pd.DataFrame({"micronegocios": w, "n_muestra": 1.0}, index=df.index)
     for c in _CONTEOS:
         d[c] = pd.to_numeric(df[c], errors="coerce") * w if c in df.columns else np.nan

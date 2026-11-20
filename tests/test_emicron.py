@@ -209,6 +209,18 @@ def test_indicadores_sin_separar_anios_avisa(emicron_root):
     assert len(r) == 1 and r["n_muestra"].iloc[0] == 6
 
 
+def test_indicadores_sin_peso_dejan_fuera_esas_filas(emicron_root):
+    e = _load(emicron_root, [2024, 2025])
+    with pytest.warns(UserWarning, match="Sin fex_dpto: se dejan fuera 1 de 2025"):
+        r = dd.emicron.indicadores(e, peso="fex_dpto")
+    assert r["anio"].tolist() == [2024]  # 2025 no trae factor departamental: no se suma como cero
+    assert r[["micronegocios", "n_muestra"]].values.tolist() == [[1740.0, 3]]
+    with pytest.raises(ValueError, match="2025 no trae factor departamental: use peso='fex'"):
+        dd.emicron.indicadores(_load(emicron_root, 2025), peso="fex_dpto")
+    with pytest.warns(UserWarning, match="2025: sin consumo intermedio"):  # el sintético no trae ventas
+        assert dd.emicron.indicadores(_load(emicron_root, 2025))["micronegocios"].tolist() == [700.0]
+
+
 # ---------------------------------------------------------------------------------------------------- #
 # Diccionario
 # ---------------------------------------------------------------------------------------------------- #
@@ -273,6 +285,15 @@ def test_cli_config(tmp_path, monkeypatch):
 # ---------------------------------------------------------------------------------------------------- #
 REAL = Path(os.environ.get("DANE_DATA_TEST_EMICRON", dd.get_path("emicron")))
 hay_datos_reales = pytest.mark.skipif(not (REAL / "datos" / "2024").is_dir(), reason="sin datos reales de la EMICRON")
+
+
+@hay_datos_reales
+def test_real_2025_sin_factor_departamental():
+    with pytest.warns(UserWarning, match="24 ciudades"):
+        e = dd.emicron.load(2025, modulos=[], root=REAL)
+    assert e["fex_dpto"].isna().all() and e["fex"].notna().all()
+    with pytest.raises(ValueError, match="fex_dpto"):
+        dd.emicron.indicadores(e, peso="fex_dpto")
 
 
 @hay_datos_reales
