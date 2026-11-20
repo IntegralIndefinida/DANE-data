@@ -85,7 +85,7 @@ def _cmd_app(args) -> int:
 
 def _cmd_estado(args) -> int:
     for key, label in (("geih", "GEIH principal"), ("geih_empalme", "GEIH empalme"), ("eam", "EAM"),
-                       ("eevv", "Est. Vitales")):
+                       ("eevv", "Est. Vitales"), ("ecv", "ECV")):
         print(f"{label:15s} {config.get_path(key)}")
     for emp in (False, True):
         av = geih.available(empalme=emp)
@@ -107,14 +107,16 @@ def _cmd_estado(args) -> int:
 
 def _cmd_config(args) -> int:
     try:
-        config.set_paths(geih=args.geih, geih_empalme=args.empalme, eam=args.eam, eevv=args.eevv, save=True)
+        config.set_paths(geih=args.geih, geih_empalme=args.empalme, eam=args.eam, eevv=args.eevv, ecv=args.ecv,
+                         save=True)
     except ValueError as e:  # una carpeta vacía
         print(f"dane-data config: {e}", file=sys.stderr)
         return 2
     print(f"Guardado en {config.CONFIG_FILE}")
     for k, v in config.show_paths().items():
         print(f"  {k:13s} {v}")
-    for clave, valor in (("geih", args.geih), ("geih_empalme", args.empalme), ("eam", args.eam), ("eevv", args.eevv)):
+    for clave, valor in (("geih", args.geih), ("geih_empalme", args.empalme), ("eam", args.eam), ("eevv", args.eevv),
+                         ("ecv", args.ecv)):
         env = config._KEYS[clave][0]
         if valor is not None and os.environ.get(env):
             print(f"  Aviso: la variable de entorno {env} ({os.environ[env]}) tiene prioridad sobre el archivo "
@@ -163,6 +165,7 @@ def _parser() -> argparse.ArgumentParser:
     c.add_argument("--empalme", help="Carpeta de la GEIH empalme (la que contiene datos_csv/)")
     c.add_argument("--eam", help="Carpeta de la EAM (la que contiene datos/)")
     c.add_argument("--eevv", help="Carpeta de las Estadísticas Vitales (la que contiene datos/)")
+    c.add_argument("--ecv", help="Carpeta de la Encuesta Nacional de Calidad de Vida (la que contiene datos/)")
     c.set_defaults(fn=_cmd_config)
 
     d = sub.add_parser("descargar", help="Descargar microdatos del DANE")

@@ -9,6 +9,7 @@ Cada encuesta tiene su carpeta raíz, con esta estructura:
 <raíz empalme>/datos_csv/<año>/<mes>/*.csv  serie de empalme
 <raíz EAM>/datos/<año>/*.csv|*.txt
 <raíz EEVV>/datos/<tipo>/<año>/*.csv|*.txt  estadísticas vitales
+<raíz ECV>/datos/<año>/<módulo>/*.csv|*.dta  calidad de vida
 ```
 
 Las carpetas de los meses conservan el nombre que trae el ZIP del DANE (`Enero 2024`, `ENE_2021`…);
@@ -21,20 +22,22 @@ Por defecto todo queda en `~/dane_data_datos/`. Para usar otras carpetas (por ej
 ```python
 import dane_data as dd
 
-dd.set_paths(geih="D:/datos/GEIH", geih_empalme="D:/datos/GEIH_empalme", eam="D:/datos/EAM", eevv="D:/datos/EEVV", save=True)
+dd.set_paths(geih="D:/datos/GEIH", geih_empalme="D:/datos/GEIH_empalme", eam="D:/datos/EAM", eevv="D:/datos/EEVV",
+             ecv="D:/datos/ECV", save=True)
 ```
 
 Con `save=True` quedan guardadas en `~/.config/dane_data/config.json` para las próximas sesiones, para la
 línea de comandos y para la aplicación; sin él, valen solo para la sesión actual. Lo mismo se hace desde la
-terminal con `dane-data config --geih RUTA --empalme RUTA --eam RUTA --eevv RUTA` o desde la página de inicio de la
+terminal con `dane-data config --geih RUTA --empalme RUTA --eam RUTA --eevv RUTA --ecv RUTA` o desde la página de inicio de la
 aplicación.
 
 Cada carpeta se resuelve en este orden:
 
 1. {dd}`set_paths()` en la sesión actual.
-2. Las variables de entorno `DANE_DATA_GEIH`, `DANE_DATA_GEIH_EMPALME`, `DANE_DATA_EAM` y `DANE_DATA_EEVV`.
+2. Las variables de entorno `DANE_DATA_GEIH`, `DANE_DATA_GEIH_EMPALME`, `DANE_DATA_EAM`, `DANE_DATA_EEVV` y `DANE_DATA_ECV`.
 3. El archivo `~/.config/dane_data/config.json`.
-4. `~/dane_data_datos/geih`, `~/dane_data_datos/geih/empalme`, `~/dane_data_datos/eam` y `~/dane_data_datos/eevv`.
+4. `~/dane_data_datos/geih`, `~/dane_data_datos/geih/empalme`, `~/dane_data_datos/eam`,
+   `~/dane_data_datos/eevv` y `~/dane_data_datos/ecv`.
 
 {dd}`show_paths()` muestra las carpetas que se están usando, y {dd}`get_path()` una sola.
 
