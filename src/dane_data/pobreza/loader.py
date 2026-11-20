@@ -20,6 +20,8 @@ Lo que el DANE escribe distinto según el año (ver la tabla de diferencias del 
 
 * El departamento es ``DPTO`` o ``DEPTO``; en 2014 es un número de 1 a 24 que no es el código DANE, y en 2025 viene el
   nombre en vez del código.
+* En 2012 y 2022–2024 unos hogares rurales traen el departamento de Bogotá; se cuentan en Cundinamarca, como los demás
+  años y los anexos del DANE.
 * ``DOMINIO`` en 2017 va con tildes y en tipo título (``Bogotá``); los demás años en mayúscula sin tildes.
 * El ingreso con arriendo imputado es ``INGTOTUGARR`` hasta 2022 e ``INGTOTARR`` desde 2023; el factor departamental es
   ``FEX_DPTO_C`` en 2012–2014.
@@ -275,6 +277,9 @@ def harmonize(df: pd.DataFrame, anio: int) -> pd.DataFrame:
                  np.where(df["dominio"].isin(TRECE_CIUDADES), GRUPOS_DOMINIO[0], GRUPOS_DOMINIO[1])),
         dtype=CATEGORIAS["grupo_dominio"])
     df["departamento"] = _departamento(df, anio)
+    # En 2012 y 2022–2024 unos pocos hogares rurales traen DPTO 11 (Bogotá). Los demás años y los anexos del DANE los
+    # cuentan en Cundinamarca: la Bogotá de las cifras departamentales es solo su cabecera.
+    df.loc[df["departamento"].eq("Bogotá D.C.") & df["zona"].ne("Urbano (cabecera)"), "departamento"] = "Cundinamarca"
     for nombre, original in (("personas", "NPER"), ("personas_ug", "NPERSUG")):
         conteo = _numero(df, original)
         df[nombre] = conteo.astype("int64") if conteo.notna().all() else conteo  # vacíos: los reporta _clasificar

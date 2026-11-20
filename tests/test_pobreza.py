@@ -1,6 +1,7 @@
 """Pobreza monetaria y desigualdad: carpetas, descarga, carga, indicadores y unión con la GEIH."""
 
 import json
+import os
 import warnings
 from pathlib import Path
 
@@ -102,6 +103,12 @@ def test_armoniza_todas_las_epocas(pobreza_root):
         assert df[c].notna().all(), c
     assert set(df.dominio) == {"Bogotá", "Medellín", "Rural"}
     assert set(df.departamento) == {"Bogotá D.C.", "Antioquia", "Cundinamarca"}
+    # La zona rural con el departamento de Bogotá cuenta en Cundinamarca, como en los anexos del DANE
+    ruta = pobreza_root / "datos" / "2022" / "hogares.csv"
+    h22 = pd.read_csv(ruta, sep=";", decimal=",")
+    h22.loc[2, "Dpto"] = 11
+    h22.to_csv(ruta, sep=";", decimal=",", index=False)
+    assert dd.pobreza.load(2022, root=pobreza_root).departamento.tolist()[2] == "Cundinamarca"
     # 2014 (número de 1 a 24) y 2025 (nombre) bien traducidos
     assert (df.groupby("DIRECTORIO", observed=True).departamento.nunique() == 1).all()
     assert set(df.loc[df.DIRECTORIO == 3, "departamento"]) == {"Cundinamarca"}
@@ -420,3 +427,68 @@ def test_departamental_con_empalme(pobreza_root):
     (pobreza_root / "datos" / "empalme" / "hogares_empalmado_dpto_2021.csv").unlink()
     sin = dd.pobreza.load(2021, root=pobreza_root, empalme=True)
     assert sin.fex_dpto.isna().all() and (sin.ingreso_pc_dpto == sin.ingreso_pc).all()
+
+
+# ---------------------------------------------------------------------------------------------------- #
+# Con los datos reales: contra los anexos del DANE (tests/datos/dane_pobreza_publicado.csv)
+REAL = Path(os.environ.get("DANE_DATA_TEST_POBREZA", dd.get_path("pobreza")))
+hay_datos_reales = pytest.mark.skipif(not dd.pobreza.find_files(root=REAL), reason="sin datos reales de pobreza")
+PUBLICADO = Path(__file__).parent / "datos" / "dane_pobreza_publicado.csv"
+# Las 7 ciudades con área metropolitana: el dominio es el área metropolitana
+_AM = {"Barranquilla", "Bucaramanga", "Cali", "Cúcuta", "Manizales", "Medellín", "Pereira"}
+_ETIQUETA_DOMINIO = {d: f"{d} A.M." if d in _AM else d for d in dd.pobreza.DOMINIOS.values()}
+_GRANDES = {"13 ciudades y áreas metropolitanas": "13 ciudades y A.M.", "Otras cabeceras": "Otras cabeceras",
+            "Centros poblados y rural disperso": "Centros poblados y rural disperso"}
+# Lo publicado tiene un decimal (porcentajes), tres o cinco (Gini) o es entero (pesos) o en miles (personas)
+_TOLERANCIA = {"%": 0.08, "coeficiente": 0.0006, "pesos": 2.0, "personas": 1000.0}
+# Diferencias conocidas con el anexo (ver docs/guia/diferencias.md): ninguna por ahora
+_CONOCIDAS: set = set()
+
+
+def _calculado(anios, root):
+    """Lo mismo que publica el DANE, en el formato del CSV: (anio, nivel, dominio, indicador) -> valor."""
+    serie = lambda por=None, **kw: dd.pobreza.serie_indicadores(anios, por=por, empalme=True, root=root, **kw)  # noqa: E731
+    partes = [serie().assign(dominio="Nacional", nivel="nacional"),
+              serie("zona").assign(dominio=lambda d: d.zona.map({"Urbano (cabecera)": "Cabeceras",
+                                                                  "Rural (centros poblados y disperso)":
+                                                                  "Centros poblados y rural disperso"}), nivel="nacional"),
+              serie("grupo_dominio").assign(dominio=lambda d: d.grupo_dominio.map(_GRANDES), nivel="nacional"),
+              serie("dominio").assign(dominio=lambda d: d.dominio.map(_ETIQUETA_DOMINIO), nivel="nacional")]
+    desde_2021 = [a for a in anios if a >= 2021]
+    if desde_2021:
+        dpto = dd.pobreza.serie_indicadores(desde_2021, por="departamento", empalme=True, root=root, departamental=True)
+        partes.append(dpto.assign(dominio=dpto.departamento.astype(str), nivel="departamental"))
+    largo = pd.concat(partes, ignore_index=True).melt(id_vars=["anio", "nivel", "dominio"],
+                                                      value_vars=list(_TOLERANCIA_POR_INDICADOR), var_name="indicador")
+    largo = largo.dropna(subset=["dominio"])
+    return largo.drop_duplicates(["anio", "nivel", "dominio", "indicador"]).set_index(
+        ["anio", "nivel", "dominio", "indicador"])["value"]
+
+
+_TOLERANCIA_POR_INDICADOR = {
+    **dict.fromkeys(["incidencia", "incidencia_extrema", "brecha", "brecha_extrema", "severidad", "severidad_extrema"], "%"),
+    "gini": "coeficiente", "ingreso_pc": "pesos", "linea_pobreza": "pesos", "linea_pobreza_extrema": "pesos",
+    "personas": "personas", "pobres": "personas", "pobres_extremos": "personas",
+}
+
+
+@hay_datos_reales
+def test_real_coincide_con_lo_publicado():
+    """Toda la serie empalmada 2012–2025 contra los anexos nacional y departamental del DANE."""
+    publicado = pd.read_csv(PUBLICADO)
+    anios = sorted(set(dd.pobreza.find_files(root=REAL)) & set(publicado.anio))
+    hay_empalme = all((REAL / "datos" / "empalme" / f"{n}.csv").exists() or (REAL / "datos" / "empalme" / f"{n}.dta").exists()
+                      for n in ("empalme_2012_2020", "lineas_2012_2018", "hogares_empalmado_2021"))
+    if not hay_empalme:
+        anios = [a for a in anios if a >= 2022]
+    calculado = _calculado(anios, REAL)
+    publicado = publicado[publicado.anio.isin(anios)].set_index(["anio", "nivel", "dominio", "indicador"])
+    comparables = publicado.index.intersection(calculado.index)
+    # No se comparan las capitales sin área metropolitana de 2022 en adelante ni el total del anexo departamental
+    assert len(comparables) > 0.8 * len(publicado)
+    problemas = []
+    for clave in comparables:
+        fila = publicado.loc[clave]
+        if abs(calculado[clave] - fila.valor) > _TOLERANCIA[fila.unidad] and clave not in _CONOCIDAS:
+            problemas.append(f"{clave}: calculado {calculado[clave]:.4f}, publicado {fila.valor}")
+    assert not problemas, f"{len(problemas)} de {len(comparables)} cifras no coinciden:\n" + "\n".join(problemas[:40])
