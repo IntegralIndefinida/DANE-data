@@ -160,6 +160,7 @@ class PobrezaDownloader(DescargadorANDA):
         for k in faltantes:
             pendientes[POBREZA_KNOWN_FILES[k][2]] = pendientes.get(POBREZA_KNOWN_FILES[k][2], 0) + 1
         bajados: dict[str, bool] = {}
+        fallo_zip: set[str] = set()  # ZIP con algo que no se pudo bajar o extraer: se conservan
         for i, (anio, archivo) in enumerate(faltantes):
             self._check_stop()
             self._emit(i / max(len(faltantes), 1), f"Pobreza {anio}: {archivo}")
@@ -173,10 +174,13 @@ class PobrezaDownloader(DescargadorANDA):
             pendientes[url] -= 1
             if not bajados[url]:
                 self._fallo(f"{archivo} {anio}: no se pudo descargar {nombre}.")
+                fallo_zip.add(url)
             elif motivo := self._extraer(destino, archivo, self.data_dir / str(anio),
                                          {"catalogo": catalogo, "zip": nombre, "url": url}):
                 self._fallo(f"{archivo} {anio}: {motivo}.")
-            if not self.keep_zips and pendientes[url] == 0:
+                fallo_zip.add(url)
+            # Solo cuando todo lo de ese ZIP se extrajo: si falló, el ZIP de antes (con forzar) sirve para reintentar
+            if not self.keep_zips and pendientes[url] == 0 and url not in fallo_zip:
                 destino.unlink(missing_ok=True)
         return self._terminar("la pobreza monetaria", self.data_dir)
 

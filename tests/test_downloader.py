@@ -1121,3 +1121,21 @@ def test_pobreza_empalme_en_su_carpeta(tmp_path):
 def test_pobreza_download_valida_archivos(tmp_path):
     with pytest.raises(ValueError, match="viviendas"):
         dd.pobreza.download(2024, archivos="viviendas", root=tmp_path)
+
+
+def test_pobreza_conserva_el_zip_si_falla(tmp_path):
+    """Con keep_zips=False, el ZIP solo se borra si todo lo suyo se extrajo: si no, sirve para reintentar."""
+    url = _url_pob(2019, "hogares")
+    _, fallidos = _baja_pob(tmp_path, {url: _zip_eevv({"otra cosa.csv": HOG})}, [2019], archivos=("hogares",),
+                            keep_zips=False)
+    assert len(fallidos) == 1
+    assert list((tmp_path / "raw_zips").rglob("*.zip"))  # no se pudo extraer: se conserva
+    # Con forzar, si la descarga nueva falla, el ZIP de antes no se borra
+    zip_viejo = tmp_path / "raw_zips" / "684" / "Hogaresd.zip"
+    zip_viejo.write_bytes(_zip_eevv({"Hogares.csv": HOG}))
+    _, fallidos = _baja_pob(tmp_path, {}, [2019], archivos=("hogares",), keep_zips=False, forzar=True)
+    assert len(fallidos) == 1 and zip_viejo.exists()
+    # Si todo sale bien, se borra
+    _, fallidos = _baja_pob(tmp_path, {url: _zip_eevv({"Hogares.csv": HOG})}, [2019], archivos=("hogares",),
+                            keep_zips=False, forzar=True)
+    assert fallidos == [] and not zip_viejo.exists()
