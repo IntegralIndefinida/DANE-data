@@ -10,6 +10,7 @@ import pandas as pd
 import pytest
 
 import dane_data as dd
+from dane_data import cli
 
 
 def test_carpeta_emicron(tmp_path, monkeypatch):
@@ -221,6 +222,50 @@ def test_diccionario():
     # Las variables de CORE que vienen del DANE están en el diccionario
     origenes = {o.upper() for _, o, _ in dd.emicron.loader._ARMONIZADAS.values()} | {m.upper() for m in dd.emicron.MONTOS}
     assert origenes <= set(d)
+
+
+# ---------------------------------------------------------------------------------------------------- #
+# Línea de comandos
+# ---------------------------------------------------------------------------------------------------- #
+def test_cli_estado(emicron_root, monkeypatch, capsys):
+    monkeypatch.setitem(dd.config._session, "emicron", emicron_root)
+    assert cli.main(["estado"]) == 0
+    assert "EMICRON: 4 años (2019–2025)" in capsys.readouterr().out
+
+
+def test_cli_estado_sin_datos(tmp_path, monkeypatch, capsys):
+    monkeypatch.setitem(dd.config._session, "emicron", tmp_path / "nada")
+    assert cli.main(["estado"]) == 0
+    assert "EMICRON: sin datos" in capsys.readouterr().out
+
+
+def test_cli_descargar(monkeypatch):
+    llamada = {}
+    monkeypatch.setattr(dd.emicron, "download", lambda **kw: llamada.update(kw) or [])
+    assert cli.main(["descargar", "emicron", "--anios", "2024", "--modulos", "ventas", "tic", "--borrar-zips"]) == 0
+    assert llamada == {"years": [2024], "modulos": ["ventas", "tic"], "delete_zips": True, "forzar": False}
+    monkeypatch.setattr(dd.emicron, "download", lambda **kw: ["2024 ventas: no se pudo descargar"])
+    assert cli.main(["descargar", "emicron", "--anios", "2024"]) == 1
+
+
+@pytest.mark.parametrize("argumentos, mensaje", [
+    (["descargar", "emicron", "--tipos", "fetales"], "no aplica"),
+    (["descargar", "emicron", "--empalme"], "no aplica"),
+    (["descargar", "emicron", "--modulos", "ocupados"], "no son de esta encuesta"),
+    (["descargar", "geih", "--modulos", "ventas"], "no son de esta encuesta"),
+    (["descargar", "eam", "--modulos", "ventas"], "no aplica"),
+])
+def test_cli_opciones_de_otra_encuesta(argumentos, mensaje, capsys):
+    assert cli.main(argumentos) == 2
+    assert mensaje in capsys.readouterr().err
+
+
+def test_cli_config(tmp_path, monkeypatch):
+    monkeypatch.setattr(dd.config, "CONFIG_FILE", tmp_path / "c.json")
+    monkeypatch.setattr(dd.config, "_session", {})
+    monkeypatch.delenv("DANE_DATA_EMICRON", raising=False)
+    assert cli.main(["config", "--emicron", str(tmp_path / "x")]) == 0
+    assert json.loads((tmp_path / "c.json").read_text())["emicron"] == str(tmp_path / "x")
 
 
 # ---------------------------------------------------------------------------------------------------- #
