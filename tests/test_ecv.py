@@ -1,7 +1,9 @@
 """Encuesta Nacional de Calidad de Vida: carpetas, carga, armonización, indicadores e IPM."""
 
 import json
+import os
 import warnings
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -283,6 +285,7 @@ def test_privaciones_de_trabajo_salud_y_vivienda():
     assert _priv(P4015=7) == ["pisos"]
     assert _priv(P4005=5) == ["paredes"] and _priv(P4005=5, area="Centros poblados y rural disperso") == []
     assert _priv(P4005=10) == ["paredes"] and _priv(P4005=10, anio=2018) == []  # 2018: 9 es «sin paredes»
+    assert _priv(P4005=10, anio=2020) == []  # el DANE siguió con los códigos de 2018–2019 en 2020
     assert _priv(P4005=9, anio=2018) == ["paredes"]
     tres = ({}, {**_HIJO, "edad": 41, "P6240": 1, "P6920": 1}, {**_HIJO, "edad": 42, "P6240": 1, "P6920": 1})
     assert _priv(*tres, P5010=1) == ["hacinamiento"]  # 3 por cuarto
@@ -300,7 +303,9 @@ def test_umbral_y_agregados_del_ipm():
     r = dd.ecv.ipm(h).iloc[0]  # nacional: sin lo rural de Vaupés
     assert (r.personas, r.personas_pobres, r.incidencia) == (20, 10, 50)
     assert r.intensidad == pytest.approx(34) and r.ipm == pytest.approx(0.17)
-    assert r.pct_pisos == 50 and r.pct_aseguramiento_salud == 100
+    assert r.hogares == 20 and r.pct_pisos == 50 and r.pct_aseguramiento_salud == 100  # privaciones: % de hogares
+    assert h.region_ipm.tolist() == ["Bogotá (cabecera)", "Bogotá (cabecera)", "Orinoquía-Amazonía"]
+    assert dd.ecv.ipm(h, por="region_ipm").personas.tolist() == [10, 20]  # por región, toda la muestra (Vaupés rural)
     assert dd.ecv.ipm(h, muestra="completa").personas.tolist() == [30]
     por_dpto = dd.ecv.ipm(h, por="departamento")  # con departamento, toda la muestra
     assert por_dpto.set_index("departamento").incidencia.to_dict() == {"Bogotá D.C.": 50, "Vaupés": 100}
@@ -316,3 +321,62 @@ def test_serie_ipm_pide_los_capitulos(ecv_root):
         dd.ecv.serie_ipm(2025, root=ecv_root)
     with pytest.raises(FileNotFoundError):
         dd.ecv.serie_ipm(2019, root=ecv_root)
+
+
+# ---------------------------------------------------------------------------------------------------- #
+# Datos reales (se saltan si no están)
+# ---------------------------------------------------------------------------------------------------- #
+REAL = Path(os.environ.get("DANE_DATA_TEST_ECV", dd.get_path("ecv")))
+hay_datos_reales = pytest.mark.skipif(not (REAL / "datos").is_dir(), reason="sin datos reales de la ECV")
+DATOS = Path(__file__).parent / "datos"
+# El anexo de 2024 trae intercambiados el uso de celular de Chocó y de Córdoba (vea la guía, «Diferencias con el DANE»)
+_ECV_DIFERENCIAS = {(2024, "Chocó", "pct_usa_celular"), (2024, "Córdoba", "pct_usa_celular")}
+
+
+def _comparar(publicado: pd.DataFrame, calculado: list[pd.DataFrame], llave: str) -> pd.DataFrame:
+    calculado = pd.concat([c.rename(columns={llave: "dominio"}) if llave in c else c.assign(dominio="Total nacional")
+                           for c in calculado])
+    largo = calculado.melt(id_vars=["anio", "dominio"], var_name="indicador", value_name="calculado")
+    largo["dominio"] = largo["dominio"].astype(str)
+    return publicado.merge(largo, on=["anio", "dominio", "indicador"], how="left")
+
+
+@hay_datos_reales
+def test_real_indicadores_coinciden_con_la_serie_del_dane():
+    """Los 27 indicadores de la serie 2018–2025 del DANE, nacionales, por área y por departamento."""
+    publicado = pd.read_csv(DATOS / "dane_ecv_publicado.csv")
+    anios = sorted(set(publicado.anio) & set(dd.ecv.available(root=REAL).anio))
+    publicado = publicado[publicado.anio.isin(anios)]
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+        partes = [dd.ecv.serie_indicadores(anios, root=REAL)] + [
+            dd.ecv.serie_indicadores(anios, por=k, root=REAL).rename(columns={k: "dominio"}) for k in ("area", "departamento")]
+    x = _comparar(publicado, partes, "dominio")
+    x = x[~x.apply(lambda f: (f.anio, f.dominio, f.indicador) in _ECV_DIFERENCIAS, axis=1)]
+    assert x.calculado.notna().all(), x[x.calculado.isna()].head()
+    dif = (x.calculado - x.valor).abs()
+    en_miles = x.indicador.isin(["hogares", "personas"])
+    departamento = ~x.dominio.isin(["Total nacional", "Cabecera", "Centros poblados y rural disperso"])
+    # Nacional y por área, exacto (el Cuadro 1 va en miles); por departamento, a menos de 0,1 puntos (5 cifras de 2023 y
+    # 2024 difieren en 0,004 a 0,08)
+    tolerancia = np.where(en_miles, 500, np.where(departamento, 0.1, 0.0005 * np.maximum(1, x.valor.abs())))
+    malos = x[dif > tolerancia]
+    assert malos.empty, malos.head(10)
+
+
+@hay_datos_reales
+def test_real_ipm_coincide_con_los_anexos_del_dane():
+    """Incidencia, IPM y privaciones de los anexos del IPM, salvo 2020 (inasistencia con el SIMAT) y 21 hogares de 2021."""
+    publicado = pd.read_csv(DATOS / "dane_ipm_publicado.csv")
+    anios = sorted(set(publicado.anio) & set(dd.ecv.available(root=REAL).anio))
+    publicado = publicado[publicado.anio.isin(anios)]
+    partes = [dd.ecv.serie_ipm(anios, root=REAL)] + [
+        dd.ecv.serie_ipm(anios, por=k, root=REAL).rename(columns={k: "dominio"}) for k in ("area", "region_ipm", "departamento")]
+    x = _comparar(publicado, partes, "dominio")
+    # 2020: el DANE armó la inasistencia escolar con el SIMAT, que no está en los microdatos; lo demás de 2020 sí coincide
+    x = x[(x.anio != 2020) | ~x.indicador.isin(["incidencia", "ipm", "pct_inasistencia_escolar"])]
+    assert x.calculado.notna().all(), x[x.calculado.isna()].head()
+    # Los anexos redondean a 0,1 (el IPM a 0,001); 2021 tiene 21 hogares con otra inasistencia escolar
+    tolerancia = np.where(x.indicador == "ipm", 0.00051, np.where(x.anio == 2021, 0.15, 0.051))
+    malos = x[(x.calculado - x.valor).abs() > tolerancia]
+    assert malos.empty, malos.head(10)

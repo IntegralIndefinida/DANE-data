@@ -45,10 +45,21 @@ COLUMNAS_IPM = ("P4005", "P4015", "P8520S3", "P8520S5", "P5010", "P8526", "P8530
                 "P3336S2", "P3336S3", "P3337", "P6240", "P6250", "P6260", "P6270", "P6351", "P7250", "P6920")
 # Las que existen en todos los años (P1075, P3336Sx y P3337 son de la asistencia virtual, desde 2021)
 _NECESARIAS = tuple(c for c in COLUMNAS_IPM if c not in ("P1075", "P3336S1", "P3336S2", "P3336S3", "P3337"))
-# El DANE calcula las cifras nacionales, por área y por región sin la parte rural de estos departamentos (las
+# El DANE calcula las cifras nacionales y por área sin la parte rural de estos departamentos (las regionales y las
 # departamentales, con toda la muestra)
 _SIN_RURAL_EN_LO_NACIONAL = ("Arauca", "Casanare", "Putumayo", "Amazonas", "Guainía", "Guaviare", "Vaupés", "Vichada")
 _RURAL = "Centros poblados y rural disperso"
+# Las 6 regiones de los anexos del IPM, que no son las 9 de la ECV: la parte rural de Bogotá va en Oriental y San Andrés
+# no tiene región
+_REGIONES_IPM = {
+    "Caribe": ("Atlántico", "Bolívar", "Cesar", "Córdoba", "La Guajira", "Magdalena", "Sucre"),
+    "Oriental": ("Boyacá", "Cundinamarca", "Meta", "Norte de Santander", "Santander"),
+    "Central": ("Antioquia", "Caldas", "Caquetá", "Huila", "Quindío", "Risaralda", "Tolima"),
+    "Pacífica": ("Cauca", "Chocó", "Nariño", "Valle del Cauca"),
+    "Orinoquía-Amazonía": _SIN_RURAL_EN_LO_NACIONAL,
+}
+_REGION_IPM = {d: r for r, dptos in _REGIONES_IPM.items() for d in dptos}
+REGIONES_IPM = pd.CategoricalDtype([*_REGIONES_IPM, "Bogotá (cabecera)"])
 MUESTRAS = ("nacional", "completa")
 
 
@@ -80,7 +91,9 @@ def privaciones(df: pd.DataFrame) -> pd.DataFrame:
     Devuelve
     --------
     DataFrame
-        Una fila por hogar: ``anio``, ``DIRECTORIO``, ``SECUENCIA_P``, ``fex``, ``personas``, ``area``, ``region``,
+        Una fila por hogar: ``anio``, ``DIRECTORIO``, ``SECUENCIA_P``, ``fex``, ``personas``, ``area``, ``region``
+        (la de la ECV), ``region_ipm`` (las 6 de los anexos del IPM: Caribe, Oriental, Central, Pacífica,
+        Orinoquía-Amazonía y Bogotá (cabecera); la parte rural de Bogotá es Oriental y San Andrés queda vacía),
         ``departamento``, ``sexo_jefe``, una columna 0/1 por privación (``dd.ecv.PRIVACIONES``), ``puntaje`` (la suma
         ponderada, de 0 a 1) y ``pobre`` (puntaje de 5/15 o más).
 
@@ -100,7 +113,8 @@ def privaciones(df: pd.DataFrame) -> pd.DataFrame:
     educativo y por analfabetismo; un niño de 5 años que estudia y no tiene el dato de alimentación en el colegio no se
     priva; desde 2021, un niño que estudia solo de forma virtual cuenta como inasistente si el hogar no tiene internet o
     él no tuvo contacto con sus maestros la semana pasada. Las paredes de guadua, caña y otro vegetal son el código 7 en
-    2018–2019 y los códigos 7 y 8 desde 2020.
+    2018–2019 y los códigos 7 y 8 desde 2020; el DANE siguió con los códigos viejos en 2020, así que ese año «sin
+    paredes» (el código 10) no se priva.
 
     Ejemplos
     --------
@@ -172,7 +186,8 @@ def privaciones(df: pd.DataFrame) -> pd.DataFrame:
     p["acueducto"] = np.where(rural, jn("P8530").isin([4, 5, 6, 8, 9, 10]), ~jn("P8520S5").eq(1))
     p["alcantarillado"] = np.where(rural, jn("P8526").isin([3, 5, 6]), ~jn("P8520S3").eq(1))
     p["pisos"] = jn("P4015").eq(7)
-    recientes = j.index.get_level_values("anio") >= 2020
+    # Códigos de 2020 en adelante, pero el DANE siguió con los de 2018–2019 en 2020: «sin paredes» (10) no se priva
+    recientes = j.index.get_level_values("anio") >= 2021
     vegetal_y_desechos = np.where(recientes, jn("P4005").isin([7, 8, 9, 10]), jn("P4005").isin([7, 8, 9]))
     p["paredes"] = vegetal_y_desechos | (~rural & jn("P4005").eq(5))  # madera burda: privación solo urbana
     por_cuarto = p["personas"] / jn("P5010").where(lambda v: v > 0)
@@ -182,10 +197,14 @@ def privaciones(df: pd.DataFrame) -> pd.DataFrame:
         p[nombre] = p[nombre].fillna(False).astype(bool).astype("int8")
     p["puntaje"] = sum(p[nombre] * peso for nombre, (_, peso) in PRIVACIONES.items())
     p["pobre"] = p["puntaje"] >= UMBRAL - 1e-9
+    departamento = j["departamento"].astype("object") if "departamento" in j else pd.Series(np.nan, index=j.index)
+    region_ipm = departamento.map(_REGION_IPM).mask(departamento.eq("Bogotá D.C."),
+                                                     np.where(rural, "Oriental", "Bogotá (cabecera)"))
     describe = pd.DataFrame({"fex": j["fex"], "area": j["area"], "region": j.get("region"),
-                             "departamento": j.get("departamento"), "sexo_jefe": j.get("sexo")}, index=p.index)
-    columnas = ["anio", *KEYS_HOGAR, "fex", "personas", "area", "region", "departamento", "sexo_jefe", *PRIVACIONES,
-                "puntaje", "pobre"]
+                             "region_ipm": region_ipm.astype(REGIONES_IPM), "departamento": j.get("departamento"),
+                             "sexo_jefe": j.get("sexo")}, index=p.index)
+    columnas = ["anio", *KEYS_HOGAR, "fex", "personas", "area", "region", "region_ipm", "departamento", "sexo_jefe",
+                *PRIVACIONES, "puntaje", "pobre"]
     return pd.concat([describe, p], axis=1).reset_index()[columnas]
 
 
@@ -203,12 +222,14 @@ def ipm(df: pd.DataFrame, por: str | Iterable[str] | None = None, muestra: str |
     df
         Personas con los capítulos del IPM (vea :func:`privaciones`), o lo que devuelve :func:`privaciones`.
     por
-        Columna o lista de columnas de :func:`privaciones` para agrupar: ``"anio"``, ``"area"``, ``"region"``,
-        ``"departamento"``, ``"sexo_jefe"``. ``None`` da una sola fila.
+        Columna o lista de columnas de :func:`privaciones` para agrupar: ``"anio"``, ``"area"``, ``"region_ipm"`` (las
+        regiones de los anexos del DANE), ``"region"`` (las de la ECV), ``"departamento"``, ``"sexo_jefe"``. ``None`` da
+        una sola fila.
     muestra
         ``"nacional"``: sin la parte rural de Arauca, Casanare, Putumayo, Amazonas, Guainía, Guaviare, Vaupés y Vichada,
-        como el DANE para las cifras nacionales, por área y por región. ``"completa"``: todos los hogares, como el DANE
-        para las departamentales. Por defecto, la completa si se agrupa por ``departamento`` y la nacional si no.
+        como el DANE para las cifras nacionales y por área. ``"completa"``: todos los hogares, como el DANE para las
+        regionales y las departamentales. Por defecto, la completa si se agrupa por ``departamento``, ``region_ipm`` o
+        ``region``, y la nacional si no.
     dropna
         Quitar los hogares sin dato en ``por``.
 
@@ -216,8 +237,9 @@ def ipm(df: pd.DataFrame, por: str | Iterable[str] | None = None, muestra: str |
     --------
     DataFrame
         Una fila por grupo: ``personas``, ``personas_pobres``, ``incidencia`` (H, % de personas pobres), ``intensidad``
-        (A, % promedio de privaciones de los pobres), ``ipm`` (H × A, de 0 a 1) y ``pct_<privación>`` (% de personas en
-        hogares con esa privación). Todo se expande con ``fex`` por persona.
+        (A, % promedio de privaciones de los pobres) e ``ipm`` (H × A, de 0 a 1), sobre las personas; ``hogares`` y
+        ``pct_<privación>`` (% de hogares con esa privación, como los anexos del DANE), sobre los hogares. Todo se
+        expande con ``fex``.
 
     Lanza
     -----
@@ -238,7 +260,7 @@ def ipm(df: pd.DataFrame, por: str | Iterable[str] | None = None, muestra: str |
     """
     llaves = _lista(por)
     if muestra is None:
-        muestra = "completa" if "departamento" in llaves else "nacional"
+        muestra = "completa" if {"departamento", "region_ipm", "region"} & set(llaves) else "nacional"
     if muestra not in MUESTRAS:
         raise ValueError(f"Muestra desconocida {muestra!r}. Opciones: {list(MUESTRAS)}")
     hogares = df if "puntaje" in df.columns else privaciones(df)
@@ -258,8 +280,12 @@ def ipm(df: pd.DataFrame, por: str | Iterable[str] | None = None, muestra: str |
     res["incidencia"] = 100 * pobres / personas.where(lambda v: v > 0)
     res["intensidad"] = 100 * suma(hogares["puntaje"].where(hogares["pobre"], 0)) / pobres.where(lambda v: v > 0)
     res["ipm"] = res["incidencia"] * res["intensidad"] / 1e4
+    # Las privaciones, como en los anexos del DANE, son % de hogares: sin multiplicar por las personas
+    fex = hogares["fex"].astype("float64")
+    por_hogar = lambda valores: (fex * valores).groupby(grupos, observed=True, dropna=False, sort=True).sum()  # noqa: E731
+    res["hogares"] = por_hogar(1.0)
     for nombre in PRIVACIONES:
-        res[f"pct_{nombre}"] = 100 * suma(hogares[nombre].astype("float64")) / personas.where(lambda v: v > 0)
+        res[f"pct_{nombre}"] = 100 * por_hogar(hogares[nombre].astype("float64")) / res["hogares"].where(lambda v: v > 0)
     if llaves:
         res.index.names = llaves
         return _con_categorias(res.reset_index(), hogares, llaves)

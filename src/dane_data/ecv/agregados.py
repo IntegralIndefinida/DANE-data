@@ -200,8 +200,8 @@ def serie_ipm(
     anios
         Año o lista de años. ``None`` para todos los descargados.
     por
-        Columna o lista de columnas para desagregar, además del año: ``"area"``, ``"region"``, ``"departamento"`` o
-        ``"sexo_jefe"``.
+        Columna o lista de columnas para desagregar, además del año: ``"area"``, ``"region_ipm"`` (las regiones de los
+        anexos del DANE), ``"region"`` (las de la ECV), ``"departamento"`` o ``"sexo_jefe"``.
     muestra
         ``"nacional"`` o ``"completa"``; por defecto, como el DANE (vea :func:`ipm`).
     dropna

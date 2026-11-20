@@ -1,0 +1,769 @@
+anio,dominio,indicador,valor,fuente
+2018,Amazonas,incidencia,35.4,IPM departamental IPM_Departamentos
+2019,Amazonas,incidencia,35.6,IPM departamental IPM_Departamentos
+2020,Amazonas,incidencia,39.0,IPM departamental IPM_Departamentos
+2021,Amazonas,incidencia,25.7,IPM departamental IPM_Departamentos
+2022,Amazonas,incidencia,27.9,IPM departamental IPM_Departamentos
+2023,Amazonas,incidencia,25.4,IPM departamental IPM_Departamentos
+2024,Amazonas,incidencia,15.6,IPM departamental IPM_Departamentos
+2025,Amazonas,incidencia,18.1,IPM departamental IPM_Departamentos
+2018,Antioquia,incidencia,15.3,IPM departamental IPM_Departamentos
+2019,Antioquia,incidencia,15.7,IPM departamental IPM_Departamentos
+2020,Antioquia,incidencia,14.9,IPM departamental IPM_Departamentos
+2021,Antioquia,incidencia,14.3,IPM departamental IPM_Departamentos
+2022,Antioquia,incidencia,10.7,IPM departamental IPM_Departamentos
+2023,Antioquia,incidencia,9.5,IPM departamental IPM_Departamentos
+2024,Antioquia,incidencia,10.9,IPM departamental IPM_Departamentos
+2025,Antioquia,incidencia,9.5,IPM departamental IPM_Departamentos
+2018,Arauca,incidencia,27.6,IPM departamental IPM_Departamentos
+2019,Arauca,incidencia,23.3,IPM departamental IPM_Departamentos
+2020,Arauca,incidencia,26.1,IPM departamental IPM_Departamentos
+2021,Arauca,incidencia,26.8,IPM departamental IPM_Departamentos
+2022,Arauca,incidencia,22.6,IPM departamental IPM_Departamentos
+2023,Arauca,incidencia,22.8,IPM departamental IPM_Departamentos
+2024,Arauca,incidencia,17.7,IPM departamental IPM_Departamentos
+2025,Arauca,incidencia,12.7,IPM departamental IPM_Departamentos
+2018,Atlántico,incidencia,21.1,IPM departamental IPM_Departamentos
+2019,Atlántico,incidencia,14.9,IPM departamental IPM_Departamentos
+2020,Atlántico,incidencia,14.1,IPM departamental IPM_Departamentos
+2021,Atlántico,incidencia,15.5,IPM departamental IPM_Departamentos
+2022,Atlántico,incidencia,10.2,IPM departamental IPM_Departamentos
+2023,Atlántico,incidencia,12.0,IPM departamental IPM_Departamentos
+2024,Atlántico,incidencia,9.5,IPM departamental IPM_Departamentos
+2025,Atlántico,incidencia,8.2,IPM departamental IPM_Departamentos
+2018,Bogotá (cabecera),incidencia,4.1,IPM IPM_Dominios
+2019,Bogotá (cabecera),incidencia,7.1,IPM IPM_Dominios
+2020,Bogotá (cabecera),incidencia,7.5,IPM IPM_Dominios
+2021,Bogotá (cabecera),incidencia,5.7,IPM IPM_Dominios
+2022,Bogotá (cabecera),incidencia,3.8,IPM IPM_Dominios
+2023,Bogotá (cabecera),incidencia,3.6,IPM IPM_Dominios
+2024,Bogotá (cabecera),incidencia,5.4,IPM IPM_Dominios
+2025,Bogotá (cabecera),incidencia,2.2,IPM IPM_Dominios
+2018,Bogotá D.C.,incidencia,4.1,IPM departamental IPM_Departamentos
+2019,Bogotá D.C.,incidencia,7.1,IPM departamental IPM_Departamentos
+2020,Bogotá D.C.,incidencia,7.5,IPM departamental IPM_Departamentos
+2021,Bogotá D.C.,incidencia,5.7,IPM departamental IPM_Departamentos
+2022,Bogotá D.C.,incidencia,3.8,IPM departamental IPM_Departamentos
+2023,Bogotá D.C.,incidencia,3.6,IPM departamental IPM_Departamentos
+2024,Bogotá D.C.,incidencia,5.4,IPM departamental IPM_Departamentos
+2025,Bogotá D.C.,incidencia,2.2,IPM departamental IPM_Departamentos
+2018,Bolívar,incidencia,31.9,IPM departamental IPM_Departamentos
+2019,Bolívar,incidencia,26.9,IPM departamental IPM_Departamentos
+2020,Bolívar,incidencia,28.1,IPM departamental IPM_Departamentos
+2021,Bolívar,incidencia,26.8,IPM departamental IPM_Departamentos
+2022,Bolívar,incidencia,19.4,IPM departamental IPM_Departamentos
+2023,Bolívar,incidencia,18.4,IPM departamental IPM_Departamentos
+2024,Bolívar,incidencia,15.6,IPM departamental IPM_Departamentos
+2025,Bolívar,incidencia,17.0,IPM departamental IPM_Departamentos
+2018,Boyacá,incidencia,16.5,IPM departamental IPM_Departamentos
+2019,Boyacá,incidencia,12.8,IPM departamental IPM_Departamentos
+2020,Boyacá,incidencia,11.7,IPM departamental IPM_Departamentos
+2021,Boyacá,incidencia,10.9,IPM departamental IPM_Departamentos
+2022,Boyacá,incidencia,9.6,IPM departamental IPM_Departamentos
+2023,Boyacá,incidencia,9.9,IPM departamental IPM_Departamentos
+2024,Boyacá,incidencia,6.9,IPM departamental IPM_Departamentos
+2025,Boyacá,incidencia,6.4,IPM departamental IPM_Departamentos
+2018,Cabecera,incidencia,13.2,IPM IPM_Dominios
+2019,Cabecera,incidencia,12.3,IPM IPM_Dominios
+2020,Cabecera,incidencia,12.5,IPM IPM_Dominios
+2021,Cabecera,incidencia,11.5,IPM IPM_Dominios
+2022,Cabecera,incidencia,8.7,IPM IPM_Dominios
+2023,Cabecera,incidencia,8.3,IPM IPM_Dominios
+2024,Cabecera,incidencia,7.8,IPM IPM_Dominios
+2025,Cabecera,incidencia,6.3,IPM IPM_Dominios
+2018,Caldas,incidencia,13.8,IPM departamental IPM_Departamentos
+2019,Caldas,incidencia,14.3,IPM departamental IPM_Departamentos
+2020,Caldas,incidencia,14.5,IPM departamental IPM_Departamentos
+2021,Caldas,incidencia,11.5,IPM departamental IPM_Departamentos
+2022,Caldas,incidencia,10.5,IPM departamental IPM_Departamentos
+2023,Caldas,incidencia,7.4,IPM departamental IPM_Departamentos
+2024,Caldas,incidencia,9.2,IPM departamental IPM_Departamentos
+2025,Caldas,incidencia,7.9,IPM departamental IPM_Departamentos
+2018,Caquetá,incidencia,26.9,IPM departamental IPM_Departamentos
+2019,Caquetá,incidencia,25.7,IPM departamental IPM_Departamentos
+2020,Caquetá,incidencia,26.1,IPM departamental IPM_Departamentos
+2021,Caquetá,incidencia,23.1,IPM departamental IPM_Departamentos
+2022,Caquetá,incidencia,19.6,IPM departamental IPM_Departamentos
+2023,Caquetá,incidencia,17.2,IPM departamental IPM_Departamentos
+2024,Caquetá,incidencia,13.9,IPM departamental IPM_Departamentos
+2025,Caquetá,incidencia,15.0,IPM departamental IPM_Departamentos
+2018,Caribe,incidencia,32.9,IPM IPM_Dominios
+2019,Caribe,incidencia,28.1,IPM IPM_Dominios
+2020,Caribe,incidencia,28.7,IPM IPM_Dominios
+2021,Caribe,incidencia,26.8,IPM IPM_Dominios
+2022,Caribe,incidencia,21.4,IPM IPM_Dominios
+2023,Caribe,incidencia,20.1,IPM IPM_Dominios
+2024,Caribe,incidencia,18.5,IPM IPM_Dominios
+2025,Caribe,incidencia,17.9,IPM IPM_Dominios
+2018,Casanare,incidencia,19.0,IPM departamental IPM_Departamentos
+2019,Casanare,incidencia,18.3,IPM departamental IPM_Departamentos
+2020,Casanare,incidencia,19.6,IPM departamental IPM_Departamentos
+2021,Casanare,incidencia,19.5,IPM departamental IPM_Departamentos
+2022,Casanare,incidencia,13.3,IPM departamental IPM_Departamentos
+2023,Casanare,incidencia,15.0,IPM departamental IPM_Departamentos
+2024,Casanare,incidencia,11.3,IPM departamental IPM_Departamentos
+2025,Casanare,incidencia,8.9,IPM departamental IPM_Departamentos
+2018,Cauca,incidencia,27.7,IPM departamental IPM_Departamentos
+2019,Cauca,incidencia,24.0,IPM departamental IPM_Departamentos
+2020,Cauca,incidencia,28.2,IPM departamental IPM_Departamentos
+2021,Cauca,incidencia,18.6,IPM departamental IPM_Departamentos
+2022,Cauca,incidencia,18.3,IPM departamental IPM_Departamentos
+2023,Cauca,incidencia,15.8,IPM departamental IPM_Departamentos
+2024,Cauca,incidencia,14.0,IPM departamental IPM_Departamentos
+2025,Cauca,incidencia,13.0,IPM departamental IPM_Departamentos
+2018,Central,incidencia,16.3,IPM IPM_Dominios
+2019,Central,incidencia,15.5,IPM IPM_Dominios
+2020,Central,incidencia,16.2,IPM IPM_Dominios
+2021,Central,incidencia,14.5,IPM IPM_Dominios
+2022,Central,incidencia,11.1,IPM IPM_Dominios
+2023,Central,incidencia,10.2,IPM IPM_Dominios
+2024,Central,incidencia,10.8,IPM IPM_Dominios
+2025,Central,incidencia,9.3,IPM IPM_Dominios
+2018,Centros poblados y rural disperso,incidencia,38.6,IPM IPM_Dominios
+2019,Centros poblados y rural disperso,incidencia,34.5,IPM IPM_Dominios
+2020,Centros poblados y rural disperso,incidencia,37.1,IPM IPM_Dominios
+2021,Centros poblados y rural disperso,incidencia,31.1,IPM IPM_Dominios
+2022,Centros poblados y rural disperso,incidencia,27.3,IPM IPM_Dominios
+2023,Centros poblados y rural disperso,incidencia,25.1,IPM IPM_Dominios
+2024,Centros poblados y rural disperso,incidencia,24.3,IPM IPM_Dominios
+2025,Centros poblados y rural disperso,incidencia,22.4,IPM IPM_Dominios
+2018,Cesar,incidencia,31.7,IPM departamental IPM_Departamentos
+2019,Cesar,incidencia,25.5,IPM departamental IPM_Departamentos
+2020,Cesar,incidencia,27.2,IPM departamental IPM_Departamentos
+2021,Cesar,incidencia,25.3,IPM departamental IPM_Departamentos
+2022,Cesar,incidencia,19.1,IPM departamental IPM_Departamentos
+2023,Cesar,incidencia,17.7,IPM departamental IPM_Departamentos
+2024,Cesar,incidencia,13.4,IPM departamental IPM_Departamentos
+2025,Cesar,incidencia,14.8,IPM departamental IPM_Departamentos
+2018,Chocó,incidencia,46.3,IPM departamental IPM_Departamentos
+2019,Chocó,incidencia,42.3,IPM departamental IPM_Departamentos
+2020,Chocó,incidencia,49.0,IPM departamental IPM_Departamentos
+2021,Chocó,incidencia,36.0,IPM departamental IPM_Departamentos
+2022,Chocó,incidencia,36.8,IPM departamental IPM_Departamentos
+2023,Chocó,incidencia,37.4,IPM departamental IPM_Departamentos
+2024,Chocó,incidencia,33.9,IPM departamental IPM_Departamentos
+2025,Chocó,incidencia,30.8,IPM departamental IPM_Departamentos
+2018,Cundinamarca,incidencia,10.5,IPM departamental IPM_Departamentos
+2019,Cundinamarca,incidencia,12.3,IPM departamental IPM_Departamentos
+2020,Cundinamarca,incidencia,11.4,IPM departamental IPM_Departamentos
+2021,Cundinamarca,incidencia,9.4,IPM departamental IPM_Departamentos
+2022,Cundinamarca,incidencia,7.3,IPM departamental IPM_Departamentos
+2023,Cundinamarca,incidencia,7.6,IPM departamental IPM_Departamentos
+2024,Cundinamarca,incidencia,7.4,IPM departamental IPM_Departamentos
+2025,Cundinamarca,incidencia,4.1,IPM departamental IPM_Departamentos
+2018,Córdoba,incidencia,34.4,IPM departamental IPM_Departamentos
+2019,Córdoba,incidencia,34.7,IPM departamental IPM_Departamentos
+2020,Córdoba,incidencia,31.8,IPM departamental IPM_Departamentos
+2021,Córdoba,incidencia,26.9,IPM departamental IPM_Departamentos
+2022,Córdoba,incidencia,26.9,IPM departamental IPM_Departamentos
+2023,Córdoba,incidencia,21.4,IPM departamental IPM_Departamentos
+2024,Córdoba,incidencia,25.7,IPM departamental IPM_Departamentos
+2025,Córdoba,incidencia,19.8,IPM departamental IPM_Departamentos
+2018,Guainía,incidencia,60.6,IPM departamental IPM_Departamentos
+2019,Guainía,incidencia,67.0,IPM departamental IPM_Departamentos
+2020,Guainía,incidencia,65.9,IPM departamental IPM_Departamentos
+2021,Guainía,incidencia,57.3,IPM departamental IPM_Departamentos
+2022,Guainía,incidencia,46.5,IPM departamental IPM_Departamentos
+2023,Guainía,incidencia,52.1,IPM departamental IPM_Departamentos
+2024,Guainía,incidencia,49.0,IPM departamental IPM_Departamentos
+2025,Guainía,incidencia,51.8,IPM departamental IPM_Departamentos
+2018,Guaviare,incidencia,31.4,IPM departamental IPM_Departamentos
+2019,Guaviare,incidencia,30.9,IPM departamental IPM_Departamentos
+2020,Guaviare,incidencia,34.6,IPM departamental IPM_Departamentos
+2021,Guaviare,incidencia,31.0,IPM departamental IPM_Departamentos
+2022,Guaviare,incidencia,26.9,IPM departamental IPM_Departamentos
+2023,Guaviare,incidencia,30.6,IPM departamental IPM_Departamentos
+2024,Guaviare,incidencia,21.3,IPM departamental IPM_Departamentos
+2025,Guaviare,incidencia,20.0,IPM departamental IPM_Departamentos
+2018,Huila,incidencia,18.0,IPM departamental IPM_Departamentos
+2019,Huila,incidencia,18.3,IPM departamental IPM_Departamentos
+2020,Huila,incidencia,23.4,IPM departamental IPM_Departamentos
+2021,Huila,incidencia,17.5,IPM departamental IPM_Departamentos
+2022,Huila,incidencia,13.3,IPM departamental IPM_Departamentos
+2023,Huila,incidencia,11.9,IPM departamental IPM_Departamentos
+2024,Huila,incidencia,10.9,IPM departamental IPM_Departamentos
+2025,Huila,incidencia,9.7,IPM departamental IPM_Departamentos
+2018,La Guajira,incidencia,53.3,IPM departamental IPM_Departamentos
+2019,La Guajira,incidencia,48.8,IPM departamental IPM_Departamentos
+2020,La Guajira,incidencia,51.7,IPM departamental IPM_Departamentos
+2021,La Guajira,incidencia,48.7,IPM departamental IPM_Departamentos
+2022,La Guajira,incidencia,42.9,IPM departamental IPM_Departamentos
+2023,La Guajira,incidencia,42.6,IPM departamental IPM_Departamentos
+2024,La Guajira,incidencia,39.3,IPM departamental IPM_Departamentos
+2025,La Guajira,incidencia,40.1,IPM departamental IPM_Departamentos
+2018,Magdalena,incidencia,36.4,IPM departamental IPM_Departamentos
+2019,Magdalena,incidencia,31.6,IPM departamental IPM_Departamentos
+2020,Magdalena,incidencia,33.4,IPM departamental IPM_Departamentos
+2021,Magdalena,incidencia,32.4,IPM departamental IPM_Departamentos
+2022,Magdalena,incidencia,23.0,IPM departamental IPM_Departamentos
+2023,Magdalena,incidencia,21.4,IPM departamental IPM_Departamentos
+2024,Magdalena,incidencia,19.2,IPM departamental IPM_Departamentos
+2025,Magdalena,incidencia,17.6,IPM departamental IPM_Departamentos
+2018,Meta,incidencia,15.6,IPM departamental IPM_Departamentos
+2019,Meta,incidencia,19.1,IPM departamental IPM_Departamentos
+2020,Meta,incidencia,14.1,IPM departamental IPM_Departamentos
+2021,Meta,incidencia,14.9,IPM departamental IPM_Departamentos
+2022,Meta,incidencia,11.3,IPM departamental IPM_Departamentos
+2023,Meta,incidencia,12.9,IPM departamental IPM_Departamentos
+2024,Meta,incidencia,10.4,IPM departamental IPM_Departamentos
+2025,Meta,incidencia,12.3,IPM departamental IPM_Departamentos
+2018,Nariño,incidencia,33.1,IPM departamental IPM_Departamentos
+2019,Nariño,incidencia,23.2,IPM departamental IPM_Departamentos
+2020,Nariño,incidencia,27.3,IPM departamental IPM_Departamentos
+2021,Nariño,incidencia,22.1,IPM departamental IPM_Departamentos
+2022,Nariño,incidencia,17.6,IPM departamental IPM_Departamentos
+2023,Nariño,incidencia,16.6,IPM departamental IPM_Departamentos
+2024,Nariño,incidencia,18.1,IPM departamental IPM_Departamentos
+2025,Nariño,incidencia,13.2,IPM departamental IPM_Departamentos
+2018,Norte de Santander,incidencia,29.5,IPM departamental IPM_Departamentos
+2019,Norte de Santander,incidencia,24.2,IPM departamental IPM_Departamentos
+2020,Norte de Santander,incidencia,26.1,IPM departamental IPM_Departamentos
+2021,Norte de Santander,incidencia,24.7,IPM departamental IPM_Departamentos
+2022,Norte de Santander,incidencia,18.5,IPM departamental IPM_Departamentos
+2023,Norte de Santander,incidencia,20.5,IPM departamental IPM_Departamentos
+2024,Norte de Santander,incidencia,15.2,IPM departamental IPM_Departamentos
+2025,Norte de Santander,incidencia,13.3,IPM departamental IPM_Departamentos
+2018,Oriental,incidencia,15.7,IPM IPM_Dominios
+2019,Oriental,incidencia,15.2,IPM IPM_Dominios
+2020,Oriental,incidencia,14.5,IPM IPM_Dominios
+2021,Oriental,incidencia,13.7,IPM IPM_Dominios
+2022,Oriental,incidencia,10.7,IPM IPM_Dominios
+2023,Oriental,incidencia,11.1,IPM IPM_Dominios
+2024,Oriental,incidencia,8.8,IPM IPM_Dominios
+2025,Oriental,incidencia,7.4,IPM IPM_Dominios
+2018,Orinoquía-Amazonía,incidencia,29.8,IPM IPM_Dominios
+2019,Orinoquía-Amazonía,incidencia,30.0,IPM IPM_Dominios
+2020,Orinoquía-Amazonía,incidencia,32.2,IPM IPM_Dominios
+2021,Orinoquía-Amazonía,incidencia,28.6,IPM IPM_Dominios
+2022,Orinoquía-Amazonía,incidencia,25.6,IPM IPM_Dominios
+2023,Orinoquía-Amazonía,incidencia,24.1,IPM IPM_Dominios
+2024,Orinoquía-Amazonía,incidencia,20.3,IPM IPM_Dominios
+2025,Orinoquía-Amazonía,incidencia,18.2,IPM IPM_Dominios
+2018,Pacífica,incidencia,22.5,IPM IPM_Dominios
+2019,Pacífica,incidencia,17.7,IPM IPM_Dominios
+2020,Pacífica,incidencia,20.0,IPM IPM_Dominios
+2021,Pacífica,incidencia,14.9,IPM IPM_Dominios
+2022,Pacífica,incidencia,14.6,IPM IPM_Dominios
+2023,Pacífica,incidencia,12.6,IPM IPM_Dominios
+2024,Pacífica,incidencia,11.8,IPM IPM_Dominios
+2025,Pacífica,incidencia,9.7,IPM IPM_Dominios
+2018,Putumayo,incidencia,24.1,IPM departamental IPM_Departamentos
+2019,Putumayo,incidencia,25.4,IPM departamental IPM_Departamentos
+2020,Putumayo,incidencia,27.8,IPM departamental IPM_Departamentos
+2021,Putumayo,incidencia,22.8,IPM departamental IPM_Departamentos
+2022,Putumayo,incidencia,20.8,IPM departamental IPM_Departamentos
+2023,Putumayo,incidencia,13.2,IPM departamental IPM_Departamentos
+2024,Putumayo,incidencia,11.8,IPM departamental IPM_Departamentos
+2025,Putumayo,incidencia,13.6,IPM departamental IPM_Departamentos
+2018,Quindío,incidencia,14.2,IPM departamental IPM_Departamentos
+2019,Quindío,incidencia,10.2,IPM departamental IPM_Departamentos
+2020,Quindío,incidencia,12.9,IPM departamental IPM_Departamentos
+2021,Quindío,incidencia,10.9,IPM departamental IPM_Departamentos
+2022,Quindío,incidencia,10.0,IPM departamental IPM_Departamentos
+2023,Quindío,incidencia,7.5,IPM departamental IPM_Departamentos
+2024,Quindío,incidencia,7.4,IPM departamental IPM_Departamentos
+2025,Quindío,incidencia,6.7,IPM departamental IPM_Departamentos
+2018,Risaralda,incidencia,11.6,IPM departamental IPM_Departamentos
+2019,Risaralda,incidencia,11.1,IPM departamental IPM_Departamentos
+2020,Risaralda,incidencia,13.1,IPM departamental IPM_Departamentos
+2021,Risaralda,incidencia,10.7,IPM departamental IPM_Departamentos
+2022,Risaralda,incidencia,10.0,IPM departamental IPM_Departamentos
+2023,Risaralda,incidencia,11.8,IPM departamental IPM_Departamentos
+2024,Risaralda,incidencia,9.5,IPM departamental IPM_Departamentos
+2025,Risaralda,incidencia,4.9,IPM departamental IPM_Departamentos
+2018,San Andrés,incidencia,8.5,IPM departamental IPM_Departamentos
+2019,San Andrés,incidencia,8.2,IPM departamental IPM_Departamentos
+2020,San Andrés,incidencia,11.9,IPM departamental IPM_Departamentos
+2021,San Andrés,incidencia,7.0,IPM departamental IPM_Departamentos
+2022,San Andrés,incidencia,8.8,IPM departamental IPM_Departamentos
+2023,San Andrés,incidencia,5.0,IPM departamental IPM_Departamentos
+2024,San Andrés,incidencia,6.0,IPM departamental IPM_Departamentos
+2025,San Andrés,incidencia,4.3,IPM departamental IPM_Departamentos
+2018,Santander,incidencia,12.6,IPM departamental IPM_Departamentos
+2019,Santander,incidencia,12.4,IPM departamental IPM_Departamentos
+2020,Santander,incidencia,12.5,IPM departamental IPM_Departamentos
+2021,Santander,incidencia,13.3,IPM departamental IPM_Departamentos
+2022,Santander,incidencia,10.4,IPM departamental IPM_Departamentos
+2023,Santander,incidencia,9.8,IPM departamental IPM_Departamentos
+2024,Santander,incidencia,6.8,IPM departamental IPM_Departamentos
+2025,Santander,incidencia,6.9,IPM departamental IPM_Departamentos
+2018,Sucre,incidencia,41.7,IPM departamental IPM_Departamentos
+2019,Sucre,incidencia,33.3,IPM departamental IPM_Departamentos
+2020,Sucre,incidencia,38.1,IPM departamental IPM_Departamentos
+2021,Sucre,incidencia,30.3,IPM departamental IPM_Departamentos
+2022,Sucre,incidencia,26.0,IPM departamental IPM_Departamentos
+2023,Sucre,incidencia,23.1,IPM departamental IPM_Departamentos
+2024,Sucre,incidencia,21.8,IPM departamental IPM_Departamentos
+2025,Sucre,incidencia,25.4,IPM departamental IPM_Departamentos
+2018,Tolima,incidencia,22.2,IPM departamental IPM_Departamentos
+2019,Tolima,incidencia,15.2,IPM departamental IPM_Departamentos
+2020,Tolima,incidencia,19.0,IPM departamental IPM_Departamentos
+2021,Tolima,incidencia,16.6,IPM departamental IPM_Departamentos
+2022,Tolima,incidencia,10.5,IPM departamental IPM_Departamentos
+2023,Tolima,incidencia,12.9,IPM departamental IPM_Departamentos
+2024,Tolima,incidencia,12.6,IPM departamental IPM_Departamentos
+2025,Tolima,incidencia,12.2,IPM departamental IPM_Departamentos
+2018,Total nacional,incidencia,19.1,IPM IPM_Dominios
+2019,Total nacional,incidencia,17.5,IPM IPM_Dominios
+2020,Total nacional,incidencia,18.1,IPM IPM_Dominios
+2021,Total nacional,incidencia,16.0,IPM IPM_Dominios
+2022,Total nacional,incidencia,12.9,IPM IPM_Dominios
+2023,Total nacional,incidencia,12.1,IPM IPM_Dominios
+2024,Total nacional,incidencia,11.5,IPM IPM_Dominios
+2025,Total nacional,incidencia,9.9,IPM IPM_Dominios
+2018,Valle del Cauca,incidencia,14.1,IPM departamental IPM_Departamentos
+2019,Valle del Cauca,incidencia,10.8,IPM departamental IPM_Departamentos
+2020,Valle del Cauca,incidencia,11.1,IPM departamental IPM_Departamentos
+2021,Valle del Cauca,incidencia,8.6,IPM departamental IPM_Departamentos
+2022,Valle del Cauca,incidencia,9.7,IPM departamental IPM_Departamentos
+2023,Valle del Cauca,incidencia,7.2,IPM departamental IPM_Departamentos
+2024,Valle del Cauca,incidencia,6.2,IPM departamental IPM_Departamentos
+2025,Valle del Cauca,incidencia,4.9,IPM departamental IPM_Departamentos
+2018,Vaupés,incidencia,68.5,IPM departamental IPM_Departamentos
+2019,Vaupés,incidencia,66.5,IPM departamental IPM_Departamentos
+2020,Vaupés,incidencia,65.6,IPM departamental IPM_Departamentos
+2021,Vaupés,incidencia,52.7,IPM departamental IPM_Departamentos
+2022,Vaupés,incidencia,47.1,IPM departamental IPM_Departamentos
+2023,Vaupés,incidencia,55.7,IPM departamental IPM_Departamentos
+2024,Vaupés,incidencia,37.4,IPM departamental IPM_Departamentos
+2025,Vaupés,incidencia,41.7,IPM departamental IPM_Departamentos
+2018,Vichada,incidencia,63.5,IPM departamental IPM_Departamentos
+2019,Vichada,incidencia,72.2,IPM departamental IPM_Departamentos
+2020,Vichada,incidencia,75.6,IPM departamental IPM_Departamentos
+2021,Vichada,incidencia,64.8,IPM departamental IPM_Departamentos
+2022,Vichada,incidencia,75.4,IPM departamental IPM_Departamentos
+2023,Vichada,incidencia,65.4,IPM departamental IPM_Departamentos
+2024,Vichada,incidencia,70.2,IPM departamental IPM_Departamentos
+2025,Vichada,incidencia,55.2,IPM departamental IPM_Departamentos
+2018,Bogotá (cabecera),ipm,0.015,IPM Incidencia Ajustada_IPM
+2019,Bogotá (cabecera),ipm,0.027999999999999997,IPM Incidencia Ajustada_IPM
+2020,Bogotá (cabecera),ipm,0.028999999999999998,IPM Incidencia Ajustada_IPM
+2021,Bogotá (cabecera),ipm,0.022000000000000002,IPM Incidencia Ajustada_IPM
+2022,Bogotá (cabecera),ipm,0.015,IPM Incidencia Ajustada_IPM
+2023,Bogotá (cabecera),ipm,0.013999999999999999,IPM Incidencia Ajustada_IPM
+2024,Bogotá (cabecera),ipm,0.021,IPM Incidencia Ajustada_IPM
+2025,Bogotá (cabecera),ipm,0.008,IPM Incidencia Ajustada_IPM
+2018,Cabecera,ipm,0.054000000000000006,IPM Incidencia Ajustada_IPM
+2019,Cabecera,ipm,0.05,IPM Incidencia Ajustada_IPM
+2020,Cabecera,ipm,0.051,IPM Incidencia Ajustada_IPM
+2021,Cabecera,ipm,0.046,IPM Incidencia Ajustada_IPM
+2022,Cabecera,ipm,0.034,IPM Incidencia Ajustada_IPM
+2023,Cabecera,ipm,0.033,IPM Incidencia Ajustada_IPM
+2024,Cabecera,ipm,0.031,IPM Incidencia Ajustada_IPM
+2025,Cabecera,ipm,0.025,IPM Incidencia Ajustada_IPM
+2018,Caribe,ipm,0.14300000000000002,IPM Incidencia Ajustada_IPM
+2019,Caribe,ipm,0.12,IPM Incidencia Ajustada_IPM
+2020,Caribe,ipm,0.12300000000000001,IPM Incidencia Ajustada_IPM
+2021,Caribe,ipm,0.11199999999999999,IPM Incidencia Ajustada_IPM
+2022,Caribe,ipm,0.08800000000000001,IPM Incidencia Ajustada_IPM
+2023,Caribe,ipm,0.08199999999999999,IPM Incidencia Ajustada_IPM
+2024,Caribe,ipm,0.076,IPM Incidencia Ajustada_IPM
+2025,Caribe,ipm,0.074,IPM Incidencia Ajustada_IPM
+2018,Central,ipm,0.066,IPM Incidencia Ajustada_IPM
+2019,Central,ipm,0.063,IPM Incidencia Ajustada_IPM
+2020,Central,ipm,0.066,IPM Incidencia Ajustada_IPM
+2021,Central,ipm,0.057,IPM Incidencia Ajustada_IPM
+2022,Central,ipm,0.044000000000000004,IPM Incidencia Ajustada_IPM
+2023,Central,ipm,0.04,IPM Incidencia Ajustada_IPM
+2024,Central,ipm,0.043,IPM Incidencia Ajustada_IPM
+2025,Central,ipm,0.037,IPM Incidencia Ajustada_IPM
+2018,Centros poblados y rural disperso,ipm,0.16399999999999998,IPM Incidencia Ajustada_IPM
+2019,Centros poblados y rural disperso,ipm,0.145,IPM Incidencia Ajustada_IPM
+2020,Centros poblados y rural disperso,ipm,0.156,IPM Incidencia Ajustada_IPM
+2021,Centros poblados y rural disperso,ipm,0.129,IPM Incidencia Ajustada_IPM
+2022,Centros poblados y rural disperso,ipm,0.11199999999999999,IPM Incidencia Ajustada_IPM
+2023,Centros poblados y rural disperso,ipm,0.10300000000000001,IPM Incidencia Ajustada_IPM
+2024,Centros poblados y rural disperso,ipm,0.1,IPM Incidencia Ajustada_IPM
+2025,Centros poblados y rural disperso,ipm,0.092,IPM Incidencia Ajustada_IPM
+2018,Oriental,ipm,0.062,IPM Incidencia Ajustada_IPM
+2019,Oriental,ipm,0.061,IPM Incidencia Ajustada_IPM
+2020,Oriental,ipm,0.059000000000000004,IPM Incidencia Ajustada_IPM
+2021,Oriental,ipm,0.055,IPM Incidencia Ajustada_IPM
+2022,Oriental,ipm,0.042,IPM Incidencia Ajustada_IPM
+2023,Oriental,ipm,0.044000000000000004,IPM Incidencia Ajustada_IPM
+2024,Oriental,ipm,0.035,IPM Incidencia Ajustada_IPM
+2025,Oriental,ipm,0.03,IPM Incidencia Ajustada_IPM
+2018,Orinoquía-Amazonía,ipm,0.128,IPM Incidencia Ajustada_IPM
+2019,Orinoquía-Amazonía,ipm,0.13,IPM Incidencia Ajustada_IPM
+2020,Orinoquía-Amazonía,ipm,0.14,IPM Incidencia Ajustada_IPM
+2021,Orinoquía-Amazonía,ipm,0.121,IPM Incidencia Ajustada_IPM
+2022,Orinoquía-Amazonía,ipm,0.111,IPM Incidencia Ajustada_IPM
+2023,Orinoquía-Amazonía,ipm,0.10300000000000001,IPM Incidencia Ajustada_IPM
+2024,Orinoquía-Amazonía,ipm,0.087,IPM Incidencia Ajustada_IPM
+2025,Orinoquía-Amazonía,ipm,0.075,IPM Incidencia Ajustada_IPM
+2018,Pacífica,ipm,0.094,IPM Incidencia Ajustada_IPM
+2019,Pacífica,ipm,0.07200000000000001,IPM Incidencia Ajustada_IPM
+2020,Pacífica,ipm,0.083,IPM Incidencia Ajustada_IPM
+2021,Pacífica,ipm,0.061,IPM Incidencia Ajustada_IPM
+2022,Pacífica,ipm,0.059000000000000004,IPM Incidencia Ajustada_IPM
+2023,Pacífica,ipm,0.051,IPM Incidencia Ajustada_IPM
+2024,Pacífica,ipm,0.048,IPM Incidencia Ajustada_IPM
+2025,Pacífica,ipm,0.039,IPM Incidencia Ajustada_IPM
+2018,Total nacional,ipm,0.08,IPM Incidencia Ajustada_IPM
+2019,Total nacional,ipm,0.07200000000000001,IPM Incidencia Ajustada_IPM
+2020,Total nacional,ipm,0.075,IPM Incidencia Ajustada_IPM
+2021,Total nacional,ipm,0.065,IPM Incidencia Ajustada_IPM
+2022,Total nacional,ipm,0.052000000000000005,IPM Incidencia Ajustada_IPM
+2023,Total nacional,ipm,0.049,IPM Incidencia Ajustada_IPM
+2024,Total nacional,ipm,0.046,IPM Incidencia Ajustada_IPM
+2025,Total nacional,ipm,0.04,IPM Incidencia Ajustada_IPM
+2018,Cabecera,pct_acueducto,2.9,IPM IPM_Indicadores
+2019,Cabecera,pct_acueducto,2.8,IPM IPM_Indicadores
+2020,Cabecera,pct_acueducto,2.5,IPM IPM_Indicadores
+2021,Cabecera,pct_acueducto,2.5,IPM IPM_Indicadores
+2022,Cabecera,pct_acueducto,2.2,IPM IPM_Indicadores
+2023,Cabecera,pct_acueducto,2.0,IPM IPM_Indicadores
+2024,Cabecera,pct_acueducto,1.8,IPM IPM_Indicadores
+2025,Cabecera,pct_acueducto,2.2,IPM IPM_Indicadores
+2018,Centros poblados y rural disperso,pct_acueducto,41.5,IPM IPM_Indicadores
+2019,Centros poblados y rural disperso,pct_acueducto,41.2,IPM IPM_Indicadores
+2020,Centros poblados y rural disperso,pct_acueducto,34.3,IPM IPM_Indicadores
+2021,Centros poblados y rural disperso,pct_acueducto,41.1,IPM IPM_Indicadores
+2022,Centros poblados y rural disperso,pct_acueducto,37.3,IPM IPM_Indicadores
+2023,Centros poblados y rural disperso,pct_acueducto,33.3,IPM IPM_Indicadores
+2024,Centros poblados y rural disperso,pct_acueducto,33.7,IPM IPM_Indicadores
+2025,Centros poblados y rural disperso,pct_acueducto,30.7,IPM IPM_Indicadores
+2018,Total nacional,pct_acueducto,11.7,IPM IPM_Indicadores
+2019,Total nacional,pct_acueducto,11.5,IPM IPM_Indicadores
+2020,Total nacional,pct_acueducto,9.7,IPM IPM_Indicadores
+2021,Total nacional,pct_acueducto,10.9,IPM IPM_Indicadores
+2022,Total nacional,pct_acueducto,9.8,IPM IPM_Indicadores
+2023,Total nacional,pct_acueducto,8.8,IPM IPM_Indicadores
+2024,Total nacional,pct_acueducto,8.6,IPM IPM_Indicadores
+2025,Total nacional,pct_acueducto,8.3,IPM IPM_Indicadores
+2018,Cabecera,pct_alcantarillado,7.4,IPM IPM_Indicadores
+2019,Cabecera,pct_alcantarillado,7.2,IPM IPM_Indicadores
+2020,Cabecera,pct_alcantarillado,6.9,IPM IPM_Indicadores
+2021,Cabecera,pct_alcantarillado,7.1,IPM IPM_Indicadores
+2022,Cabecera,pct_alcantarillado,6.8,IPM IPM_Indicadores
+2023,Cabecera,pct_alcantarillado,6.5,IPM IPM_Indicadores
+2024,Cabecera,pct_alcantarillado,6.2,IPM IPM_Indicadores
+2025,Cabecera,pct_alcantarillado,6.7,IPM IPM_Indicadores
+2018,Centros poblados y rural disperso,pct_alcantarillado,26.0,IPM IPM_Indicadores
+2019,Centros poblados y rural disperso,pct_alcantarillado,23.7,IPM IPM_Indicadores
+2020,Centros poblados y rural disperso,pct_alcantarillado,21.5,IPM IPM_Indicadores
+2021,Centros poblados y rural disperso,pct_alcantarillado,22.2,IPM IPM_Indicadores
+2022,Centros poblados y rural disperso,pct_alcantarillado,20.2,IPM IPM_Indicadores
+2023,Centros poblados y rural disperso,pct_alcantarillado,19.6,IPM IPM_Indicadores
+2024,Centros poblados y rural disperso,pct_alcantarillado,19.5,IPM IPM_Indicadores
+2025,Centros poblados y rural disperso,pct_alcantarillado,18.7,IPM IPM_Indicadores
+2018,Total nacional,pct_alcantarillado,11.6,IPM IPM_Indicadores
+2019,Total nacional,pct_alcantarillado,11.0,IPM IPM_Indicadores
+2020,Total nacional,pct_alcantarillado,10.2,IPM IPM_Indicadores
+2021,Total nacional,pct_alcantarillado,10.4,IPM IPM_Indicadores
+2022,Total nacional,pct_alcantarillado,9.7,IPM IPM_Indicadores
+2023,Total nacional,pct_alcantarillado,9.3,IPM IPM_Indicadores
+2024,Total nacional,pct_alcantarillado,9.1,IPM IPM_Indicadores
+2025,Total nacional,pct_alcantarillado,9.2,IPM IPM_Indicadores
+2018,Cabecera,pct_analfabetismo,6.3,IPM IPM_Indicadores
+2019,Cabecera,pct_analfabetismo,6.0,IPM IPM_Indicadores
+2020,Cabecera,pct_analfabetismo,5.7,IPM IPM_Indicadores
+2021,Cabecera,pct_analfabetismo,5.7,IPM IPM_Indicadores
+2022,Cabecera,pct_analfabetismo,5.2,IPM IPM_Indicadores
+2023,Cabecera,pct_analfabetismo,5.0,IPM IPM_Indicadores
+2024,Cabecera,pct_analfabetismo,4.8,IPM IPM_Indicadores
+2025,Cabecera,pct_analfabetismo,4.2,IPM IPM_Indicadores
+2018,Centros poblados y rural disperso,pct_analfabetismo,22.6,IPM IPM_Indicadores
+2019,Centros poblados y rural disperso,pct_analfabetismo,20.5,IPM IPM_Indicadores
+2020,Centros poblados y rural disperso,pct_analfabetismo,17.6,IPM IPM_Indicadores
+2021,Centros poblados y rural disperso,pct_analfabetismo,18.1,IPM IPM_Indicadores
+2022,Centros poblados y rural disperso,pct_analfabetismo,16.7,IPM IPM_Indicadores
+2023,Centros poblados y rural disperso,pct_analfabetismo,16.6,IPM IPM_Indicadores
+2024,Centros poblados y rural disperso,pct_analfabetismo,15.7,IPM IPM_Indicadores
+2025,Centros poblados y rural disperso,pct_analfabetismo,14.8,IPM IPM_Indicadores
+2018,Total nacional,pct_analfabetismo,10.0,IPM IPM_Indicadores
+2019,Total nacional,pct_analfabetismo,9.3,IPM IPM_Indicadores
+2020,Total nacional,pct_analfabetismo,8.4,IPM IPM_Indicadores
+2021,Total nacional,pct_analfabetismo,8.4,IPM IPM_Indicadores
+2022,Total nacional,pct_analfabetismo,7.7,IPM IPM_Indicadores
+2023,Total nacional,pct_analfabetismo,7.5,IPM IPM_Indicadores
+2024,Total nacional,pct_analfabetismo,7.1,IPM IPM_Indicadores
+2025,Total nacional,pct_analfabetismo,6.4,IPM IPM_Indicadores
+2018,Cabecera,pct_aseguramiento_salud,11.1,IPM IPM_Indicadores
+2019,Cabecera,pct_aseguramiento_salud,11.9,IPM IPM_Indicadores
+2020,Cabecera,pct_aseguramiento_salud,11.4,IPM IPM_Indicadores
+2021,Cabecera,pct_aseguramiento_salud,10.6,IPM IPM_Indicadores
+2022,Cabecera,pct_aseguramiento_salud,9.0,IPM IPM_Indicadores
+2023,Cabecera,pct_aseguramiento_salud,7.2,IPM IPM_Indicadores
+2024,Cabecera,pct_aseguramiento_salud,6.4,IPM IPM_Indicadores
+2025,Cabecera,pct_aseguramiento_salud,4.9,IPM IPM_Indicadores
+2018,Centros poblados y rural disperso,pct_aseguramiento_salud,10.6,IPM IPM_Indicadores
+2019,Centros poblados y rural disperso,pct_aseguramiento_salud,9.5,IPM IPM_Indicadores
+2020,Centros poblados y rural disperso,pct_aseguramiento_salud,8.6,IPM IPM_Indicadores
+2021,Centros poblados y rural disperso,pct_aseguramiento_salud,8.4,IPM IPM_Indicadores
+2022,Centros poblados y rural disperso,pct_aseguramiento_salud,6.3,IPM IPM_Indicadores
+2023,Centros poblados y rural disperso,pct_aseguramiento_salud,5.1,IPM IPM_Indicadores
+2024,Centros poblados y rural disperso,pct_aseguramiento_salud,4.4,IPM IPM_Indicadores
+2025,Centros poblados y rural disperso,pct_aseguramiento_salud,3.8,IPM IPM_Indicadores
+2018,Total nacional,pct_aseguramiento_salud,11.0,IPM IPM_Indicadores
+2019,Total nacional,pct_aseguramiento_salud,11.3,IPM IPM_Indicadores
+2020,Total nacional,pct_aseguramiento_salud,10.8,IPM IPM_Indicadores
+2021,Total nacional,pct_aseguramiento_salud,10.1,IPM IPM_Indicadores
+2022,Total nacional,pct_aseguramiento_salud,8.4,IPM IPM_Indicadores
+2023,Total nacional,pct_aseguramiento_salud,6.7,IPM IPM_Indicadores
+2024,Total nacional,pct_aseguramiento_salud,6.0,IPM IPM_Indicadores
+2025,Total nacional,pct_aseguramiento_salud,4.7,IPM IPM_Indicadores
+2018,Cabecera,pct_atencion_integral,8.6,IPM IPM_Indicadores
+2019,Cabecera,pct_atencion_integral,8.3,IPM IPM_Indicadores
+2020,Cabecera,pct_atencion_integral,7.6,IPM IPM_Indicadores
+2021,Cabecera,pct_atencion_integral,7.8,IPM IPM_Indicadores
+2022,Cabecera,pct_atencion_integral,6.9,IPM IPM_Indicadores
+2023,Cabecera,pct_atencion_integral,6.4,IPM IPM_Indicadores
+2024,Cabecera,pct_atencion_integral,5.8,IPM IPM_Indicadores
+2025,Cabecera,pct_atencion_integral,5.6,IPM IPM_Indicadores
+2018,Centros poblados y rural disperso,pct_atencion_integral,7.1,IPM IPM_Indicadores
+2019,Centros poblados y rural disperso,pct_atencion_integral,6.6,IPM IPM_Indicadores
+2020,Centros poblados y rural disperso,pct_atencion_integral,7.9,IPM IPM_Indicadores
+2021,Centros poblados y rural disperso,pct_atencion_integral,8.9,IPM IPM_Indicadores
+2022,Centros poblados y rural disperso,pct_atencion_integral,7.1,IPM IPM_Indicadores
+2023,Centros poblados y rural disperso,pct_atencion_integral,6.6,IPM IPM_Indicadores
+2024,Centros poblados y rural disperso,pct_atencion_integral,5.3,IPM IPM_Indicadores
+2025,Centros poblados y rural disperso,pct_atencion_integral,4.4,IPM IPM_Indicadores
+2018,Total nacional,pct_atencion_integral,8.3,IPM IPM_Indicadores
+2019,Total nacional,pct_atencion_integral,7.9,IPM IPM_Indicadores
+2020,Total nacional,pct_atencion_integral,7.6,IPM IPM_Indicadores
+2021,Total nacional,pct_atencion_integral,8.0,IPM IPM_Indicadores
+2022,Total nacional,pct_atencion_integral,6.9,IPM IPM_Indicadores
+2023,Total nacional,pct_atencion_integral,6.5,IPM IPM_Indicadores
+2024,Total nacional,pct_atencion_integral,5.7,IPM IPM_Indicadores
+2025,Total nacional,pct_atencion_integral,5.3,IPM IPM_Indicadores
+2018,Cabecera,pct_barreras_acceso_salud,5.7,IPM IPM_Indicadores
+2019,Cabecera,pct_barreras_acceso_salud,5.6,IPM IPM_Indicadores
+2020,Cabecera,pct_barreras_acceso_salud,2.1,IPM IPM_Indicadores
+2021,Cabecera,pct_barreras_acceso_salud,2.3,IPM IPM_Indicadores
+2022,Cabecera,pct_barreras_acceso_salud,2.0,IPM IPM_Indicadores
+2023,Cabecera,pct_barreras_acceso_salud,1.8,IPM IPM_Indicadores
+2024,Cabecera,pct_barreras_acceso_salud,3.0,IPM IPM_Indicadores
+2025,Cabecera,pct_barreras_acceso_salud,2.6,IPM IPM_Indicadores
+2018,Centros poblados y rural disperso,pct_barreras_acceso_salud,7.8,IPM IPM_Indicadores
+2019,Centros poblados y rural disperso,pct_barreras_acceso_salud,5.4,IPM IPM_Indicadores
+2020,Centros poblados y rural disperso,pct_barreras_acceso_salud,2.6,IPM IPM_Indicadores
+2021,Centros poblados y rural disperso,pct_barreras_acceso_salud,2.1,IPM IPM_Indicadores
+2022,Centros poblados y rural disperso,pct_barreras_acceso_salud,1.9,IPM IPM_Indicadores
+2023,Centros poblados y rural disperso,pct_barreras_acceso_salud,1.9,IPM IPM_Indicadores
+2024,Centros poblados y rural disperso,pct_barreras_acceso_salud,2.8,IPM IPM_Indicadores
+2025,Centros poblados y rural disperso,pct_barreras_acceso_salud,3.4,IPM IPM_Indicadores
+2018,Total nacional,pct_barreras_acceso_salud,6.2,IPM IPM_Indicadores
+2019,Total nacional,pct_barreras_acceso_salud,5.5,IPM IPM_Indicadores
+2020,Total nacional,pct_barreras_acceso_salud,2.2,IPM IPM_Indicadores
+2021,Total nacional,pct_barreras_acceso_salud,2.2,IPM IPM_Indicadores
+2022,Total nacional,pct_barreras_acceso_salud,2.0,IPM IPM_Indicadores
+2023,Total nacional,pct_barreras_acceso_salud,1.8,IPM IPM_Indicadores
+2024,Total nacional,pct_barreras_acceso_salud,2.9,IPM IPM_Indicadores
+2025,Total nacional,pct_barreras_acceso_salud,2.8,IPM IPM_Indicadores
+2018,Cabecera,pct_desempleo_larga_duracion,12.7,IPM IPM_Indicadores
+2019,Cabecera,pct_desempleo_larga_duracion,12.9,IPM IPM_Indicadores
+2020,Cabecera,pct_desempleo_larga_duracion,14.5,IPM IPM_Indicadores
+2021,Cabecera,pct_desempleo_larga_duracion,14.6,IPM IPM_Indicadores
+2022,Cabecera,pct_desempleo_larga_duracion,13.5,IPM IPM_Indicadores
+2023,Cabecera,pct_desempleo_larga_duracion,14.1,IPM IPM_Indicadores
+2024,Cabecera,pct_desempleo_larga_duracion,13.7,IPM IPM_Indicadores
+2025,Cabecera,pct_desempleo_larga_duracion,13.6,IPM IPM_Indicadores
+2018,Centros poblados y rural disperso,pct_desempleo_larga_duracion,10.0,IPM IPM_Indicadores
+2019,Centros poblados y rural disperso,pct_desempleo_larga_duracion,11.0,IPM IPM_Indicadores
+2020,Centros poblados y rural disperso,pct_desempleo_larga_duracion,13.1,IPM IPM_Indicadores
+2021,Centros poblados y rural disperso,pct_desempleo_larga_duracion,12.0,IPM IPM_Indicadores
+2022,Centros poblados y rural disperso,pct_desempleo_larga_duracion,12.4,IPM IPM_Indicadores
+2023,Centros poblados y rural disperso,pct_desempleo_larga_duracion,12.4,IPM IPM_Indicadores
+2024,Centros poblados y rural disperso,pct_desempleo_larga_duracion,11.9,IPM IPM_Indicadores
+2025,Centros poblados y rural disperso,pct_desempleo_larga_duracion,11.1,IPM IPM_Indicadores
+2018,Total nacional,pct_desempleo_larga_duracion,12.1,IPM IPM_Indicadores
+2019,Total nacional,pct_desempleo_larga_duracion,12.4,IPM IPM_Indicadores
+2020,Total nacional,pct_desempleo_larga_duracion,14.2,IPM IPM_Indicadores
+2021,Total nacional,pct_desempleo_larga_duracion,14.1,IPM IPM_Indicadores
+2022,Total nacional,pct_desempleo_larga_duracion,13.3,IPM IPM_Indicadores
+2023,Total nacional,pct_desempleo_larga_duracion,13.8,IPM IPM_Indicadores
+2024,Total nacional,pct_desempleo_larga_duracion,13.3,IPM IPM_Indicadores
+2025,Total nacional,pct_desempleo_larga_duracion,13.1,IPM IPM_Indicadores
+2018,Cabecera,pct_empleo_formal,67.5,IPM IPM_Indicadores
+2019,Cabecera,pct_empleo_formal,67.7,IPM IPM_Indicadores
+2020,Cabecera,pct_empleo_formal,69.5,IPM IPM_Indicadores
+2021,Cabecera,pct_empleo_formal,68.6,IPM IPM_Indicadores
+2022,Cabecera,pct_empleo_formal,67.7,IPM IPM_Indicadores
+2023,Cabecera,pct_empleo_formal,66.4,IPM IPM_Indicadores
+2024,Cabecera,pct_empleo_formal,65.5,IPM IPM_Indicadores
+2025,Cabecera,pct_empleo_formal,64.9,IPM IPM_Indicadores
+2018,Centros poblados y rural disperso,pct_empleo_formal,90.5,IPM IPM_Indicadores
+2019,Centros poblados y rural disperso,pct_empleo_formal,90.6,IPM IPM_Indicadores
+2020,Centros poblados y rural disperso,pct_empleo_formal,90.4,IPM IPM_Indicadores
+2021,Centros poblados y rural disperso,pct_empleo_formal,90.8,IPM IPM_Indicadores
+2022,Centros poblados y rural disperso,pct_empleo_formal,90.9,IPM IPM_Indicadores
+2023,Centros poblados y rural disperso,pct_empleo_formal,89.8,IPM IPM_Indicadores
+2024,Centros poblados y rural disperso,pct_empleo_formal,89.5,IPM IPM_Indicadores
+2025,Centros poblados y rural disperso,pct_empleo_formal,88.9,IPM IPM_Indicadores
+2018,Total nacional,pct_empleo_formal,72.7,IPM IPM_Indicadores
+2019,Total nacional,pct_empleo_formal,72.9,IPM IPM_Indicadores
+2020,Total nacional,pct_empleo_formal,74.2,IPM IPM_Indicadores
+2021,Total nacional,pct_empleo_formal,73.5,IPM IPM_Indicadores
+2022,Total nacional,pct_empleo_formal,72.7,IPM IPM_Indicadores
+2023,Total nacional,pct_empleo_formal,71.4,IPM IPM_Indicadores
+2024,Total nacional,pct_empleo_formal,70.7,IPM IPM_Indicadores
+2025,Total nacional,pct_empleo_formal,70.0,IPM IPM_Indicadores
+2018,Cabecera,pct_hacinamiento,8.4,IPM IPM_Indicadores
+2019,Cabecera,pct_hacinamiento,8.9,IPM IPM_Indicadores
+2020,Cabecera,pct_hacinamiento,8.1,IPM IPM_Indicadores
+2021,Cabecera,pct_hacinamiento,8.0,IPM IPM_Indicadores
+2022,Cabecera,pct_hacinamiento,7.7,IPM IPM_Indicadores
+2023,Cabecera,pct_hacinamiento,7.4,IPM IPM_Indicadores
+2024,Cabecera,pct_hacinamiento,6.1,IPM IPM_Indicadores
+2025,Cabecera,pct_hacinamiento,5.4,IPM IPM_Indicadores
+2018,Centros poblados y rural disperso,pct_hacinamiento,8.1,IPM IPM_Indicadores
+2019,Centros poblados y rural disperso,pct_hacinamiento,7.5,IPM IPM_Indicadores
+2020,Centros poblados y rural disperso,pct_hacinamiento,7.1,IPM IPM_Indicadores
+2021,Centros poblados y rural disperso,pct_hacinamiento,7.4,IPM IPM_Indicadores
+2022,Centros poblados y rural disperso,pct_hacinamiento,6.7,IPM IPM_Indicadores
+2023,Centros poblados y rural disperso,pct_hacinamiento,6.1,IPM IPM_Indicadores
+2024,Centros poblados y rural disperso,pct_hacinamiento,6.1,IPM IPM_Indicadores
+2025,Centros poblados y rural disperso,pct_hacinamiento,5.4,IPM IPM_Indicadores
+2018,Total nacional,pct_hacinamiento,8.3,IPM IPM_Indicadores
+2019,Total nacional,pct_hacinamiento,8.6,IPM IPM_Indicadores
+2020,Total nacional,pct_hacinamiento,7.9,IPM IPM_Indicadores
+2021,Total nacional,pct_hacinamiento,7.9,IPM IPM_Indicadores
+2022,Total nacional,pct_hacinamiento,7.4,IPM IPM_Indicadores
+2023,Total nacional,pct_hacinamiento,7.1,IPM IPM_Indicadores
+2024,Total nacional,pct_hacinamiento,6.1,IPM IPM_Indicadores
+2025,Total nacional,pct_hacinamiento,5.4,IPM IPM_Indicadores
+2018,Cabecera,pct_inasistencia_escolar,2.5,IPM IPM_Indicadores
+2019,Cabecera,pct_inasistencia_escolar,2.1,IPM IPM_Indicadores
+2020,Cabecera,pct_inasistencia_escolar,12.4,IPM IPM_Indicadores
+2021,Cabecera,pct_inasistencia_escolar,5.0,IPM IPM_Indicadores
+2022,Cabecera,pct_inasistencia_escolar,1.9,IPM IPM_Indicadores
+2023,Cabecera,pct_inasistencia_escolar,1.9,IPM IPM_Indicadores
+2024,Cabecera,pct_inasistencia_escolar,1.5,IPM IPM_Indicadores
+2025,Cabecera,pct_inasistencia_escolar,1.3,IPM IPM_Indicadores
+2018,Centros poblados y rural disperso,pct_inasistencia_escolar,5.3,IPM IPM_Indicadores
+2019,Centros poblados y rural disperso,pct_inasistencia_escolar,4.6,IPM IPM_Indicadores
+2020,Centros poblados y rural disperso,pct_inasistencia_escolar,30.1,IPM IPM_Indicadores
+2021,Centros poblados y rural disperso,pct_inasistencia_escolar,7.2,IPM IPM_Indicadores
+2022,Centros poblados y rural disperso,pct_inasistencia_escolar,3.6,IPM IPM_Indicadores
+2023,Centros poblados y rural disperso,pct_inasistencia_escolar,3.7,IPM IPM_Indicadores
+2024,Centros poblados y rural disperso,pct_inasistencia_escolar,3.2,IPM IPM_Indicadores
+2025,Centros poblados y rural disperso,pct_inasistencia_escolar,3.4,IPM IPM_Indicadores
+2018,Total nacional,pct_inasistencia_escolar,3.1,IPM IPM_Indicadores
+2019,Total nacional,pct_inasistencia_escolar,2.7,IPM IPM_Indicadores
+2020,Total nacional,pct_inasistencia_escolar,16.4,IPM IPM_Indicadores
+2021,Total nacional,pct_inasistencia_escolar,5.5,IPM IPM_Indicadores
+2022,Total nacional,pct_inasistencia_escolar,2.3,IPM IPM_Indicadores
+2023,Total nacional,pct_inasistencia_escolar,2.3,IPM IPM_Indicadores
+2024,Total nacional,pct_inasistencia_escolar,1.8,IPM IPM_Indicadores
+2025,Total nacional,pct_inasistencia_escolar,1.8,IPM IPM_Indicadores
+2018,Cabecera,pct_logro_educativo,34.4,IPM IPM_Indicadores
+2019,Cabecera,pct_logro_educativo,34.1,IPM IPM_Indicadores
+2020,Cabecera,pct_logro_educativo,33.3,IPM IPM_Indicadores
+2021,Cabecera,pct_logro_educativo,32.1,IPM IPM_Indicadores
+2022,Cabecera,pct_logro_educativo,32.4,IPM IPM_Indicadores
+2023,Cabecera,pct_logro_educativo,31.1,IPM IPM_Indicadores
+2024,Cabecera,pct_logro_educativo,30.3,IPM IPM_Indicadores
+2025,Cabecera,pct_logro_educativo,28.8,IPM IPM_Indicadores
+2018,Centros poblados y rural disperso,pct_logro_educativo,78.8,IPM IPM_Indicadores
+2019,Centros poblados y rural disperso,pct_logro_educativo,77.6,IPM IPM_Indicadores
+2020,Centros poblados y rural disperso,pct_logro_educativo,72.5,IPM IPM_Indicadores
+2021,Centros poblados y rural disperso,pct_logro_educativo,71.8,IPM IPM_Indicadores
+2022,Centros poblados y rural disperso,pct_logro_educativo,71.8,IPM IPM_Indicadores
+2023,Centros poblados y rural disperso,pct_logro_educativo,69.9,IPM IPM_Indicadores
+2024,Centros poblados y rural disperso,pct_logro_educativo,68.0,IPM IPM_Indicadores
+2025,Centros poblados y rural disperso,pct_logro_educativo,66.3,IPM IPM_Indicadores
+2018,Total nacional,pct_logro_educativo,44.5,IPM IPM_Indicadores
+2019,Total nacional,pct_logro_educativo,44.0,IPM IPM_Indicadores
+2020,Total nacional,pct_logro_educativo,42.2,IPM IPM_Indicadores
+2021,Total nacional,pct_logro_educativo,40.8,IPM IPM_Indicadores
+2022,Total nacional,pct_logro_educativo,40.9,IPM IPM_Indicadores
+2023,Total nacional,pct_logro_educativo,39.4,IPM IPM_Indicadores
+2024,Total nacional,pct_logro_educativo,38.3,IPM IPM_Indicadores
+2025,Total nacional,pct_logro_educativo,36.8,IPM IPM_Indicadores
+2018,Cabecera,pct_paredes,2.9,IPM IPM_Indicadores
+2019,Cabecera,pct_paredes,2.7,IPM IPM_Indicadores
+2020,Cabecera,pct_paredes,2.8,IPM IPM_Indicadores
+2021,Cabecera,pct_paredes,2.6,IPM IPM_Indicadores
+2022,Cabecera,pct_paredes,2.5,IPM IPM_Indicadores
+2023,Cabecera,pct_paredes,2.3,IPM IPM_Indicadores
+2024,Cabecera,pct_paredes,2.1,IPM IPM_Indicadores
+2025,Cabecera,pct_paredes,2.2,IPM IPM_Indicadores
+2018,Centros poblados y rural disperso,pct_paredes,2.0,IPM IPM_Indicadores
+2019,Centros poblados y rural disperso,pct_paredes,2.6,IPM IPM_Indicadores
+2020,Centros poblados y rural disperso,pct_paredes,1.5,IPM IPM_Indicadores
+2021,Centros poblados y rural disperso,pct_paredes,1.8,IPM IPM_Indicadores
+2022,Centros poblados y rural disperso,pct_paredes,1.8,IPM IPM_Indicadores
+2023,Centros poblados y rural disperso,pct_paredes,1.6,IPM IPM_Indicadores
+2024,Centros poblados y rural disperso,pct_paredes,2.3,IPM IPM_Indicadores
+2025,Centros poblados y rural disperso,pct_paredes,2.1,IPM IPM_Indicadores
+2018,Total nacional,pct_paredes,2.7,IPM IPM_Indicadores
+2019,Total nacional,pct_paredes,2.6,IPM IPM_Indicadores
+2020,Total nacional,pct_paredes,2.5,IPM IPM_Indicadores
+2021,Total nacional,pct_paredes,2.4,IPM IPM_Indicadores
+2022,Total nacional,pct_paredes,2.3,IPM IPM_Indicadores
+2023,Total nacional,pct_paredes,2.1,IPM IPM_Indicadores
+2024,Total nacional,pct_paredes,2.1,IPM IPM_Indicadores
+2025,Total nacional,pct_paredes,2.2,IPM IPM_Indicadores
+2018,Cabecera,pct_pisos,1.9,IPM IPM_Indicadores
+2019,Cabecera,pct_pisos,2.0,IPM IPM_Indicadores
+2020,Cabecera,pct_pisos,2.2,IPM IPM_Indicadores
+2021,Cabecera,pct_pisos,1.8,IPM IPM_Indicadores
+2022,Cabecera,pct_pisos,1.7,IPM IPM_Indicadores
+2023,Cabecera,pct_pisos,1.5,IPM IPM_Indicadores
+2024,Cabecera,pct_pisos,1.3,IPM IPM_Indicadores
+2025,Cabecera,pct_pisos,1.2,IPM IPM_Indicadores
+2018,Centros poblados y rural disperso,pct_pisos,20.7,IPM IPM_Indicadores
+2019,Centros poblados y rural disperso,pct_pisos,21.4,IPM IPM_Indicadores
+2020,Centros poblados y rural disperso,pct_pisos,20.2,IPM IPM_Indicadores
+2021,Centros poblados y rural disperso,pct_pisos,20.4,IPM IPM_Indicadores
+2022,Centros poblados y rural disperso,pct_pisos,19.7,IPM IPM_Indicadores
+2023,Centros poblados y rural disperso,pct_pisos,18.3,IPM IPM_Indicadores
+2024,Centros poblados y rural disperso,pct_pisos,18.1,IPM IPM_Indicadores
+2025,Centros poblados y rural disperso,pct_pisos,17.2,IPM IPM_Indicadores
+2018,Total nacional,pct_pisos,6.2,IPM IPM_Indicadores
+2019,Total nacional,pct_pisos,6.4,IPM IPM_Indicadores
+2020,Total nacional,pct_pisos,6.3,IPM IPM_Indicadores
+2021,Total nacional,pct_pisos,5.9,IPM IPM_Indicadores
+2022,Total nacional,pct_pisos,5.6,IPM IPM_Indicadores
+2023,Total nacional,pct_pisos,5.1,IPM IPM_Indicadores
+2024,Total nacional,pct_pisos,4.9,IPM IPM_Indicadores
+2025,Total nacional,pct_pisos,4.6,IPM IPM_Indicadores
+2018,Cabecera,pct_rezago_escolar,25.5,IPM IPM_Indicadores
+2019,Cabecera,pct_rezago_escolar,24.3,IPM IPM_Indicadores
+2020,Cabecera,pct_rezago_escolar,24.9,IPM IPM_Indicadores
+2021,Cabecera,pct_rezago_escolar,23.5,IPM IPM_Indicadores
+2022,Cabecera,pct_rezago_escolar,22.8,IPM IPM_Indicadores
+2023,Cabecera,pct_rezago_escolar,22.9,IPM IPM_Indicadores
+2024,Cabecera,pct_rezago_escolar,20.7,IPM IPM_Indicadores
+2025,Cabecera,pct_rezago_escolar,18.3,IPM IPM_Indicadores
+2018,Centros poblados y rural disperso,pct_rezago_escolar,33.9,IPM IPM_Indicadores
+2019,Centros poblados y rural disperso,pct_rezago_escolar,30.9,IPM IPM_Indicadores
+2020,Centros poblados y rural disperso,pct_rezago_escolar,29.5,IPM IPM_Indicadores
+2021,Centros poblados y rural disperso,pct_rezago_escolar,29.7,IPM IPM_Indicadores
+2022,Centros poblados y rural disperso,pct_rezago_escolar,29.8,IPM IPM_Indicadores
+2023,Centros poblados y rural disperso,pct_rezago_escolar,29.4,IPM IPM_Indicadores
+2024,Centros poblados y rural disperso,pct_rezago_escolar,26.8,IPM IPM_Indicadores
+2025,Centros poblados y rural disperso,pct_rezago_escolar,25.1,IPM IPM_Indicadores
+2018,Total nacional,pct_rezago_escolar,27.4,IPM IPM_Indicadores
+2019,Total nacional,pct_rezago_escolar,25.8,IPM IPM_Indicadores
+2020,Total nacional,pct_rezago_escolar,25.9,IPM IPM_Indicadores
+2021,Total nacional,pct_rezago_escolar,24.9,IPM IPM_Indicadores
+2022,Total nacional,pct_rezago_escolar,24.3,IPM IPM_Indicadores
+2023,Total nacional,pct_rezago_escolar,24.3,IPM IPM_Indicadores
+2024,Total nacional,pct_rezago_escolar,22.0,IPM IPM_Indicadores
+2025,Total nacional,pct_rezago_escolar,19.7,IPM IPM_Indicadores
+2018,Cabecera,pct_trabajo_infantil,1.4,IPM IPM_Indicadores
+2019,Cabecera,pct_trabajo_infantil,1.2,IPM IPM_Indicadores
+2020,Cabecera,pct_trabajo_infantil,0.8,IPM IPM_Indicadores
+2021,Cabecera,pct_trabajo_infantil,0.9,IPM IPM_Indicadores
+2022,Cabecera,pct_trabajo_infantil,0.9,IPM IPM_Indicadores
+2023,Cabecera,pct_trabajo_infantil,0.9,IPM IPM_Indicadores
+2024,Cabecera,pct_trabajo_infantil,0.7,IPM IPM_Indicadores
+2025,Cabecera,pct_trabajo_infantil,0.8,IPM IPM_Indicadores
+2018,Centros poblados y rural disperso,pct_trabajo_infantil,4.2,IPM IPM_Indicadores
+2019,Centros poblados y rural disperso,pct_trabajo_infantil,3.4,IPM IPM_Indicadores
+2020,Centros poblados y rural disperso,pct_trabajo_infantil,2.8,IPM IPM_Indicadores
+2021,Centros poblados y rural disperso,pct_trabajo_infantil,2.9,IPM IPM_Indicadores
+2022,Centros poblados y rural disperso,pct_trabajo_infantil,2.4,IPM IPM_Indicadores
+2023,Centros poblados y rural disperso,pct_trabajo_infantil,2.7,IPM IPM_Indicadores
+2024,Centros poblados y rural disperso,pct_trabajo_infantil,2.6,IPM IPM_Indicadores
+2025,Centros poblados y rural disperso,pct_trabajo_infantil,2.7,IPM IPM_Indicadores
+2018,Total nacional,pct_trabajo_infantil,2.0,IPM IPM_Indicadores
+2019,Total nacional,pct_trabajo_infantil,1.7,IPM IPM_Indicadores
+2020,Total nacional,pct_trabajo_infantil,1.2,IPM IPM_Indicadores
+2021,Total nacional,pct_trabajo_infantil,1.3,IPM IPM_Indicadores
+2022,Total nacional,pct_trabajo_infantil,1.2,IPM IPM_Indicadores
+2023,Total nacional,pct_trabajo_infantil,1.3,IPM IPM_Indicadores
+2024,Total nacional,pct_trabajo_infantil,1.1,IPM IPM_Indicadores
+2025,Total nacional,pct_trabajo_infantil,1.2,IPM IPM_Indicadores
