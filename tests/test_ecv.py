@@ -312,6 +312,8 @@ def test_umbral_y_agregados_del_ipm():
     assert dd.ecv.ipm(pd.concat([pobre, casi], ignore_index=True), por="sexo_jefe").sexo_jefe.tolist() == ["Mujer"]
     with pytest.raises(ValueError, match="Muestra desconocida"):
         dd.ecv.ipm(h, muestra="rural")
+    with pytest.warns(UserWarning, match="SIMAT"):
+        dd.ecv.ipm(h.assign(anio=2020))
     with pytest.raises(ValueError, match="MODULOS_IPM"):
         dd.ecv.privaciones(pobre.drop(columns="P6160"))
 
@@ -370,8 +372,11 @@ def test_real_ipm_coincide_con_los_anexos_del_dane():
     publicado = pd.read_csv(DATOS / "dane_ipm_publicado.csv")
     anios = sorted(set(publicado.anio) & set(dd.ecv.available(root=REAL).anio))
     publicado = publicado[publicado.anio.isin(anios)]
-    partes = [dd.ecv.serie_ipm(anios, root=REAL)] + [
-        dd.ecv.serie_ipm(anios, por=k, root=REAL).rename(columns={k: "dominio"}) for k in ("area", "region_ipm", "departamento")]
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)  # el de 2020
+        partes = [dd.ecv.serie_ipm(anios, root=REAL)] + [
+            dd.ecv.serie_ipm(anios, por=k, root=REAL).rename(columns={k: "dominio"})
+            for k in ("area", "region_ipm", "departamento")]
     x = _comparar(publicado, partes, "dominio")
     # 2020: el DANE armó la inasistencia escolar con el SIMAT, que no está en los microdatos; lo demás de 2020 sí coincide
     x = x[(x.anio != 2020) | ~x.indicador.isin(["incidencia", "ipm", "pct_inasistencia_escolar"])]

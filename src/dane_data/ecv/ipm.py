@@ -10,6 +10,7 @@ dice todo, el comentario lo indica.
 
 from __future__ import annotations
 
+import warnings
 from typing import Iterable
 
 import numpy as np
@@ -108,6 +109,9 @@ def privaciones(df: pd.DataFrame) -> pd.DataFrame:
 
     Notas
     -----
+    En 2020 el DANE armó la inasistencia escolar con el SIMAT (el registro de matrícula del Ministerio de Educación), que no
+    está en los microdatos: con la ECV sola, ese año la incidencia nacional da 14,8 % y no el 18,1 % publicado.
+
     Lo que no dice el algoritmo publicado y se ajustó a la base oficial: los años de educación (vea ``_anios_ipm``); el
     desempleo de larga duración es de 52 semanas o más; un hogar sin personas de 15 años y más se priva por logro
     educativo y por analfabetismo; un niño de 5 años que estudia y no tiene el dato de alimentación en el colegio no se
@@ -264,6 +268,10 @@ def ipm(df: pd.DataFrame, por: str | Iterable[str] | None = None, muestra: str |
     if muestra not in MUESTRAS:
         raise ValueError(f"Muestra desconocida {muestra!r}. Opciones: {list(MUESTRAS)}")
     hogares = df if "puntaje" in df.columns else privaciones(df)
+    if hogares["anio"].eq(2020).any():
+        warnings.warn("IPM 2020: el DANE armó la inasistencia escolar con el SIMAT, que no está en los microdatos de la "
+                      "ECV; con la ECV sola la incidencia nacional da 14,8 % y no el 18,1 % publicado.", UserWarning,
+                      stacklevel=2)
     if muestra == "nacional":
         hogares = hogares[_muestra_nacional(hogares)]
     if llaves and dropna:
