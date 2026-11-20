@@ -789,3 +789,46 @@ def test_diccionario_eevv(encuesta):
 def test_las_paginas_estan_en_la_navegacion():
     inicio = (PAGINAS.parent / "Inicio.py").read_text(encoding="utf-8")
     assert "paginas/eevv_vitales.py" in inicio
+
+
+def test_descargar_emicron(tmp_path, monkeypatch):
+    for clave in ("geih", "geih_empalme", "eam", "eevv", "emicron"):
+        monkeypatch.setitem(dd.config._session, clave, tmp_path / clave)
+    pedidos = []
+    monkeypatch.setattr(dd.emicron, "download", lambda anios, **kw: pedidos.append((list(anios), kw["modulos"])) or [])
+    monkeypatch.setattr(dd.eam, "download", lambda *a, **kw: pytest.fail("se llamó a la EAM"))
+    at = AppTest.from_file(str(PAGINAS / "descargar.py")).run()
+    at.radio[0].set_value("EMICRON (micronegocios, anual)").run()
+    assert not at.exception
+    assert next(m for m in at.multiselect if m.label == "Años").value == [2024]  # el último año nacional
+    next(b for b in at.button if b.label.endswith("Descargar")).click().run()
+    assert not at.exception
+    assert pedidos == [([2024], None)]  # todos los módulos
+    modulos = next(m for m in at.multiselect if m.label == "Módulos")
+    assert "fex_dpto" not in modulos.options and "identificacion" not in modulos.options  # se bajan siempre
+    modulos.set_value(["ventas", "costos"]).run()
+    next(b for b in at.button if b.label.endswith("Descargar")).click().run()
+    assert pedidos[-1] == ([2024], ["ventas", "costos"])
+    assert "dd.emicron.download([2024], modulos=['ventas', 'costos']" in at.code[0].value
+
+
+def test_inicio_con_emicron(emicron_root, tmp_path, monkeypatch):
+    archivo = tmp_path / "config.json"
+    monkeypatch.setattr(dd.config, "CONFIG_FILE", archivo)
+    monkeypatch.setattr(dd.config, "_session", {"geih": tmp_path / "g", "geih_empalme": tmp_path / "e", "eam": tmp_path / "eam",
+                                                "eevv": tmp_path / "v", "emicron": emicron_root})
+    at = AppTest.from_file(str(PAGINAS / "inicio.py"), default_timeout=60).run()
+    assert not at.exception
+    assert next(m for m in at.metric if m.label == "EMICRON").value == "4 años"
+    next(t for t in at.text_input if t.label == "EMICRON").set_value(str(tmp_path / "otra"))
+    next(b for b in at.button if b.label == "Guardar").click().run()
+    assert not at.exception
+    assert json.loads(archivo.read_text(encoding="utf-8")) == {"emicron": str(tmp_path / "otra")}
+
+
+def test_citar_incluye_la_emicron():
+    at = AppTest.from_file(str(PAGINAS / "citar.py")).run()
+    assert not at.exception
+    assert "EMICRON" in at.code[0].value  # el título del software
+    assert "Encuesta de Micronegocios (EMICRON) [microdatos]" in at.code[2].value
+    assert "Estadísticas Vitales y EMICRON" in Path(dd.__file__).parents[2].joinpath("CITATION.cff").read_text(encoding="utf-8")

@@ -211,6 +211,7 @@ LOCALE_ES = {"format": {"months": _MESES, "shortMonths": [m[:3] for m in _MESES]
 FUENTES = {
     "geih": "Fuente: DANE, GEIH. Cálculos con dane-data.",
     "eam": "Fuente: DANE, EAM. Cálculos con dane-data.",
+    "emicron": "Fuente: DANE, EMICRON. Cálculos con dane-data.",
     "eevv": "Fuente: DANE, Estadísticas Vitales: hechos registrados,<br>sin ajuste por subregistro. Cálculos con dane-data.",
     "tasas": "Fuente: DANE, Estadísticas Vitales y proyecciones de población:<br>hechos registrados, sin ajuste por "
              "subregistro. Cálculos con dane-data.",
@@ -356,6 +357,11 @@ def disponibles_eam(rutas: tuple) -> pd.DataFrame:
 @st.cache_data(ttl=30, show_spinner=False)
 def disponibles_eevv(rutas: tuple) -> pd.DataFrame:
     return dd.eevv.available()
+
+
+@st.cache_data(ttl=30, show_spinner=False)
+def disponibles_emicron(rutas: tuple) -> pd.DataFrame:
+    return dd.emicron.available()
 
 
 # --------------------------------------------------------------------------- #
