@@ -5,6 +5,7 @@ from __future__ import annotations
 import numbers
 from typing import Iterable
 
+from .agregados import clear_cache, serie_indicadores
 from .downloader import ARCHIVOS, ARCHIVOS_EMPALME, POBREZA_KNOWN_FILES, PobrezaDownloader
 from .indicadores import GLOSARIO, indicadores
 from .loader import (CATEGORIAS, CORE, DOMINIOS, ETIQUETAS, GRUPOS_DOMINIO, METODOLOGIAS, TRECE_CIUDADES, _root,
@@ -91,6 +92,6 @@ def download(
 
 __all__ = [
     "download", "available", "find_files", "load", "harmonize", "ARCHIVOS", "ARCHIVOS_EMPALME", "ANIOS_DISPONIBLES",
-    "indicadores", "CORE", "ETIQUETAS", "CATEGORIAS", "DOMINIOS", "GRUPOS_DOMINIO", "TRECE_CIUDADES", "METODOLOGIAS",
+    "indicadores", "serie_indicadores", "clear_cache", "CORE", "ETIQUETAS", "CATEGORIAS", "DOMINIOS", "GRUPOS_DOMINIO", "TRECE_CIUDADES", "METODOLOGIAS",
     "GLOSARIO",
 ]

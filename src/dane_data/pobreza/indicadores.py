@@ -124,7 +124,11 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, dropna
     if (vacios := base[list(_NECESARIAS)].isna().sum()).any():
         raise ValueError(f"Hogares sin dato: {vacios[vacios > 0].to_dict()}.")
     for c in _CONTEXTO:
-        if c in base.columns and c not in llaves and base[c].nunique() > 1:
+        if c not in base.columns or c in llaves:
+            continue
+        # Con anio en por, cada grupo tiene una sola metodología: lo que no puede pasar es mezclar dentro de un grupo
+        mezcla = (base.groupby(llaves, observed=True)[c].nunique().max() if llaves else base[c].nunique()) > 1
+        if mezcla:
             raise ValueError(f"Los datos tienen varios valores de {c} ({sorted(base[c].unique().tolist())}): agregue "
                              f"{c!r} a por.")
     if not llaves:

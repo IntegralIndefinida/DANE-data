@@ -2,6 +2,7 @@
 
 import json
 import warnings
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -256,3 +257,58 @@ def test_indicadores_con_load(pobreza_root):
     emp = dd.pobreza.load([2019, 2025], root=pobreza_root, empalme=True)
     assert emp.empalmado.all()
     assert list(dd.pobreza.indicadores(emp, por="anio").anio) == [2019, 2025]
+
+
+# ---------------------------------------------------------------------------------------------------- #
+# Series con caché
+@pytest.fixture
+def cache_tmp(tmp_path, monkeypatch):
+    monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
+    return tmp_path / "cache"
+
+
+def test_serie_igual_a_load_e_indicadores(pobreza_root, cache_tmp):
+    anios = [2017, 2019, 2021, 2022, 2025]
+    for empalme in (False, True):
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            serie = dd.pobreza.serie_indicadores(anios, por="zona", empalme=empalme, root=pobreza_root)
+            directo = dd.pobreza.indicadores(dd.pobreza.load(anios, empalme=empalme, root=pobreza_root), por=["anio", "zona"])
+        pd.testing.assert_frame_equal(serie, directo)
+    filtrada = dd.pobreza.serie_indicadores(2025, filtros={"dominio": ["Bogotá"]}, root=pobreza_root)
+    assert filtrada.hogares_muestra.tolist() == [1]
+
+
+def test_serie_usa_la_cache_y_se_invalida(pobreza_root, cache_tmp, monkeypatch):
+    from dane_data.pobreza import loader
+    lecturas = []
+    leer = loader.read_table
+    monkeypatch.setattr(loader, "read_table", lambda ruta, **kw: lecturas.append(Path(ruta).name) or leer(ruta, **kw))
+    primera = dd.pobreza.serie_indicadores([2019, 2021], empalme=True, root=pobreza_root)
+    # 2019 y 2021 no usan las líneas de 2012–2018: no se leen
+    assert sorted(set(lecturas)) == ["empalme_2012_2020.csv", "hogares.csv", "hogares_empalmado_2021.csv"]
+    lecturas.clear()
+    pd.testing.assert_frame_equal(dd.pobreza.serie_indicadores([2019, 2021], empalme=True, root=pobreza_root), primera)
+    assert lecturas == []
+    # Sin empalme es otra entrada de la caché
+    dd.pobreza.serie_indicadores(2019, root=pobreza_root)
+    assert lecturas == ["hogares.csv"]
+    # Cambia el factor de empalme: se recalcula 2019, que lo usa, y no 2021, que no
+    lecturas.clear()
+    emp = pobreza_root / "datos" / "empalme" / "empalme_2012_2020.csv"
+    emp.write_text(emp.read_text().replace(";0.5", ";0.25"))
+    nueva = dd.pobreza.serie_indicadores([2019, 2021], empalme=True, root=pobreza_root)
+    assert "hogares_empalmado_2021.csv" not in lecturas and "empalme_2012_2020.csv" in lecturas
+    assert nueva.personas[0] == primera.personas[0] / 2 and nueva.personas[1] == primera.personas[1]
+    assert dd.pobreza.clear_cache() > 0 and dd.pobreza.clear_cache() == 0
+
+
+def test_serie_avisa_una_vez_aun_desde_la_cache(pobreza_root, cache_tmp):
+    dd.pobreza.serie_indicadores(2018, root=pobreza_root)
+    dd.pobreza.serie_indicadores(2019, root=pobreza_root)
+    with warnings.catch_warnings(record=True) as avisos:
+        warnings.simplefilter("always")
+        dd.pobreza.serie_indicadores([2018, 2019], root=pobreza_root)
+    assert len(avisos) == 1 and "empalme=True" in str(avisos[0].message)
+    with pytest.raises(FileNotFoundError, match="download"):
+        dd.pobreza.serie_indicadores(2030, root=pobreza_root)

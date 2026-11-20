@@ -453,9 +453,10 @@ def load(
     extras = [] if isinstance(columns, str) else [c.upper() for c in columns]
     leer = None if columns == "all" else set(CORE) | set(extras)
     fuentes = {}
-    if empalme and min(archivos) <= 2021:
-        necesarios = [n for n in ARCHIVOS_EMPALME if n != "hogares_empalmado_dpto_2021"]
-        fuentes = {n: _leer_empalme(n, root) for n in necesarios}
+    if empalme:  # solo los archivos que usan los años pedidos (el factor 2012–2020 pesa 75 MB)
+        necesarios = {"empalme_2012_2020": min(archivos) <= 2020, "lineas_2012_2018": min(archivos) <= 2018,
+                      "hogares_empalmado_2021": 2021 in archivos}
+        fuentes = {n: _leer_empalme(n, root) for n, hace_falta in necesarios.items() if hace_falta}
 
     partes = []
     for i, (anio, ruta) in enumerate(sorted(archivos.items())):
