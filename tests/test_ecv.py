@@ -112,3 +112,13 @@ def test_load_columns_limita_lo_que_se_lee(ecv_root):
     df = _load(2025, modulos="servicios", columns=["P5010"], root=ecv_root)
     assert "P5010" in df and "P5000" not in df and "P4005" not in df
     assert {"sexo", "edad", "region", "fex"} <= set(df.columns)  # las armonizadas siempre
+
+
+def test_diccionario_ecv():
+    d = dd.diccionario("ecv")
+    assert d["P6090"]["modulos"] == ["salud"]
+    assert d["P1075"]["modulos"] == ["condiciones"] and d["P1075"]["categorias"] == {"1": "Si", "2": "No"}
+    assert set(d["DIRECTORIO"]["modulos"]) == set(dd.ecv.MODULOS)  # las llaves están en todos los capítulos
+    assert {m for v in d.values() for m in v["modulos"]} == set(dd.ecv.MODULOS)
+    assert dd.describir("p5230", encuesta="ecv") == "6. ¿Usted se considera pobre?"
+    assert "P8586" in dd.buscar_variable("actualmente estudia", "ecv").variable.tolist()

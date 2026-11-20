@@ -777,7 +777,7 @@ def test_inicio_con_eevv(eevv_root, tmp_path, monkeypatch):
     assert json.loads(archivo.read_text(encoding="utf-8")) == {"eevv": str(tmp_path / "otra")}
 
 
-@pytest.mark.parametrize("encuesta", ["Defunciones", "Nacimientos", "Defunciones fetales"])
+@pytest.mark.parametrize("encuesta", ["Defunciones", "Nacimientos", "Defunciones fetales", "ECV"])
 def test_diccionario_eevv(encuesta):
     at = AppTest.from_file(str(PAGINAS / "diccionario.py"), default_timeout=60).run()
     at.radio[0].set_value(encuesta).run()
