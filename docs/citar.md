@@ -30,13 +30,13 @@ misma cita en APA y BibTeX, tomada de
 [`CITATION.cff`](https://github.com/IntegralIndefinida/DANE-data/blob/main/CITATION.cff). La página *Cómo citar* de
 la {doc}`aplicación <guia/app>` da el BibTeX con el campo `version` de la versión instalada.
 
-> Ramírez, L. (2026). *dane-data: microdatos del DANE (GEIH, EAM y Estadísticas Vitales) listos para analizar* (versión
+> Ramírez, L. (2026). *dane-data: microdatos del DANE (GEIH, EAM, Estadísticas Vitales y pobreza monetaria) listos para analizar* (versión
 > {{ version }}) [software]. <https://github.com/IntegralIndefinida/DANE-data>
 
 ```bibtex
 @software{dane_data,
   author  = {Ramírez, Luis},
-  title   = {dane-data: microdatos del DANE (GEIH, EAM y Estadísticas Vitales) listos para analizar},
+  title   = {dane-data: microdatos del DANE (GEIH, EAM, Estadísticas Vitales y pobreza monetaria) listos para analizar},
   year    = {2026},
   url     = {https://github.com/IntegralIndefinida/DANE-data},
 }
