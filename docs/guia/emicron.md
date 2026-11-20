@@ -135,3 +135,8 @@ módulo; `load_personal` los deja como en los demás y numera a la persona en `o
 * **Muestras pequeñas.** Con pocos micronegocios encuestados (`n_muestra`) las cifras no son confiables, sobre todo por
   ciudad o departamento.
 * **Cortes repetidos, no un panel.** Cada año son otros micronegocios: la EMICRON no sigue a los mismos negocios.
+
+```{seealso}
+El ejemplo {doc}`../ejemplos/micronegocios` sigue la informalidad de los micronegocios de 2019 a 2024, por actividad y
+por ciudad.
+```
