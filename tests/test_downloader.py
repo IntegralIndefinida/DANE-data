@@ -1122,3 +1122,32 @@ def test_ecv_available_y_find_files(tmp_path):
     assert list(dd.ecv.find_files(2020, modulo="salud", root=tmp_path)) == [2020]
     assert dd.ecv.find_files(2020, modulo="tic", root=tmp_path) == {}
     assert dd.ecv.available(root=tmp_path / "no_existe").empty
+
+
+def _zip_deflate64(nombre: str, datos: bytes, crc: int | None = None) -> bytes:
+    """Un ZIP con un miembro en Deflate64 (método 9), como Educación 2021 de la ECV: zipfile no sabe escribirlo."""
+    import struct
+    import zlib
+
+    import inflate64
+
+    deflater = inflate64.Deflater()
+    comprimido = deflater.deflate(datos) + deflater.flush()
+    crc = zlib.crc32(datos) if crc is None else crc
+    n = nombre.encode()
+    local = struct.pack("<4s5H3L2H", b"PK\x03\x04", 20, 0, 9, 0, 0, crc, len(comprimido), len(datos), len(n), 0) + n
+    central = struct.pack("<4s6H3L5H2L", b"PK\x01\x02", 20, 20, 0, 9, 0, 0, crc, len(comprimido), len(datos), len(n),
+                          0, 0, 0, 0, 0, 0) + n
+    fin = struct.pack("<4s4H2LH", b"PK\x05\x06", 0, 0, 1, 1, len(central), len(local) + len(comprimido), 0)
+    return local + comprimido + central + fin
+
+
+def test_ecv_extrae_zip_en_deflate64(tmp_path):
+    csv = ("DIRECTORIO;SECUENCIA_P\n" + "".join(f"{i};1\n" for i in range(5000))).encode()
+    url = _url_ecv(2021, "educacion")
+    _, fallidos = _baja_ecv(tmp_path, {url: _zip_deflate64("Educación.csv", csv)}, [2021], modulos=("educacion",))
+    assert fallidos == []
+    assert (tmp_path / "datos" / "2021" / "educacion" / "Educación.csv").read_bytes() == csv
+    _, fallidos = _baja_ecv(tmp_path, {url: _zip_deflate64("Educación.csv", csv, crc=1)}, [2021], modulos=("educacion",),
+                            forzar=True)
+    assert len(fallidos) == 1 and "educacion 2021" in fallidos[0]  # un CRC distinto no deja un archivo dañado

@@ -23,6 +23,7 @@ dependencies = [
     "requests>=2.28",
     "pandas>=2.0",
     "pyarrow>=12",
+    "inflate64>=1.0",
 ]
 
 [project.urls]
