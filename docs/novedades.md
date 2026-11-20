@@ -13,6 +13,7 @@
   extrema, Gini e ingreso per cápita, nacional, por dominio y, con `departamental=True`, por departamento. Coinciden con los
   anexos del DANE.
 * {dd}`pobreza.unir_geih()` pega a cada persona de la GEIH la pobreza de su hogar.
+* La aplicación tiene una página *Pobreza monetaria*, con la serie empalmada y las cifras departamentales, y la pobreza en *Descargar datos* e *Inicio*.
 * {dd}`weighted_gini()`: el coeficiente de Gini ponderado.
 * {dd}`set_paths()` acepta `pobreza=` y `dane-data config` acepta `--pobreza`.
 

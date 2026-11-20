@@ -212,6 +212,7 @@ FUENTES = {
     "geih": "Fuente: DANE, GEIH. Cálculos con dane-data.",
     "eam": "Fuente: DANE, EAM. Cálculos con dane-data.",
     "eevv": "Fuente: DANE, Estadísticas Vitales: hechos registrados,<br>sin ajuste por subregistro. Cálculos con dane-data.",
+    "pobreza": "Fuente: DANE, Medición de Pobreza Monetaria y Desigualdad (GEIH). Cálculos con dane-data.",
     "tasas": "Fuente: DANE, Estadísticas Vitales y proyecciones de población:<br>hechos registrados, sin ajuste por "
              "subregistro. Cálculos con dane-data.",
 }
@@ -328,6 +329,20 @@ def conteos_eevv(anios, tipo: str, por: str | None, filtros: dict, rutas: tuple)
     return res
 
 
+# La pobreza también sale año por año de la caché en disco (dd.pobreza.serie_indicadores). A diferencia de las EEVV, sus avisos
+# (metodologías o marcos distintos) se devuelven para mostrarlos en la página: son la advertencia más importante de la serie.
+@st.cache_data(max_entries=50, show_spinner=False)
+def indicadores_pobreza(anios, por: str | None, empalme: bool, departamental: bool,
+                        rutas: tuple) -> tuple[pd.DataFrame, list[str]]:
+    barra, progreso = _barra("Preparando los indicadores de pobreza (la primera vez lee los archivos del DANE)…")
+    with warnings.catch_warnings(record=True) as avisos:
+        warnings.simplefilter("always", UserWarning)
+        res = dd.pobreza.serie_indicadores(anios, por=por, empalme=empalme, departamental=departamental,
+                                           progress=progreso)
+    barra.empty()
+    return res, list(dict.fromkeys(str(a.message) for a in avisos if issubclass(a.category, UserWarning)))
+
+
 @st.cache_data(max_entries=20, show_spinner=False)
 def tasas_eevv(anios, por: str | None, rutas: tuple) -> pd.DataFrame:
     barra, progreso = _barra("Calculando las tasas…")
@@ -356,6 +371,11 @@ def disponibles_eam(rutas: tuple) -> pd.DataFrame:
 @st.cache_data(ttl=30, show_spinner=False)
 def disponibles_eevv(rutas: tuple) -> pd.DataFrame:
     return dd.eevv.available()
+
+
+@st.cache_data(ttl=30, show_spinner=False)
+def disponibles_pobreza(rutas: tuple) -> pd.DataFrame:
+    return dd.pobreza.available()
 
 
 # --------------------------------------------------------------------------- #

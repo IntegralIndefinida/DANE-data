@@ -3,7 +3,8 @@ from pathlib import Path
 import streamlit as st
 
 import dane_data as dd
-from dane_data.app._ui import aviso_version_nueva, disponibles_eam, disponibles_eevv, disponibles_geih, rutas_actuales
+from dane_data.app._ui import (aviso_version_nueva, disponibles_eam, disponibles_eevv, disponibles_geih, disponibles_pobreza,
+                               rutas_actuales)
 
 st.title("DANE-data")
 # El aviso va arriba pero se llena al final: sin internet, la consulta no demora el resto de la página
@@ -21,7 +22,9 @@ with c1, st.container(border=True, height="stretch"):
         "**informalidad** y los **ingresos laborales**. Cada fila es una persona; el *factor de "
         "expansión* dice a cuántas personas del país representa.\n\n"
         "**Úsela para:** brechas de género, desempleo juvenil, informalidad por región, "
-        "ingresos frente al salario mínimo…"
+        "ingresos frente al salario mínimo…\n\n"
+        "De la GEIH sale también la **pobreza monetaria** (2012–2025): el DANE publica aparte el ingreso per cápita de "
+        "cada hogar y si es pobre, y la página **Pobreza monetaria** calcula sus cifras oficiales."
     )
 with c2, st.container(border=True, height="stretch"):
     st.markdown(
@@ -44,7 +47,8 @@ st.subheader("¿Cómo empiezo?")
 st.markdown(
     "1. **Datos:** si aún no los tiene, vaya a **Descargar datos** (menú izquierdo). "
     "Si ya los descargó, indique la carpeta abajo.\n"
-    "2. **Explore:** abra **Indicadores laborales**, **Indicadores industriales** o **Nacimientos y defunciones**, "
+    "2. **Explore:** abra **Indicadores laborales**, **Pobreza monetaria**, **Indicadores industriales** o "
+    "**Nacimientos y defunciones**, "
     "elija años y filtros.\n"
     "3. **Exporte:** cada tabla se descarga en CSV, Excel o Stata. Cada página muestra el "
     "**código Python** equivalente para pasar a un notebook cuando esté listo."
@@ -61,8 +65,10 @@ st.subheader("Datos disponibles en este computador")
 rutas = rutas_actuales()
 g, e, ge = disponibles_geih(False, rutas), disponibles_eam(rutas), disponibles_geih(True, rutas)
 v = disponibles_eevv(rutas)
+pm = disponibles_pobreza(rutas)
+pm_anios = pm.anio.dropna() if len(pm) else pm.anio  # las filas del empalme no tienen año
 
-m1, m2, m3, m4 = st.columns(4)
+m1, m2, m3, m4, m5 = st.columns(5)
 m1.metric("GEIH (serie principal)", f"{g.anio.nunique()} años" if len(g) else "Sin datos",
           f"{g.anio.min()}–{g.anio.max()} · {len(g)} meses" if len(g) else None, delta_color="off")
 m2.metric("GEIH (serie de empalme)", f"{ge.anio.nunique()} años" if len(ge) else "Sin datos",
@@ -71,6 +77,8 @@ m3.metric("EAM", f"{e.anio.nunique()} años" if len(e) else "Sin datos",
           f"{e.anio.min()}–{e.anio.max()}" if len(e) else None, delta_color="off")
 m4.metric("Estadísticas Vitales", f"{v.anio.nunique()} años" if len(v) else "Sin datos",
           f"{v.anio.min()}–{v.anio.max()}" if len(v) else None, delta_color="off")
+m5.metric("Pobreza monetaria", f"{pm_anios.nunique()} años" if len(pm_anios) else "Sin datos",
+          f"{pm_anios.min()}–{pm_anios.max()}" if len(pm_anios) else None, delta_color="off")
 
 incompletos = g[~g.completo] if len(g) else g
 if len(incompletos):
@@ -81,10 +89,10 @@ if len(incompletos):
                    "lo que ya está descargado» en las opciones avanzadas.")
 
 # ---------------------------------------------------------------- Configuración
-with st.expander("Carpetas de datos", icon=":material/folder:", expanded=not (len(g) or len(e) or len(v))):
+with st.expander("Carpetas de datos", icon=":material/folder:", expanded=not (len(g) or len(e) or len(v) or len(pm))):
     st.caption(
         "Indique dónde están (o dónde quiere guardar) los datos. Para la GEIH, la carpeta que "
-        "contiene `datos_csv/`; para la EAM y las Estadísticas Vitales, la que contiene `datos/`. Se recuerda para la "
+        "contiene `datos_csv/`; para la EAM, las Estadísticas Vitales y la pobreza, la que contiene `datos/`. Se recuerda para la "
         "próxima vez."
     )
     with st.form("rutas"):
@@ -92,9 +100,11 @@ with st.expander("Carpetas de datos", icon=":material/folder:", expanded=not (le
         p_emp = st.text_input("GEIH serie de empalme", str(dd.get_path("geih_empalme")))
         p_eam = st.text_input("EAM", str(dd.get_path("eam")))
         p_eevv = st.text_input("Estadísticas Vitales", str(dd.get_path("eevv")))
+        p_pobreza = st.text_input("Pobreza monetaria", str(dd.get_path("pobreza")))
         if st.form_submit_button("Guardar", type="primary"):
             # Solo las que cambiaron: así no se fija en el archivo una ruta que viene de una variable de entorno
-            cambios = {k: v.strip() for k, v in (("geih", p_geih), ("geih_empalme", p_emp), ("eam", p_eam), ("eevv", p_eevv))
+            cambios = {k: v.strip() for k, v in (("geih", p_geih), ("geih_empalme", p_emp), ("eam", p_eam), ("eevv", p_eevv),
+                                                          ("pobreza", p_pobreza))
                        if v.strip() != str(dd.get_path(k))}
             # La app corre dentro de la carpeta del paquete: una ruta relativa quedaría ahí (y uv la borra al
             # reinstalar), lejos de donde la buscaría un notebook.
@@ -116,7 +126,7 @@ st.divider()
 st.caption(
     "Fuente: DANE — Archivo Nacional de Datos (ANDA), microdatos anonimizados de uso público. "
     "Cite: *DANE, Gran Encuesta Integrada de Hogares (GEIH)* / *Encuesta Anual Manufacturera (EAM)* / *Estadísticas "
-    "Vitales (EEVV)*."
+    "Vitales (EEVV)* / *Medición de Pobreza Monetaria y Desigualdad*."
 )
 
 with hueco_version.container():

@@ -789,3 +789,85 @@ def test_diccionario_eevv(encuesta):
 def test_las_paginas_estan_en_la_navegacion():
     inicio = (PAGINAS.parent / "Inicio.py").read_text(encoding="utf-8")
     assert "paginas/eevv_vitales.py" in inicio
+
+
+# ---------------------------------------------------------------------------------------------------- #
+# Pobreza monetaria
+# ---------------------------------------------------------------------------------------------------- #
+@pytest.fixture
+def app_pobreza(pobreza_root, tmp_path, monkeypatch):
+    monkeypatch.setitem(dd.config._session, "pobreza", pobreza_root)
+    monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
+    return AppTest.from_file(str(PAGINAS / "pobreza.py"), default_timeout=60)
+
+
+def test_pobreza_sin_datos(tmp_path, monkeypatch):
+    monkeypatch.setitem(dd.config._session, "pobreza", tmp_path / "nada")
+    monkeypatch.setattr("streamlit.page_link", lambda *a, **k: None)
+    at = AppTest.from_file(str(PAGINAS / "pobreza.py"), default_timeout=60).run()
+    assert not at.exception
+    assert any("pobreza monetaria" in w.value for w in at.main.warning)
+
+
+def test_pobreza_indicadores_con_y_sin_empalme(app_pobreza):
+    at = app_pobreza.run()
+    assert not at.exception
+    assert at.toggle(key="pobreza_empalme").value  # hay archivos de empalme: activo por defecto
+    assert at.metric[0].label == "Pobreza monetaria" and at.metric[0].value.endswith("%")
+    assert any("empalme=True" in c.value and "serie_indicadores" in c.value for c in at.code)
+    assert not at.main.warning  # la serie empalmada se puede comparar: sin avisos
+    at.toggle(key="pobreza_empalme").set_value(False).run()
+    assert not at.exception
+    assert any("MESEP" in w.value for w in at.main.warning)  # el aviso de la librería se ve en la página
+    _seleccionar(at, "Desagregar por", "Gran dominio")
+    _seleccionar(at, "Indicador", "Coeficiente de Gini")
+    assert any("por='grupo_dominio'" in c.value for c in at.code)
+
+
+def test_pobreza_por_departamento(app_pobreza):
+    at = app_pobreza.run()
+    _seleccionar(at, "Desagregar por", "Departamento")
+    # Con empalme, antes de 2021 no hay serie departamental: se avisa y se muestran solo 2021 en adelante, sin error
+    assert any("desde 2021" in w.value for w in at.main.warning)
+    assert any("departamental=True" in c.value and "[2021, 2022, 2023, 2025]" in c.value for c in at.code)
+    at.toggle(key="pobreza_empalme").set_value(False).run()
+    assert not at.exception
+    assert any("departamental=True" in c.value and "2012" in c.value for c in at.code)
+
+
+def test_pobreza_falta_el_factor_departamental(app_pobreza, pobreza_root):
+    """Sin el archivo departamental de 2021, la combinación da un error en la página, no una excepción."""
+    (pobreza_root / "datos" / "empalme" / "hogares_empalmado_dpto_2021.csv").unlink()
+    at = app_pobreza.run()
+    _seleccionar(at, "Desagregar por", "Departamento")
+    assert any("factor departamental" in e.value for e in at.error)
+
+
+def test_descargar_pobreza(tmp_path, monkeypatch):
+    for clave in ("geih", "geih_empalme", "eam", "eevv", "pobreza"):
+        monkeypatch.setitem(dd.config._session, clave, tmp_path / clave)
+    llamadas = []
+    monkeypatch.setattr(dd.pobreza, "download", lambda *a, **kw: llamadas.append((a, kw)) or [])
+    monkeypatch.setattr(dd.eam, "download", lambda *a, **kw: pytest.fail("pobreza no debe ir a la EAM"))
+    at = AppTest.from_file(str(PAGINAS / "descargar.py")).run()
+    at.radio[0].set_value("Pobreza monetaria (hogares, anual)").run()
+    assert not at.exception
+    assert "dd.pobreza.download([2023, 2024, 2025], archivos=['hogares'], empalme=True, delete_zips=True)" in at.code[0].value
+    next(b for b in at.button if b.label.endswith("Descargar")).click().run()
+    assert not at.exception and len(llamadas) == 1
+    assert llamadas[0][1]["empalme"] and llamadas[0][1]["archivos"] == ["hogares"]
+
+
+def test_inicio_con_pobreza(pobreza_root, tmp_path, monkeypatch):
+    for clave in ("geih", "geih_empalme", "eam", "eevv"):
+        monkeypatch.setitem(dd.config._session, clave, tmp_path / clave)
+    monkeypatch.setitem(dd.config._session, "pobreza", pobreza_root)
+    monkeypatch.setattr(dd.config, "CONFIG_FILE", tmp_path / "c.json")
+    at = AppTest.from_file(str(PAGINAS / "inicio.py")).run()
+    assert not at.exception
+    m = next(x for x in at.metric if x.label == "Pobreza monetaria")
+    assert m.value == "9 años"  # las filas del empalme no cuentan como años
+    next(t for t in at.text_input if t.label == "Pobreza monetaria").set_value(str(tmp_path / "otra"))
+    next(b for b in at.button if b.label == "Guardar").click().run()
+    assert not at.exception
+    assert json.loads((tmp_path / "c.json").read_text()) == {"pobreza": str(tmp_path / "otra")}
