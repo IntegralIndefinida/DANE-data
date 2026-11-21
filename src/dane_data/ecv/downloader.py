@@ -121,6 +121,10 @@ class ECVDownloader(DescargadorANDA):
                 for extension in EXTENSIONES:
                     elegidos = [m for m in miembros if m.filename.lower().endswith(extension)]
                     if elegidos:
+                        nombres = [sanitize_member_name(m.filename) for m in elegidos]
+                        if len(set(nombres)) < len(nombres):  # al aplanar las subcarpetas uno pisaría al otro
+                            raise ValueError(f"dos archivos de {zip_path.name} quedan con el mismo nombre: "
+                                             f"{sorted({n for n in nombres if nombres.count(n) > 1})}")
                         extraidos = []
                         for m in elegidos:
                             extraer_miembro(z, m, destino := nueva / sanitize_member_name(m.filename))
@@ -130,7 +134,7 @@ class ECVDownloader(DescargadorANDA):
 
         try:
             return extraer_aparte(extraer, carpeta, self.raw_dir, EXTENSIONES)
-        except (zipfile.BadZipFile, OSError) as e:
+        except (zipfile.BadZipFile, OSError, ValueError) as e:
             log.error(f"Error extrayendo {zip_path.name}: {e}")
             return False
 

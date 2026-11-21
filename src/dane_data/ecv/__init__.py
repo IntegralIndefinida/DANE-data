@@ -28,7 +28,11 @@ def download(
     Descarga los microdatos de la Encuesta Nacional de Calidad de Vida del ANDA del DANE.
 
     Un capítulo del cuestionario por carpeta, en ``<carpeta>/datos/<año>/<módulo>/``. Es incremental: lo ya extraído se
-    salta.
+    salta. Con cualquier capítulo de 2018 baja también los factores del CNPV 2018, y con 2020 la base complementaria del
+    IPM: sin ellos las cifras no son las oficiales.
+
+    Ocupa espacio: los 11 capítulos de un año son unos 1,4 GB en ZIP en 2025 (menos en los años anteriores), más lo
+    extraído; ``delete_zips=True`` borra los ZIP. Una descarga cortada vuelve a empezar ese ZIP.
 
     Parámetros
     ----------

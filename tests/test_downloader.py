@@ -1154,3 +1154,26 @@ def test_ecv_extrae_zip_en_deflate64(tmp_path):
     _, fallidos = _baja_ecv(tmp_path, {url: _zip_deflate64("Educación.csv", csv, crc=1)}, [2021], modulos=("educacion",),
                             forzar=True)
     assert len(fallidos) == 1 and "educacion 2021" in fallidos[0]  # un CRC distinto no deja un archivo dañado
+
+
+def test_ecv_extraer_falla_si_dos_archivos_quedan_con_el_mismo_nombre(tmp_path):
+    zp = tmp_path / "x.zip"
+    with zipfile.ZipFile(zp, "w") as z:
+        z.writestr("a/Datos.csv", "DIRECTORIO\n1\n")
+        z.writestr("b/Datos.csv", "DIRECTORIO\n2\n")
+    dl = ECVDownloader(base_dir=tmp_path)
+    assert dl._extraer(zp, tmp_path / "datos" / "2025" / "vivienda") is False
+    assert not (tmp_path / "datos" / "2025" / "vivienda").exists()
+
+
+# Los 90 números de descarga de la tabla fija se copiaron a mano del ANDA: un número equivocado bajaría un ZIP válido de
+# otro capítulo. Esta prueba los compara con las páginas get-microdata; usa la red, así que corre solo con
+# DANE_DATA_TEST_RED=1.
+@pytest.mark.skipif(not __import__("os").environ.get("DANE_DATA_TEST_RED"), reason="usa la red: DANE_DATA_TEST_RED=1")
+@pytest.mark.parametrize("catalogo", sorted({c for c, _, _ in ECV_KNOWN_FILES.values()}))
+def test_red_ecv_tabla_fija_igual_al_anda(catalogo, tmp_path):
+    publicados = GEIHDownloader(base_dir=tmp_path)._enlaces(catalogo)
+    assert publicados, f"sin respuesta del catálogo {catalogo}"
+    for (anio, modulo), (cat, nombre, url) in ECV_KNOWN_FILES.items():
+        if cat == catalogo:
+            assert publicados.get(url, "").strip() == nombre, (anio, modulo, nombre, publicados.get(url))
