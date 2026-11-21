@@ -8,7 +8,7 @@ from typing import Iterable
 import numpy as np
 import pandas as pd
 
-from ..stats import _con_categorias
+from ..stats import _con_categorias, _motivo_sin_peso
 
 GLOSARIO = {
     "Micronegocio": "Unidad económica con hasta 9 personas ocupadas que desarrolla una actividad productiva de bienes o "
@@ -127,13 +127,12 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = "anio", peso
     w = pd.to_numeric(df[peso], errors="coerce")
     # Un factor ausente no es un peso cero: esas filas no se pueden expandir (fex_dpto no existe en 2025)
     if (sin_peso := w.isna()).any():
-        donde = (df.loc[sin_peso, "anio"].value_counts().sort_index().items() if "anio" in df.columns else [("", sin_peso.sum())])
-        detalle = ", ".join(f"{n} de {a}" if a != "" else str(n) for a, n in donde)
+        anios = df.loc[sin_peso, "anio"].value_counts().sort_index() if "anio" in df.columns else None
+        detalle = ", ".join(f"{n} de {a}" for a, n in anios.items()) if anios is not None else str(sin_peso.sum())
+        motivo = _motivo_sin_peso(peso, [] if anios is None else anios.index.tolist())
         if sin_peso.all():
-            raise ValueError(f"Ningún micronegocio tiene {peso} ({detalle}). La EMICRON 2025 no trae factor departamental: "
-                             "use peso='fex'. En otros años, vuelva a descargar con dane_data.emicron.download(...).")
-        warnings.warn(f"Sin {peso}: se dejan fuera {detalle} micronegocios. La EMICRON 2025 no trae factor departamental.",
-                      UserWarning, stacklevel=2)
+            raise ValueError(f"Ningún micronegocio tiene {peso} ({detalle})." + motivo)
+        warnings.warn(f"Sin {peso}: se dejan fuera {detalle} micronegocios." + motivo, UserWarning, stacklevel=2)
         df, w = df[~sin_peso], w[~sin_peso]
     d = pd.DataFrame({"micronegocios": w, "n_muestra": 1.0}, index=df.index)
     for c in _CONTEOS:

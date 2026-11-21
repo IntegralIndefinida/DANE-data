@@ -489,8 +489,11 @@ def test_tabla_deja_fuera_las_filas_sin_peso():
     df["fex"] = df["fex"].astype(object).where(df["fex"].notna(), "")  # texto vacío: igual de vacío
     with pytest.warns(UserWarning):
         assert dd.tabla(df)["total"].iloc[0] == 40.0
-    with pytest.raises(ValueError, match="use peso='fex'"):
+    with pytest.raises(ValueError, match="Falta el factor departamental de 2024") as error:
         dd.tabla(df.assign(fex_dpto=None), peso="fex_dpto")
+    assert "2025 no trae factor departamental" in str(error.value)
+    with pytest.raises(ValueError, match="^Ninguna fila tiene fex.$"):  # otros pesos: sin explicaciones de la EMICRON
+        dd.tabla(df.assign(fex=None))
 
 
 def test_tabla_sin_peso_conserva_el_divisor_de_meses():

@@ -210,6 +210,20 @@ def test_indicadores_2019_sin_derivadas_son_vacios(emicron_root):
     assert r.loc[2024, "valor_agregado"] > 0
 
 
+def test_sin_factor_departamental_en_otro_anio_pide_descargarlo(emicron_root):
+    """En 2019–2024 el factor departamental existe: si falta es el archivo, no la EMICRON 2025."""
+    (emicron_root / "datos" / "2024" / "fex_dpto.csv").unlink()
+    with pytest.warns(UserWarning) as avisos:  # también el de cobertura de 2025
+        e = dd.emicron.load([2024, 2025], root=emicron_root)
+    assert any("2024: falta el factor departamental" in str(a.message) for a in avisos)
+    with pytest.raises(ValueError, match="Falta el factor departamental de 2024: vuelva a descargar") as error:
+        dd.emicron.indicadores(e[e["anio"] == 2024], peso="fex_dpto")
+    assert "2025" not in str(error.value)
+    with pytest.raises(ValueError, match="Falta el factor departamental de 2024") as error:
+        dd.tabla(e, por="anio", peso="fex_dpto")
+    assert "2025 no trae factor departamental" in str(error.value)  # las dos causas, cada una con su año
+
+
 def test_indicadores_sin_micronegocios(emicron_root):
     """Un filtro que no deja a nadie da cero micronegocios, no un error."""
     vacio = _load(emicron_root, 2024).iloc[0:0]
@@ -234,8 +248,9 @@ def test_indicadores_sin_peso_dejan_fuera_esas_filas(emicron_root):
         r = dd.emicron.indicadores(e, peso="fex_dpto")
     assert r["anio"].tolist() == [2024]  # 2025 no trae factor departamental: no se suma como cero
     assert r[["micronegocios", "n_muestra"]].values.tolist() == [[1740.0, 3]]
-    with pytest.raises(ValueError, match="2025 no trae factor departamental: use peso='fex'"):
+    with pytest.raises(ValueError, match="2025 no trae factor departamental") as error:
         dd.emicron.indicadores(_load(emicron_root, 2025), peso="fex_dpto")
+    assert "vuelva a descargar" not in str(error.value)  # en 2025 no falta ningún archivo
     with pytest.warns(UserWarning, match="2025: sin consumo intermedio"):  # el sintético no trae ventas
         assert dd.emicron.indicadores(_load(emicron_root, 2025))["micronegocios"].tolist() == [700.0]
 

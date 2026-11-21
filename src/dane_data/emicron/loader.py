@@ -320,6 +320,10 @@ def _leer_anio(anio: int, archivos: dict[str, Path], modulos: list[str], columns
         df["fex"] = pd.to_numeric(df["f_exp"], errors="coerce")
     df["fex_dpto"] = (_factor(archivos["fex_dpto"], anio).reindex(clave).to_numpy() if "fex_dpto" in archivos
                       else np.nan)
+    from .downloader import EMICRON_KNOWN_FILES  # aquí: el descargador importa este módulo
+    if "fex_dpto" not in archivos and (anio, "fex_dpto") in EMICRON_KNOWN_FILES:  # 2025 no lo tiene en el ANDA
+        warnings.warn(f"EMICRON {anio}: falta el factor departamental; fex_dpto queda vacío. Descárguelo con "
+                      f"dane_data.emicron.download({anio}).", UserWarning, stacklevel=3)
     return harmonize(df, anio)
 
 
