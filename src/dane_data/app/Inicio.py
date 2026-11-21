@@ -21,6 +21,9 @@ paginas = {
     "Estadísticas Vitales": [
         st.Page("paginas/eevv_vitales.py", title="Nacimientos y defunciones", icon=":material/child_care:"),
     ],
+    "EMICRON · Micronegocios": [
+        st.Page("paginas/emicron_micronegocios.py", title="Micronegocios", icon=":material/storefront:"),
+    ],
     "Herramientas": [
         st.Page("paginas/descargar.py", title="Descargar datos", icon=":material/download:"),
         st.Page("paginas/diccionario.py", title="Diccionario de variables", icon=":material/menu_book:"),

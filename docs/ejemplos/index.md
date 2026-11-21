@@ -114,6 +114,22 @@ La caída de la natalidad, la mortalidad infantil por departamento y los homicid
 :::
 ::::
 
+## Micronegocios
+
+::::{grid} 1 2 3 3
+:gutter: 3
+:class-container: galeria
+
+:::{grid-item-card} La informalidad de los micronegocios
+:img-top: ../_static/galeria/micronegocios.png
+:img-alt: La informalidad de los micronegocios
+:link: micronegocios
+:link-type: doc
+
+RUT, registro mercantil y aporte a salud y pensión de los negocios de hasta 9 personas, por actividad y ciudad.
+:::
+::::
+
 ## Confiabilidad
 
 ::::{grid} 1 2 3 3
@@ -143,5 +159,6 @@ eam_industria
 eam_panel
 recetas
 vitales
+micronegocios
 validacion
 ```

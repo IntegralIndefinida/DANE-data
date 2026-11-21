@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import warnings
 from typing import Iterable
 
 import numpy as np
@@ -177,6 +178,24 @@ def weighted_mean(values, weights) -> float:
     return float(np.average(v[mask], weights=w[mask])) if mask.any() and w[mask].sum() > 0 else np.nan
 
 
+def _motivo_sin_peso(peso: str, anios: list) -> str:
+    """
+    Por qué falta el peso, según los años de las filas que no lo tienen (``anios`` vacío si los datos no tienen
+    ``anio``). Solo se explica ``fex_dpto`` de la EMICRON: 2025 no lo trae, y en los demás años falta el archivo.
+    """
+    if peso != "fex_dpto":
+        return ""
+    otros = [a for a in anios if a != 2025]
+    texto = ""
+    if 2025 in anios:
+        texto += (" La EMICRON 2025 no trae factor departamental: solo cubre las 24 ciudades, así que no tiene cifras por "
+                  "departamento (con peso='fex', las de las ciudades).")
+    if otros or not anios:
+        de = f" de {', '.join(map(str, otros))}" if otros else ""
+        texto += f" Falta el factor departamental{de}: vuelva a descargar esos años con dane_data.emicron.download(...)."
+    return texto
+
+
 def tabla(
     df: pd.DataFrame,
     por: str | Iterable[str] | None = None,
@@ -207,7 +226,8 @@ def tabla(
         ejemplo, con ``por=["anio", "sexo"]``, el porcentaje de cada sexo en cada año.
         ``"media"`` o ``"mediana"``: de ``variable``, ponderadas, en cada grupo.
     peso
-        Columna del factor de expansión. ``None`` cuenta observaciones sin expandir.
+        Columna del factor de expansión. ``None`` cuenta observaciones sin expandir. Las filas con el peso vacío se
+        dejan fuera, con un aviso: no cuentan ni en ``total`` ni en ``n_muestra``.
 
     Devuelve
     --------
@@ -219,7 +239,8 @@ def tabla(
     Lanza
     -----
     ValueError
-        Si ``estadistico`` no es uno de los cuatro, o falta ``variable`` para la media o la mediana.
+        Si ``estadistico`` no es uno de los cuatro, falta ``variable`` para la media o la mediana, o ninguna fila tiene
+        ``peso``.
 
     Véase también
     -------------
@@ -276,7 +297,19 @@ def tabla(
     if peso is None:
         d["_w"] = 1.0
     else:
+        d[peso] = pd.to_numeric(d[peso], errors="coerce")
         d["_w"] = peso_mensual_promedio(d, peso)
+        # Un peso vacío no es cero: la fila no se puede expandir. Se quita después de calcular _w, que divide por los
+        # meses de antes (geih.filtrar los anota con el número de filas); quitarla antes cambiaría ese divisor.
+        if (sin_peso := d["_w"].isna()).any():
+            anios = d.loc[sin_peso, "anio"].value_counts().sort_index() if "anio" in d.columns else None
+            motivo = _motivo_sin_peso(peso, [] if anios is None else anios.index.tolist())
+            if sin_peso.all():
+                raise ValueError(f"Ninguna fila tiene {peso}." + motivo)
+            detalle = ", ".join(f"{n} de {a}" for a, n in anios.items()) if anios is not None else str(sin_peso.sum())
+            warnings.warn(f"Sin {peso}: se dejan fuera {detalle} fila(s), que no se pueden expandir; los grupos que se "
+                          f"quedan sin filas no aparecen." + motivo, UserWarning, stacklevel=2)
+            d = d[~sin_peso]
     if variable is not None:
         d = d[d[variable].notna()]
     g = d.groupby(por, observed=True, dropna=False) if por else None

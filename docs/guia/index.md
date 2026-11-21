@@ -14,7 +14,7 @@ Indicadores, tablas y gráficas en el navegador, sin escribir código.
 :::
 
 :::{grid-item-card} {octicon}`database` Datos
-Las tres fuentes, dónde quedan los archivos y cómo descargarlos.
+Las cuatro fuentes, dónde quedan los archivos y cómo descargarlos.
 
 * {doc}`encuestas`
 * {doc}`datos`
@@ -46,6 +46,12 @@ La Encuesta Anual Manufacturera: agregados por sector y panel de establecimiento
 Nacimientos, defunciones y causas de muerte, con tasas sobre la población.
 
 * {doc}`eevv`
+:::
+
+:::{grid-item-card} {octicon}`briefcase` Micronegocios
+La EMICRON: negocios de hasta 9 personas, ventas, valor agregado e informalidad empresarial.
+
+* {doc}`emicron`
 :::
 
 :::{grid-item-card} {octicon}`terminal` Línea de comandos
@@ -108,6 +114,13 @@ eam
 :caption: Estadísticas Vitales
 
 eevv
+```
+
+```{toctree}
+:hidden:
+:caption: Micronegocios
+
+emicron
 ```
 
 ```{toctree}

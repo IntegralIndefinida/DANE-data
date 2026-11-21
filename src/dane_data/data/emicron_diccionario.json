@@ -1,0 +1,2908 @@
+{
+ "DIRECTORIO": {
+  "etiqueta": "DIRECTORIO",
+  "pregunta": "DIRECTORIO",
+  "categorias": {},
+  "modulos": [
+   "Factores de expansion departamentales 2024.NSDstat",
+   "Módulo de identificación.NSDstat",
+   "Módulo de emprendimiento.NSDstat",
+   "Módulo de sitio o ubicación.NSDstat",
+   "Módulo de personal ocupado.NSDstat",
+   "Módulo personal ocupado (propietario(a)).NSDstat",
+   "Módulo de caracteristicas del micronegocio.NSDstat",
+   "Módulo de TIC.NSDstat",
+   "Módulo de costos, gastos y activos.NSDstat",
+   "Módulo de ventas o ingresos.NSDstat",
+   "Módulo de inclusión financiera.NSDstat",
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "SECUENCIA_P": {
+  "etiqueta": "SECUENCIA_P",
+  "pregunta": "SECUENCIA_P",
+  "categorias": {},
+  "modulos": [
+   "Factores de expansion departamentales 2024.NSDstat",
+   "Módulo de identificación.NSDstat",
+   "Módulo de emprendimiento.NSDstat",
+   "Módulo de sitio o ubicación.NSDstat",
+   "Módulo de personal ocupado.NSDstat",
+   "Módulo personal ocupado (propietario(a)).NSDstat",
+   "Módulo de caracteristicas del micronegocio.NSDstat",
+   "Módulo de TIC.NSDstat",
+   "Módulo de costos, gastos y activos.NSDstat",
+   "Módulo de ventas o ingresos.NSDstat",
+   "Módulo de inclusión financiera.NSDstat",
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "SECUENCIA_ENCUESTA": {
+  "etiqueta": "SECUENCIA_ENCUESTA",
+  "pregunta": "SECUENCIA_ENCUESTA",
+  "categorias": {},
+  "modulos": [
+   "Factores de expansion departamentales 2024.NSDstat",
+   "Módulo de identificación.NSDstat",
+   "Módulo de emprendimiento.NSDstat",
+   "Módulo de sitio o ubicación.NSDstat",
+   "Módulo de personal ocupado.NSDstat",
+   "Módulo personal ocupado (propietario(a)).NSDstat",
+   "Módulo de caracteristicas del micronegocio.NSDstat",
+   "Módulo de TIC.NSDstat",
+   "Módulo de costos, gastos y activos.NSDstat",
+   "Módulo de ventas o ingresos.NSDstat",
+   "Módulo de inclusión financiera.NSDstat",
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "FEX_C": {
+  "etiqueta": "",
+  "pregunta": "",
+  "categorias": {},
+  "modulos": [
+   "Factores de expansion departamentales 2024.NSDstat"
+  ]
+ },
+ "COD_DEPTO": {
+  "etiqueta": "Departamento",
+  "pregunta": "Departamento 05 Antioquia 08 Atlántico 11 Bogotá, D. C. 13 Bolívar 15 Boyacá 17 Caldas 18 Caquetá 19 Cauca 20 Cesar 23 Córdoba 25 Cundinamarca 27 Chocó 41 Huila 44 La Guajira 47 Magdalena 50 Meta 52 Nariño 54 Norte De Santander 63 Quindío 66 Risaralda 68 Santander 70 Sucre 73 Tolima 76 Valle Del Cauca 88 Archipiélago de San Andrés, Providencia y Santa Catalina",
+  "categorias": {
+   "05": "Antioquia",
+   "08": "Atlántico",
+   "11": "Bogotá, D. C.",
+   "13": "Bolívar",
+   "15": "Boyacá",
+   "17": "Caldas",
+   "18": "Caquetá",
+   "19": "Cauca",
+   "20": "Cesar",
+   "23": "Córdoba",
+   "25": "Cundinamarca",
+   "27": "Chocó",
+   "41": "Huila",
+   "44": "La Guajira",
+   "47": "Magdalena",
+   "50": "Meta",
+   "52": "Nariño",
+   "54": "Norte De Santander",
+   "63": "Quindío",
+   "66": "Risaralda",
+   "68": "Santander",
+   "70": "Sucre",
+   "73": "Tolima",
+   "76": "Valle Del Cauca",
+   "88": "Archipiélago de San Andrés, Providencia y Santa Catalina"
+  },
+  "modulos": [
+   "Módulo de identificación.NSDstat",
+   "Módulo de emprendimiento.NSDstat",
+   "Módulo de sitio o ubicación.NSDstat",
+   "Módulo de personal ocupado.NSDstat",
+   "Módulo personal ocupado (propietario(a)).NSDstat",
+   "Módulo de caracteristicas del micronegocio.NSDstat",
+   "Módulo de TIC.NSDstat",
+   "Módulo de costos, gastos y activos.NSDstat",
+   "Módulo de ventas o ingresos.NSDstat",
+   "Módulo de inclusión financiera.NSDstat",
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "AREA": {
+  "etiqueta": "Ciudades principales y áreas metropolitanas",
+  "pregunta": "Ciudades principales y áreas metropolitanas 05 Medellín AM 08 Barranquilla AM 11 Bogotá 13 Cartagena 15 Tunja 17 Manizales AM 18 Florencia 19 Popayán 20 Valledupar 23 Montería 27 Quibdó 41 Neiva 44 Riohacha 47 Santa Marta 50 Villavicencio 52 Pasto 54 Cúcuta AM 63 Armenia 66 Pereira AM 68 Bucaramanga AM 70 Sincelejo 73 Ibagué 76 Cali AM 88 San Andrés",
+  "categorias": {
+   "05": "Medellín AM",
+   "08": "Barranquilla AM",
+   "11": "Bogotá",
+   "13": "Cartagena",
+   "15": "Tunja",
+   "17": "Manizales AM",
+   "18": "Florencia",
+   "19": "Popayán",
+   "20": "Valledupar",
+   "23": "Montería",
+   "27": "Quibdó",
+   "41": "Neiva",
+   "44": "Riohacha",
+   "47": "Santa Marta",
+   "50": "Villavicencio",
+   "52": "Pasto",
+   "54": "Cúcuta AM",
+   "63": "Armenia",
+   "66": "Pereira AM",
+   "68": "Bucaramanga AM",
+   "70": "Sincelejo",
+   "73": "Ibagué",
+   "76": "Cali AM",
+   "88": "San Andrés"
+  },
+  "modulos": [
+   "Módulo de identificación.NSDstat",
+   "Módulo de emprendimiento.NSDstat",
+   "Módulo de sitio o ubicación.NSDstat",
+   "Módulo de personal ocupado.NSDstat",
+   "Módulo personal ocupado (propietario(a)).NSDstat",
+   "Módulo de caracteristicas del micronegocio.NSDstat",
+   "Módulo de TIC.NSDstat",
+   "Módulo de costos, gastos y activos.NSDstat",
+   "Módulo de ventas o ingresos.NSDstat",
+   "Módulo de inclusión financiera.NSDstat",
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "CLASE_TE": {
+  "etiqueta": "Clase",
+  "pregunta": "Clase",
+  "categorias": {},
+  "modulos": [
+   "Módulo de identificación.NSDstat",
+   "Módulo de emprendimiento.NSDstat",
+   "Módulo de sitio o ubicación.NSDstat",
+   "Módulo de personal ocupado.NSDstat",
+   "Módulo personal ocupado (propietario(a)).NSDstat",
+   "Módulo de caracteristicas del micronegocio.NSDstat",
+   "Módulo de TIC.NSDstat",
+   "Módulo de costos, gastos y activos.NSDstat",
+   "Módulo de ventas o ingresos.NSDstat",
+   "Módulo de inclusión financiera.NSDstat",
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P35": {
+  "etiqueta": "Sexo del propietario del micronegocio",
+  "pregunta": "Sexo del propietario del micronegocio 1 Hombre 2 Mujer",
+  "categorias": {
+   "1": "Hombre",
+   "2": "Mujer"
+  },
+  "modulos": [
+   "Módulo de identificación.NSDstat"
+  ]
+ },
+ "P241": {
+  "etiqueta": "Edad del propietario del micronegocio",
+  "pregunta": "Edad del propietario del micronegocio",
+  "categorias": {},
+  "modulos": [
+   "Módulo de identificación.NSDstat"
+  ]
+ },
+ "MES_REF": {
+  "etiqueta": "Mes de referencia",
+  "pregunta": "Mes de referencia ENERO FEBRERO MARZO ABRIL MAYO JUNIO JULIO AGOSTO SEPTIEMBRE OCTUBRE NOVIEMBRE DICIEMBRE",
+  "categorias": {
+   "1": "ENERO",
+   "10": "OCTUBRE",
+   "11": "NOVIEMBRE",
+   "12": "DICIEMBRE",
+   "2": "FEBRERO",
+   "3": "MARZO",
+   "4": "ABRIL",
+   "5": "MAYO",
+   "6": "JUNIO",
+   "7": "JULIO",
+   "8": "AGOSTO",
+   "9": "SEPTIEMBRE"
+  },
+  "modulos": [
+   "Módulo de identificación.NSDstat"
+  ]
+ },
+ "P3031": {
+  "etiqueta": "En su actividad o negocio, ¿tiene personas que le ayudan ?",
+  "pregunta": "En su actividad o negocio, ¿tiene personas que le ayudan ? 1 Sí 2 No",
+  "categorias": {
+   "1": "Sí",
+   "2": "No"
+  },
+  "modulos": [
+   "Módulo de identificación.NSDstat"
+  ]
+ },
+ "P3032_1": {
+  "etiqueta": "Trabajadores(as) que reciben un pago?",
+  "pregunta": "Trabajadores(as) que reciben un pago? 0-9",
+  "categorias": {},
+  "modulos": [
+   "Módulo de identificación.NSDstat"
+  ]
+ },
+ "P3032_2": {
+  "etiqueta": "Socios(as)?",
+  "pregunta": "Socios(as)? 0-9",
+  "categorias": {},
+  "modulos": [
+   "Módulo de identificación.NSDstat"
+  ]
+ },
+ "P3032_3": {
+  "etiqueta": "Trabajadores(as) o familiares sin remuneración?",
+  "pregunta": "Trabajadores(as) o familiares sin remuneración? 0-9",
+  "categorias": {},
+  "modulos": [
+   "Módulo de identificación.NSDstat"
+  ]
+ },
+ "P3033": {
+  "etiqueta": "En su negocio o actividad, usted es:",
+  "pregunta": "En su negocio o actividad, usted es: 1 Patrón o empleador(a)? 2 Trabajador(a) por cuenta propia?",
+  "categorias": {
+   "1": "Patrón o empleador(a)?",
+   "2": "Trabajador(a) por cuenta propia?"
+  },
+  "modulos": [
+   "Módulo de identificación.NSDstat"
+  ]
+ },
+ "P3034": {
+  "etiqueta": "¿Cuántos meses lleva trabajando en su negocio o actividad ?",
+  "pregunta": "¿Cuántos meses lleva trabajando en su negocio o actividad ?",
+  "categorias": {},
+  "modulos": [
+   "Módulo de identificación.NSDstat"
+  ]
+ },
+ "P3035": {
+  "etiqueta": "El negocio ¿Tiene nombre comercial?",
+  "pregunta": "El negocio ¿Tiene nombre comercial? 1 Sí 2 No",
+  "categorias": {
+   "1": "Sí",
+   "2": "No"
+  },
+  "modulos": [
+   "Módulo de identificación.NSDstat"
+  ]
+ },
+ "P3000": {
+  "etiqueta": "¿Tiene correo electrónico?",
+  "pregunta": "¿Tiene correo electrónico? 1 Sí 2 No",
+  "categorias": {
+   "1": "Sí",
+   "2": "No"
+  },
+  "modulos": [
+   "Módulo de identificación.NSDstat"
+  ]
+ },
+ "GRUPOS4": {
+  "etiqueta": "Rama de actividad según CIIU Rev. 4 agrupado en 4 grupos",
+  "pregunta": "Rama de actividad según CIIU Rev. 4 agrupado en 4 grupos 01 Agricultura, ganadería, caza, silvicultura y pesca 02 Industria manufacturera 03 Comercio 04 Servicios",
+  "categorias": {
+   "01": "Agricultura, ganadería, caza, silvicultura y pesca",
+   "02": "Industria manufacturera",
+   "03": "Comercio",
+   "04": "Servicios"
+  },
+  "modulos": [
+   "Módulo de identificación.NSDstat"
+  ]
+ },
+ "GRUPOS12": {
+  "etiqueta": "Rama de actividad según CIIU Rev. 4 agrupado en 12 grupos",
+  "pregunta": "Rama de actividad según CIIU Rev. 4 agrupado en 12 grupos 01 Agricultura, ganadería, caza, silvicultura y pesca 02 Minería 03 Industria manufacturera 04 Construcción 05 Comercio y reparación de vehículos automotores y motocicletas 06 Transporte y almacenamiento 07 Alojamiento y servicios de comida 08 Información y comunicaciones 09 Actividades inmobiliarias, profesionales y servicios administrativos 10 Educación 11 Actividades de atención a la salud humana y de asistencia social 12 Actividades artísticas, de entretenimiento, de recreación y otras actividades de servicios",
+  "categorias": {
+   "01": "Agricultura, ganadería, caza, silvicultura y pesca",
+   "02": "Minería",
+   "03": "Industria manufacturera",
+   "04": "Construcción",
+   "05": "Comercio y reparación de vehículos automotores y motocicletas",
+   "06": "Transporte y almacenamiento",
+   "07": "Alojamiento y servicios de comida",
+   "08": "Información y comunicaciones",
+   "09": "Actividades inmobiliarias, profesionales y servicios administrativos",
+   "10": "Educación",
+   "11": "Actividades de atención a la salud humana y de asistencia social",
+   "12": "Actividades artísticas, de entretenimiento, de recreación y otras actividades de servicios"
+  },
+  "modulos": [
+   "Módulo de identificación.NSDstat"
+  ]
+ },
+ "F_EXP": {
+  "etiqueta": "Factor de expansión",
+  "pregunta": "Factor de expansión",
+  "categorias": {},
+  "modulos": [
+   "Módulo de identificación.NSDstat",
+   "Módulo de emprendimiento.NSDstat",
+   "Módulo de sitio o ubicación.NSDstat",
+   "Módulo de personal ocupado.NSDstat",
+   "Módulo personal ocupado (propietario(a)).NSDstat",
+   "Módulo de caracteristicas del micronegocio.NSDstat",
+   "Módulo de TIC.NSDstat",
+   "Módulo de costos, gastos y activos.NSDstat",
+   "Módulo de ventas o ingresos.NSDstat",
+   "Módulo de inclusión financiera.NSDstat",
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3050": {
+  "etiqueta": ". ¿Quién creó o constituyó el negocio o actividad?",
+  "pregunta": ". ¿Quién creó o constituyó el negocio o actividad? 1 Usted solo 2 Usted y otro(s) familiares 3 Usted y otra(s) persona(s) no familiar(es) 4 Otras personas 5 Un familiar 6 Otro ¿Quién?",
+  "categorias": {
+   "1": "Usted solo",
+   "2": "Usted y otro(s) familiares",
+   "3": "Usted y otra(s) persona(s) no familiar(es)",
+   "4": "Otras personas",
+   "5": "Un familiar",
+   "6": "Otro ¿Quién?"
+  },
+  "modulos": [
+   "Módulo de emprendimiento.NSDstat"
+  ]
+ },
+ "P3051": {
+  "etiqueta": "¿Cuál fue el motivo principal por el que usted inició este negocio o actividad económica?",
+  "pregunta": "¿Cuál fue el motivo principal por el que usted inició este negocio o actividad económica? 1 No tiene otra alternativa de ingresos 2 Lo identificó como una oportunidad de negocio en el mercado 3 Por tradición familiar o lo heredó 4 Para complementar el ingreso familiar o mejorar el ingreso 5 Para ejercer su oficio, carrera o profesión 6 No tenía la experiencia requerida, la escolaridad o capacitación para un empleo 7 Otro ¿cuál?",
+  "categorias": {
+   "1": "No tiene otra alternativa de ingresos",
+   "2": "Lo identificó como una oportunidad de negocio en el mercado",
+   "3": "Por tradición familiar o lo heredó",
+   "4": "Para complementar el ingreso familiar o mejorar el ingreso",
+   "5": "Para ejercer su oficio, carrera o profesión",
+   "6": "No tenía la experiencia requerida, la escolaridad o capacitación para un empleo",
+   "7": "Otro ¿cuál?"
+  },
+  "modulos": [
+   "Módulo de emprendimiento.NSDstat"
+  ]
+ },
+ "P639": {
+  "etiqueta": "¿Cuánto tiempo lleva funcionado el negocio o actividad?",
+  "pregunta": "¿Cuánto tiempo lleva funcionado el negocio o actividad? 1 Menos de un año 2 De 1 a menos de 3 años 3 De 3 a menos de 5 años 4 De 5 a menos de 10 años 5 10 años y más",
+  "categorias": {
+   "1": "Menos de un año",
+   "2": "De 1 a menos de 3 años",
+   "3": "De 3 a menos de 5 años",
+   "4": "De 5 a menos de 10 años",
+   "5": "10 años y más"
+  },
+  "modulos": [
+   "Módulo de emprendimiento.NSDstat"
+  ]
+ },
+ "P3052": {
+  "etiqueta": "¿Cuál fue la mayor fuente de recursos para la creación o constitución de este negocio o actividad?",
+  "pregunta": "¿Cuál fue la mayor fuente de recursos para la creación o constitución de este negocio o actividad? 1 Ahorros personales 2 Préstamos familiares 3 Préstamos bancarios 4 Prestamistas 5 Capital semilla 6 No requirió financiación 7 No sabe 8 Otro ¿cuál?",
+  "categorias": {
+   "1": "Ahorros personales",
+   "2": "Préstamos familiares",
+   "3": "Préstamos bancarios",
+   "4": "Prestamistas",
+   "5": "Capital semilla",
+   "6": "No requirió financiación",
+   "7": "No sabe",
+   "8": "Otro ¿cuál?"
+  },
+  "modulos": [
+   "Módulo de emprendimiento.NSDstat"
+  ]
+ },
+ "P3053": {
+  "etiqueta": "¿El negocio o actividad se encuentra principalmente:",
+  "pregunta": "¿El negocio o actividad se encuentra principalmente: 1 En su vivienda o en otra vivienda 2 Local, tienda, taller, fábrica, oficina,consultorio 3 De puerta en puerta (a domicilio) 4 Ambulante - sitio al descubierto 5 Vehículo con o sin motor? 6 Obra y construcción 7 Finca 8 Otra",
+  "categorias": {
+   "1": "En su vivienda o en otra vivienda",
+   "2": "Local, tienda, taller, fábrica, oficina,consultorio",
+   "3": "De puerta en puerta (a domicilio)",
+   "4": "Ambulante - sitio al descubierto",
+   "5": "Vehículo con o sin motor?",
+   "6": "Obra y construcción",
+   "7": "Finca",
+   "8": "Otra"
+  },
+  "modulos": [
+   "Módulo de sitio o ubicación.NSDstat"
+  ]
+ },
+ "P3095": {
+  "etiqueta": "La vivienda ¿",
+  "pregunta": "La vivienda ¿ 1 Tiene un espacio exclusivo para la actividad 2 No tiene un espacio exclusivo para la actividad",
+  "categorias": {
+   "1": "Tiene un espacio exclusivo para la actividad",
+   "2": "No tiene un espacio exclusivo para la actividad"
+  },
+  "modulos": [
+   "Módulo de sitio o ubicación.NSDstat"
+  ]
+ },
+ "P3096": {
+  "etiqueta": "Especifique cuál ¿",
+  "pregunta": "Especifique cuál ¿ 1 Local - tienda 2 Taller - fábrica 3 Oficina -consultorio 4 En kiosco - caseta",
+  "categorias": {
+   "1": "Local - tienda",
+   "2": "Taller - fábrica",
+   "3": "Oficina -consultorio",
+   "4": "En kiosco - caseta"
+  },
+  "modulos": [
+   "Módulo de sitio o ubicación.NSDstat"
+  ]
+ },
+ "P3097": {
+  "etiqueta": "La actividad la desarrolla principalmente ...",
+  "pregunta": "La actividad la desarrolla principalmente ... 1 En el domicilo de sus clientes 2 Visitando locales o negocios de sus clientes",
+  "categorias": {
+   "1": "En el domicilo de sus clientes",
+   "2": "Visitando locales o negocios de sus clientes"
+  },
+  "modulos": [
+   "Módulo de sitio o ubicación.NSDstat"
+  ]
+ },
+ "P3098": {
+  "etiqueta": "La actividad es ¿",
+  "pregunta": "La actividad es ¿ 1 Móvil 2 Estacionaria",
+  "categorias": {
+   "1": "Móvil",
+   "2": "Estacionaria"
+  },
+  "modulos": [
+   "Módulo de sitio o ubicación.NSDstat"
+  ]
+ },
+ "P3054": {
+  "etiqueta": "¿Cuántos puestos, establecimientos, oficinas, talleres, vehículos tienen el negocio o actividad?",
+  "pregunta": "¿Cuántos puestos, establecimientos, oficinas, talleres, vehículos tienen el negocio o actividad?",
+  "categorias": {},
+  "modulos": [
+   "Módulo de sitio o ubicación.NSDstat"
+  ]
+ },
+ "P3055": {
+  "etiqueta": "El puesto, local, oficina, consultorio, tienda, vehículo o lugar donde desarrolla su negocio o actividad es:",
+  "pregunta": "El puesto, local, oficina, consultorio, tienda, vehículo o lugar donde desarrolla su negocio o actividad es: 1 Propio, totalmente pagado ? 2 Propio, lo están pagando ? 3 En arriendo o subarriendo ? 4 En usufructo ? 5 Posesión sin titulo (Ocupante de hecho) o propiedad colectiva ? 6 Otro ¿cuál?",
+  "categorias": {
+   "1": "Propio, totalmente pagado ?",
+   "2": "Propio, lo están pagando ?",
+   "3": "En arriendo o subarriendo ?",
+   "4": "En usufructo ?",
+   "5": "Posesión sin titulo (Ocupante de hecho) o propiedad colectiva ?",
+   "6": "Otro ¿cuál?"
+  },
+  "modulos": [
+   "Módulo de sitio o ubicación.NSDstat"
+  ]
+ },
+ "P469": {
+  "etiqueta": "El negocio o actividad económica es visible al público?",
+  "pregunta": "El negocio o actividad económica es visible al público? 1 Sí 2 No",
+  "categorias": {
+   "1": "Sí",
+   "2": "No"
+  },
+  "modulos": [
+   "Módulo de sitio o ubicación.NSDstat"
+  ]
+ },
+ "SECUENCIA_PH": {
+  "etiqueta": "Secuencia PH",
+  "pregunta": "Secuencia PH",
+  "categorias": {},
+  "modulos": [
+   "Módulo de personal ocupado.NSDstat"
+  ]
+ },
+ "TIPO": {
+  "etiqueta": "Personal ocupado",
+  "pregunta": "Personal ocupado 1 Trabajadores que reciben un pago 2 Socios 3 Trabajadores o familiares sin remuneración",
+  "categorias": {
+   "1": "Trabajadores que reciben un pago",
+   "2": "Socios",
+   "3": "Trabajadores o familiares sin remuneración"
+  },
+  "modulos": [
+   "Módulo de personal ocupado.NSDstat"
+  ]
+ },
+ "P3077": {
+  "etiqueta": "Tipo de personal",
+  "pregunta": "Tipo de personal 1 Contrato a término indefinido 2 Temporal",
+  "categorias": {
+   "1": "Contrato a término indefinido",
+   "2": "Temporal"
+  },
+  "modulos": [
+   "Módulo de personal ocupado.NSDstat"
+  ]
+ },
+ "P3078": {
+  "etiqueta": "Sexo",
+  "pregunta": "Sexo 1 Hombre 2 Mujer",
+  "categorias": {
+   "1": "Hombre",
+   "2": "Mujer"
+  },
+  "modulos": [
+   "Módulo de personal ocupado.NSDstat"
+  ]
+ },
+ "P3079": {
+  "etiqueta": "¿Cuánto le pagó el mes pasado ?",
+  "pregunta": "¿Cuánto le pagó el mes pasado ?",
+  "categorias": {},
+  "modulos": [
+   "Módulo de personal ocupado.NSDstat"
+  ]
+ },
+ "P3080": {
+  "etiqueta": "¿ Le pagó salud y/o pensión el mes pasado ?",
+  "pregunta": "¿ Le pagó salud y/o pensión el mes pasado ? 1 Si 2 No 3 Solo salud 4 Solo pensión",
+  "categorias": {
+   "1": "Si",
+   "2": "No",
+   "3": "Solo salud",
+   "4": "Solo pensión"
+  },
+  "modulos": [
+   "Módulo de personal ocupado.NSDstat"
+  ]
+ },
+ "P3081": {
+  "etiqueta": "¿Cuánto le pagó el mes pasado en salud y pensión?",
+  "pregunta": "¿Cuánto le pagó el mes pasado en salud y pensión?",
+  "categorias": {},
+  "modulos": [
+   "Módulo de personal ocupado.NSDstat"
+  ]
+ },
+ "P3082": {
+  "etiqueta": "¿ Le pagó prestaciones sociales ?",
+  "pregunta": "¿ Le pagó prestaciones sociales ? 1 Sí 2 No",
+  "categorias": {
+   "1": "Sí",
+   "2": "No"
+  },
+  "modulos": [
+   "Módulo de personal ocupado.NSDstat"
+  ]
+ },
+ "P3083": {
+  "etiqueta": "¿Cuánto le pagó por prestaciones sociales?",
+  "pregunta": "¿Cuánto le pagó por prestaciones sociales?",
+  "categorias": {},
+  "modulos": [
+   "Módulo de personal ocupado.NSDstat"
+  ]
+ },
+ "P3084": {
+  "etiqueta": "¿Le pagó ARL ?",
+  "pregunta": "¿Le pagó ARL ? 1 Sí 2 No",
+  "categorias": {
+   "1": "Sí",
+   "2": "No"
+  },
+  "modulos": [
+   "Módulo de personal ocupado.NSDstat"
+  ]
+ },
+ "P2990": {
+  "etiqueta": "¿Le pagó Caja de Compensación o aportó al SENA o ICBF?",
+  "pregunta": "¿Le pagó Caja de Compensación o aportó al SENA o ICBF? 1 Sí 2 No",
+  "categorias": {
+   "1": "Sí",
+   "2": "No"
+  },
+  "modulos": [
+   "Módulo de personal ocupado.NSDstat"
+  ]
+ },
+ "P3085": {
+  "etiqueta": "¿Cuántos meses lleva laborando este trabajador en el negocio o actividad?",
+  "pregunta": "¿Cuántos meses lleva laborando este trabajador en el negocio o actividad?",
+  "categorias": {},
+  "modulos": [
+   "Módulo de personal ocupado.NSDstat"
+  ]
+ },
+ "P3099": {
+  "etiqueta": "¿ Cuántos años cumplidos tiene ?",
+  "pregunta": "¿ Cuántos años cumplidos tiene ?",
+  "categorias": {},
+  "modulos": [
+   "Módulo de personal ocupado.NSDstat"
+  ]
+ },
+ "P3088": {
+  "etiqueta": "¿Pagó su salud y/o pensión el mes anterior?",
+  "pregunta": "¿Pagó su salud y/o pensión el mes anterior? 1 Si 2 No 3 Solo salud 4 Solo pensión",
+  "categorias": {
+   "1": "Si",
+   "2": "No",
+   "3": "Solo salud",
+   "4": "Solo pensión"
+  },
+  "modulos": [
+   "Módulo personal ocupado (propietario(a)).NSDstat"
+  ]
+ },
+ "P3089": {
+  "etiqueta": "¿Cuánto pagó el mes pasado en salud y pensión?",
+  "pregunta": "¿Cuánto pagó el mes pasado en salud y pensión?",
+  "categorias": {},
+  "modulos": [
+   "Módulo personal ocupado (propietario(a)).NSDstat"
+  ]
+ },
+ "P3090": {
+  "etiqueta": "¿Pagó su ARL ?",
+  "pregunta": "¿Pagó su ARL ? 1 Sí 2 No",
+  "categorias": {
+   "1": "Sí",
+   "2": "No"
+  },
+  "modulos": [
+   "Módulo personal ocupado (propietario(a)).NSDstat"
+  ]
+ },
+ "P2989": {
+  "etiqueta": "¿Pagó Caja de Compensación o aportó al SENA o ICBF?",
+  "pregunta": "¿Pagó Caja de Compensación o aportó al SENA o ICBF? 1 Sí 2 No",
+  "categorias": {
+   "1": "Sí",
+   "2": "No"
+  },
+  "modulos": [
+   "Módulo personal ocupado (propietario(a)).NSDstat"
+  ]
+ },
+ "P3091": {
+  "etiqueta": "¿Cuántas personas en promedio trabajaron en su negocio o actividad económica en el año anterior o en los meses de operación?",
+  "pregunta": "¿Cuántas personas en promedio trabajaron en su negocio o actividad económica en el año anterior o en los meses de operación?",
+  "categorias": {},
+  "modulos": [
+   "Módulo personal ocupado (propietario(a)).NSDstat"
+  ]
+ },
+ "SUELDOS": {
+  "etiqueta": "Sueldos y salarios mensuales",
+  "pregunta": "Sueldos y salarios mensuales",
+  "categorias": {},
+  "modulos": [
+   "Módulo personal ocupado (propietario(a)).NSDstat"
+  ]
+ },
+ "PRESTACIONES": {
+  "etiqueta": "Prestaciones sociales mensuales",
+  "pregunta": "Prestaciones sociales mensuales",
+  "categorias": {},
+  "modulos": [
+   "Módulo personal ocupado (propietario(a)).NSDstat"
+  ]
+ },
+ "REMUNERACION_TOTAL": {
+  "etiqueta": "Remuneración total mensual del personal ocupado",
+  "pregunta": "Remuneración total mensual del personal ocupado",
+  "categorias": {},
+  "modulos": [
+   "Módulo personal ocupado (propietario(a)).NSDstat"
+  ]
+ },
+ "P1633": {
+  "etiqueta": "¿El negocio o actividad tiene Registro Único Tributario (RUT)?",
+  "pregunta": "¿El negocio o actividad tiene Registro Único Tributario (RUT)? 1 Sí 2 No",
+  "categorias": {
+   "1": "Sí",
+   "2": "No"
+  },
+  "modulos": [
+   "Módulo de caracteristicas del micronegocio.NSDstat"
+  ]
+ },
+ "P986": {
+  "etiqueta": "¿A que regimen pertenece?",
+  "pregunta": "¿A que regimen pertenece? 1 Común 2 Simplificado",
+  "categorias": {
+   "1": "Común",
+   "2": "Simplificado"
+  },
+  "modulos": [
+   "Módulo de caracteristicas del micronegocio.NSDstat"
+  ]
+ },
+ "P640": {
+  "etiqueta": "¿Cuál es el principal registro que utiliza para llevar sus cuentas?",
+  "pregunta": "¿Cuál es el principal registro que utiliza para llevar sus cuentas? 1 Balance general o P y G 2 Libro de registro diario de operaciones 3 Otro tipo de cuentas (libreta, cuaderno, excel, caja registradora) 4 Informes financieros/ laborales/tributarios 5 No lleva registros",
+  "categorias": {
+   "1": "Balance general o P y G",
+   "2": "Libro de registro diario de operaciones",
+   "3": "Otro tipo de cuentas (libreta, cuaderno, excel, caja registradora)",
+   "4": "Informes financieros/ laborales/tributarios",
+   "5": "No lleva registros"
+  },
+  "modulos": [
+   "Módulo de caracteristicas del micronegocio.NSDstat"
+  ]
+ },
+ "P4000": {
+  "etiqueta": "¿Cual es la razón principal por la cual no lleva algun tipo de registro?",
+  "pregunta": "¿Cual es la razón principal por la cual no lleva algun tipo de registro? 1 No se necesita 2 No sabe como llevar registros 3 No aplica",
+  "categorias": {
+   "1": "No se necesita",
+   "2": "No sabe como llevar registros",
+   "3": "No aplica"
+  },
+  "modulos": [
+   "Módulo de caracteristicas del micronegocio.NSDstat"
+  ]
+ },
+ "P1055": {
+  "etiqueta": "¿El negocio o actividad se encuentra registrado en alguna Cámara de Comercio?",
+  "pregunta": "¿El negocio o actividad se encuentra registrado en alguna Cámara de Comercio? 1 Sí 2 No",
+  "categorias": {
+   "1": "Sí",
+   "2": "No"
+  },
+  "modulos": [
+   "Módulo de caracteristicas del micronegocio.NSDstat"
+  ]
+ },
+ "P1056": {
+  "etiqueta": "¿Cómo está registrado?",
+  "pregunta": "¿Cómo está registrado? 1 Como persona natural comerciante 2 Como persona jurídica",
+  "categorias": {
+   "1": "Como persona natural comerciante",
+   "2": "Como persona jurídica"
+  },
+  "modulos": [
+   "Módulo de caracteristicas del micronegocio.NSDstat"
+  ]
+ },
+ "P661": {
+  "etiqueta": "Obtuvo o renovó ese registro este año?",
+  "pregunta": "Obtuvo o renovó ese registro este año? 1 Sí 2 No",
+  "categorias": {
+   "1": "Sí",
+   "2": "No"
+  },
+  "modulos": [
+   "Módulo de caracteristicas del micronegocio.NSDstat"
+  ]
+ },
+ "P1057": {
+  "etiqueta": "¿Ha registrado el negocio o actividad ante alguna autoridad o entidad (alcaldía, ministerios u otros)",
+  "pregunta": "¿Ha registrado el negocio o actividad ante alguna autoridad o entidad (alcaldía, ministerios u otros) 1 Sí 2 No",
+  "categorias": {
+   "1": "Sí",
+   "2": "No"
+  },
+  "modulos": [
+   "Módulo de caracteristicas del micronegocio.NSDstat"
+  ]
+ },
+ "P4004": {
+  "etiqueta": "Cuál?",
+  "pregunta": "Cuál? 1 Alcaldía 2 Instituto Colombiano Agropecuario - ICA 3 Ministerio 4 Otro, cuál ?",
+  "categorias": {
+   "1": "Alcaldía",
+   "2": "Instituto Colombiano Agropecuario - ICA",
+   "3": "Ministerio",
+   "4": "Otro, cuál ?"
+  },
+  "modulos": [
+   "Módulo de caracteristicas del micronegocio.NSDstat"
+  ]
+ },
+ "P2991": {
+  "etiqueta": "En el último año, ¿realizó las(s) declaracion(es) de impuesto sobre la renta",
+  "pregunta": "En el último año, ¿realizó las(s) declaracion(es) de impuesto sobre la renta 1 Si 2 No 3 No es responsable de este impuesto 9 No Informa",
+  "categorias": {
+   "1": "Si",
+   "2": "No",
+   "3": "No es responsable de este impuesto",
+   "9": "No Informa"
+  },
+  "modulos": [
+   "Módulo de caracteristicas del micronegocio.NSDstat"
+  ]
+ },
+ "P2992": {
+  "etiqueta": "En el último año, ¿realizó las(s) declaracion(es) de IVA (Impuesto al Valor Agregado)",
+  "pregunta": "En el último año, ¿realizó las(s) declaracion(es) de IVA (Impuesto al Valor Agregado) 1 Si 2 No 3 No es responsable de este impuesto 9 No Informa",
+  "categorias": {
+   "1": "Si",
+   "2": "No",
+   "3": "No es responsable de este impuesto",
+   "9": "No Informa"
+  },
+  "modulos": [
+   "Módulo de caracteristicas del micronegocio.NSDstat"
+  ]
+ },
+ "P2993": {
+  "etiqueta": "En el último año, ¿realizó las(s) declaracion(es) de ICA (Impuesto de Industria y Comercio)",
+  "pregunta": "En el último año, ¿realizó las(s) declaracion(es) de ICA (Impuesto de Industria y Comercio) 1 Si 2 No 3 No es responsable de este impuesto 9 No Informa",
+  "categorias": {
+   "1": "Si",
+   "2": "No",
+   "3": "No es responsable de este impuesto",
+   "9": "No Informa"
+  },
+  "modulos": [
+   "Módulo de caracteristicas del micronegocio.NSDstat"
+  ]
+ },
+ "P4001": {
+  "etiqueta": "¿Para su negocio o actividad utiliza alguno(a) de los siguientes dispositivos electrónicos ?",
+  "pregunta": "¿Para su negocio o actividad utiliza alguno(a) de los siguientes dispositivos electrónicos ? 1 Sí 2 No",
+  "categorias": {
+   "1": "Sí",
+   "2": "No"
+  },
+  "modulos": [
+   "Módulo de TIC.NSDstat"
+  ]
+ },
+ "P1087": {
+  "etiqueta": "¿Cuántos computadores de escritorio tiene en uso el negocio o actividad?",
+  "pregunta": "¿Cuántos computadores de escritorio tiene en uso el negocio o actividad?",
+  "categorias": {},
+  "modulos": [
+   "Módulo de TIC.NSDstat"
+  ]
+ },
+ "P1088": {
+  "etiqueta": "¿Cuántos computadores portátiles tiene en uso el negocio o actividad?",
+  "pregunta": "¿Cuántos computadores portátiles tiene en uso el negocio o actividad?",
+  "categorias": {},
+  "modulos": [
+   "Módulo de TIC.NSDstat"
+  ]
+ },
+ "P977": {
+  "etiqueta": "¿Cuántas tabletas tiene en uso el negocio o actividad?",
+  "pregunta": "¿Cuántas tabletas tiene en uso el negocio o actividad?",
+  "categorias": {},
+  "modulos": [
+   "Módulo de TIC.NSDstat"
+  ]
+ },
+ "P976": {
+  "etiqueta": "¿Para su negocio o actividad utiliza el teléfono celular?",
+  "pregunta": "¿Para su negocio o actividad utiliza el teléfono celular? 1 Sí 2 No",
+  "categorias": {
+   "1": "Sí",
+   "2": "No"
+  },
+  "modulos": [
+   "Módulo de TIC.NSDstat"
+  ]
+ },
+ "P978": {
+  "etiqueta": "¿Cuántos teléfonos celulares inteligentes (Smartphone) tiene en uso el negocio o actividad?",
+  "pregunta": "¿Cuántos teléfonos celulares inteligentes (Smartphone) tiene en uso el negocio o actividad?",
+  "categorias": {},
+  "modulos": [
+   "Módulo de TIC.NSDstat"
+  ]
+ },
+ "P979": {
+  "etiqueta": "¿Cuántos teléfonos celular convencional tiene en uso el negocio o actividad?",
+  "pregunta": "¿Cuántos teléfonos celular convencional tiene en uso el negocio o actividad?",
+  "categorias": {},
+  "modulos": [
+   "Módulo de TIC.NSDstat"
+  ]
+ },
+ "P994": {
+  "etiqueta": "¿Cuál es la principal razón por la cual el negocio o actividad no tiene en uso computador (PC, portátil), tableta, Smartphone?",
+  "pregunta": "¿Cuál es la principal razón por la cual el negocio o actividad no tiene en uso computador (PC, portátil), tableta, Smartphone? 1 Es muy costoso 2 No se necesita 3 El personal no sabe usarlo",
+  "categorias": {
+   "1": "Es muy costoso",
+   "2": "No se necesita",
+   "3": "El personal no sabe usarlo"
+  },
+  "modulos": [
+   "Módulo de TIC.NSDstat"
+  ]
+ },
+ "P2532": {
+  "etiqueta": "El negocio o actividad tiene página web o presencia en un sitio web?",
+  "pregunta": "El negocio o actividad tiene página web o presencia en un sitio web? 1 Sí 2 No",
+  "categorias": {
+   "1": "Sí",
+   "2": "No"
+  },
+  "modulos": [
+   "Módulo de TIC.NSDstat"
+  ]
+ },
+ "P1559": {
+  "etiqueta": "El negocio o actividad tiene presencia en redes sociales (Facebook, twitter, etc.)?",
+  "pregunta": "El negocio o actividad tiene presencia en redes sociales (Facebook, twitter, etc.)? 1 Sí 2 No",
+  "categorias": {
+   "1": "Sí",
+   "2": "No"
+  },
+  "modulos": [
+   "Módulo de TIC.NSDstat"
+  ]
+ },
+ "P2524": {
+  "etiqueta": "¿Este negocio o actividad tiene acceso o utiliza el servicio de internet?",
+  "pregunta": "¿Este negocio o actividad tiene acceso o utiliza el servicio de internet? 1 Sí 2 No",
+  "categorias": {
+   "1": "Sí",
+   "2": "No"
+  },
+  "modulos": [
+   "Módulo de TIC.NSDstat"
+  ]
+ },
+ "P1093": {
+  "etiqueta": "¿Utiliza internet con conexión dentro del negocio o donde desarrolla su actividad?",
+  "pregunta": "¿Utiliza internet con conexión dentro del negocio o donde desarrolla su actividad? 1 Sí 2 No",
+  "categorias": {
+   "1": "Sí",
+   "2": "No"
+  },
+  "modulos": [
+   "Módulo de TIC.NSDstat"
+  ]
+ },
+ "P2528": {
+  "etiqueta": "¿Qué tipo de conexión utiliza principalmente el negocio para acceder a internet?",
+  "pregunta": "¿Qué tipo de conexión utiliza principalmente el negocio para acceder a internet?",
+  "categorias": {},
+  "modulos": [
+   "Módulo de TIC.NSDstat"
+  ]
+ },
+ "P1095": {
+  "etiqueta": "¿Cuál es la principal razón por la cual el negocio o actividad no utiliza internet?",
+  "pregunta": "¿Cuál es la principal razón por la cual el negocio o actividad no utiliza internet? 1 Es muy costoso 2 No lo necesita 3 El personal no sabe usarlo 4 No tiene dispositivo para conectarse (computadores, tabletas, entre otros) 5 El servicio no es de buena calidad 6 No hay cobertura del servicio en la zona",
+  "categorias": {
+   "1": "Es muy costoso",
+   "2": "No lo necesita",
+   "3": "El personal no sabe usarlo",
+   "4": "No tiene dispositivo para conectarse (computadores, tabletas, entre otros)",
+   "5": "El servicio no es de buena calidad",
+   "6": "No hay cobertura del servicio en la zona"
+  },
+  "modulos": [
+   "Módulo de TIC.NSDstat"
+  ]
+ },
+ "P980": {
+  "etiqueta": "Del total del personal ocupado del negocio o actividad, ¿cuántos utilizan internet para el desarrollo de sus actividades?",
+  "pregunta": "Del total del personal ocupado del negocio o actividad, ¿cuántos utilizan internet para el desarrollo de sus actividades?",
+  "categorias": {},
+  "modulos": [
+   "Módulo de TIC.NSDstat"
+  ]
+ },
+ "P1006_1": {
+  "etiqueta": "Búsqueda de información de dependencias oficiales y autoridades",
+  "pregunta": "Búsqueda de información de dependencias oficiales y autoridades 1 Sí 2 No",
+  "categorias": {
+   "1": "Sí",
+   "2": "No"
+  },
+  "modulos": [
+   "Módulo de TIC.NSDstat"
+  ]
+ },
+ "P1006_2": {
+  "etiqueta": "Banca electrónica y otros servicios financieros",
+  "pregunta": "Banca electrónica y otros servicios financieros 1 Sí 2 No",
+  "categorias": {
+   "1": "Sí",
+   "2": "No"
+  },
+  "modulos": [
+   "Módulo de TIC.NSDstat"
+  ]
+ },
+ "P1006_3": {
+  "etiqueta": "Transacciones con organismos gubernamentales",
+  "pregunta": "Transacciones con organismos gubernamentales 1 Sí 2 No",
+  "categorias": {
+   "1": "Sí",
+   "2": "No"
+  },
+  "modulos": [
+   "Módulo de TIC.NSDstat"
+  ]
+ },
+ "P1006_4": {
+  "etiqueta": "Servicio al cliente",
+  "pregunta": "Servicio al cliente 1 Sí 2 No",
+  "categorias": {
+   "1": "Sí",
+   "2": "No"
+  },
+  "modulos": [
+   "Módulo de TIC.NSDstat"
+  ]
+ },
+ "P1006_5": {
+  "etiqueta": "Entrega de productos en forma digitalizada (a través de internet)",
+  "pregunta": "Entrega de productos en forma digitalizada (a través de internet) 1 Sí 2 No",
+  "categorias": {
+   "1": "Sí",
+   "2": "No"
+  },
+  "modulos": [
+   "Módulo de TIC.NSDstat"
+  ]
+ },
+ "P1006_6": {
+  "etiqueta": "Comprar a proveedores por internet mediante una plataforma electrónica (comercio electrónico)",
+  "pregunta": "Comprar a proveedores por internet mediante una plataforma electrónica (comercio electrónico) 1 Sí 2 No",
+  "categorias": {
+   "1": "Sí",
+   "2": "No"
+  },
+  "modulos": [
+   "Módulo de TIC.NSDstat"
+  ]
+ },
+ "P1006_7": {
+  "etiqueta": "Vender productos a clientes por internet mediante una plataforma electrónica (comercio electrónico)",
+  "pregunta": "Vender productos a clientes por internet mediante una plataforma electrónica (comercio electrónico) 1 Sí 2 No",
+  "categorias": {
+   "1": "Sí",
+   "2": "No"
+  },
+  "modulos": [
+   "Módulo de TIC.NSDstat"
+  ]
+ },
+ "P1006_8": {
+  "etiqueta": "Uso de aplicaciones",
+  "pregunta": "Uso de aplicaciones 1 Sí 2 No",
+  "categorias": {
+   "1": "Sí",
+   "2": "No"
+  },
+  "modulos": [
+   "Módulo de TIC.NSDstat"
+  ]
+ },
+ "P1006_9": {
+  "etiqueta": "Enviar o recibir correo electrónico",
+  "pregunta": "Enviar o recibir correo electrónico 1 Sí 2 No",
+  "categorias": {
+   "1": "Sí",
+   "2": "No"
+  },
+  "modulos": [
+   "Módulo de TIC.NSDstat"
+  ]
+ },
+ "P1006_10": {
+  "etiqueta": "Búsqueda de información sobre bienes y servicios",
+  "pregunta": "Búsqueda de información sobre bienes y servicios 1 Sí 2 No",
+  "categorias": {
+   "1": "Sí",
+   "2": "No"
+  },
+  "modulos": [
+   "Módulo de TIC.NSDstat"
+  ]
+ },
+ "P1006_11": {
+  "etiqueta": "Llamadas telefónicas por internet/VoIP o uso de videoconferencias (Skype, etc)",
+  "pregunta": "Llamadas telefónicas por internet/VoIP o uso de videoconferencias (Skype, etc) 1 Sí 2 No",
+  "categorias": {
+   "1": "Sí",
+   "2": "No"
+  },
+  "modulos": [
+   "Módulo de TIC.NSDstat"
+  ]
+ },
+ "P1006_12": {
+  "etiqueta": "Capacitación del personal",
+  "pregunta": "Capacitación del personal 1 Sí 2 No",
+  "categorias": {
+   "1": "Sí",
+   "2": "No"
+  },
+  "modulos": [
+   "Módulo de TIC.NSDstat"
+  ]
+ },
+ "P1006_13": {
+  "etiqueta": "Mensajería instantánea o chat (por ej. WhatsApp, Messenger, Line, etc.)",
+  "pregunta": "Mensajería instantánea o chat (por ej. WhatsApp, Messenger, Line, etc.) 1 Sí 2 No",
+  "categorias": {
+   "1": "Sí",
+   "2": "No"
+  },
+  "modulos": [
+   "Módulo de TIC.NSDstat"
+  ]
+ },
+ "P3056_A": {
+  "etiqueta": "Costo de mercancía vendida",
+  "pregunta": "Costo de mercancía vendida",
+  "categorias": {},
+  "modulos": [
+   "Módulo de costos, gastos y activos.NSDstat"
+  ]
+ },
+ "P3056_B": {
+  "etiqueta": "Costo de los insumos para la prestación del servicio",
+  "pregunta": "Costo de los insumos para la prestación del servicio",
+  "categorias": {},
+  "modulos": [
+   "Módulo de costos, gastos y activos.NSDstat"
+  ]
+ },
+ "P3056_C": {
+  "etiqueta": "Costo de las materias primas, materiales y empaques?",
+  "pregunta": "Costo de las materias primas, materiales y empaques?",
+  "categorias": {},
+  "modulos": [
+   "Módulo de costos, gastos y activos.NSDstat"
+  ]
+ },
+ "P3056_D": {
+  "etiqueta": "Costos de producción agricola, pecuaria, extractiva (semillas, fertilizantes, fungicidas, preparación terreno, redes, alimento para animales )",
+  "pregunta": "Costos de producción agricola, pecuaria, extractiva (semillas, fertilizantes, fungicidas, preparación terreno, redes, alimento para animales )",
+  "categorias": {},
+  "modulos": [
+   "Módulo de costos, gastos y activos.NSDstat"
+  ]
+ },
+ "P3056_E": {
+  "etiqueta": "P3056_E",
+  "pregunta": "P3056_E",
+  "categorias": {},
+  "modulos": [
+   "Módulo de costos, gastos y activos.NSDstat"
+  ]
+ },
+ "P3057_A": {
+  "etiqueta": "Costo de mercancía vendida",
+  "pregunta": "Costo de mercancía vendida",
+  "categorias": {},
+  "modulos": [
+   "Módulo de costos, gastos y activos.NSDstat"
+  ]
+ },
+ "P3057_B": {
+  "etiqueta": "Costo de los insumos para la prestación del servicio",
+  "pregunta": "Costo de los insumos para la prestación del servicio",
+  "categorias": {},
+  "modulos": [
+   "Módulo de costos, gastos y activos.NSDstat"
+  ]
+ },
+ "P3057_C": {
+  "etiqueta": "Costo de las materias primas, materiales y empaques?",
+  "pregunta": "Costo de las materias primas, materiales y empaques?",
+  "categorias": {},
+  "modulos": [
+   "Módulo de costos, gastos y activos.NSDstat"
+  ]
+ },
+ "P3057_D": {
+  "etiqueta": "Costos de producción agricola, pecuaria, extractiva (semillas, fertilizantes, fungicidas, preparación terreno, redes, alimento para animales )",
+  "pregunta": "Costos de producción agricola, pecuaria, extractiva (semillas, fertilizantes, fungicidas, preparación terreno, redes, alimento para animales )",
+  "categorias": {},
+  "modulos": [
+   "Módulo de costos, gastos y activos.NSDstat"
+  ]
+ },
+ "P3057_E": {
+  "etiqueta": "P3057_E",
+  "pregunta": "P3057_E",
+  "categorias": {},
+  "modulos": [
+   "Módulo de costos, gastos y activos.NSDstat"
+  ]
+ },
+ "P3017_A": {
+  "etiqueta": "Arrendamiento de bienes inmuebles y muebles (local, maquinaria, etc.)",
+  "pregunta": "Arrendamiento de bienes inmuebles y muebles (local, maquinaria, etc.)",
+  "categorias": {},
+  "modulos": [
+   "Módulo de costos, gastos y activos.NSDstat"
+  ]
+ },
+ "P3017_B": {
+  "etiqueta": "Energía eléctrica comprada",
+  "pregunta": "Energía eléctrica comprada",
+  "categorias": {},
+  "modulos": [
+   "Módulo de costos, gastos y activos.NSDstat"
+  ]
+ },
+ "P3017_C": {
+  "etiqueta": "Servicio de teléfono, internet, televisión, plan de datos, descargas, transacciones en línea",
+  "pregunta": "Servicio de teléfono, internet, televisión, plan de datos, descargas, transacciones en línea",
+  "categorias": {},
+  "modulos": [
+   "Módulo de costos, gastos y activos.NSDstat"
+  ]
+ },
+ "P3017_D": {
+  "etiqueta": "Servicio de agua, acueducto, alcantarillado.",
+  "pregunta": "Servicio de agua, acueducto, alcantarillado.",
+  "categorias": {},
+  "modulos": [
+   "Módulo de costos, gastos y activos.NSDstat"
+  ]
+ },
+ "P3017_E": {
+  "etiqueta": "Consumo de combustibles (gas natural, gas propano en pipeta, gasolina, carbón, leña)",
+  "pregunta": "Consumo de combustibles (gas natural, gas propano en pipeta, gasolina, carbón, leña)",
+  "categorias": {},
+  "modulos": [
+   "Módulo de costos, gastos y activos.NSDstat"
+  ]
+ },
+ "P3017_F": {
+  "etiqueta": "Mantenimiento y reparación del local, vehículos, o maquinaria",
+  "pregunta": "Mantenimiento y reparación del local, vehículos, o maquinaria",
+  "categorias": {},
+  "modulos": [
+   "Módulo de costos, gastos y activos.NSDstat"
+  ]
+ },
+ "P3017_G": {
+  "etiqueta": "Transporte fletes y acarreos (parqueadero)",
+  "pregunta": "Transporte fletes y acarreos (parqueadero)",
+  "categorias": {},
+  "modulos": [
+   "Módulo de costos, gastos y activos.NSDstat"
+  ]
+ },
+ "P3017_H": {
+  "etiqueta": "Publicidad, propaganda, servicios profesionales (contador, abogado)",
+  "pregunta": "Publicidad, propaganda, servicios profesionales (contador, abogado)",
+  "categorias": {},
+  "modulos": [
+   "Módulo de costos, gastos y activos.NSDstat"
+  ]
+ },
+ "P3017_K": {
+  "etiqueta": "Otros gastos (aseo y vigilancia, administración, entre otros)",
+  "pregunta": "Otros gastos (aseo y vigilancia, administración, entre otros)",
+  "categorias": {},
+  "modulos": [
+   "Módulo de costos, gastos y activos.NSDstat"
+  ]
+ },
+ "P3017_I": {
+  "etiqueta": "Licencias de funcionamiento, registro mercantil o tarifas de asociaciónes gremiales",
+  "pregunta": "Licencias de funcionamiento, registro mercantil o tarifas de asociaciónes gremiales",
+  "categorias": {},
+  "modulos": [
+   "Módulo de costos, gastos y activos.NSDstat"
+  ]
+ },
+ "P3017_J": {
+  "etiqueta": "Impuestos (predial, rodamiento, SOAT, sayco)",
+  "pregunta": "Impuestos (predial, rodamiento, SOAT, sayco)",
+  "categorias": {},
+  "modulos": [
+   "Módulo de costos, gastos y activos.NSDstat"
+  ]
+ },
+ "P3017_L": {
+  "etiqueta": "Otros pagos asociados al proceso productivo y de comercialización (INVIMA, carné manipulación de alimento, etc.)",
+  "pregunta": "Otros pagos asociados al proceso productivo y de comercialización (INVIMA, carné manipulación de alimento, etc.)",
+  "categorias": {},
+  "modulos": [
+   "Módulo de costos, gastos y activos.NSDstat"
+  ]
+ },
+ "P3018_1": {
+  "etiqueta": "En el año anterior en su negocio o actividad invirtió en la compra o adquisición de:",
+  "pregunta": "En el año anterior en su negocio o actividad invirtió en la compra o adquisición de: 1 Terrenos o local",
+  "categorias": {},
+  "modulos": [
+   "Módulo de costos, gastos y activos.NSDstat"
+  ]
+ },
+ "P3018_2": {
+  "etiqueta": "En el año anterior en su negocio o actividad invirtió en la compra o adquisición de:",
+  "pregunta": "En el año anterior en su negocio o actividad invirtió en la compra o adquisición de: Maquinaria o herramientas",
+  "categorias": {},
+  "modulos": [
+   "Módulo de costos, gastos y activos.NSDstat"
+  ]
+ },
+ "P3018_3": {
+  "etiqueta": "En el año anterior en su negocio o actividad invirtió en la compra o adquisición de:",
+  "pregunta": "En el año anterior en su negocio o actividad invirtió en la compra o adquisición de: 3 Equipo de informática (hardware/software) y comunicación",
+  "categorias": {},
+  "modulos": [
+   "Módulo de costos, gastos y activos.NSDstat"
+  ]
+ },
+ "P3018_4": {
+  "etiqueta": "En el año anterior en su negocio o actividad invirtió en la compra o adquisición de:",
+  "pregunta": "En el año anterior en su negocio o actividad invirtió en la compra o adquisición de: 4 Muebles o equipos de oficina",
+  "categorias": {},
+  "modulos": [
+   "Módulo de costos, gastos y activos.NSDstat"
+  ]
+ },
+ "P3018_5": {
+  "etiqueta": "Maquinaria o herramientas",
+  "pregunta": "Maquinaria o herramientas 5 Vehículos",
+  "categorias": {},
+  "modulos": [
+   "Módulo de costos, gastos y activos.NSDstat"
+  ]
+ },
+ "P3018_6": {
+  "etiqueta": "Muebles o equipos de oficina",
+  "pregunta": "Muebles o equipos de oficina 6 Otros activos",
+  "categorias": {},
+  "modulos": [
+   "Módulo de costos, gastos y activos.NSDstat"
+  ]
+ },
+ "P3018_7": {
+  "etiqueta": "En el año anterior en su negocio o actividad invirtió en la compra o adquisición de:",
+  "pregunta": "En el año anterior en su negocio o actividad invirtió en la compra o adquisición de: 7 No invirtió",
+  "categorias": {},
+  "modulos": [
+   "Módulo de costos, gastos y activos.NSDstat"
+  ]
+ },
+ "P3018_A": {
+  "etiqueta": "Terrenos o local",
+  "pregunta": ". Terrenos o local",
+  "categorias": {},
+  "modulos": [
+   "Módulo de costos, gastos y activos.NSDstat"
+  ]
+ },
+ "P3018_B": {
+  "etiqueta": "Maquinaria o herramientas",
+  "pregunta": "Maquinaria o herramientas",
+  "categorias": {},
+  "modulos": [
+   "Módulo de costos, gastos y activos.NSDstat"
+  ]
+ },
+ "P3018_C": {
+  "etiqueta": "Equipo de informática (hardware/sotware) y comunicación",
+  "pregunta": "Equipo de informática (hardware/sotware) y comunicación",
+  "categorias": {},
+  "modulos": [
+   "Módulo de costos, gastos y activos.NSDstat"
+  ]
+ },
+ "P3018_D": {
+  "etiqueta": "Muebles o equipos de oficina",
+  "pregunta": "Muebles o equipos de oficina",
+  "categorias": {},
+  "modulos": [
+   "Módulo de costos, gastos y activos.NSDstat"
+  ]
+ },
+ "P3018_E": {
+  "etiqueta": "Vehiculos",
+  "pregunta": "Vehiculos",
+  "categorias": {},
+  "modulos": [
+   "Módulo de costos, gastos y activos.NSDstat"
+  ]
+ },
+ "P3018_F": {
+  "etiqueta": "Otros activos",
+  "pregunta": "Otros activos",
+  "categorias": {},
+  "modulos": [
+   "Módulo de costos, gastos y activos.NSDstat"
+  ]
+ },
+ "P3019": {
+  "etiqueta": "Si usted tuviera que comprar las herramientas, maquinaria, muebles, equipo de informática, terreno, local y vehículos que utiliza en su negocio, ¿Cuánto cree que costaría?",
+  "pregunta": "Si usted tuviera que comprar las herramientas, maquinaria, muebles, equipo de informática, terreno, local y vehículos que utiliza en su negocio, ¿Cuánto cree que costaría?",
+  "categorias": {},
+  "modulos": [
+   "Módulo de costos, gastos y activos.NSDstat"
+  ]
+ },
+ "COSTOS_MES_ANTERIOR": {
+  "etiqueta": "Costos mensuales",
+  "pregunta": "Costos mensuales",
+  "categorias": {},
+  "modulos": [
+   "Módulo de costos, gastos y activos.NSDstat"
+  ]
+ },
+ "COSTOS_ANIO_ANTERIOR": {
+  "etiqueta": "Costos del año anterior",
+  "pregunta": "Costos del año anterior",
+  "categorias": {},
+  "modulos": [
+   "Módulo de costos, gastos y activos.NSDstat"
+  ]
+ },
+ "GASTOS_MES": {
+  "etiqueta": "Gastos mensuales",
+  "pregunta": "Gastos mensuales",
+  "categorias": {},
+  "modulos": [
+   "Módulo de costos, gastos y activos.NSDstat"
+  ]
+ },
+ "CONSUMO_INTERMEDIO": {
+  "etiqueta": "Consumo intermedio mensual",
+  "pregunta": "Consumo intermedio mensual",
+  "categorias": {},
+  "modulos": [
+   "Módulo de costos, gastos y activos.NSDstat"
+  ]
+ },
+ "P3057": {
+  "etiqueta": "Ventas de productos elaborados",
+  "pregunta": "Ventas de productos elaborados",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P3058": {
+  "etiqueta": "Servicio de maquila",
+  "pregunta": "Servicio de maquila",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P3059": {
+  "etiqueta": "Servicios de reparación y mantenimiento",
+  "pregunta": "Servicios de reparación y mantenimiento",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P3060": {
+  "etiqueta": "Otros ingresos",
+  "pregunta": "Otros ingresos",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P3061": {
+  "etiqueta": "Venta de mercancía",
+  "pregunta": "Venta de mercancía",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P3062": {
+  "etiqueta": "Por consignación o comisión",
+  "pregunta": "Por consignación o comisión",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P4002": {
+  "etiqueta": "Servicios de reparación y mantenimiento",
+  "pregunta": "Servicios de reparación y mantenimiento",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P3063": {
+  "etiqueta": "Otros ingresos",
+  "pregunta": "Otros ingresos",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P3064": {
+  "etiqueta": "Ingresos por los servicios ofrecidos",
+  "pregunta": "Ingresos por los servicios ofrecidos",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P3065": {
+  "etiqueta": "Ingresos por Mantenimiento y reparación",
+  "pregunta": "Ingresos por Mantenimiento y reparación",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P3066": {
+  "etiqueta": "Por ventas de mercancías",
+  "pregunta": "Por ventas de mercancías",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P3067": {
+  "etiqueta": "Otros ingresos",
+  "pregunta": "Otros ingresos",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P3092": {
+  "etiqueta": "Ingresos por venta de productos agrícolas, ganaderos, pesqueros, o actividades mineras",
+  "pregunta": "Ingresos por venta de productos agrícolas, ganaderos, pesqueros, o actividades mineras",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P3093": {
+  "etiqueta": "Otros ingresos",
+  "pregunta": "Otros ingresos",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P4036": {
+  "etiqueta": "P4036",
+  "pregunta": "P4036",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P4005": {
+  "etiqueta": "Ventas de productos elaborados",
+  "pregunta": "Ventas de productos elaborados",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P4006": {
+  "etiqueta": "Servicio de maquila",
+  "pregunta": "Servicio de maquila",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P4007": {
+  "etiqueta": "Servicios de reparación y mantenimiento",
+  "pregunta": "Servicios de reparación y mantenimiento",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P4008": {
+  "etiqueta": "Otros ingresos",
+  "pregunta": "Otros ingresos",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P4009": {
+  "etiqueta": "Venta de mercancía",
+  "pregunta": "Venta de mercancía",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P4010": {
+  "etiqueta": "Por consignación o comisión",
+  "pregunta": "Por consignación o comisión",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P4011": {
+  "etiqueta": "Servicios de reparación y mantenimiento",
+  "pregunta": "Servicios de reparación y mantenimiento",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P4012": {
+  "etiqueta": "Otros ingresos",
+  "pregunta": "Otros ingresos",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P4013": {
+  "etiqueta": "Ingresos por los servicios ofrecidos",
+  "pregunta": "Ingresos por los servicios ofrecidos",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P4014": {
+  "etiqueta": "Ingresos por Mantenimiento y reparación",
+  "pregunta": "Ingresos por Mantenimiento y reparación",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P4015": {
+  "etiqueta": "Por ventas de mercancías",
+  "pregunta": "Por ventas de mercancías",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P4016": {
+  "etiqueta": "Otros ingresos",
+  "pregunta": "Otros ingresos",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P4017": {
+  "etiqueta": "Ingresos por venta de productos agrícolas, ganaderos, pesqueros, o actividades mineras",
+  "pregunta": "Ingresos por venta de productos agrícolas, ganaderos, pesqueros, o actividades mineras",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P4018": {
+  "etiqueta": "Otros ingresos",
+  "pregunta": "Otros ingresos",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P4037": {
+  "etiqueta": "P4037",
+  "pregunta": "P4037",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P3068_ENE": {
+  "etiqueta": "¿Cuáles meses funcionó el negocio, o trabajó en su actividad durante el año anterior?",
+  "pregunta": "¿Cuáles meses funcionó el negocio, o trabajó en su actividad durante el año anterior? Enero",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P3068_FEB": {
+  "etiqueta": "¿Cuáles meses funcionó el negocio, o trabajó en su actividad durante el año anterior?",
+  "pregunta": "¿Cuáles meses funcionó el negocio, o trabajó en su actividad durante el año anterior? Febrero",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P3068_MAR": {
+  "etiqueta": "¿Cuáles meses funcionó el negocio, o trabajó en su actividad durante el año anterior?",
+  "pregunta": "¿Cuáles meses funcionó el negocio, o trabajó en su actividad durante el año anterior? Marzo",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P3068_ABR": {
+  "etiqueta": "¿Cuáles meses funcionó el negocio, o trabajó en su actividad durante el año anterior?",
+  "pregunta": "¿Cuáles meses funcionó el negocio, o trabajó en su actividad durante el año anterior? Abril",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P3068_MAY": {
+  "etiqueta": "¿Cuáles meses funcionó el negocio, o trabajó en su actividad durante el año anterior?",
+  "pregunta": "¿Cuáles meses funcionó el negocio, o trabajó en su actividad durante el año anterior? Mayo",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P3068_JUN": {
+  "etiqueta": "¿Cuáles meses funcionó el negocio, o trabajó en su actividad durante el año anterior?",
+  "pregunta": "¿Cuáles meses funcionó el negocio, o trabajó en su actividad durante el año anterior? Junio",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P3068_JUL": {
+  "etiqueta": "¿Cuáles meses funcionó el negocio, o trabajó en su actividad durante el año anterior?",
+  "pregunta": "¿Cuáles meses funcionó el negocio, o trabajó en su actividad durante el año anterior? Julio",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P3068_AGO": {
+  "etiqueta": "¿Cuáles meses funcionó el negocio, o trabajó en su actividad durante el año anterior?",
+  "pregunta": "¿Cuáles meses funcionó el negocio, o trabajó en su actividad durante el año anterior? Agosto",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P3068_SEP": {
+  "etiqueta": "¿Cuáles meses funcionó el negocio, o trabajó en su actividad durante el año anterior?",
+  "pregunta": "¿Cuáles meses funcionó el negocio, o trabajó en su actividad durante el año anterior? Septiembre",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P3068_OCT": {
+  "etiqueta": "¿Cuáles meses funcionó el negocio, o trabajó en su actividad durante el año anterior?",
+  "pregunta": "¿Cuáles meses funcionó el negocio, o trabajó en su actividad durante el año anterior? Octubre",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P3068_NOV": {
+  "etiqueta": "¿Cuáles meses funcionó el negocio, o trabajó en su actividad durante el año anterior?",
+  "pregunta": "¿Cuáles meses funcionó el negocio, o trabajó en su actividad durante el año anterior? v",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P3068_DIC": {
+  "etiqueta": "¿Cuáles meses funcionó el negocio, o trabajó en su actividad durante el año anterior?",
+  "pregunta": "¿Cuáles meses funcionó el negocio, o trabajó en su actividad durante el año anterior? Diciembre",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P3068_TOD": {
+  "etiqueta": "¿Cuáles meses funcionó el negocio, o trabajó en su actividad durante el año anterior?",
+  "pregunta": "¿Cuáles meses funcionó el negocio, o trabajó en su actividad durante el año anterior? Todos los 12 meses",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P3068_NIN": {
+  "etiqueta": "¿Cuáles meses funcionó el negocio, o trabajó en su actividad durante el año anterior?",
+  "pregunta": "¿Cuáles meses funcionó el negocio, o trabajó en su actividad durante el año anterior? Ninguno",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P4019": {
+  "etiqueta": "Ventas de productos elaborados",
+  "pregunta": "Ventas de productos elaborados",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P4020": {
+  "etiqueta": "Servicio de maquila",
+  "pregunta": "Servicio de maquila",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P4021": {
+  "etiqueta": "Servicios de reparación y mantenimiento",
+  "pregunta": "Servicios de reparación y mantenimiento",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P4022": {
+  "etiqueta": "Otros ingresos",
+  "pregunta": "Otros ingresos",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P4023": {
+  "etiqueta": "Venta de mercancía",
+  "pregunta": "Venta de mercancía",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P4024": {
+  "etiqueta": "Por consignación o comisión",
+  "pregunta": "Por consignación o comisión",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P4025": {
+  "etiqueta": "Servicios de reparación y mantenimiento",
+  "pregunta": "Servicios de reparación y mantenimiento",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P4026": {
+  "etiqueta": "Otros ingresos",
+  "pregunta": "Otros ingresos",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P4027": {
+  "etiqueta": "Ingresos por los servicios ofrecidos",
+  "pregunta": "Ingresos por los servicios ofrecidos",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P4028": {
+  "etiqueta": "Ingresos por Mantenimiento y reparación",
+  "pregunta": "Ingresos por Mantenimiento y reparación",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P4029": {
+  "etiqueta": "Por ventas de mercancías",
+  "pregunta": "Por ventas de mercancías",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P4030": {
+  "etiqueta": "Otros ingresos",
+  "pregunta": "Otros ingresos",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P4031": {
+  "etiqueta": "Ingresos por venta de productos agrícolas, ganaderos, pesqueros, o actividades mineras",
+  "pregunta": "Ingresos por venta de productos agrícolas, ganaderos, pesqueros, o actividades mineras",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P4032": {
+  "etiqueta": "Otros ingresos",
+  "pregunta": "Otros ingresos",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P4038": {
+  "etiqueta": "Ventas o ingresos totales",
+  "pregunta": "Ventas o ingresos totales",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P3072": {
+  "etiqueta": "En promedio ¿cuánto le deja su negocio o actividad al mes?",
+  "pregunta": "En promedio ¿cuánto le deja su negocio o actividad al mes?",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "VENTAS_MES_ANTERIOR": {
+  "etiqueta": "Ventas o ingresos mensuales",
+  "pregunta": "Ventas o ingresos mensuales",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "VENTAS_MES_ANIO_ANTERIOR": {
+  "etiqueta": "Ventas o ingresos del año anterior",
+  "pregunta": "Ventas o ingresos del año anterior",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "VENTAS_ANIO_ANTERIOR": {
+  "etiqueta": "Ventas o ingresos del mismo mes del año anterior",
+  "pregunta": "Ventas o ingresos del mismo mes del año anterior",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "VALOR_AGREGADO": {
+  "etiqueta": "Valor agregado mensual",
+  "pregunta": "Valor agregado mensual",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "INGRESO_MIXTO": {
+  "etiqueta": "Ingreso mixto mensual",
+  "pregunta": "Ingreso mixto mensual",
+  "categorias": {},
+  "modulos": [
+   "Módulo de ventas o ingresos.NSDstat"
+  ]
+ },
+ "P1764_1": {
+  "etiqueta": "¿Cuáles formas de pago acepta en su negocio?",
+  "pregunta": "¿Cuáles formas de pago acepta en su negocio? Efectivo",
+  "categorias": {},
+  "modulos": [
+   "Módulo de inclusión financiera.NSDstat"
+  ]
+ },
+ "P1764_2": {
+  "etiqueta": "¿Cuáles formas de pago acepta en su negocio?",
+  "pregunta": "¿Cuáles formas de pago acepta en su negocio? Cheque",
+  "categorias": {},
+  "modulos": [
+   "Módulo de inclusión financiera.NSDstat"
+  ]
+ },
+ "P1764_3": {
+  "etiqueta": "¿Cuáles formas de pago acepta en su negocio?",
+  "pregunta": "¿Cuáles formas de pago acepta en su negocio? Transferencia bancaria, Pagos por internet",
+  "categorias": {},
+  "modulos": [
+   "Módulo de inclusión financiera.NSDstat"
+  ]
+ },
+ "P1764_4": {
+  "etiqueta": "¿Cuáles formas de pago acepta en su negocio?",
+  "pregunta": "¿Cuáles formas de pago acepta en su negocio? Facturas, para ser pagadas por sus clientes a los 15, 30 o más días",
+  "categorias": {},
+  "modulos": [
+   "Módulo de inclusión financiera.NSDstat"
+  ]
+ },
+ "P1764_5": {
+  "etiqueta": "¿Cuáles formas de pago acepta en su negocio?",
+  "pregunta": "¿Cuáles formas de pago acepta en su negocio? Tarjeta débito",
+  "categorias": {},
+  "modulos": [
+   "Módulo de inclusión financiera.NSDstat"
+  ]
+ },
+ "P1764_6": {
+  "etiqueta": "¿Cuáles formas de pago acepta en su negocio?",
+  "pregunta": "¿Cuáles formas de pago acepta en su negocio? Tarjeta crédito",
+  "categorias": {},
+  "modulos": [
+   "Módulo de inclusión financiera.NSDstat"
+  ]
+ },
+ "P1764_7": {
+  "etiqueta": "¿Cuáles formas de pago acepta en su negocio?",
+  "pregunta": "¿Cuáles formas de pago acepta en su negocio? Otro",
+  "categorias": {},
+  "modulos": [
+   "Módulo de inclusión financiera.NSDstat"
+  ]
+ },
+ "P1765": {
+  "etiqueta": "En el año anterior ¿solicitó algún crédito o préstamo para la gestión de su negocio o actividad económica?",
+  "pregunta": "En el año anterior ¿solicitó algún crédito o préstamo para la gestión de su negocio o actividad económica? 1 Sí 2 No",
+  "categorias": {
+   "1": "Sí",
+   "2": "No"
+  },
+  "modulos": [
+   "Módulo de inclusión financiera.NSDstat"
+  ]
+ },
+ "P1567": {
+  "etiqueta": "¿Por qué no ha solicitado algún crédito o préstamo?",
+  "pregunta": "¿Por qué no ha solicitado algún crédito o préstamo? 1 No lo necesita 2 Miedo a las deudas - No le gusta endeudarse 3 No cumple los requisitos (garantías, codeudores, avales, fiadores) 4 Los intereses y comisiones son muy altos 5 Está reportado negativamente en Centrales de Riesgos 6 Otro, ¿cuál?",
+  "categorias": {
+   "1": "No lo necesita",
+   "2": "Miedo a las deudas - No le gusta endeudarse",
+   "3": "No cumple los requisitos (garantías, codeudores, avales, fiadores)",
+   "4": "Los intereses y comisiones son muy altos",
+   "5": "Está reportado negativamente en Centrales de Riesgos",
+   "6": "Otro, ¿cuál?"
+  },
+  "modulos": [
+   "Módulo de inclusión financiera.NSDstat"
+  ]
+ },
+ "P1569": {
+  "etiqueta": "¿A quién solicitó el préstamo?",
+  "pregunta": "¿A quién solicitó el préstamo? 1 Institución financiera regulada (bancos, cooperativas, compañías de financiamiento, etc.) 2 Crédito de proveedores 3 Casa de empeño 4 Entidades Micro crediticias (ONG) 5 Prestamista, gota a gota 6 Familiares o amigos 7 Otro, ¿cuál?",
+  "categorias": {
+   "1": "Institución financiera regulada (bancos, cooperativas, compañías de financiamiento, etc.)",
+   "2": "Crédito de proveedores",
+   "3": "Casa de empeño",
+   "4": "Entidades Micro crediticias (ONG)",
+   "5": "Prestamista, gota a gota",
+   "6": "Familiares o amigos",
+   "7": "Otro, ¿cuál?"
+  },
+  "modulos": [
+   "Módulo de inclusión financiera.NSDstat"
+  ]
+ },
+ "P1568": {
+  "etiqueta": "¿Obtuvo el crédito o préstamo solicitado?",
+  "pregunta": "¿Obtuvo el crédito o préstamo solicitado? 1 Sí 2 No",
+  "categorias": {
+   "1": "Sí",
+   "2": "No"
+  },
+  "modulos": [
+   "Módulo de inclusión financiera.NSDstat"
+  ]
+ },
+ "P1571_1": {
+  "etiqueta": "¿Por qué no lo obtuvo?",
+  "pregunta": "¿Por qué no lo obtuvo? Falta de garantías (fiador o aval)",
+  "categorias": {},
+  "modulos": [
+   "Módulo de inclusión financiera.NSDstat"
+  ]
+ },
+ "P1571_2": {
+  "etiqueta": "¿Por qué no lo obtuvo?",
+  "pregunta": "¿Por qué no lo obtuvo? Está reportado en centrales de riesgo",
+  "categorias": {},
+  "modulos": [
+   "Módulo de inclusión financiera.NSDstat"
+  ]
+ },
+ "P1571_3": {
+  "etiqueta": "¿Por qué no lo obtuvo?",
+  "pregunta": "¿Por qué no lo obtuvo? No tiene historial crediticio",
+  "categorias": {},
+  "modulos": [
+   "Módulo de inclusión financiera.NSDstat"
+  ]
+ },
+ "P1571_4": {
+  "etiqueta": "¿Por qué no lo obtuvo?",
+  "pregunta": "¿Por qué no lo obtuvo? No puede demostrar ingresos",
+  "categorias": {},
+  "modulos": [
+   "Módulo de inclusión financiera.NSDstat"
+  ]
+ },
+ "P1571_5": {
+  "etiqueta": "¿Por qué no lo obtuvo?",
+  "pregunta": "¿Por qué no lo obtuvo? Tiene ingresos insuficientes",
+  "categorias": {},
+  "modulos": [
+   "Módulo de inclusión financiera.NSDstat"
+  ]
+ },
+ "P1571_6": {
+  "etiqueta": "¿Por qué no lo obtuvo?",
+  "pregunta": "¿Por qué no lo obtuvo? Otro",
+  "categorias": {},
+  "modulos": [
+   "Módulo de inclusión financiera.NSDstat"
+  ]
+ },
+ "P1570": {
+  "etiqueta": "¿Para qué utilizó (o va utilizar) el crédito que solicitó?",
+  "pregunta": "¿Para qué utilizó (o va utilizar) el crédito que solicitó? 1 Para invertir en el negocio 2 Para cubrir gastos personales u otros 3 Todas las Anteriores",
+  "categorias": {
+   "1": "Para invertir en el negocio",
+   "2": "Para cubrir gastos personales u otros",
+   "3": "Todas las Anteriores"
+  },
+  "modulos": [
+   "Módulo de inclusión financiera.NSDstat"
+  ]
+ },
+ "P1570_1": {
+  "etiqueta": "Porcentaje invertido en el negocio",
+  "pregunta": "Porcentaje invertido en el negocio",
+  "categorias": {},
+  "modulos": [
+   "Módulo de inclusión financiera.NSDstat"
+  ]
+ },
+ "P1570_2": {
+  "etiqueta": "Porcentaje para cubrir gastos personales u otros",
+  "pregunta": "Porcentaje para cubrir gastos personales u otros",
+  "categorias": {},
+  "modulos": [
+   "Módulo de inclusión financiera.NSDstat"
+  ]
+ },
+ "P1572_1": {
+  "etiqueta": "¿El dinero destinado al negocio lo gastó en?",
+  "pregunta": "¿El dinero destinado al negocio lo gastó en? Compra de materia prima, insumos, inventarios y demás gastos operativos y de funcionamiento",
+  "categorias": {},
+  "modulos": [
+   "Módulo de inclusión financiera.NSDstat"
+  ]
+ },
+ "P1572_2": {
+  "etiqueta": "¿El dinero destinado al negocio lo gastó en?",
+  "pregunta": "¿El dinero destinado al negocio lo gastó en? Pagó de nómina",
+  "categorias": {},
+  "modulos": [
+   "Módulo de inclusión financiera.NSDstat"
+  ]
+ },
+ "P1572_3": {
+  "etiqueta": "¿El dinero destinado al negocio lo gastó en?",
+  "pregunta": "¿El dinero destinado al negocio lo gastó en? Mejora de las condiciones de plazo, tasa o amortización de créditos vigentes",
+  "categorias": {},
+  "modulos": [
+   "Módulo de inclusión financiera.NSDstat"
+  ]
+ },
+ "P1572_4": {
+  "etiqueta": "¿El dinero destinado al negocio lo gastó en?",
+  "pregunta": "¿El dinero destinado al negocio lo gastó en? Compra o arriendo de maquinaria y equipos",
+  "categorias": {},
+  "modulos": [
+   "Módulo de inclusión financiera.NSDstat"
+  ]
+ },
+ "P1572_5": {
+  "etiqueta": "¿El dinero destinado al negocio lo gastó en?",
+  "pregunta": "¿El dinero destinado al negocio lo gastó en? Remodelaciones o adecuaciones para ampliar o mejorar la capacidad productiva de comercialización o de servicios",
+  "categorias": {},
+  "modulos": [
+   "Módulo de inclusión financiera.NSDstat"
+  ]
+ },
+ "P1572_6": {
+  "etiqueta": "¿El dinero destinado al negocio lo gastó en?",
+  "pregunta": "¿El dinero destinado al negocio lo gastó en? Emergencias / imprevistos del negocio",
+  "categorias": {},
+  "modulos": [
+   "Módulo de inclusión financiera.NSDstat"
+  ]
+ },
+ "P3014": {
+  "etiqueta": "En el año anterior ¿Ahorró dinero de su negocio o actividad ?",
+  "pregunta": "En el año anterior ¿Ahorró dinero de su negocio o actividad ? 1 Sí 2 No",
+  "categorias": {
+   "1": "Sí",
+   "2": "No"
+  },
+  "modulos": [
+   "Módulo de inclusión financiera.NSDstat"
+  ]
+ },
+ "P1573_1": {
+  "etiqueta": "¿En qué va a usar o usó el dinero que ahorró?",
+  "pregunta": "¿En qué va a usar o usó el dinero que ahorró? Cubrir gastos del negocio cuando los ingresos no sean suficientes",
+  "categorias": {},
+  "modulos": [
+   "Módulo de inclusión financiera.NSDstat"
+  ]
+ },
+ "P1573_2": {
+  "etiqueta": "¿En qué va a usar o usó el dinero que ahorró?",
+  "pregunta": "¿En qué va a usar o usó el dinero que ahorró? Surtir el negocio para temporadas altas",
+  "categorias": {},
+  "modulos": [
+   "Módulo de inclusión financiera.NSDstat"
+  ]
+ },
+ "P1573_3": {
+  "etiqueta": "¿En qué va a usar o usó el dinero que ahorró?",
+  "pregunta": "¿En qué va a usar o usó el dinero que ahorró? Ampliar el negocio (ampliar o abrir nuevas sucursales, comprar maquinaria)",
+  "categorias": {},
+  "modulos": [
+   "Módulo de inclusión financiera.NSDstat"
+  ]
+ },
+ "P1573_4": {
+  "etiqueta": "¿En qué va a usar o usó el dinero que ahorró?",
+  "pregunta": "¿En qué va a usar o usó el dinero que ahorró? Iniciar otro negocio con una actividad diferente",
+  "categorias": {},
+  "modulos": [
+   "Módulo de inclusión financiera.NSDstat"
+  ]
+ },
+ "P1573_5": {
+  "etiqueta": "¿En qué va a usar o usó el dinero que ahorró?",
+  "pregunta": "¿En qué va a usar o usó el dinero que ahorró? Cubrir los gastos personales o del hogar (salud, educación, viajes, etc.)",
+  "categorias": {},
+  "modulos": [
+   "Módulo de inclusión financiera.NSDstat"
+  ]
+ },
+ "P1573_6": {
+  "etiqueta": "¿En qué va a usar o usó el dinero que ahorró?",
+  "pregunta": "¿En qué va a usar o usó el dinero que ahorró? Pagar deudas del negocio",
+  "categorias": {},
+  "modulos": [
+   "Módulo de inclusión financiera.NSDstat"
+  ]
+ },
+ "P1574": {
+  "etiqueta": "¿Por qué no ahorró?",
+  "pregunta": "¿Por qué no ahorró? 1 No le alcanzó 2 No necesita / No le interesa ahorrar 3 No sabe como ahorrar 4 No le han ofrecido productos para ahorrar 5 No confía en las entidades financieras",
+  "categorias": {
+   "1": "No le alcanzó",
+   "2": "No necesita / No le interesa ahorrar",
+   "3": "No sabe como ahorrar",
+   "4": "No le han ofrecido productos para ahorrar",
+   "5": "No confía en las entidades financieras"
+  },
+  "modulos": [
+   "Módulo de inclusión financiera.NSDstat"
+  ]
+ },
+ "P1771": {
+  "etiqueta": "¿En dónde ahorró?",
+  "pregunta": "¿En dónde ahorró? 1 En una institución financiera / a través de una cuenta de ahorro 2 A través de cooperativas o fondos de empleados 3 A través de un grupo de ahorro / cadena /natillera 4 A través de familiares o amigos 5 A través de compra de activos (inversión en joyas, casas, apartamentos, lotes, locales, bodegas, lotes, muebles, etc.) 6 En su vivienda 7 Otro, cuál?",
+  "categorias": {
+   "1": "En una institución financiera / a través de una cuenta de ahorro",
+   "2": "A través de cooperativas o fondos de empleados",
+   "3": "A través de un grupo de ahorro / cadena /natillera",
+   "4": "A través de familiares o amigos",
+   "5": "A través de compra de activos (inversión en joyas, casas, apartamentos, lotes, locales, bodegas, lotes, muebles, etc.)",
+   "6": "En su vivienda",
+   "7": "Otro, cuál?"
+  },
+  "modulos": [
+   "Módulo de inclusión financiera.NSDstat"
+  ]
+ },
+ "P3002": {
+  "etiqueta": "[K1_A]. ¿El negocio o actividad económica pertenece a alguna asociación de productores y/o comerciantes?",
+  "pregunta": "¿El negocio o actividad económica pertenece a alguna asociación de productores y/o comerciantes? 1 Sí 2 No",
+  "categorias": {
+   "1": "Sí",
+   "2": "No"
+  },
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3003_1": {
+  "etiqueta": "[K1_B]. ¿Qué servicios recibe de esta asociación de productores y/o comerciantes?",
+  "pregunta": "¿Qué servicios recibe de esta asociación de productores y/o comerciantes? Comercialización",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3003_2": {
+  "etiqueta": "[K1_B]. ¿Qué servicios recibe de esta asociación de productores y/o comerciantes?",
+  "pregunta": "¿Qué servicios recibe de esta asociación de productores y/o comerciantes? Financiamiento",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3003_3": {
+  "etiqueta": "[K1_B]. ¿Qué servicios recibe de esta asociación de productores y/o comerciantes?",
+  "pregunta": "¿Qué servicios recibe de esta asociación de productores y/o comerciantes? Seguridad",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3003_4": {
+  "etiqueta": "[K1_B]. ¿Qué servicios recibe de esta asociación de productores y/o comerciantes?",
+  "pregunta": "¿Qué servicios recibe de esta asociación de productores y/o comerciantes? Capacitación / entrenamientos",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3003_5": {
+  "etiqueta": "[K1_B]. ¿Qué servicios recibe de esta asociación de productores y/o comerciantes?",
+  "pregunta": "¿Qué servicios recibe de esta asociación de productores y/o comerciantes? representación frente al estado",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3003_6": {
+  "etiqueta": "[K1_B]. ¿Qué servicios recibe de esta asociación de productores y/o comerciantes?",
+  "pregunta": "¿Qué servicios recibe de esta asociación de productores y/o comerciantes? Cobertura de riesgos",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3003_7": {
+  "etiqueta": "[K1_B]. ¿Qué servicios recibe de esta asociación de productores y/o comerciantes?",
+  "pregunta": "¿Qué servicios recibe de esta asociación de productores y/o comerciantes? Beneficios sociales",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3003_8": {
+  "etiqueta": "[K1_B]. ¿Qué servicios recibe de esta asociación de productores y/o comerciantes?",
+  "pregunta": "¿Qué servicios recibe de esta asociación de productores y/o comerciantes? Actividades ambientales",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3004": {
+  "etiqueta": "[K1_C]. ¿El negocio o actividad económica pertenece a alguna Cooperativa?",
+  "pregunta": "¿El negocio o actividad económica pertenece a alguna Cooperativa? 1 Sí 2 No",
+  "categorias": {
+   "1": "Sí",
+   "2": "No"
+  },
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3005_1": {
+  "etiqueta": "[K1_D]. ¿Qué servicios recibe de esta Cooperativa?",
+  "pregunta": "¿Qué servicios recibe de esta Cooperativa? Comercialización",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3005_2": {
+  "etiqueta": "[K1_D]. ¿Qué servicios recibe de esta Cooperativa?",
+  "pregunta": "¿Qué servicios recibe de esta Cooperativa? Financiamiento",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3005_3": {
+  "etiqueta": "[K1_D]. ¿Qué servicios recibe de esta Cooperativa?",
+  "pregunta": "¿Qué servicios recibe de esta Cooperativa? Seguridad",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3005_4": {
+  "etiqueta": "[K1_D]. ¿Qué servicios recibe de esta Cooperativa?",
+  "pregunta": "¿Qué servicios recibe de esta Cooperativa? Capacitación / entrenamientos",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3005_5": {
+  "etiqueta": "[K1_D]. ¿Qué servicios recibe de esta Cooperativa?",
+  "pregunta": "¿Qué servicios recibe de esta Cooperativa? representación frente al estado",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3005_6": {
+  "etiqueta": "[K1_D]. ¿Qué servicios recibe de esta Cooperativa?",
+  "pregunta": "¿Qué servicios recibe de esta Cooperativa? Cobertura de riesgos",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3005_7": {
+  "etiqueta": "[K1_D]. ¿Qué servicios recibe de esta Cooperativa?",
+  "pregunta": "¿Qué servicios recibe de esta Cooperativa? Beneficios sociales",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3005_8": {
+  "etiqueta": "[K1_D]. ¿Qué servicios recibe de esta Cooperativa?",
+  "pregunta": "¿Qué servicios recibe de esta Cooperativa? Actividades ambientales",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3006": {
+  "etiqueta": "[K1_E]. ¿El negocio o actividad económica pertenece a alguna junta de acción Comunal?",
+  "pregunta": "¿El negocio o actividad económica pertenece a alguna junta de acción Comunal? 1 Sí 2 No",
+  "categorias": {
+   "1": "Sí",
+   "2": "No"
+  },
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3007_1": {
+  "etiqueta": "[K1_F]. ¿Qué servicios recibe de esta junta de acción Comunal?",
+  "pregunta": "¿Qué servicios recibe de esta junta de acción Comunal? Comercialización",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3007_2": {
+  "etiqueta": "[K1_F]. ¿Qué servicios recibe de esta junta de acción Comunal?",
+  "pregunta": "¿Qué servicios recibe de esta junta de acción Comunal? Financiamiento",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3007_3": {
+  "etiqueta": "[K1_F]. ¿Qué servicios recibe de esta junta de acción Comunal?",
+  "pregunta": "¿Qué servicios recibe de esta junta de acción Comunal? Seguridad",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3007_4": {
+  "etiqueta": "[K1_F]. ¿Qué servicios recibe de esta junta de acción Comunal?",
+  "pregunta": "¿Qué servicios recibe de esta junta de acción Comunal? Capacitación / entrenamientos",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3007_5": {
+  "etiqueta": "[K1_F]. ¿Qué servicios recibe de esta junta de acción Comunal?",
+  "pregunta": "¿Qué servicios recibe de esta junta de acción Comunal? representación frente al estado",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3007_6": {
+  "etiqueta": "[K1_F]. ¿Qué servicios recibe de esta junta de acción Comunal?",
+  "pregunta": "¿Qué servicios recibe de esta junta de acción Comunal? Cobertura de riesgos",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3007_7": {
+  "etiqueta": "[K1_F]. ¿Qué servicios recibe de esta junta de acción Comunal?",
+  "pregunta": "¿Qué servicios recibe de esta junta de acción Comunal? Beneficios sociales",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3007_8": {
+  "etiqueta": "[K1_F]. ¿Qué servicios recibe de esta junta de acción Comunal?",
+  "pregunta": "¿Qué servicios recibe de esta junta de acción Comunal? Actividades ambientales",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3008": {
+  "etiqueta": "[K1_G]. ¿El negocio o actividad económica pertenece a alguna Organización de vigilancia o seguridad?",
+  "pregunta": "¿El negocio o actividad económica pertenece a alguna Organización de vigilancia o seguridad? 1 Sí 2 No",
+  "categorias": {
+   "1": "Sí",
+   "2": "No"
+  },
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3009_1": {
+  "etiqueta": "[K1_H]. ¿Qué servicios recibe de esta Organización de vigilancia o seguridad?",
+  "pregunta": "¿Qué servicios recibe de esta Organización de vigilancia o seguridad? Comercialización",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3009_2": {
+  "etiqueta": "[K1_H]. ¿Qué servicios recibe de esta Organización de vigilancia o seguridad?",
+  "pregunta": "¿Qué servicios recibe de esta Organización de vigilancia o seguridad? Financiamiento",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3009_3": {
+  "etiqueta": "[K1_H]. ¿Qué servicios recibe de esta Organización de vigilancia o seguridad?",
+  "pregunta": "¿Qué servicios recibe de esta Organización de vigilancia o seguridad? Seguridad",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3009_4": {
+  "etiqueta": "[K1_H]. ¿Qué servicios recibe de esta Organización de vigilancia o seguridad?",
+  "pregunta": "¿Qué servicios recibe de esta Organización de vigilancia o seguridad? Capacitación / entrenamientos",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3009_5": {
+  "etiqueta": "[K1_H]. ¿Qué servicios recibe de esta Organización de vigilancia o seguridad?",
+  "pregunta": "¿Qué servicios recibe de esta Organización de vigilancia o seguridad? representación frente al estado",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3009_6": {
+  "etiqueta": "[K1_H]. ¿Qué servicios recibe de esta Organización de vigilancia o seguridad?",
+  "pregunta": "¿Qué servicios recibe de esta Organización de vigilancia o seguridad? Cobertura de riesgos",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3009_7": {
+  "etiqueta": "[K1_H]. ¿Qué servicios recibe de esta Organización de vigilancia o seguridad?",
+  "pregunta": "¿Qué servicios recibe de esta Organización de vigilancia o seguridad? Beneficios sociales",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3009_8": {
+  "etiqueta": "[K1_H]. ¿Qué servicios recibe de esta Organización de vigilancia o seguridad?",
+  "pregunta": "¿Qué servicios recibe de esta Organización de vigilancia o seguridad? Actividades ambientales",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3010": {
+  "etiqueta": "[K1_I]. ¿El negocio o actividad económica pertenece a alguna Veeduria ciudadana?",
+  "pregunta": "¿El negocio o actividad económica pertenece a alguna Veeduria ciudadana? 1 Sí 2 No",
+  "categorias": {
+   "1": "Sí",
+   "2": "No"
+  },
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3011_1": {
+  "etiqueta": "[K1_J]. ¿Qué servicios recibe de esta Veeduria ciudadana?",
+  "pregunta": "¿Qué servicios recibe de esta Veeduria ciudadana? Comercialización",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3011_2": {
+  "etiqueta": "[K1_J]. ¿Qué servicios recibe de esta Veeduria ciudadana?",
+  "pregunta": "¿Qué servicios recibe de esta Veeduria ciudadana? Financiamiento",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3011_3": {
+  "etiqueta": "[K1_J]. ¿Qué servicios recibe de esta Veeduria ciudadana?",
+  "pregunta": "¿Qué servicios recibe de esta Veeduria ciudadana? Seguridad",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3011_4": {
+  "etiqueta": "[K1_J]. ¿Qué servicios recibe de esta Veeduria ciudadana?",
+  "pregunta": "¿Qué servicios recibe de esta Veeduria ciudadana? Capacitación / entrenamientos",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3011_5": {
+  "etiqueta": "[K1_J]. ¿Qué servicios recibe de esta Veeduria ciudadana?",
+  "pregunta": "¿Qué servicios recibe de esta Veeduria ciudadana? representación frente al estado",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3011_6": {
+  "etiqueta": "[K1_J]. ¿Qué servicios recibe de esta Veeduria ciudadana?",
+  "pregunta": "¿Qué servicios recibe de esta Veeduria ciudadana? Cobertura de riesgos",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3011_7": {
+  "etiqueta": "[K1_J]. ¿Qué servicios recibe de esta Veeduria ciudadana?",
+  "pregunta": "¿Qué servicios recibe de esta Veeduria ciudadana? Beneficios sociales",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3011_8": {
+  "etiqueta": "[K1_J]. ¿Qué servicios recibe de esta Veeduria ciudadana?",
+  "pregunta": "¿Qué servicios recibe de esta Veeduria ciudadana? Actividades ambientales",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3012": {
+  "etiqueta": "[K1_K]. ¿El negocio o actividad económica pertenece a algun Grupo ambientalista?",
+  "pregunta": "¿El negocio o actividad económica pertenece a algun Grupo ambientalista? 1 Sí 2 No",
+  "categorias": {
+   "1": "Sí",
+   "2": "No"
+  },
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3013_1": {
+  "etiqueta": "[K1_L]. ¿Qué servicios recibe de este Grupo ambientalidta?",
+  "pregunta": "¿Qué servicios recibe de este Grupo ambientalista? Comercialización",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3013_2": {
+  "etiqueta": "[K1_L]. ¿Qué servicios recibe de este Grupo ambientalidta?",
+  "pregunta": "¿Qué servicios recibe de este Grupo ambientalista?} Financiamiento",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3013_3": {
+  "etiqueta": "[K1_L]. ¿Qué servicios recibe de este Grupo ambientalidta?",
+  "pregunta": "¿Qué servicios recibe de este Grupo ambientalista? Seguridad",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3013_4": {
+  "etiqueta": "[K1_L]. ¿Qué servicios recibe de este Grupo ambientalidta?",
+  "pregunta": "¿Qué servicios recibe de este Grupo ambientalista? Capacitación / entrenamientos",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3013_5": {
+  "etiqueta": "[K1_L]. ¿Qué servicios recibe de este Grupo ambientalidta?",
+  "pregunta": "¿Qué servicios recibe de este Grupo ambientalista? representación frente al estado",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3013_6": {
+  "etiqueta": "[K1_L]. ¿Qué servicios recibe de este Grupo ambientalidta?",
+  "pregunta": "¿Qué servicios recibe de este Grupo ambientalista? Cobertura de riesgos",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3013_7": {
+  "etiqueta": "[K1_L]. ¿Qué servicios recibe de este Grupo ambientalidta?",
+  "pregunta": "¿Qué servicios recibe de este Grupo ambientalista? Beneficios sociales",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3013_8": {
+  "etiqueta": "[K1_L]. ¿Qué servicios recibe de este Grupo ambientalidta?",
+  "pregunta": "¿Qué servicios recibe de este Grupo ambientalista? Actividades ambientales",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3022": {
+  "etiqueta": "[K1_M]. ¿El negocio o actividad económica pertenece a alguna Organización de población vulnerable?",
+  "pregunta": "¿El negocio o actividad económica pertenece a alguna Organización de población vulnerable? 1 Sí 2 No",
+  "categorias": {
+   "1": "Sí",
+   "2": "No"
+  },
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3015_1": {
+  "etiqueta": "[K1_N]. ¿Qué servicios recibe de esta Organización de población vulnerable?",
+  "pregunta": "¿Qué servicios recibe de esta Organización de población vulnerable? Comercialización",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3015_2": {
+  "etiqueta": "[K1_N]. ¿Qué servicios recibe de esta Organización de población vulnerable?",
+  "pregunta": "¿Qué servicios recibe de esta Organización de población vulnerable? Financiamiento",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3015_3": {
+  "etiqueta": "[K1_N]. ¿Qué servicios recibe de esta Organización de población vulnerable?",
+  "pregunta": "¿Qué servicios recibe de esta Organización de población vulnerable? Seguridad",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3015_4": {
+  "etiqueta": "[K1_N]. ¿Qué servicios recibe de esta Organización de población vulnerable?",
+  "pregunta": "¿Qué servicios recibe de esta Organización de población vulnerable? Capacitación / entrenamientos",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3015_5": {
+  "etiqueta": "[K1_N]. ¿Qué servicios recibe de esta Organización de población vulnerable?",
+  "pregunta": "¿Qué servicios recibe de esta Organización de población vulnerable? representación frente al estado",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3015_6": {
+  "etiqueta": "[K1_N]. ¿Qué servicios recibe de esta Organización de población vulnerable?",
+  "pregunta": "¿Qué servicios recibe de esta Organización de población vulnerable? Cobertura de riesgos",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3015_7": {
+  "etiqueta": "[K1_N]. ¿Qué servicios recibe de esta Organización de población vulnerable?",
+  "pregunta": "¿Qué servicios recibe de esta Organización de población vulnerable? Beneficios sociales",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3015_8": {
+  "etiqueta": "[K1_N]. ¿Qué servicios recibe de esta Organización de población vulnerable?",
+  "pregunta": "¿Qué servicios recibe de esta Organización de población vulnerable? Actividades ambientales",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3016": {
+  "etiqueta": "[K1_O]. ¿El negocio o actividad económica pertenece a alguna otra Organización?",
+  "pregunta": "¿El negocio o actividad económica pertenece a alguna otra Organización? 1 Sí 2 No",
+  "categorias": {
+   "1": "Sí",
+   "2": "No"
+  },
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3021_1": {
+  "etiqueta": "[K1_P]. ¿Qué servicios recibe de ${P3020} ?",
+  "pregunta": "¿Qué servicios recibe de ${P3020} ? Comercialización",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3021_2": {
+  "etiqueta": "[K1_P]. ¿Qué servicios recibe de ${P3020} ?",
+  "pregunta": "¿Qué servicios recibe de ${P3020} ? Financiamiento",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3021_3": {
+  "etiqueta": "[K1_P]. ¿Qué servicios recibe de ${P3020} ?",
+  "pregunta": "¿Qué servicios recibe de ${P3020} ? Seguridad",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3021_4": {
+  "etiqueta": "[K1_P]. ¿Qué servicios recibe de ${P3020} ?",
+  "pregunta": "¿Qué servicios recibe de ${P3020} ? Capacitación / entrenamientos",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3021_5": {
+  "etiqueta": "[K1_P]. ¿Qué servicios recibe de ${P3020} ?",
+  "pregunta": "¿Qué servicios recibe de ${P3020} ? representación frente al estado",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3021_6": {
+  "etiqueta": "[K1_P]. ¿Qué servicios recibe de ${P3020} ?",
+  "pregunta": "¿Qué servicios recibe de ${P3020} ? Cobertura de riesgos",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3021_7": {
+  "etiqueta": "[K1_P]. ¿Qué servicios recibe de ${P3020} ?",
+  "pregunta": "¿Qué servicios recibe de ${P3020} ? Beneficios sociales",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P3021_8": {
+  "etiqueta": "[K1_P]. ¿Qué servicios recibe de ${P3020} ?",
+  "pregunta": "¿Qué servicios recibe de ${P3020} ? Actividades ambientales",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ },
+ "P4003": {
+  "etiqueta": "[K2]. Cuánto dinero invirtió el negocio o actividad en esta organización el mes pasado?",
+  "pregunta": "Cuánto dinero invirtió el negocio o actividad en esta organización el mes pasado?",
+  "categorias": {},
+  "modulos": [
+   "Módulo de capital social.NSDstat"
+  ]
+ }
+}

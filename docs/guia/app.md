@@ -29,6 +29,7 @@ terminal (o `Ctrl+C`). Si no tiene Python, use los lanzadores del zip para estud
 | Indicadores industriales | Producción, {term}`valor agregado`, empleo, productividad y participación laboral por sector o departamento |
 | Panel y microdatos EAM | Panel de establecimientos (balanceado o no), supervivencia y exportación |
 | Nacimientos y defunciones | Indicadores de los tres certificados, tasas sobre la población y causas de muerte |
+| Micronegocios | Micronegocios, personal ocupado, ventas, valor agregado e informalidad de la EMICRON, en el total nacional o en las 24 ciudades, por sexo, actividad o sitio |
 | Descargar datos | Elige encuesta y años y descarga, con barra de progreso y botón para cancelar |
 | Diccionario de variables | Buscador de variables con las etiquetas y categorías oficiales del DANE |
 | Cómo citar | La cita de `dane-data` (APA y BibTeX, con la versión instalada) y la de los datos del DANE |
