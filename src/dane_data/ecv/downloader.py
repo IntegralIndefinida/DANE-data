@@ -16,6 +16,7 @@ from __future__ import annotations
 import logging
 import time
 import zipfile
+import zlib
 from pathlib import Path
 
 from .._hooks import DescargadorANDA, archivos_datos, extraer_aparte, extraer_miembro, sanitize_member_name
@@ -134,7 +135,7 @@ class ECVDownloader(DescargadorANDA):
 
         try:
             return extraer_aparte(extraer, carpeta, self.raw_dir, EXTENSIONES)
-        except (zipfile.BadZipFile, OSError, ValueError) as e:
+        except (zipfile.BadZipFile, zlib.error, EOFError, OSError, ValueError) as e:  # zlib/EOF: datos comprimidos dañados
             log.error(f"Error extrayendo {zip_path.name}: {e}")
             return False
 

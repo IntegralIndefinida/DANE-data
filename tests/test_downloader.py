@@ -1177,3 +1177,25 @@ def test_red_ecv_tabla_fija_igual_al_anda(catalogo, tmp_path):
     for (anio, modulo), (cat, nombre, url) in ECV_KNOWN_FILES.items():
         if cat == catalogo:
             assert publicados.get(url, "").strip() == nombre, (anio, modulo, nombre, publicados.get(url))
+
+
+def _zip_deflate_danado(ruta):
+    """ZIP con encabezados sanos y el Deflate del miembro dañado: zipfile lanza zlib.error al leerlo."""
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
+        z.writestr("Datos 2025.csv", "DIRECTORIO,X\n" + "".join(f"{i},{i * 7}\n" for i in range(5000)))
+    b = bytearray(buf.getvalue())
+    i = b.index(b"Datos 2025.csv") + len("Datos 2025.csv")
+    b[i:i + 8] = b"\xff" * 8
+    ruta.write_bytes(bytes(b))
+
+
+@pytest.mark.parametrize("encuesta", ["ecv", "eevv"])
+def test_extraer_con_deflate_danado_falla_sin_detener_la_descarga(tmp_path, encuesta):
+    _zip_deflate_danado(zp := tmp_path / "x.zip")
+    carpeta = tmp_path / "datos" / "2025" / "x"
+    if encuesta == "ecv":
+        assert ECVDownloader(base_dir=tmp_path)._extraer(zp, carpeta) is False
+    else:
+        assert EEVVDownloader(base_dir=tmp_path)._extraer(zp, 2025, carpeta) is False
+    assert not carpeta.exists()
