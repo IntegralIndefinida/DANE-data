@@ -181,4 +181,5 @@ if st.button("Descargar", type="primary", icon=":material/download:",
 with st.expander("Hacerlo desde Python o la terminal", icon=":material/code:"):
     st.code(f"import dane_data as dd\n{codigo_py}", language="python")
     st.code("dane-data descargar geih --anios 2024 2025\ndane-data descargar eam --anios 2022 2023 2024\n"
-            "dane-data descargar eevv --anios 2025 --tipos nacimientos defunciones", language="bash")
+            "dane-data descargar eevv --anios 2025 --tipos nacimientos defunciones\n"
+            "dane-data descargar ecv --anios 2025", language="bash")
