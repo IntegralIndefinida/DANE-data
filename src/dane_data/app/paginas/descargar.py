@@ -5,7 +5,8 @@ import streamlit as st
 
 import dane_data as dd
 from dane_data.app._ui import (CERTIFICADOS, LogEnPantalla, args_py, disponibles_eam, disponibles_ecv, disponibles_eevv,
-                               disponibles_emicron, disponibles_geih, fmt_num, rutas_actuales)
+                               disponibles_emicron, disponibles_geih, disponibles_pobreza, fmt_num,
+                               rutas_actuales)
 
 st.title("Descargar datos del DANE")
 st.markdown(
@@ -14,7 +15,8 @@ st.markdown(
 )
 
 encuesta = st.radio("Encuesta", ["GEIH (hogares, mensual)", "EAM (industria, anual)", "Estadísticas Vitales (nacimientos y defunciones)",
-                                 "EMICRON (micronegocios, anual)", "ECV (calidad de vida y pobreza multidimensional)"],
+                                 "EMICRON (micronegocios, anual)", "ECV (calidad de vida y pobreza multidimensional)",
+                                 "Pobreza monetaria (hogares, anual)"],
                        horizontal=True)
 rutas = rutas_actuales()
 
@@ -139,6 +141,33 @@ elif encuesta.startswith("ECV"):
                                                 should_stop=stop, forzar=forzar)
     codigo_py = f"dd.ecv.download({anios!r}" + args_py(
         modulos=modulos if set(modulos) != set(CAPITULOS) else None, delete_zips=borrar, forzar=forzar) + ")"
+elif encuesta.startswith("Pobreza"):
+    ya = disponibles_pobreza(rutas)
+    tiene = set(ya.anio.dropna().astype(int)) if len(ya) else set()  # las filas del empalme no tienen año
+    todos = dd.pobreza.ANIOS_DISPONIBLES
+    if "descargar_pobreza_anios" not in st.session_state:
+        st.session_state["descargar_pobreza_anios"] = [a for a in todos if a not in tiene][-3:] or [todos[-1]]
+    anios = st.multiselect("Años", todos, key="descargar_pobreza_anios", placeholder="Elija los años",
+                           format_func=lambda a: f"{a} ✓" if a in tiene else str(a))
+    st.button(f"Seleccionar toda la serie {todos[0]}–{todos[-1]}",
+              on_click=lambda: st.session_state.update(descargar_pobreza_anios=list(todos)))
+    empalme = st.toggle("Bajar también los archivos del empalme", value=True,
+                        help="Para la serie comparable 2012–2025 que publica el DANE: el factor de empalme, las líneas "
+                             "actualizadas de 2012–2018 y los hogares empalmados de 2021 (unos 60 MB, una sola vez).")
+    personas = st.toggle("Bajar también el archivo de personas",
+                         help="Los componentes del ingreso de cada persona. Los indicadores solo necesitan el de hogares; "
+                              "el de personas ocupa unas seis veces más.")
+    borrar = st.toggle("Borrar los ZIP después de extraer", value=True)
+    forzar = st.toggle("Volver a bajar lo que ya está descargado",
+                       help="Solo si el DANE corrigió o volvió a publicar esos años: reemplaza lo que hay.")
+    archivos = ["hogares", "personas"] if personas else ["hogares"]
+    # Ya extraído: unos 36 MB por año los hogares y 220 MB las personas (toda la serie ocupa 3,7 GB)
+    peso = (36 + 220 * personas) * len(anios) + 100 * empalme
+    st.info(f"Tamaño aproximado en disco: **{peso} MB** · destino: `{dd.get_path('pobreza')}`")
+    lanzar = lambda prog, stop: dd.pobreza.download(anios, archivos=archivos, empalme=empalme,  # noqa: E731
+                                                    delete_zips=borrar, progress=prog, should_stop=stop, forzar=forzar)
+    codigo_py = f"dd.pobreza.download({anios!r}, archivos={archivos!r}" + args_py(
+        empalme=empalme, delete_zips=borrar, forzar=forzar) + ")"
 elif encuesta.startswith("EAM"):
     ya = disponibles_eam(rutas)
     tiene = set(ya.anio.unique()) if len(ya) else set()
@@ -212,4 +241,5 @@ with st.expander("Hacerlo desde Python o la terminal", icon=":material/code:"):
     st.code("dane-data descargar geih --anios 2024 2025\ndane-data descargar eam --anios 2022 2023 2024\n"
             "dane-data descargar eevv --anios 2025 --tipos nacimientos defunciones\n"
             "dane-data descargar emicron --anios 2023 2024\n"
-            "dane-data descargar ecv --anios 2025", language="bash")
+            "dane-data descargar ecv --anios 2025\n"
+            "dane-data descargar pobreza --anios 2024 2025 --archivos hogares --empalme", language="bash")

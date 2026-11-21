@@ -4,8 +4,8 @@
 
 Microdatos del DANE listos para analizar: la Gran Encuesta Integrada de Hogares (GEIH, 2007–2026), la
 Encuesta Anual Manufacturera (EAM, 1992–2024), las Estadísticas Vitales (nacimientos y defunciones, 1979–2025), la
-Encuesta de Micronegocios (EMICRON, 2019–2025) y la Encuesta Nacional de Calidad de Vida (ECV, 2018–2025), con el Índice
-de Pobreza Multidimensional.
+Encuesta de Micronegocios (EMICRON, 2019–2025), la Encuesta Nacional de Calidad de Vida (ECV, 2018–2025), con el Índice
+de Pobreza Multidimensional, y la Medición de Pobreza Monetaria y Desigualdad (2012–2025).
 
 [![Tasa de desocupación mensual y promedio de 12 meses, total nacional, 2007–2026, calculada con dane-data](https://raw.githubusercontent.com/IntegralIndefinida/DANE-data/main/docs/_static/galeria/desempleo.png)](https://integralindefinida.github.io/DANE-data/ejemplos/desempleo.html)
 
@@ -153,7 +153,14 @@ df = dd.ecv.load(2025, modulos=["salud", "educacion"])   # una persona por fila,
 dd.ecv.serie_indicadores(range(2018, 2026), por="area")  # servicios, internet, salud, educación… como el DANE
 dd.ecv.serie_ipm(range(2018, 2026), por="departamento")  # incidencia, intensidad, IPM y las 15 privaciones
 
-# 10. Diccionario oficial
+# 10. Pobreza monetaria: la serie empalmada 2012–2025 del DANE
+dd.pobreza.download(empalme=True)
+dd.pobreza.serie_indicadores(range(2012, 2026), empalme=True)   # incidencia, brecha, severidad, Gini
+hog = dd.pobreza.load(2025)                              # un hogar por fila: ingreso per cápita, líneas, pobre
+dd.pobreza.indicadores(hog, por="departamento", departamental=True)
+per = dd.pobreza.unir_geih(dd.geih.load(2025))           # la pobreza del hogar en cada persona de la GEIH
+
+# 11. Diccionario oficial
 dd.buscar_variable("pensión")
 dd.describir("P6920")
 ```
@@ -250,6 +257,10 @@ En la ECV, los 27 indicadores de la serie 2018–2025 del DANE coinciden exactam
 de 0,1 puntos por departamento. Las 15 privaciones del IPM coinciden hogar por hogar con la base oficial del DANE en 2018,
 2019, 2023, 2024 y 2025, y en 2020–2022 salvo 5, 25 y 3 hogares (el IPM nacional de 2025 da 9,9 % y 0,040, y el de 2020,
 18,1 %, como lo publicado).
+
+En la pobreza monetaria, la serie empalmada 2012–2025 coincide con los anexos del boletín de junio de 2026: las 5 644 cifras
+que se pueden comparar (incidencia, brecha y severidad de la pobreza y la pobreza extrema, Gini, ingreso per cápita, líneas,
+población y pobres, nacional, por grandes dominios, 23 ciudades y 24 departamentos) quedan dentro del redondeo publicado.
 
 ## Advertencias metodológicas
 
@@ -382,6 +393,19 @@ el DANE, así que en estos casos no coincide con las variables armonizadas.
 | Privaciones en los anexos del IPM | «Privaciones por hogar según variable». | Son porcentajes de hogares, no de personas, aunque la incidencia sí es de personas. `ipm` da las dos cosas así. |
 | Educación 2021 (catálogo 734) | — | El ZIP está comprimido en Deflate64, que la librería estándar de Python no lee. `dane-data` lo descomprime con `inflate64`. |
 
+### Pobreza monetaria
+
+| Variable | Qué dice el ANDA | Qué muestran los datos y qué hace `dane-data` |
+|---|---|---|
+| `DPTO` (hogares 2016, 2017 y 2019) | El DDI no trae el departamento en el archivo de hogares. | Sí está, como `DPTO` o `DEPTO`. `departamento` lo usa. |
+| `DPTO` (hogares 2014, catálogo 334) | Código DANE del departamento. | Es un número de 1 a 24 (el archivo de personas sí trae el código). Se traduce por las ciudades capitales de cada número; el 24, sin capital, es Cundinamarca. Coincide con el archivo de personas en todos los hogares. |
+| `DPTO` (hogares 2025, catálogo 908) | Código del departamento. | Viene el nombre («Antioquia»). Se traduce al mismo `departamento` de los demás años. |
+| `DPTO` 11 en la zona rural (2012 y 2022–2024) | Bogotá. | Son unos 235 hogares por año. Los demás años y los anexos del DANE los cuentan en Cundinamarca: la Bogotá de las cifras departamentales es su cabecera. `departamento` hace lo mismo. |
+| `DOMINIO` (2017, catálogo 545) | El nombre del dominio. | Con tildes y en tipo título («Bogotá»), los demás años en mayúscula sin tildes. `dominio` los iguala. |
+| `INGTOTUGARR` (desde 2023) | — | Se llama `INGTOTARR`. `ingreso_ug_arriendo` usa la que venga. |
+| Documentos de los catálogos 2019–2025 | Adjuntan los algoritmos de la MESEP 2002–2010 (ingreso per cápita y líneas). | Esas bases usan la metodología actualizada (líneas de la ENPH 2016–2017), documentada en dane.gov.co. |
+| Departamentos | — | La medición cubre 23 departamentos y Bogotá; los otros nueve de la GEIH no están. `unir_geih` los deja vacíos y no los cuenta en la cobertura. |
+
 ## Estructura
 
 ```
@@ -398,6 +422,7 @@ src/dane_data/
 ├── eevv/              downloader.py · loader.py · indicadores.py · agregados.py (serie_*, tasas)
 ├── emicron/           downloader.py · loader.py · indicadores.py
 ├── ecv/               downloader.py · loader.py · indicadores.py · ipm.py · agregados.py (serie_*)
+├── pobreza/           downloader.py · loader.py (empalme) · indicadores.py · agregados.py · union.py (unir_geih)
 ├── cli.py             comando `dane-data`
 └── app/               aplicación Streamlit (Inicio.py + paginas/)
 ```
@@ -431,17 +456,18 @@ Para desinstalar, vea [Desinstalar](https://integralindefinida.github.io/DANE-da
 
 Código: MIT. Datos: DANE, Archivo Nacional de Datos (ANDA). Cite como
 *DANE. Gran Encuesta Integrada de Hogares (GEIH) [microdatos]* / *Encuesta Anual Manufacturera (EAM) [microdatos]* /
-*Estadísticas Vitales (EEVV) [microdatos]* / *Encuesta Nacional de Calidad de Vida (ECV) [microdatos]*.
+*Estadísticas Vitales (EEVV) [microdatos]* / *Encuesta Nacional de Calidad de Vida (ECV) [microdatos]* /
+*Medición de Pobreza Monetaria y Desigualdad [microdatos]*.
 
 Si `dane-data` le sirvió en un trabajo, cítelo también, con la versión que usó (`dd.__version__`):
 
-> Ramírez, L. (2026). *dane-data: microdatos del DANE (GEIH, EAM, Estadísticas Vitales, EMICRON y ECV) listos para analizar* (versión X.Y.Z)
+> Ramírez, L. (2026). *dane-data: microdatos del DANE (GEIH, EAM, Estadísticas Vitales, EMICRON, ECV y pobreza monetaria) listos para analizar* (versión X.Y.Z)
 > [software]. https://github.com/IntegralIndefinida/DANE-data
 
 ```bibtex
 @software{dane_data,
   author  = {Ramírez, Luis},
-  title   = {dane-data: microdatos del DANE (GEIH, EAM, Estadísticas Vitales, EMICRON y ECV) listos para analizar},
+  title   = {dane-data: microdatos del DANE (GEIH, EAM, Estadísticas Vitales, EMICRON, ECV y pobreza monetaria) listos para analizar},
   version = {X.Y.Z},
   year    = {2026},
   url     = {https://github.com/IntegralIndefinida/DANE-data},

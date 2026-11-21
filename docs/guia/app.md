@@ -28,6 +28,7 @@ terminal (o `Ctrl+C`). Si no tiene Python, use los lanzadores del zip para estud
 | Tablas y microdatos | Tablas ponderadas a la medida, distribución de ingresos frente al salario mínimo, vista de los microdatos y exportación a CSV |
 | Indicadores industriales | Producción, {term}`valor agregado`, empleo, productividad y participación laboral por sector o departamento |
 | Panel y microdatos EAM | Panel de establecimientos (balanceado o no), supervivencia y exportación |
+| Pobreza monetaria | Incidencia, brecha y severidad de la pobreza y la pobreza extrema, Gini e ingreso per cápita, con la serie empalmada 2012–2025 del DANE, por zona, gran dominio, ciudad o departamento (vea {doc}`pobreza`) |
 | Nacimientos y defunciones | Indicadores de los tres certificados, tasas sobre la población y causas de muerte |
 | Micronegocios | Micronegocios, personal ocupado, ventas, valor agregado e informalidad de la EMICRON, en el total nacional o en las 24 ciudades, por sexo, actividad o sitio |
 | Calidad de vida y pobreza | Indicadores de la ECV (servicios, internet, salud, educación, TIC) y el Índice de Pobreza Multidimensional, por área, región, departamento o sexo del jefe |

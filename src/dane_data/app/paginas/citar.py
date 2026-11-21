@@ -3,7 +3,7 @@ import streamlit as st
 import dane_data as dd
 
 # La misma cita que CITATION.cff y docs/citar.md, con la versión instalada
-TITULO = "dane-data: microdatos del DANE (GEIH, EAM, Estadísticas Vitales, EMICRON y ECV) listos para analizar"
+TITULO = "dane-data: microdatos del DANE (GEIH, EAM, Estadísticas Vitales, EMICRON, ECV y pobreza monetaria) listos para analizar"
 REPOSITORIO = "https://github.com/IntegralIndefinida/DANE-data"
 DOCS = "https://integralindefinida.github.io/DANE-data"
 
@@ -49,6 +49,8 @@ st.code(
     "https://microdatos.dane.gov.co\n\n"
     "DANE. Índice de Pobreza Multidimensional (IPM): metodología. "
     "https://www.dane.gov.co/index.php/estadisticas-por-tema/pobreza-y-condiciones-de-vida/pobreza-multidimensional\n\n"
+    "DANE. Medición de Pobreza Monetaria y Desigualdad [microdatos]. Archivo Nacional de Datos (ANDA). "
+    "https://microdatos.dane.gov.co\n\n"
     "DANE. Proyecciones de población. "
     "https://www.dane.gov.co/index.php/estadisticas-por-tema/demografia-y-poblacion/proyecciones-de-poblacion",
     language=None, wrap_lines=True,

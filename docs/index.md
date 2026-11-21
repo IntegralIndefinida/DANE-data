@@ -7,8 +7,9 @@ html_theme.sidebar_secondary.remove: true
 :::{div} lema
 **Microdatos del DANE listos para analizar.** La Gran Encuesta Integrada de Hogares (GEIH, 2007–2026), la
 Encuesta Anual Manufacturera (EAM, 1992–2024), las Estadísticas Vitales (nacimientos y defunciones, 1979–2025), la
-Encuesta de Micronegocios (EMICRON, 2019–2025) y la Encuesta Nacional de Calidad de Vida (ECV, 2018–2025, con el
-Índice de Pobreza Multidimensional), descargadas, unidas y armonizadas, en Python o en una aplicación en el navegador.
+Encuesta de Micronegocios (EMICRON, 2019–2025), la Encuesta Nacional de Calidad de Vida (ECV, 2018–2025, con el
+Índice de Pobreza Multidimensional) y la pobreza monetaria (2012–2025), descargadas, unidas y armonizadas, en Python o
+en una aplicación en el navegador.
 :::
 
 ::::{grid} auto
@@ -63,6 +64,7 @@ dane-data descargar eam --anios 2022 2023 2024
 dane-data descargar eevv --anios 2025
 dane-data descargar emicron --anios 2024
 dane-data descargar ecv --anios 2025
+dane-data descargar pobreza --empalme
 dane-data estado
 ```
 :::

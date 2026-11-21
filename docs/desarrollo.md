@@ -28,6 +28,7 @@ src/dane_data/
 ├── eevv/              downloader.py · loader.py · indicadores.py · agregados.py
 ├── emicron/           downloader.py · loader.py · indicadores.py
 ├── ecv/               downloader.py · loader.py · indicadores.py · ipm.py · agregados.py
+├── pobreza/           downloader.py · loader.py · indicadores.py · agregados.py · union.py
 ├── cli.py             comando dane-data
 └── app/               aplicación Streamlit (Inicio.py + paginas/)
 ```
@@ -40,6 +41,7 @@ variables armonizadas van en minúscula y las originales del DANE en mayúscula.
 * `tests/conftest.py` construye carpetas **sintéticas** de la GEIH, la EAM, las Estadísticas Vitales, la EMICRON y la ECV
   con las rarezas de cada época.
   Cuando aparezca una rareza nueva en los archivos del DANE, agréguela a estos datos.
+  Las de la pobreza monetaria se arman en `tests/test_pobreza.py` (fixture `pobreza_root`).
 * Las pruebas de los descargadores usan ZIP en memoria: nunca se conectan a internet.
 * GitHub Actions (`.github/workflows/pruebas.yml`) corre todas las pruebas en cada push a `main` y en cada
   pull request, con Python 3.10 (pandas 2) y 3.12 (las versiones de `uv.lock`).
@@ -84,6 +86,14 @@ variables armonizadas van en minúscula y las originales del DANE en mayúscula.
   Las reglas del IPM se infirieron de la base oficial del DANE: `tests/test_ecv.py` las compara hogar por hogar con ella si
   `$DANE_DATA_TEST_IPM` apunta a una carpeta con una subcarpeta por año y, adentro, el CSV de hogares departamental de
   `BDATOS-IPM` (catálogos del IPM en el ANDA). Corra esa prueba al cambiar `ecv/ipm.py` o al agregar un año.
+
+* La pobreza monetaria se compara con los anexos del DANE si hay datos en `$DANE_DATA_TEST_POBREZA` o en la carpeta
+  configurada. Cuando el DANE publica un año nuevo, agregue su catálogo a `_CATALOGOS` en `pobreza/downloader.py`, cambie las
+  URL de `ANEXOS` en el script y actualice las cifras:
+
+  ```bash
+  uv run --extra app python tests/datos/actualizar_pobreza_publicado.py
+  ```
 
 ## Documentación
 

@@ -3,7 +3,8 @@
 `dane-data` trabaja con cuatro operaciones estadísticas del DANE cuyos {term}`microdatos` se publican en el
 [Archivo Nacional de Datos (ANDA)](https://microdatos.dane.gov.co): la Gran Encuesta Integrada de Hogares
 (GEIH), la Encuesta Anual Manufacturera (EAM), las Estadísticas Vitales (EEVV), la Encuesta de Micronegocios
-(EMICRON) y la Encuesta Nacional de Calidad de Vida (ECV).
+(EMICRON) y la Encuesta Nacional de Calidad de Vida (ECV). De la GEIH sale además la Medición de Pobreza Monetaria y
+Desigualdad, con sus propios microdatos: vea {doc}`pobreza`.
 
 ## GEIH: Gran Encuesta Integrada de Hogares
 

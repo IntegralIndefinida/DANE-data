@@ -709,7 +709,7 @@ wheels = [
 
 [[package]]
 name = "dane-data"
-version = "0.5.0"
+version = "0.6.0"
 source = { editable = "." }
 dependencies = [
     { name = "inflate64" },

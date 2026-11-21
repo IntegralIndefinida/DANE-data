@@ -178,6 +178,62 @@ def weighted_mean(values, weights) -> float:
     return float(np.average(v[mask], weights=w[mask])) if mask.any() and w[mask].sum() > 0 else np.nan
 
 
+def weighted_gini(values, weights) -> float:
+    """
+    Coeficiente de Gini ponderado.
+
+    Es uno menos el doble del área bajo la curva de Lorenz: con los valores ordenados de menor a mayor,
+    ``G = 1 − Σ Δp_i (L_i + L_{i−1})``, donde ``Δp_i = w_i / Σw`` es la fracción del peso de cada valor y ``L_i`` la
+    fracción acumulada del total hasta él. Así calcula el DANE el Gini del ingreso per cápita: con los pesos de las
+    personas, reproduce las cifras publicadas.
+
+    Parámetros
+    ----------
+    values
+        Valores (cualquier secuencia numérica), sin negativos.
+    weights
+        Pesos, del mismo largo que ``values``. Se ignoran los pares con algún NaN y los pesos que no son positivos.
+
+    Devuelve
+    --------
+    float
+        Entre 0 (todos tienen lo mismo) y casi 1 (uno tiene todo), o NaN si no quedan valores o todos son 0.
+
+    Lanza
+    -----
+    ValueError
+        Si hay valores negativos: la curva de Lorenz deja de tener sentido.
+
+    Véase también
+    -------------
+    weighted_mean : Media ponderada.
+    pobreza.indicadores : Gini del ingreso per cápita, por grupo.
+
+    Ejemplos
+    --------
+    >>> import dane_data as dd
+    >>> dd.weighted_gini([5, 5, 5], [1, 2, 3])
+    0.0
+    >>> dd.weighted_gini([0, 0, 0, 100], [1, 1, 1, 1])  # uno tiene todo: (n − 1) / n
+    0.75
+    >>> round(dd.weighted_gini([1, 2], [1, 3]), 4), round(dd.weighted_gini([1, 2, 2, 2], [1, 1, 1, 1]), 4)
+    (0.1071, 0.1071)
+    """
+    v = np.asarray(values, dtype=float)
+    w = np.asarray(weights, dtype=float)
+    mask = ~(np.isnan(v) | np.isnan(w)) & (w > 0)
+    v, w = v[mask], w[mask]
+    if (v < 0).any():
+        raise ValueError("weighted_gini no acepta valores negativos.")
+    if v.size == 0 or not (total := float(np.sum(v * w))) > 0:
+        return np.nan
+    order = np.argsort(v, kind="stable")
+    v, w = v[order], w[order]
+    lorenz = np.cumsum(v * w) / total
+    anterior = np.concatenate([[0.0], lorenz[:-1]])
+    return float(1 - np.sum(w * (lorenz + anterior)) / np.sum(w))
+
+
 def _motivo_sin_peso(peso: str, anios: list) -> str:
     """
     Por qué falta el peso, según los años de las filas que no lo tienen (``anios`` vacío si los datos no tienen

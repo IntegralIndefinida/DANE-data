@@ -10,6 +10,8 @@ docs/api/generated/
 .ipynb_checkpoints/
 # microdatos: no se versionan
 /data/
+# documentación del DANE para el módulo de pobreza (82 MB, se baja del ANDA y de dane.gov.co)
+/metodologia_pobreza/
 *.csv
 *.CSV
 !tests/datos/*.csv

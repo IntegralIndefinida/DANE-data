@@ -39,5 +39,12 @@
 
 ```{include} ../../README.md
 :start-after: "### ECV"
+:end-before: "### Pobreza monetaria"
+```
+
+## Pobreza monetaria
+
+```{include} ../../README.md
+:start-after: "### Pobreza monetaria"
 :end-before: "## Estructura"
 ```

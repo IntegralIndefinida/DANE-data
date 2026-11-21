@@ -35,6 +35,13 @@ Los indicadores de {dd}`ecv.indicadores()` (vienen de `dd.ecv.GLOSARIO`). El IPM
 ```{include} _generado/glosario_ecv.md
 ```
 
+## Pobreza monetaria
+
+Los indicadores de {dd}`pobreza.indicadores()` (vienen de `dd.pobreza.GLOSARIO`).
+
+```{include} _generado/glosario_pobreza.md
+```
+
 ## Términos de las encuestas
 
 ```{glossary}

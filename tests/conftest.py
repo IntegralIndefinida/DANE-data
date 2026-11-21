@@ -350,3 +350,67 @@ def ecv_completo(tmp_path):
     for modulo in ("salud", "primera_infancia", "educacion", "fuerza_trabajo", "tic", "trabajo_infantil"):
         _write(d / modulo / f"{modulo}.csv", f"{llaves}\n1;1;1;1;100\n")
     return tmp_path / "ecv_completo"
+# ---------------------------------------------------------------------------------------------------- #
+# Pobreza monetaria: tres hogares por año con las rarezas de cada época del DANE
+# ---------------------------------------------------------------------------------------------------- #
+# Tres hogares por año: (DIRECTORIO, SECUENCIA_P, MES, CLASE, DOMINIO, DPTO, NPER, NPERSUG, INGPCUG, LI, LP, FEX_C)
+_HOGARES = [(1, 1, 1, 1, "BOGOTA", 11, 4, 3, 150.0, 100.0, 200.0, 10.0),
+            (2, 1, 1, 1, "MEDELLIN", 5, 2, 2, 250.0, 100.0, 200.0, 20.0),
+            (3, 1, 2, 2, "RURAL", 25, 3, 3, 80.0, 90.0, 150.0, 30.0)]
+
+
+def _escribir(ruta, df, sep=";", decimal=","):
+    ruta.parent.mkdir(parents=True, exist_ok=True)
+    df.to_csv(ruta, sep=sep, decimal=decimal, index=False)
+
+
+def _hogares_df(anio):
+    df = pd.DataFrame(_HOGARES, columns=["Directorio", "Secuencia_p", "Mes", "Clase", "Dominio", "Dpto", "Nper",
+                                         "Npersug", "Ingpcug", "Li", "Lp", "Fex_c"])
+    df["Ingtotug"] = df.Ingpcug * df.Npersug
+    df["Ingtotugarr"] = df.Ingtotug
+    df["Pobre"] = (df.Ingpcug < df.Lp).astype(int)
+    df["Indigente"] = (df.Ingpcug < df.Li).astype(int)
+    df["Fex_dpto"] = df.Fex_c * 1.1
+    if anio <= 2014:
+        df = df.rename(columns={"Fex_dpto": "Fex_dpto_c"})
+    if anio == 2014:  # número de 1 a 24 en vez del código DANE
+        df["Dpto"] = df.Dpto.map({11: 23, 5: 21, 25: 24})
+    if anio == 2017:  # dominio con tildes, en tipo título
+        df["Dominio"] = df.Dominio.map({"BOGOTA": "Bogotá", "MEDELLIN": "Medellín", "RURAL": "Rural"})
+    if 2018 <= anio <= 2020:
+        df = df.rename(columns={"Dpto": "Depto"})
+    if anio == 2022:  # índice basura y DIRECTORIO decimal
+        df.insert(0, "Unnamed: 0", range(len(df)))
+        df["Directorio"] = df.Directorio.astype(float)
+    if anio >= 2023:
+        df = df.rename(columns={"Ingtotugarr": "ingtotarr"})
+        df.columns = df.columns.str.lower()
+    if anio == 2025:  # el nombre del departamento
+        df["dpto"] = df.dpto.map({11: "Bogotá D.C.", 5: "Antioquia", 25: "Cundinamarca"})
+    return df
+
+
+@pytest.fixture
+def pobreza_root(tmp_path):
+    root = tmp_path / "pobreza"
+    for anio in (2012, 2014, 2017, 2018, 2019, 2021, 2022, 2023, 2025):
+        df = _hogares_df(anio)
+        if anio <= 2016:
+            _escribir(root / "datos" / str(anio) / "hogares.txt", df, sep="\t", decimal=".")
+        else:
+            _escribir(root / "datos" / str(anio) / "hogares.csv", df)
+    emp = root / "datos" / "empalme"
+    fex_g = pd.DataFrame([(a, h[2], h[0], h[1], 0.5) for a in range(2012, 2021) for h in _HOGARES],
+                         columns=["año", "mes", "directorio", "secuencia_p", "FEX_G"])
+    _escribir(emp / "empalme_2012_2020.csv", fex_g, decimal=".")
+    lineas = pd.DataFrame([(a, 1, m, d, 60.0, 260.0) for a in range(2012, 2019) for m in (1, 2)
+                           for d in ("BOGOTA", "MEDELLIN", "RURAL")], columns=["AÑO", "SEMESTRE", "MES", "DOMINIO", "LI", "LP"])
+    _escribir(emp / "lineas_2012_2018.csv", lineas)
+    h21 = pd.DataFrame([(h[2], h[0], h[1], h[8], 1.0, 40.0, h[8] * 2) for h in _HOGARES],
+                       columns=["MES", "DIRECTORIO", "SECUENCIA_P", "INGPCUG", "FAC_EMP", "FEX_C", "INGPCUG_EMP"])
+    _escribir(emp / "hogares_empalmado_2021.csv", h21)
+    h21d = pd.DataFrame([(h[2], h[0], h[1], h[8], h[8] * 3, 7.0, 1.0, h[5]) for h in _HOGARES],
+                        columns=["MES", "DIRECTORIO", "SECUENCIA_P", "INGPCUG", "INGPUG_EMP", "FEX_DPTO", "FAC_EMP", "DPTO"])
+    _escribir(emp / "hogares_empalmado_dpto_2021.csv", h21d)
+    return root

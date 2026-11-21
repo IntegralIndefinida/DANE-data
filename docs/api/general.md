@@ -30,6 +30,7 @@ Vea {doc}`../guia/ponderacion` y {doc}`../guia/tablas`.
    tabla
    weighted_mean
    weighted_quantile
+   weighted_gini
 ```
 
 ## Diccionario de variables

@@ -60,6 +60,12 @@ La Encuesta Nacional de Calidad de Vida: servicios, salud, educación y el Índi
 * {doc}`ecv`
 :::
 
+:::{grid-item-card} {octicon}`graph` Pobreza monetaria
+Incidencia, brecha, severidad y Gini como el DANE, con la serie empalmada 2012–2025 y la unión con la GEIH.
+
+* {doc}`pobreza`
+:::
+
 :::{grid-item-card} {octicon}`terminal` Línea de comandos
 Descargar los datos, ver el estado y abrir la aplicación desde la terminal.
 
@@ -134,6 +140,13 @@ emicron
 :caption: Calidad de vida
 
 ecv
+```
+
+```{toctree}
+:hidden:
+:caption: Pobreza monetaria
+
+pobreza
 ```
 
 ```{toctree}
