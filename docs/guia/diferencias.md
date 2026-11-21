@@ -25,6 +25,20 @@
 
 ```{include} ../../README.md
 :start-after: "### Estadísticas Vitales"
+:end-before: "### EMICRON"
+```
+
+## EMICRON
+
+```{include} ../../README.md
+:start-after: "### EMICRON"
+:end-before: "### ECV"
+```
+
+## ECV
+
+```{include} ../../README.md
+:start-after: "### ECV"
 :end-before: "### Pobreza monetaria"
 ```
 

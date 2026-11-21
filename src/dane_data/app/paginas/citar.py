@@ -3,7 +3,7 @@ import streamlit as st
 import dane_data as dd
 
 # La misma cita que CITATION.cff y docs/citar.md, con la versión instalada
-TITULO = "dane-data: microdatos del DANE (GEIH, EAM, Estadísticas Vitales y pobreza monetaria) listos para analizar"
+TITULO = "dane-data: microdatos del DANE (GEIH, EAM, Estadísticas Vitales, EMICRON, ECV y pobreza monetaria) listos para analizar"
 REPOSITORIO = "https://github.com/IntegralIndefinida/DANE-data"
 DOCS = "https://integralindefinida.github.io/DANE-data"
 
@@ -35,7 +35,7 @@ st.code(
 
 st.subheader("Los datos")
 st.markdown("Cite la encuesta y el catálogo del ANDA que usó. Si usó tasas de las Estadísticas Vitales, cite también las "
-            "proyecciones de población:")
+            "proyecciones de población; si usó el IPM, la metodología del DANE:")
 st.code(
     "DANE. Gran Encuesta Integrada de Hogares (GEIH) [microdatos]. Archivo Nacional de Datos (ANDA). "
     "https://microdatos.dane.gov.co\n\n"
@@ -43,6 +43,12 @@ st.code(
     "https://microdatos.dane.gov.co\n\n"
     "DANE. Estadísticas Vitales (EEVV) [microdatos]. Archivo Nacional de Datos (ANDA). "
     "https://microdatos.dane.gov.co\n\n"
+    "DANE. Encuesta de Micronegocios (EMICRON) [microdatos]. Archivo Nacional de Datos (ANDA). "
+    "https://microdatos.dane.gov.co\n\n"
+    "DANE. Encuesta Nacional de Calidad de Vida (ECV) [microdatos]. Archivo Nacional de Datos (ANDA). "
+    "https://microdatos.dane.gov.co\n\n"
+    "DANE. Índice de Pobreza Multidimensional (IPM): metodología. "
+    "https://www.dane.gov.co/index.php/estadisticas-por-tema/pobreza-y-condiciones-de-vida/pobreza-multidimensional\n\n"
     "DANE. Medición de Pobreza Monetaria y Desigualdad [microdatos]. Archivo Nacional de Datos (ANDA). "
     "https://microdatos.dane.gov.co\n\n"
     "DANE. Proyecciones de población. "

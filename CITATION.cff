@@ -5,12 +5,14 @@ message: >-
   Si dane-data le sirvió en un trabajo, cítelo con estos datos. Cite también los microdatos del DANE que
   usó (vea references).
 type: software
-title: "dane-data: microdatos del DANE (GEIH, EAM, Estadísticas Vitales y pobreza monetaria) listos para analizar"
+title: "dane-data: microdatos del DANE (GEIH, EAM, Estadísticas Vitales, EMICRON, ECV y pobreza monetaria) listos para analizar"
 abstract: >-
   Descarga, carga, armoniza y analiza los microdatos del DANE para Colombia: la Gran Encuesta Integrada de
-  Hogares (GEIH, 2007–2026 y el empalme 2010–2020), la Encuesta Anual Manufacturera (EAM, 1992–2024) y las
-  Estadísticas Vitales (EEVV: defunciones 1979–2025, nacimientos y defunciones fetales 1998–2025), con las
-  proyecciones de población del DANE.
+  Hogares (GEIH, 2007–2026 y el empalme 2010–2020), la Encuesta Anual Manufacturera (EAM, 1992–2024), las
+  Estadísticas Vitales (EEVV: defunciones 1979–2025, nacimientos y defunciones fetales 1998–2025), la Encuesta
+  de Micronegocios (EMICRON, 2019–2025), la Encuesta Nacional de Calidad de Vida (ECV, 2018–2025), con el Índice
+  de Pobreza Multidimensional, y la Medición de Pobreza Monetaria y Desigualdad (2012–2025, con la serie empalmada del
+  DANE), además de las proyecciones de población del DANE.
   Incluye una librería de Python, una línea de comandos y una aplicación de Streamlit para estudiantes.
 authors:
   - family-names: Ramírez
@@ -24,11 +26,15 @@ keywords:
   - DANE
   - GEIH
   - EAM
+  - EMICRON
+  - micronegocios
   - Colombia
   - microdatos
   - mercado laboral
   - encuestas de hogares
   - estadísticas vitales
+  - calidad de vida
+  - pobreza multidimensional
 references:
   - type: data
     title: "Gran Encuesta Integrada de Hogares (GEIH)"
@@ -46,6 +52,20 @@ references:
     url: "https://microdatos.dane.gov.co"
   - type: data
     title: "Estadísticas Vitales (EEVV)"
+    authors:
+      - name: "Departamento Administrativo Nacional de Estadística (DANE)"
+    publisher:
+      name: "Archivo Nacional de Datos (ANDA)"
+    url: "https://microdatos.dane.gov.co"
+  - type: data
+    title: "Encuesta de Micronegocios (EMICRON)"
+    authors:
+      - name: "Departamento Administrativo Nacional de Estadística (DANE)"
+    publisher:
+      name: "Archivo Nacional de Datos (ANDA)"
+    url: "https://microdatos.dane.gov.co"
+  - type: data
+    title: "Encuesta Nacional de Calidad de Vida (ECV)"
     authors:
       - name: "Departamento Administrativo Nacional de Estadística (DANE)"
     publisher:

@@ -1,4 +1,4 @@
-"""Datos sintéticos que imitan las rarezas de cada época de la GEIH, la EAM y las Estadísticas Vitales."""
+"""Datos sintéticos que imitan las rarezas de cada época de la GEIH, la EAM, las Estadísticas Vitales y la ECV."""
 
 from pathlib import Path
 
@@ -232,6 +232,124 @@ def eevv_root(tmp_path):
     return root
 
 
+@pytest.fixture
+def emicron_root(tmp_path):
+    """Tres micronegocios por año de la EMICRON, con las rarezas que tiene el real."""
+    root = tmp_path / "emicron"
+    d = root / "datos"
+    rep = "CLASE_TE,COD_DEPTO,AREA,F_EXP"  # lo que repiten los módulos
+
+    # --- 2019: punto y coma, coma decimal, CLASE (no CLASE_TE), meses con mayúsculas mezcladas, sin derivadas
+    _write(d / "2019" / "identificacion.csv",
+           "﻿DIRECTORIO;SECUENCIA_ENCUESTA;SECUENCIA_P;COD_DEPTO;AREA;CLASE;P35;P241;MES_REF;P3031;P3032_1;P3032_2;"
+           "P3032_3;P3033;P3034;GRUPOS4;GRUPOS12;F_EXP\n"
+           "1;1;1;76;76;1;1;40;ENERO;1;2; ; ;1;14;04;12;295,5\n"
+           "2;1;1;5; ;2;2;35;octubre;2;0;0;0;2;100;01;01;100,25\n"
+           "3;2;1;11;11;1;2;52;Diciembre;1;0;1;1;2;30;03;05;50\n")
+    _write(d / "2019" / "propietario.csv", "DIRECTORIO;SECUENCIA_ENCUESTA;SECUENCIA_P;P3088;P3089\n1;1;1;1;100000\n2;1;1;2; \n3;2;1;3;5000\n")
+    _write(d / "2019" / "ventas.csv", "DIRECTORIO;SECUENCIA_ENCUESTA;SECUENCIA_P;VENTAS_MES_ANTERIOR;P3057\n1;1;1;1000000;5\n2;1;1;500000,5;0\n3;2;1;0;0\n")
+    _write(d / "2019" / "fex_ajustado.csv", "DIRECTORIO,SECUENCIA_P,SECUENCIA_ENCUESTA,FEX_C\n1,1,1,250.0\n2,1,1,90.5\n3,1,2,45.0\n")
+    _write(d / "2019" / "fex_dpto.csv", "DIRECTORIO,SECUENCIA_P,SECUENCIA_ENCUESTA,FEX_MICRO_DPTO\n1,1,1,260\n2,1,1,95\n3,1,2,40\n9,1,1,7\n")
+
+    # --- 2021: inclusión financiera con FEX_C y sin uno de los micronegocios; factor departamental con una clave
+    # repetida y vacía (como 2020)
+    _write(d / "2021" / "identificacion.csv",
+           "DIRECTORIO;SECUENCIA_P;SECUENCIA_ENCUESTA;COD_DEPTO;AREA;CLASE_TE;P35;P241;MES_REF;P3031;P3032_1;P3032_2;"
+           "P3032_3;P3033;GRUPOS4;GRUPOS12;F_EXP\n"
+           "10;1;1;8;8;1;2;28;MARZO;1;1;0;0;1;03;05;300,0\n"
+           "11;1;1;13; ;2;1;61;JULIO;2; ; ; ;2;02;03;200,0\n"
+           "12;1;1;68;68;1;1;45;AGOSTO;2; ; ; ;2;04;07;100,0\n")
+    _write(d / "2021" / "inclusion_financiera.csv", "DIRECTORIO;SECUENCIA_P;SECUENCIA_ENCUESTA;P1765;CLASE_TE;FEX_C\n10;1;1;1;1;300\n11;1;1;2;2;200\n")
+    _write(d / "2021" / "fex_ajustado.csv", "DIRECTORIO,SECUENCIA_P,SECUENCIA_ENCUESTA,FEX_C\n10,1,1,260\n11,1,1,180\n12,1,1,90\n")
+    _write(d / "2021" / "fex_dpto.csv", "DIRECTORIO;SECUENCIA_P;SECUENCIA_ENCUESTA;FEX_MICRO_DPTO\n10;1;1;270\n11;1;1;170\n12;1;1;95\n99;1;1.0;\n99;1;1.0;\n")
+
+    # --- 2024: comas; FEX_C es el factor departamental; personal ocupado con la clave corrida
+    _write(d / "2024" / "identificacion.csv",
+           "DIRECTORIO,SECUENCIA_P,SECUENCIA_ENCUESTA,COD_DEPTO,AREA,CLASE_TE,P35,P241,MES_REF,P3031,P3032_1,P3032_2,"
+           "P3032_3,P3033,GRUPOS4,GRUPOS12,F_EXP\n"
+           "20,1,1,11,11,1,1,50,ENERO,1,1,1,0,1,04,10,1000.5\n"
+           "21,2,3,47,47,1,2,33,JUNIO,2,,,,2,03,05,500\n"
+           "22,1,1,52,,2,1,70,DICIEMBRE,1,0,0,2,2,01,01,250\n")
+    _write(d / "2024" / "caracteristicas.csv", f"DIRECTORIO,SECUENCIA_P,SECUENCIA_ENCUESTA,P1633,P1055,{rep}\n20,1,1,1,1,1,11,11,1000.5\n21,2,3,2,2,1,47,47,500\n22,1,1,1,2,2,52,,250\n")
+    _write(d / "2024" / "propietario.csv", f"DIRECTORIO,SECUENCIA_P,SECUENCIA_ENCUESTA,P3088,SUELDOS,PRESTACIONES,REMUNERACION_TOTAL,{rep}\n"
+                                           "20,1,1,1,1200000,300000,1500000,1,11,11,1000.5\n21,2,3,2,0,0,0,1,47,47,500\n22,1,1,4,0,0,0,2,52,,250\n")
+    _write(d / "2024" / "sitio.csv", f"DIRECTORIO,SECUENCIA_P,SECUENCIA_ENCUESTA,P3053,{rep}\n20,1,1,2,1,11,11,1000.5\n21,2,3,4,1,47,47,500\n22,1,1,7,2,52,,250\n")
+    _write(d / "2024" / "costos.csv", f"DIRECTORIO,SECUENCIA_P,SECUENCIA_ENCUESTA,CONSUMO_INTERMEDIO,{rep}\n20,1,1,2000000,1,11,11,1000.5\n21,2,3,300000,1,47,47,500\n22,1,1,100000,2,52,,250\n")
+    _write(d / "2024" / "ventas.csv", f"DIRECTORIO,SECUENCIA_P,SECUENCIA_ENCUESTA,VENTAS_MES_ANTERIOR,VALOR_AGREGADO,INGRESO_MIXTO,{rep}\n"
+                                      "20,1,1,5000000,3000000,1500000,1,11,11,1000.5\n21,2,3,800000,500000,500000,1,47,47,500\n22,1,1,300000,200000,200000,2,52,,250\n")
+    _write(d / "2024" / "personal_ocupado.csv", f"DIRECTORIO,SECUENCIA_PH,SECUENCIA_P,SECUENCIA_ENCUESTA,TIPO,P3077,{rep}\n"
+                                                "20,1,1,1,1,1,1,11,11,1000.5\n20,1,1,2,2,,1,11,11,1000.5\n22,1,1,1,3,,2,52,,250\n22,1,1,2,3,,2,52,,250\n")
+    _write(d / "2024" / "fex_dpto.csv", "DIRECTORIO,SECUENCIA_P,SECUENCIA_ENCUESTA,FEX_C\n20,1,1,990\n21,2,3,510\n22,1,1,240\n")
+
+    # --- 2025: solo las 24 ciudades
+    _write(d / "2025" / "identificacion.csv",
+           "DIRECTORIO,SECUENCIA_P,SECUENCIA_ENCUESTA,COD_DEPTO,AREA,CLASE_TE,P35,P241,MES_REF,P3032_1,P3032_2,P3032_3,"
+           "P3033,GRUPOS4,GRUPOS12,F_EXP,SEGMENTO,DOMINIO\n"
+           "30,1,1,5,5,1,2,44,MAYO,0,0,0,2,03,05,700,1,1\n")
+    return root
+
+
+@pytest.fixture
+def ecv_root(tmp_path):
+    """
+    La ECV con las rarezas del ANDA: en las tablas de hogar el hogar es SECUENCIA_ENCUESTA; 2018 trae DPTO y los
+    factores del CNPV 2018 aparte; 2020 no trae REGION; 2025 con encabezados en minúscula y coma decimal.
+    """
+    root = tmp_path / "ecv"
+    d = root / "datos"
+    viv = "DIRECTORIO;SECUENCIA_ENCUESTA;SECUENCIA_P;ORDEN;{geo};FEX_C;CLASE;P4005;P4015\n"
+    hog = "DIRECTORIO;SECUENCIA_ENCUESTA;SECUENCIA_P;ORDEN;FEX_C;P5000;P5010\n"
+    per = "DIRECTORIO;SECUENCIA_ENCUESTA;SECUENCIA_P;ORDEN;FEX_C;P6020;P6040;P6051;P6080\n"
+
+    # --- 2025: la vivienda 1 (Bogotá, cabecera) tiene dos hogares; la 2 es de Antioquia, rural
+    _write(d / "2025" / "vivienda" / "Datos de la vivienda.csv", viv.format(geo="P1_DEPARTAMENTO;REGION").lower()
+           + "1;1;1;1;11;5;100,5;1;1;2\n2;1;1;1;5;6;20;2;3;1\n")
+    _write(d / "2025" / "servicios" / "Servicios del hogar.csv", hog.lower()
+           + "1;1;1;1;100,5;3;2\n1;2;1;1;100,5;1;1\n2;1;1;1;20;2;1\n")
+    _write(d / "2025" / "caracteristicas" / "Características y composición del hogar.csv", per.lower()
+           + "1;1;1;1;100,5;1;45;1;6\n1;2;1;2;100,5;2;8;3;6\n1;1;2;1;100,5;2;70;1;5\n"
+             "2;1;1;1;20;1;30;1;1\n2;2;1;2;20;2;29;2;1\n")
+    _write(d / "2025" / "salud" / "Salud.csv", "DIRECTORIO;SECUENCIA_ENCUESTA;SECUENCIA_P;ORDEN;FEX_C;P6090\n"
+           "1;1;1;1;100,5;1\n1;2;1;2;100,5;2\n1;1;2;1;100,5;1\n2;1;1;1;20;9\n")  # falta una persona
+
+    # --- 2018: DPTO, y el FEX_C de los capítulos no es el del CNPV 2018
+    _write(d / "2018" / "vivienda" / "Datos de la vivienda.csv", viv.format(geo="REGION;DPTO") + "7;1;1;1;2;11;9;2;2;3\n")
+    _write(d / "2018" / "servicios" / "Servicios del hogar.csv", hog + "7;1;1;1;9;2;1\n")
+    _write(d / "2018" / "caracteristicas" / "Caracteristicas y composicion del hogar.csv", per + "7;1;1;1;9;2;33;1;6\n")
+    _write(d / "2018" / "factores" / "Factores de expansión 2018 basados en el CNPV 2018.csv", "DIRECTORIO;FEX_C\n7;5,5\n")
+
+    # --- 2020: sin REGION; la parte rural de Bogotá es de la región Oriental
+    _write(d / "2020" / "vivienda" / "Datos de la vivienda.csv", viv.format(geo="P1_DEPARTAMENTO") + "9;1;1;1;11;4;2;1;1\n")
+    _write(d / "2020" / "servicios" / "Servicios del hogar.csv", hog + "9;1;1;1;4;1;1\n")
+    _write(d / "2020" / "caracteristicas" / "Caracteristicas y composicion del hogar.csv", per + "9;1;1;1;4;1;60;1;6\n")
+    return root
+
+
+@pytest.fixture
+def ecv_completo(tmp_path):
+    """
+    Un año de la ECV (2025) con los once capítulos y las variables de los indicadores y del IPM: dos hogares de Bogotá, uno
+    de una mujer de 70 años que no sabe leer, sin salud y con piso de tierra (pobre) y otro de una pareja que trabaja y un hijo.
+    """
+    d = tmp_path / "ecv_completo" / "datos" / "2025"
+    llaves = "DIRECTORIO;SECUENCIA_ENCUESTA;SECUENCIA_P;ORDEN;FEX_C"
+    _write(d / "vivienda" / "Datos de la vivienda.csv",
+           f"{llaves};P1_DEPARTAMENTO;REGION;CLASE;P4005;P4015;P8520S1;P8520S3;P8520S4;P8520S5\n"
+           "1;1;1;1;100;11;5;1;1;4;1;1;1;1\n2;1;1;1;50;11;5;1;1;7;1;1;1;1\n")
+    hogares = {"servicios": ("P5010;P8526;P8530;P5666", ["2;1;1;1", "1;1;1;2"]),
+               "condiciones": ("P1075;P5230", ["1;2", "2;1"]), "tenencia": ("P5095", ["3", "1"])}
+    for modulo, (columnas, filas) in hogares.items():
+        _write(d / modulo / f"{modulo}.csv", f"{llaves};{columnas}\n" + f"1;1;1;1;100;{filas[0]}\n2;1;1;1;50;{filas[1]}\n")
+    columnas = ("P6020;P6040;P6051;P6080;P6090;P6100;P5665;P8563;P51;P55;P774;P6160;P8586;P8587;P8587S1;P6211;P1088;"
+                "P1088S1;P6216;P6180;P6240;P6250;P6260;P6270;P6351;P7250;P6920;P1910;P1911;P1912;P1084;P1082;P5504")
+    _write(d / "caracteristicas" / "Características y composición del hogar.csv", f"{llaves};{columnas}\n"
+           "1;1;1;1;100;2;40;1;6;1;1;2;;;;;1;2;5;11;;;;;;1;;;;;;1;5;1;5;1;1;\n"
+           "1;2;1;2;100;1;42;2;6;1;1;2;;;;;1;2;5;11;;;;;;1;;;;;;1;5;5;5;2;1;\n"
+           "1;3;1;3;100;1;10;3;6;1;3;2;;;;;1;1;;;;2;5;;;3;;;;;;;5;5;5;5;2;1\n"
+           "2;1;1;1;50;2;70;1;6;2;;2;;;;;2;2;3;3;;;;;;5;;;;;;2;5;5;5;5;2;2\n")
+    for modulo in ("salud", "primera_infancia", "educacion", "fuerza_trabajo", "tic", "trabajo_infantil"):
+        _write(d / modulo / f"{modulo}.csv", f"{llaves}\n1;1;1;1;100\n")
+    return tmp_path / "ecv_completo"
 # ---------------------------------------------------------------------------------------------------- #
 # Pobreza monetaria: tres hogares por año con las rarezas de cada época del DANE
 # ---------------------------------------------------------------------------------------------------- #

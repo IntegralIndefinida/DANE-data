@@ -26,6 +26,8 @@ src/dane_data/
 ├── geih/              downloader.py · loader.py · indicadores.py · agregados.py
 ├── eam/               downloader.py · loader.py · indicadores.py
 ├── eevv/              downloader.py · loader.py · indicadores.py · agregados.py
+├── emicron/           downloader.py · loader.py · indicadores.py
+├── ecv/               downloader.py · loader.py · indicadores.py · ipm.py · agregados.py
 ├── pobreza/           downloader.py · loader.py · indicadores.py · agregados.py · union.py
 ├── cli.py             comando dane-data
 └── app/               aplicación Streamlit (Inicio.py + paginas/)
@@ -36,8 +38,8 @@ variables armonizadas van en minúscula y las originales del DANE en mayúscula.
 
 ## Pruebas
 
-* `tests/conftest.py` construye carpetas **sintéticas** de la GEIH, la EAM y las Estadísticas Vitales con las rarezas de cada
-  época.
+* `tests/conftest.py` construye carpetas **sintéticas** de la GEIH, la EAM, las Estadísticas Vitales, la EMICRON y la ECV
+  con las rarezas de cada época.
   Cuando aparezca una rareza nueva en los archivos del DANE, agréguela a estos datos.
   Las de la pobreza monetaria se arman en `tests/test_pobreza.py` (fixture `pobreza_root`).
 * Las pruebas de los descargadores usan ZIP en memoria: nunca se conectan a internet.
@@ -62,6 +64,28 @@ variables armonizadas van en minúscula y las originales del DANE en mayúscula.
   uv run python tests/datos/actualizar_eevv_diccionario.py
   uv run --extra app python tests/datos/actualizar_proyecciones.py
   ```
+
+* La EMICRON se compara con los anexos del DANE si hay datos en `$DANE_DATA_TEST_EMICRON` o en la carpeta configurada.
+  Cuando el DANE publica un año nuevo, agregue su catálogo al descargador (`_CATALOGOS` en `emicron/downloader.py`) y su
+  anexo a `ANEXOS`, y actualice las cifras y el diccionario:
+
+  ```bash
+  uv run --extra app python tests/datos/actualizar_emicron_publicado.py --cache metodologia/emicron/resultados
+  uv run python tests/datos/actualizar_emicron_diccionario.py
+  ```
+
+* La ECV y el IPM se comparan con los anexos del DANE si hay datos en `$DANE_DATA_TEST_ECV` o en la carpeta configurada.
+  Cuando el DANE publica un año nuevo, agréguelo a `_CATALOGOS` en `ecv/downloader.py`, baje los anexos de series de la ECV
+  y de pobreza multidimensional a una carpeta y actualice las cifras y el diccionario:
+
+  ```bash
+  uv run --extra app python tests/datos/actualizar_ecv_publicado.py CARPETA_DE_LOS_ANEXOS
+  uv run python tests/datos/actualizar_ecv_diccionario.py
+  ```
+
+  Las reglas del IPM se infirieron de la base oficial del DANE: `tests/test_ecv.py` las compara hogar por hogar con ella si
+  `$DANE_DATA_TEST_IPM` apunta a una carpeta con una subcarpeta por año y, adentro, el CSV de hogares departamental de
+  `BDATOS-IPM` (catálogos del IPM en el ANDA). Corra esa prueba al cambiar `ecv/ipm.py` o al agregar un año.
 
 * La pobreza monetaria se compara con los anexos del DANE si hay datos en `$DANE_DATA_TEST_POBREZA` o en la carpeta
   configurada. Cuando el DANE publica un año nuevo, agregue su catálogo a `_CATALOGOS` en `pobreza/downloader.py`, cambie las

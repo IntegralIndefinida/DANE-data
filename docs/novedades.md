@@ -4,6 +4,27 @@
 
 **Nuevo**
 
+* {doc}`Micronegocios <guia/emicron>` con `dd.emicron`: la Encuesta de Micronegocios (EMICRON, 2019–2025), los negocios de
+  hasta 9 personas ocupadas de los dueños que encuentra la GEIH. {dd}`emicron.download()` baja los módulos del ANDA,
+  {dd}`emicron.load()` los une en una fila por micronegocio con las variables armonizadas y el factor de la serie vigente,
+  y {dd}`emicron.indicadores()` da el cuadro I.1 del DANE (micronegocios, personal ocupado, ventas, valor agregado,
+  ingreso mixto) y la informalidad empresarial (RUT, Cámara de Comercio, salud y pensión). Comprobada contra 8 507 cifras
+  de los anexos. {dd}`emicron.load_personal()` carga el detalle de los trabajadores, socios y familiares.
+* El diccionario de la EMICRON en {dd}`diccionario()`, {dd}`buscar_variable()` y {dd}`describir()`
+  (`encuesta="emicron"`) y en la página de diccionario de la aplicación.
+* La EMICRON en la aplicación: una página nueva, *Micronegocios*, con el total nacional (2019–2024) o las 24 ciudades
+  (2019–2025), y en Descargar, Inicio y Cómo citar. También en la terminal: `dane-data descargar emicron`,
+  `dane-data config --emicron`.
+* {dd}`set_paths()` acepta `emicron=` y `ecv=`.
+* `dd.ecv`: la **Encuesta Nacional de Calidad de Vida** 2018–2025 (vea {doc}`guia/ecv`). {dd}`ecv.download()` baja del ANDA
+  los once capítulos del cuestionario de cada año y, en 2018, los factores de expansión del CNPV 2018; {dd}`ecv.load()` los
+  une en una fila por persona o por hogar, con variables armonizadas en minúscula; {dd}`ecv.indicadores()` y
+  {dd}`ecv.serie_indicadores()` dan los 27 indicadores de la serie del DANE, iguales a los publicados.
+* El **Índice de Pobreza Multidimensional**: {dd}`ecv.privaciones()`, {dd}`ecv.ipm()` y {dd}`ecv.serie_ipm()`. Reproduce la base
+  oficial del DANE hogar por hogar, salvo 5, 25 y 3 de unos 89.000 hogares en 2020, 2021 y 2022 (IPM 2025: 9,9 % y
+  0,040; 2020, con la base complementaria de estudio en casa, 18,1 %).
+* La ECV en la aplicación (página *Calidad de vida y pobreza*, Descargar datos, Inicio, Diccionario y Cómo citar), en la
+  línea de comandos (`dane-data descargar ecv`, `dane-data config --ecv`) y en {dd}`diccionario()` (`"ecv"`).
 * {doc}`Pobreza monetaria <guia/pobreza>` con `dd.pobreza`: los microdatos de la Medición de Pobreza Monetaria y Desigualdad
   2012–2025, con el ingreso per cápita de la unidad de gasto, las líneas de pobreza y quién es pobre, ya calculados por el
   DANE. {dd}`pobreza.download()`, {dd}`pobreza.load()` y `dane-data descargar pobreza`.
@@ -16,6 +37,13 @@
 * La aplicación tiene una página *Pobreza monetaria*, con la serie empalmada y las cifras departamentales, y la pobreza en *Descargar datos* e *Inicio*.
 * {dd}`weighted_gini()`: el coeficiente de Gini ponderado.
 * {dd}`set_paths()` acepta `pobreza=` y `dane-data config` acepta `--pobreza`.
+
+**Mejoras**
+
+* {dd}`tabla()` deja fuera las filas con el peso vacío, con un aviso que dice cuántas y de qué años, en vez de sumarlas
+  como cero y contarlas en `n_muestra`. Si ninguna fila tiene peso, es un error.
+* Las descargas del ANDA leen los ZIP comprimidos en Deflate64 (Educación 2021 de la ECV), con la dependencia nueva
+  `inflate64`.
 
 ## 0.5.0 (9 de noviembre de 2026)
 

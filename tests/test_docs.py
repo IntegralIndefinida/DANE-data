@@ -23,6 +23,8 @@ API = Path(__file__).parent.parent / "docs" / "api"
     (dd.geih, "geih.md", ""),
     (dd.eam, "eam.md", ""),
     (dd.eevv, "eevv.md", ""),
+    (dd.emicron, "emicron.md", ""),
+    (dd.ecv, "ecv.md", ""),
     (dd.pobreza, "pobreza.md", ""),
 ])
 def test_referencia_cubre_all(modulo, pagina, prefijo):
@@ -48,6 +50,9 @@ def test_referencia_cubre_all(modulo, pagina, prefijo):
     "dane_data.geih", "dane_data.geih.loader", "dane_data.geih.indicadores", "dane_data.geih.agregados",
     "dane_data.eam", "dane_data.eam.loader", "dane_data.eam.indicadores",
     "dane_data.eevv", "dane_data.eevv.loader", "dane_data.eevv.indicadores", "dane_data.eevv.agregados",
+    "dane_data.emicron", "dane_data.emicron.loader", "dane_data.emicron.indicadores",
+    "dane_data.ecv", "dane_data.ecv.loader", "dane_data.ecv.downloader", "dane_data.ecv.indicadores",
+    "dane_data.ecv.agregados", "dane_data.ecv.ipm",
     "dane_data.pobreza", "dane_data.pobreza.loader", "dane_data.pobreza.indicadores",
     "dane_data.pobreza.agregados", "dane_data.pobreza.union",
 ])
@@ -75,3 +80,10 @@ def test_los_enlaces_dd_de_la_guia_existen():
             if objeto is None:
                 rotos.append(f"{ruta.relative_to(docs)}: {nombre}")
     assert not rotos, f"{{dd}} que no existen en dane_data: {rotos}"
+
+
+def test_la_cita_del_readme_es_la_de_citation_cff():
+    raiz = Path(__file__).parent.parent
+    titulo = re.search(r'^title: "(.+)"$', (raiz / "CITATION.cff").read_text(encoding="utf-8"), re.M).group(1)
+    for archivo in ("README.md", "docs/citar.md", "src/dane_data/app/paginas/citar.py"):
+        assert titulo in (raiz / archivo).read_text(encoding="utf-8"), archivo

@@ -114,6 +114,38 @@ La caída de la natalidad, la mortalidad infantil por departamento y los homicid
 :::
 ::::
 
+## Micronegocios
+
+::::{grid} 1 2 3 3
+:gutter: 3
+:class-container: galeria
+
+:::{grid-item-card} La informalidad de los micronegocios
+:img-top: ../_static/galeria/micronegocios.png
+:img-alt: La informalidad de los micronegocios
+:link: micronegocios
+:link-type: doc
+
+RUT, registro mercantil y aporte a salud y pensión de los negocios de hasta 9 personas, por actividad y ciudad.
+:::
+::::
+
+## Calidad de vida
+
+::::{grid} 1 2 3 3
+:gutter: 3
+:class-container: galeria
+
+:::{grid-item-card} Calidad de vida y pobreza multidimensional
+:img-top: ../_static/galeria/ecv.png
+:img-alt: Calidad de vida y pobreza multidimensional
+:link: ecv
+:link-type: doc
+
+El IPM de 2018 a 2025, por área y por departamento, las privaciones que más bajaron y el internet en el campo.
+:::
+::::
+
 ## Confiabilidad
 
 ::::{grid} 1 2 3 3
@@ -143,5 +175,7 @@ eam_industria
 eam_panel
 recetas
 vitales
+micronegocios
+ecv
 validacion
 ```

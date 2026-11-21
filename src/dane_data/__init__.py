@@ -1,5 +1,5 @@
 """
-dane-data — microdatos del DANE (GEIH, EAM, Estadísticas Vitales y pobreza monetaria) listos para analizar.
+dane-data — microdatos del DANE (GEIH, EAM, Estadísticas Vitales, EMICRON, ECV y pobreza monetaria) listos para analizar.
 
     import dane_data as dd
     dd.set_paths(geih="~/datos/GEIH/data", eam="~/datos/EAM/data", save=True)
@@ -13,7 +13,7 @@ dane-data — microdatos del DANE (GEIH, EAM, Estadísticas Vitales y pobreza mo
     dd.eevv.tasas(range(2015, 2026), por="departamento")
 """
 
-from . import eam, eevv, geih, pobreza
+from . import eam, ecv, eevv, emicron, geih, pobreza
 from ._hooks import DownloadCancelled
 from .config import get_path, set_paths, show_paths
 from .proyecciones import poblacion
@@ -23,7 +23,7 @@ from .stats import tabla, weighted_gini, weighted_mean, weighted_quantile
 __version__ = "0.6.0"
 
 __all__ = [
-    "geih", "eam", "eevv", "pobreza", "set_paths", "get_path", "show_paths", "tabla", "weighted_mean",
-    "weighted_quantile", "weighted_gini", "buscar_variable", "describir", "diccionario", "SMLV",
+    "geih", "eam", "eevv", "emicron", "ecv", "pobreza", "set_paths", "get_path", "show_paths", "tabla",
+    "weighted_mean", "weighted_quantile", "weighted_gini", "buscar_variable", "describir", "diccionario", "SMLV",
     "DEPARTAMENTOS", "MESES", "DownloadCancelled", "poblacion",
 ]

@@ -27,6 +27,7 @@ import shutil
 import tempfile
 import time
 import zipfile
+import zlib
 from pathlib import Path
 
 from .._hooks import DescargadorANDA, archivos_datos, extraer_aparte, extraer_miembro, sanitize_member_name
@@ -163,7 +164,7 @@ class EEVVDownloader(DescargadorANDA):
 
         try:
             return extraer_aparte(extraer, carpeta, self.raw_dir, EXTENSIONES)
-        except (zipfile.BadZipFile, OSError) as e:
+        except (zipfile.BadZipFile, zlib.error, EOFError, OSError) as e:  # zlib/EOF: datos comprimidos dañados
             log.error(f"Error extrayendo {anio} de {zip_path.name}: {e}")
             return False
 

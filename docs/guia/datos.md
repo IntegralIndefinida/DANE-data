@@ -9,6 +9,8 @@ Cada encuesta tiene su carpeta raíz, con esta estructura:
 <raíz empalme>/datos_csv/<año>/<mes>/*.csv  serie de empalme
 <raíz EAM>/datos/<año>/*.csv|*.txt
 <raíz EEVV>/datos/<tipo>/<año>/*.csv|*.txt  estadísticas vitales
+<raíz EMICRON>/datos/<año>/<módulo>.csv     micronegocios
+<raíz ECV>/datos/<año>/<módulo>/*.csv|*.dta  calidad de vida
 <raíz pobreza>/datos/<año>/*.csv|*.txt     pobreza monetaria (hogares y personas)
 <raíz pobreza>/datos/empalme/*.csv         factor de empalme 2012–2020
 ```
@@ -24,21 +26,23 @@ Por defecto todo queda en `~/dane_data_datos/`. Para usar otras carpetas (por ej
 import dane_data as dd
 
 dd.set_paths(geih="D:/datos/GEIH", geih_empalme="D:/datos/GEIH_empalme", eam="D:/datos/EAM", eevv="D:/datos/EEVV",
-             pobreza="D:/datos/pobreza", save=True)
+             emicron="D:/datos/EMICRON", ecv="D:/datos/ECV", pobreza="D:/datos/pobreza", save=True)
 ```
 
 Con `save=True` quedan guardadas en `~/.config/dane_data/config.json` para las próximas sesiones, para la
 línea de comandos y para la aplicación; sin él, valen solo para la sesión actual. Lo mismo se hace desde la
-terminal con `dane-data config --geih RUTA --empalme RUTA --eam RUTA --eevv RUTA --pobreza RUTA` o desde la página de inicio de la
+terminal con `dane-data config --geih RUTA --empalme RUTA --eam RUTA --eevv RUTA --emicron RUTA --ecv RUTA --pobreza RUTA`
+o desde la página de inicio de la
 aplicación.
 
 Cada carpeta se resuelve en este orden:
 
 1. {dd}`set_paths()` en la sesión actual.
-2. Las variables de entorno `DANE_DATA_GEIH`, `DANE_DATA_GEIH_EMPALME`, `DANE_DATA_EAM`, `DANE_DATA_EEVV` y `DANE_DATA_POBREZA`.
+2. Las variables de entorno `DANE_DATA_GEIH`, `DANE_DATA_GEIH_EMPALME`, `DANE_DATA_EAM`, `DANE_DATA_EEVV`,
+   `DANE_DATA_EMICRON`, `DANE_DATA_ECV` y `DANE_DATA_POBREZA`.
 3. El archivo `~/.config/dane_data/config.json`.
-4. `~/dane_data_datos/geih`, `~/dane_data_datos/geih/empalme`, `~/dane_data_datos/eam`, `~/dane_data_datos/eevv` y
-   `~/dane_data_datos/pobreza`.
+4. `~/dane_data_datos/geih`, `~/dane_data_datos/geih/empalme`, `~/dane_data_datos/eam`, `~/dane_data_datos/eevv`,
+   `~/dane_data_datos/emicron`, `~/dane_data_datos/ecv` y `~/dane_data_datos/pobreza`.
 
 {dd}`show_paths()` muestra las carpetas que se están usando, y {dd}`get_path()` una sola.
 
@@ -54,12 +58,16 @@ dd.eam.download(range(2014, 2025))      # EAM
 dd.eam.download()                       # toda la EAM, 1992–2024
 dd.eevv.download(2025)                  # los tres certificados de las Estadísticas Vitales
 dd.eevv.download(tipos="defunciones")   # todas las defunciones, 1979–2025
+dd.emicron.download(2024)               # todos los módulos de la EMICRON 2024
+dd.ecv.download(2025)                   # los once capítulos de la ECV 2025
 dd.pobreza.download(empalme=True)       # pobreza monetaria 2012–2025 y el empalme al marco 2018
 ```
 
 {dd}`geih.download()` y {dd}`eam.download()` buscan los archivos en el catálogo del {term}`ANDA` de cada año, bajan
-los ZIP y extraen los módulos. {dd}`eevv.download()` no busca en el ANDA: tiene una tabla fija con los archivos de cada
-año y certificado (los años están en `dd.eevv.ANIOS_DISPONIBLES`); {dd}`pobreza.download()` también, por año
+los ZIP y extraen los módulos. {dd}`eevv.download()` y {dd}`ecv.download()` no buscan en el ANDA: tienen una tabla fija con
+los archivos de cada año y certificado o capítulo (los años están en `dd.eevv.ANIOS_DISPONIBLES` y
+`dd.ecv.ANIOS_DISPONIBLES`), y {dd}`emicron.download()` tampoco: un ZIP por año y módulo (`dd.emicron.MODULOS`), del
+que extrae el CSV. {dd}`pobreza.download()` también tiene una tabla fija, por año
 (`dd.pobreza.ANIOS_DISPONIBLES`). Las descargas son **incrementales**:
 
 * Al terminar un mes se escribe un marcador (`.dane_data_ok`) que registra qué módulos se extrajeron. Una
@@ -78,7 +86,7 @@ año y certificado (los años están en `dd.eevv.ANIOS_DISPONIBLES`); {dd}`pobre
   nada. Si el ZIP se borró, hace falta `forzar=True`; con `modules=["otros_ingresos", "migracion"]` se
   reemplazan solo esos dos.
 
-Las tres funciones devuelven lo que no se pudo bajar o extraer (un ZIP que no se descargó tras tres intentos,
+Todas las funciones de descarga devuelven lo que no se pudo bajar o extraer (un ZIP que no se descargó tras tres intentos,
 un año sin enlaces en el ANDA, un ZIP que no trae un módulo); la lista vacía quiere decir que todo salió
 bien. `dane-data descargar` termina con código 1 si algo falló, y la aplicación lo muestra al terminar:
 
@@ -88,7 +96,7 @@ if fallidos:
     print("\n".join(fallidos))   # vuelva a correr la misma descarga: lo completo se salta
 ```
 
-Las tres funciones aceptan `progress=` (una función que recibe el avance) y `should_stop=` (una función
+Todas aceptan `progress=` (una función que recibe el avance) y `should_stop=` (una función
 que, si devuelve True, detiene la descarga con {dd}`DownloadCancelled`). La aplicación los usa para la
 barra de progreso y el botón de cancelar.
 
@@ -120,8 +128,8 @@ Name: completo, dtype: int64
 
 {dd}`geih.available()` trae una fila por mes con los módulos que encontró, si está completo y qué le falta.
 Desde la terminal, `dane-data estado` muestra lo mismo resumido por año. Para la EAM,
-{dd}`eam.available()`, para las Estadísticas Vitales, {dd}`eevv.available()`, y para la pobreza,
-{dd}`pobreza.available()`.
+{dd}`eam.available()`; para las Estadísticas Vitales, {dd}`eevv.available()`; para la EMICRON,
+{dd}`emicron.available()`, y para la pobreza, {dd}`pobreza.available()`.
 
 ## Espacio en disco
 
@@ -131,6 +139,7 @@ Desde la terminal, `dane-data estado` muestra lo mismo resumido por año. Para l
 | Toda la serie principal 2007–2026 | 11 GB extraída |
 | Toda la EAM 1992–2024 | 330 MB |
 | Todas las Estadísticas Vitales | 3,6 GB extraídas (2,2 GB de nacimientos, 1,2 GB de defunciones), 1,6 GB de ZIP |
+| Toda la EMICRON 2019–2025 | 480 MB extraída, 300 MB de ZIP |
 | Toda la pobreza monetaria 2012–2025 | 3,7 GB extraída (0,5 GB de hogares, 3,1 GB de personas, 0,1 GB del empalme), 1,4 GB de ZIP |
 | Caché de `dane-data` con toda la GEIH leída | 800 MB en `~/.cache/dane_data` |
 

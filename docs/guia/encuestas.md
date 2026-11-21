@@ -1,9 +1,10 @@
 # Las encuestas
 
-`dane-data` trabaja con tres operaciones estadísticas del DANE cuyos {term}`microdatos` se publican en el
+`dane-data` trabaja con cuatro operaciones estadísticas del DANE cuyos {term}`microdatos` se publican en el
 [Archivo Nacional de Datos (ANDA)](https://microdatos.dane.gov.co): la Gran Encuesta Integrada de Hogares
-(GEIH), la Encuesta Anual Manufacturera (EAM) y las Estadísticas Vitales (EEVV). De la GEIH sale además la Medición de
-Pobreza Monetaria y Desigualdad, con sus propios microdatos: vea {doc}`pobreza`.
+(GEIH), la Encuesta Anual Manufacturera (EAM), las Estadísticas Vitales (EEVV), la Encuesta de Micronegocios
+(EMICRON) y la Encuesta Nacional de Calidad de Vida (ECV). De la GEIH sale además la Medición de Pobreza Monetaria y
+Desigualdad, con sus propios microdatos: vea {doc}`pobreza`.
 
 ## GEIH: Gran Encuesta Integrada de Hogares
 
@@ -110,10 +111,26 @@ defunción fetal (desde 1998). Cada registro es un hecho: no hay factor de expan
 sexo, lugar de residencia y de ocurrencia hasta el municipio, y causa básica de muerte, peso al nacer, semanas de gestación
 y tipo de parto. Vea {doc}`eevv`.
 
+## EMICRON: Encuesta de Micronegocios
+
+Encuesta **anual** (2019–2025) a los negocios de hasta 9 personas ocupadas de los patrones y los trabajadores por cuenta
+propia que encuentra la GEIH: cada registro es un micronegocio, con la clave de su propietario en la GEIH. Trae la
+actividad, el sitio, el personal ocupado, el RUT y el registro mercantil, el uso de TIC, la inclusión financiera, los
+costos, las ventas y el valor agregado. El {term}`factor de expansión` es anual. 2019–2024 cubren el total nacional y
+2025 solo las 24 ciudades. Vea {doc}`emicron`.
+
+## ECV: Encuesta Nacional de Calidad de Vida
+
+Encuesta anual por muestreo a unos 90.000 hogares (2018–2025 en `dane-data`). Cada capítulo del cuestionario es un
+archivo de viviendas, de hogares o de personas: vivienda, servicios, tenencia, condiciones de vida, características,
+salud, primera infancia, educación, fuerza de trabajo, tecnologías y trabajo infantil. Tiene factor de expansión, y con
+ella el DANE calcula el Índice de Pobreza Multidimensional (IPM). Vea {doc}`ecv`.
+
 ## Los diccionarios oficiales
 
-`dane-data` trae los diccionarios de variables (DDI) que publica el ANDA: el de la GEIH 2025, el de la EAM 2024 y los tres
-de las Estadísticas Vitales 2025. Sirven para encontrar variables sin salir de Python:
+`dane-data` trae los diccionarios de variables (DDI) que publica el ANDA: el de la GEIH 2025, el de la EAM 2024, el de la
+EMICRON 2024, los tres de las Estadísticas Vitales 2025 y el de la ECV 2025. Sirven para encontrar variables sin salir de
+Python:
 
 ```python
 >>> dd.buscar_variable("arriendo")["variable"].tolist()

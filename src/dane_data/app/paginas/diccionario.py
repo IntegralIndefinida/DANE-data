@@ -6,12 +6,12 @@ import dane_data as dd
 st.title("Diccionario de variables")
 st.markdown(
     "Busque variables por código o por palabras de la pregunta. Fuente: metadatos oficiales del DANE "
-    "(GEIH 2025, EAM 2024 y Estadísticas Vitales 2025). Los nombres pueden variar en años antiguos."
+    "(GEIH 2025, EAM 2024, EMICRON 2024, Estadísticas Vitales 2025 y ECV 2025). Los nombres pueden variar en años antiguos."
 )
 
 # Una variable de las Estadísticas Vitales cambia de etiqueta según el certificado: un diccionario para cada uno
-ENCUESTAS = {"GEIH": "geih", "EAM": "eam", "Defunciones": "eevv_defunciones", "Nacimientos": "eevv_nacimientos",
-             "Defunciones fetales": "eevv_fetales"}
+ENCUESTAS = {"GEIH": "geih", "EAM": "eam", "EMICRON": "emicron", "Defunciones": "eevv_defunciones",
+             "Nacimientos": "eevv_nacimientos", "Defunciones fetales": "eevv_fetales", "ECV": "ecv"}
 c1, c2 = st.columns([2, 3])
 encuesta = c1.radio("Encuesta", list(ENCUESTAS), horizontal=True)
 clave = ENCUESTAS[encuesta]
@@ -38,6 +38,10 @@ if filas:
                      hide_index=True)
     if clave.startswith("eevv_"):
         carga = f'df = dd.eevv.load(2025, tipo="{clave.removeprefix("eevv_")}", columns=["{var}"])'
+    elif clave == "ecv":  # el capítulo donde está la variable; Características siempre se carga
+        modulo = next((m for m in info["modulos"] if m != "caracteristicas"), None)
+        carga = (f'df = dd.ecv.load(2025, columns=["{var}"])' if modulo is None
+                 else f'df = dd.ecv.load(2025, modulos=["{modulo}"], columns=["{var}"])')
     else:
         carga = f'df = dd.{clave}.load(2024, columns=["{var if clave == "geih" else var.lower()}"])'
     st.code(carga, language="python")
@@ -68,6 +72,10 @@ with st.expander("Variables armonizadas por dane-data (iguales en todos los año
     elif clave.startswith("eevv_"):
         st.dataframe([{"variable": k, "descripción": v} for k, v in dd.eevv.ETIQUETAS[clave.removeprefix("eevv_")].items()],
                      hide_index=True)
+    elif clave == "emicron":
+        st.dataframe([{"variable": k, "descripción": v} for k, v in dd.emicron.ETIQUETAS.items()], hide_index=True)
+    elif clave == "ecv":
+        st.dataframe([{"variable": k, "descripción": v} for k, v in dd.ecv.ETIQUETAS["persona"].items()], hide_index=True)
     else:
         st.dataframe([{"variable": k, "descripción": v} for k, v in dd.eam.ETIQUETAS.items()]
                      + [{"variable": "ciiu / ciiu_rev", "descripción": "Código CIIU y su revisión (2, 3 o 4)"},

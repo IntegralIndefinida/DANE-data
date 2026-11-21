@@ -8,6 +8,7 @@ import tempfile
 import time
 import uuid
 import zipfile
+import zlib
 from pathlib import Path
 from typing import Callable, Optional
 from urllib.parse import urljoin, urlparse
@@ -213,6 +214,32 @@ def extraer_aparte(extraer: Callable[[Path], list[Path]], carpeta: Path, tempora
         shutil.rmtree(nueva, ignore_errors=True)
 
 
+_DEFLATE64 = 9  # método de compresión que zipfile no lee; lo usa Windows con archivos grandes
+
+
+def _copiar_deflate64(z: zipfile.ZipFile, member: zipfile.ZipInfo, dst) -> None:
+    """Descomprime un miembro en Deflate64 (Educación 2021 de la ECV) con inflate64, leyendo los bytes crudos del ZIP."""
+    import inflate64
+
+    with open(z.filename, "rb") as f:
+        f.seek(member.header_offset)
+        cabecera = f.read(30)  # encabezado local: firma, versiones, banderas... y largo del nombre y del campo extra
+        if cabecera[:4] != b"PK\x03\x04":
+            raise zipfile.BadZipFile(f"Encabezado dañado en {member.filename}")
+        f.seek(int.from_bytes(cabecera[26:28], "little") + int.from_bytes(cabecera[28:30], "little"), 1)
+        inflador, faltan, crc = inflate64.Inflater(), member.compress_size, 0
+        while faltan > 0:
+            bloque = f.read(min(1 << 20, faltan))
+            if not bloque:
+                raise zipfile.BadZipFile(f"{member.filename} está incompleto")
+            faltan -= len(bloque)
+            datos = inflador.inflate(bloque)
+            crc = zlib.crc32(datos, crc)
+            dst.write(datos)
+    if crc != member.CRC:
+        raise zipfile.BadZipFile(f"CRC distinto en {member.filename}")
+
+
 def extraer_miembro(z: zipfile.ZipFile, member: zipfile.ZipInfo, destino: Path) -> None:
     """
     Copia ``member`` a ``destino`` por partes, primero con otro nombre (``.part``) y renombrando
@@ -221,8 +248,12 @@ def extraer_miembro(z: zipfile.ZipFile, member: zipfile.ZipInfo, destino: Path) 
     """
     tmp = _temporal(destino)
     try:
-        with z.open(member) as src, open(tmp, "wb") as dst:
-            shutil.copyfileobj(src, dst, 1 << 20)
+        if member.compress_type == _DEFLATE64:
+            with open(tmp, "wb") as dst:
+                _copiar_deflate64(z, member, dst)
+        else:
+            with z.open(member) as src, open(tmp, "wb") as dst:
+                shutil.copyfileobj(src, dst, 1 << 20)
         tmp.replace(destino)
     finally:
         tmp.unlink(missing_ok=True)
