@@ -9,6 +9,7 @@ import pytest
 
 import dane_data as dd
 from dane_data.eam.downloader import EAM_TIC_CATALOGS, EAMDownloader
+from dane_data.ecv.downloader import ECV_KNOWN_FILES, ECVDownloader
 from dane_data.eevv.downloader import EEVV_KNOWN_FILES, EEVVDownloader
 from dane_data.emicron.downloader import EMICRON_KNOWN_FILES, EMICRONDownloader
 from dane_data.geih.downloader import MARCADOR, GEIHDownloader, faltantes_mes, is_target_csv, mes_completo
@@ -991,6 +992,214 @@ def test_eevv_available(tmp_path):
     assert tabla[["tipo", "anio", "archivo"]].values.tolist() == [["fetales", 2020, "fetal2020.csv"]]
     assert list(dd.eevv.find_files(2020, tipo="fetales", root=tmp_path)) == [2020]
     assert dd.eevv.find_files(2020, tipo="nacimientos", root=tmp_path) == {}
+
+
+# ---------------------------------------------------------------------------------------------------- #
+# ECV
+# ---------------------------------------------------------------------------------------------------- #
+class FakeECVDownloader(ECVDownloader):
+    pausa = 0
+
+    def __init__(self, paquetes: dict, **kw):
+        super().__init__(**kw)
+        self.paquetes = paquetes
+        self.descargas = []
+
+    def download_file(self, url, dest_path, max_retries=3):
+        self.descargas.append(url)
+        if url not in self.paquetes:
+            return False
+        dest_path.write_bytes(self.paquetes[url])
+        return True
+
+
+def _url_ecv(anio, modulo):
+    return ECV_KNOWN_FILES[anio, modulo][2]
+
+
+def _baja_ecv(tmp_path, paquetes, anios, modulos=("salud",), **kw):
+    dl = FakeECVDownloader(paquetes, base_dir=tmp_path, **kw)
+    return dl, dl.run_pipeline(target_years=anios, modulos=modulos)
+
+
+def test_ecv_tabla_cubre_2018_a_2025():
+    for anio in range(2018, 2026):
+        assert {m for a, m in ECV_KNOWN_FILES if a == anio} >= set(dd.ecv.MODULOS)
+    assert {a for a, m in ECV_KNOWN_FILES if m == "factores"} == {2018}
+    assert ECV_KNOWN_FILES[2020, "complementaria"] == (
+        "679", "Base_complementaria.zip", "https://microdatos.dane.gov.co/index.php/catalog/679/download/20574")
+    assert len({url for _, _, url in ECV_KNOWN_FILES.values()}) == len(ECV_KNOWN_FILES)  # sin números repetidos
+    assert ECV_KNOWN_FILES[2018, "vivienda"] == (
+        "607", "Datos de la vivienda.zip", "https://microdatos.dane.gov.co/index.php/catalog/607/download/11195")
+    assert ECV_KNOWN_FILES[2023, "salud"][1:] == ("Salud_ajustada.zip", "https://microdatos.dane.gov.co/index.php/catalog/827/download/23480")
+    assert ECV_KNOWN_FILES[2025, "fuerza_trabajo"][2].endswith("/catalog/905/download/24627")
+    assert dd.ecv.ANIOS_DISPONIBLES == list(range(2018, 2026))
+
+
+def test_ecv_prefiere_csv_y_entra_a_la_subcarpeta(tmp_path):
+    paquete = _zip_eevv({"DBF-ECV-Salud-2025/Salud.csv": "DIRECTORIO\n1\n", "DBF-ECV-Salud-2025/Salud.DTA": "x",
+                         "DBF-ECV-Salud-2025/Salud.sav": "x"})
+    _, fallidos = _baja_ecv(tmp_path, {_url_ecv(2025, "salud"): paquete}, [2025])
+    assert fallidos == []
+    assert [f.name for f in (tmp_path / "datos" / "2025" / "salud").iterdir()] == ["Salud.csv"]
+
+
+def test_ecv_usa_stata_si_no_hay_csv(tmp_path):
+    paquete = _zip_eevv({"Salud.dta": "stata", "Salud.sav": "spss"})
+    _baja_ecv(tmp_path, {_url_ecv(2019, "salud"): paquete}, [2019])
+    assert [f.name for f in (tmp_path / "datos" / "2019" / "salud").iterdir()] == ["Salud.dta"]
+
+
+def test_ecv_2018_baja_tambien_los_factores(tmp_path):
+    paquetes = {_url_ecv(2018, "salud"): _zip_eevv({"Salud.csv": "DIRECTORIO\n1\n"}),
+                _url_ecv(2018, "factores"): _zip_eevv({"Factores de expansi\u00f3n 2018 basados en el CNPV 2018.csv": "DIRECTORIO;FEX_C\n1;2\n"})}
+    dl, fallidos = _baja_ecv(tmp_path, paquetes, [2018])
+    assert fallidos == []
+    assert sorted(dl.descargas) == sorted(paquetes)
+    assert dd.ecv.available(root=tmp_path)[["anio", "modulo"]].values.tolist() == [[2018, "salud"], [2018, "factores"]]
+    _, fallidos = _baja_ecv(tmp_path, paquetes, [2019])  # en los demás años no hay factores aparte
+    assert len(fallidos) == 1 and "salud 2019" in fallidos[0]
+
+
+def test_ecv_incremental_y_forzar(tmp_path):
+    url = _url_ecv(2019, "salud")
+    paquetes = {url: _zip_eevv({"Salud.csv": "DIRECTORIO\n1\n"})}
+    dl, _ = _baja_ecv(tmp_path, paquetes, [2019])
+    assert dl.descargas == [url]
+    dl, _ = _baja_ecv(tmp_path, paquetes, [2019])
+    assert dl.descargas == []  # ya estaba
+    paquetes[url] = _zip_eevv({"Salud corregida.csv": "DIRECTORIO\n1\n"})
+    dl, _ = _baja_ecv(tmp_path, paquetes, [2019], forzar=True)
+    assert dl.descargas == [url]
+    assert [f.name for f in (tmp_path / "datos" / "2019" / "salud").iterdir()] == ["Salud corregida.csv"]
+
+
+def test_ecv_forzar_conserva_lo_anterior_si_falla(tmp_path):
+    url = _url_ecv(2019, "salud")
+    _baja_ecv(tmp_path, {url: _zip_eevv({"Salud.csv": "DIRECTORIO\n1\n"})}, [2019])
+    _, fallidos = _baja_ecv(tmp_path, {url: _zip_eevv({"Salud.sav": "spss"})}, [2019], forzar=True)
+    assert len(fallidos) == 1 and "salud 2019" in fallidos[0] and "Se conserva" in fallidos[0]
+    assert (tmp_path / "datos" / "2019" / "salud" / "Salud.csv").exists()
+
+
+def test_ecv_reporta_fallos_y_sigue(tmp_path):
+    bueno = {_url_ecv(2021, "salud"): _zip_eevv({"Salud.csv": "DIRECTORIO\n1\n"}), _url_ecv(2021, "tic"): b"no es un zip"}
+    _, fallidos = _baja_ecv(tmp_path, bueno, [2020, 2021], modulos=("salud", "tic"))
+    # 2020 también pide la base complementaria del IPM, que estos paquetes no traen
+    assert sorted(f.split(":")[0] for f in fallidos) == ["complementaria 2020", "salud 2020", "tic 2020", "tic 2021"]
+    assert (tmp_path / "datos" / "2021" / "salud" / "Salud.csv").exists()
+
+
+def test_ecv_borra_los_zip_si_se_pide(tmp_path):
+    url = _url_ecv(2022, "salud")
+    _, fallidos = _baja_ecv(tmp_path, {url: _zip_eevv({"Salud.csv": "DIRECTORIO\n1\n"})}, [2022], keep_zips=False)
+    assert fallidos == []
+    assert not (tmp_path / "raw_zips" / "793" / "Salud.zip").exists()
+    assert (tmp_path / "datos" / "2022" / "salud" / "Salud.csv").exists()
+
+
+def test_ecv_anio_sin_la_encuesta_es_un_fallo(tmp_path):
+    dl, fallidos = _baja_ecv(tmp_path, {}, [2017])
+    assert dl.descargas == []
+    assert len(fallidos) == 1 and "2017" in fallidos[0]
+
+
+def test_ecv_cancelar(tmp_path):
+    dl = FakeECVDownloader({}, base_dir=tmp_path, should_stop=lambda: True)
+    with pytest.raises(dd.DownloadCancelled):
+        dl.run_pipeline(target_years=[2020], modulos=("salud",))
+
+
+def test_ecv_download_valida_modulos(tmp_path):
+    with pytest.raises(ValueError, match="Módulo desconocido 'gastos'"):
+        dd.ecv.download(2020, modulos=["salud", "gastos"], root=tmp_path)
+    with pytest.raises(ValueError, match="Módulo desconocido 'factores'"):  # interno: va solo con 2018
+        dd.ecv.download(2018, modulos="factores", root=tmp_path)
+    with pytest.raises(ValueError, match="Módulo desconocido"):
+        dd.ecv.find_files(2020, modulo="gastos", root=tmp_path)
+
+
+def test_ecv_available_y_find_files(tmp_path):
+    _baja_ecv(tmp_path, {_url_ecv(2020, "salud"): _zip_eevv({"Salud.csv": "DIRECTORIO\n1\n"})}, [2020])
+    tabla = dd.ecv.available(root=tmp_path)
+    assert tabla[["anio", "modulo", "archivo"]].values.tolist() == [[2020, "salud", "Salud.csv"]]
+    assert list(dd.ecv.find_files(2020, modulo="salud", root=tmp_path)) == [2020]
+    assert dd.ecv.find_files(2020, modulo="tic", root=tmp_path) == {}
+    assert dd.ecv.available(root=tmp_path / "no_existe").empty
+
+
+def _zip_deflate64(nombre: str, datos: bytes, crc: int | None = None) -> bytes:
+    """Un ZIP con un miembro en Deflate64 (método 9), como Educación 2021 de la ECV: zipfile no sabe escribirlo."""
+    import struct
+    import zlib
+
+    import inflate64
+
+    deflater = inflate64.Deflater()
+    comprimido = deflater.deflate(datos) + deflater.flush()
+    crc = zlib.crc32(datos) if crc is None else crc
+    n = nombre.encode()
+    local = struct.pack("<4s5H3L2H", b"PK\x03\x04", 20, 0, 9, 0, 0, crc, len(comprimido), len(datos), len(n), 0) + n
+    central = struct.pack("<4s6H3L5H2L", b"PK\x01\x02", 20, 20, 0, 9, 0, 0, crc, len(comprimido), len(datos), len(n),
+                          0, 0, 0, 0, 0, 0) + n
+    fin = struct.pack("<4s4H2LH", b"PK\x05\x06", 0, 0, 1, 1, len(central), len(local) + len(comprimido), 0)
+    return local + comprimido + central + fin
+
+
+def test_ecv_extrae_zip_en_deflate64(tmp_path):
+    csv = ("DIRECTORIO;SECUENCIA_P\n" + "".join(f"{i};1\n" for i in range(5000))).encode()
+    url = _url_ecv(2021, "educacion")
+    _, fallidos = _baja_ecv(tmp_path, {url: _zip_deflate64("Educación.csv", csv)}, [2021], modulos=("educacion",))
+    assert fallidos == []
+    assert (tmp_path / "datos" / "2021" / "educacion" / "Educación.csv").read_bytes() == csv
+    _, fallidos = _baja_ecv(tmp_path, {url: _zip_deflate64("Educación.csv", csv, crc=1)}, [2021], modulos=("educacion",),
+                            forzar=True)
+    assert len(fallidos) == 1 and "educacion 2021" in fallidos[0]  # un CRC distinto no deja un archivo dañado
+
+
+def test_ecv_extraer_falla_si_dos_archivos_quedan_con_el_mismo_nombre(tmp_path):
+    zp = tmp_path / "x.zip"
+    with zipfile.ZipFile(zp, "w") as z:
+        z.writestr("a/Datos.csv", "DIRECTORIO\n1\n")
+        z.writestr("b/Datos.csv", "DIRECTORIO\n2\n")
+    dl = ECVDownloader(base_dir=tmp_path)
+    assert dl._extraer(zp, tmp_path / "datos" / "2025" / "vivienda") is False
+    assert not (tmp_path / "datos" / "2025" / "vivienda").exists()
+
+
+# Los 90 números de descarga de la tabla fija se copiaron a mano del ANDA: un número equivocado bajaría un ZIP válido de
+# otro capítulo. Esta prueba los compara con las páginas get-microdata; usa la red, así que corre solo con
+# DANE_DATA_TEST_RED=1.
+@pytest.mark.skipif(not __import__("os").environ.get("DANE_DATA_TEST_RED"), reason="usa la red: DANE_DATA_TEST_RED=1")
+@pytest.mark.parametrize("catalogo", sorted({c for c, _, _ in ECV_KNOWN_FILES.values()}))
+def test_red_ecv_tabla_fija_igual_al_anda(catalogo, tmp_path):
+    publicados = GEIHDownloader(base_dir=tmp_path)._enlaces(catalogo)
+    assert publicados, f"sin respuesta del catálogo {catalogo}"
+    for (anio, modulo), (cat, nombre, url) in ECV_KNOWN_FILES.items():
+        if cat == catalogo:
+            assert publicados.get(url, "").strip() == nombre, (anio, modulo, nombre, publicados.get(url))
+
+
+def _zip_deflate_danado(ruta):
+    """ZIP con encabezados sanos y el Deflate del miembro dañado: zipfile lanza zlib.error al leerlo."""
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
+        z.writestr("Datos 2025.csv", "DIRECTORIO,X\n" + "".join(f"{i},{i * 7}\n" for i in range(5000)))
+    b = bytearray(buf.getvalue())
+    i = b.index(b"Datos 2025.csv") + len("Datos 2025.csv")
+    b[i:i + 8] = b"\xff" * 8
+    ruta.write_bytes(bytes(b))
+
+
+@pytest.mark.parametrize("encuesta", ["ecv", "eevv"])
+def test_extraer_con_deflate_danado_falla_sin_detener_la_descarga(tmp_path, encuesta):
+    _zip_deflate_danado(zp := tmp_path / "x.zip")
+    carpeta = tmp_path / "datos" / "2025" / "x"
+    if encuesta == "ecv":
+        assert ECVDownloader(base_dir=tmp_path)._extraer(zp, carpeta) is False
+    else:
+        assert EEVVDownloader(base_dir=tmp_path)._extraer(zp, 2025, carpeta) is False
+    assert not carpeta.exists()
 
 
 # ---------------------------------------------------------------------------------------------------- #

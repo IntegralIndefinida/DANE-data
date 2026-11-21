@@ -28,6 +28,13 @@ Los indicadores de {dd}`emicron.indicadores()` (vienen de `dd.emicron.GLOSARIO`)
 ```{include} _generado/glosario_emicron.md
 ```
 
+## Calidad de vida
+
+Los indicadores de {dd}`ecv.indicadores()` (vienen de `dd.ecv.GLOSARIO`). El IPM se explica en {doc}`guia/ecv`.
+
+```{include} _generado/glosario_ecv.md
+```
+
 ## Términos de las encuestas
 
 ```{glossary}

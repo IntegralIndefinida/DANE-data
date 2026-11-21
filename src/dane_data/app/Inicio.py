@@ -24,6 +24,9 @@ paginas = {
     "EMICRON · Micronegocios": [
         st.Page("paginas/emicron_micronegocios.py", title="Micronegocios", icon=":material/storefront:"),
     ],
+    "ECV · Calidad de vida": [
+        st.Page("paginas/ecv_calidad.py", title="Calidad de vida y pobreza", icon=":material/home_work:"),
+    ],
     "Herramientas": [
         st.Page("paginas/descargar.py", title="Descargar datos", icon=":material/download:"),
         st.Page("paginas/diccionario.py", title="Diccionario de variables", icon=":material/menu_book:"),

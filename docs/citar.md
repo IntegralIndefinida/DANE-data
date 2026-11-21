@@ -16,6 +16,14 @@ Los microdatos son del DANE. Cite la encuesta y el catálogo del ANDA que usó:
 > DANE. *Encuesta de Micronegocios (EMICRON)* [microdatos]. Archivo Nacional de Datos (ANDA).
 > <https://microdatos.dane.gov.co>
 
+> DANE. *Encuesta Nacional de Calidad de Vida (ECV)* [microdatos]. Archivo Nacional de Datos (ANDA).
+> <https://microdatos.dane.gov.co>
+
+Si usó el Índice de Pobreza Multidimensional, cite también su metodología:
+
+> DANE. *Índice de Pobreza Multidimensional (IPM)*.
+> <https://www.dane.gov.co/index.php/estadisticas-por-tema/pobreza-y-condiciones-de-vida/pobreza-multidimensional>
+
 Si usó tasas de las Estadísticas Vitales o {dd}`poblacion()`, cite también las proyecciones de población, que
 `dane-data` trae incluidas:
 
@@ -29,13 +37,13 @@ misma cita en APA y BibTeX, tomada de
 [`CITATION.cff`](https://github.com/IntegralIndefinida/DANE-data/blob/main/CITATION.cff). La página *Cómo citar* de
 la {doc}`aplicación <guia/app>` da el BibTeX con el campo `version` de la versión instalada.
 
-> Ramírez, L. (2026). *dane-data: microdatos del DANE (GEIH, EAM, Estadísticas Vitales y EMICRON) listos para analizar* (versión
+> Ramírez, L. (2026). *dane-data: microdatos del DANE (GEIH, EAM, Estadísticas Vitales, EMICRON y ECV) listos para analizar* (versión
 > {{ version }}) [software]. <https://github.com/IntegralIndefinida/DANE-data>
 
 ```bibtex
 @software{dane_data,
   author  = {Ramírez, Luis},
-  title   = {dane-data: microdatos del DANE (GEIH, EAM, Estadísticas Vitales y EMICRON) listos para analizar},
+  title   = {dane-data: microdatos del DANE (GEIH, EAM, Estadísticas Vitales, EMICRON y ECV) listos para analizar},
   year    = {2026},
   url     = {https://github.com/IntegralIndefinida/DANE-data},
 }

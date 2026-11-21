@@ -15,12 +15,23 @@
 * La EMICRON en la aplicación: una página nueva, *Micronegocios*, con el total nacional (2019–2024) o las 24 ciudades
   (2019–2025), y en Descargar, Inicio y Cómo citar. También en la terminal: `dane-data descargar emicron`,
   `dane-data config --emicron`.
-* {dd}`set_paths()` acepta `emicron=`.
+* {dd}`set_paths()` acepta `emicron=` y `ecv=`.
+* `dd.ecv`: la **Encuesta Nacional de Calidad de Vida** 2018–2025 (vea {doc}`guia/ecv`). {dd}`ecv.download()` baja del ANDA
+  los once capítulos del cuestionario de cada año y, en 2018, los factores de expansión del CNPV 2018; {dd}`ecv.load()` los
+  une en una fila por persona o por hogar, con variables armonizadas en minúscula; {dd}`ecv.indicadores()` y
+  {dd}`ecv.serie_indicadores()` dan los 27 indicadores de la serie del DANE, iguales a los publicados.
+* El **Índice de Pobreza Multidimensional**: {dd}`ecv.privaciones()`, {dd}`ecv.ipm()` y {dd}`ecv.serie_ipm()`. Reproduce la base
+  oficial del DANE hogar por hogar, salvo 5, 25 y 3 de unos 89.000 hogares en 2020, 2021 y 2022 (IPM 2025: 9,9 % y
+  0,040; 2020, con la base complementaria de estudio en casa, 18,1 %).
+* La ECV en la aplicación (página *Calidad de vida y pobreza*, Descargar datos, Inicio, Diccionario y Cómo citar), en la
+  línea de comandos (`dane-data descargar ecv`, `dane-data config --ecv`) y en {dd}`diccionario()` (`"ecv"`).
 
 **Mejoras**
 
 * {dd}`tabla()` deja fuera las filas con el peso vacío, con un aviso que dice cuántas y de qué años, en vez de sumarlas
   como cero y contarlas en `n_muestra`. Si ninguna fila tiene peso, es un error.
+* Las descargas del ANDA leen los ZIP comprimidos en Deflate64 (Educación 2021 de la ECV), con la dependencia nueva
+  `inflate64`.
 
 ## 0.5.0 (9 de noviembre de 2026)
 

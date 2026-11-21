@@ -5,11 +5,12 @@ La instalación agrega el comando `dane-data` a la terminal:
 ```bash
 dane-data app                                       # abrir la aplicación
 dane-data estado                                    # carpetas y datos descargados
-dane-data config --geih RUTA --empalme RUTA --eam RUTA --eevv RUTA
+dane-data config --geih RUTA --empalme RUTA --eam RUTA --eevv RUTA --ecv RUTA
 dane-data descargar geih --anios 2024 2025
 dane-data descargar geih --anios 2016 --empalme
 dane-data descargar eam --anios 2022 2023 2024
 dane-data descargar eevv --anios 2025
+dane-data descargar ecv --anios 2025
 ```
 
 Si el comando no está en la terminal (por ejemplo, con `uv`), use `uv run dane-data ...` o

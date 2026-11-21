@@ -8,10 +8,12 @@ generan los descargadores originales:
     GEIH  (serie empalme)   : <raiz>/datos_csv/<año>/<mes>/*.csv
     EAM                     : <raiz>/datos/<año>/*.csv|*.txt|*.dta
     Estadísticas Vitales    : <raiz>/datos/<tipo>/<año>/*.csv|*.txt|*.dta
+    ECV                     : <raiz>/datos/<año>/<módulo>/*.csv|*.dta
 
 Prioridad para resolver cada ruta:
   1. ``set_paths(...)`` en la sesión actual.
-  2. Variables de entorno ``DANE_DATA_GEIH``, ``DANE_DATA_GEIH_EMPALME``, ``DANE_DATA_EAM``, ``DANE_DATA_EEVV``.
+  2. Variables de entorno ``DANE_DATA_GEIH``, ``DANE_DATA_GEIH_EMPALME``, ``DANE_DATA_EAM``, ``DANE_DATA_EEVV``,
+     ``DANE_DATA_ECV``.
   3. Archivo ``~/.config/dane_data/config.json`` (lo escribe ``save()`` y la app).
   4. Valor por defecto bajo ``~/dane_data_datos/``.
 """
@@ -43,6 +45,7 @@ _KEYS = {
     "eam": ("DANE_DATA_EAM", DEFAULT_HOME / "eam"),
     "eevv": ("DANE_DATA_EEVV", DEFAULT_HOME / "eevv"),
     "emicron": ("DANE_DATA_EMICRON", DEFAULT_HOME / "emicron"),
+    "ecv": ("DANE_DATA_ECV", DEFAULT_HOME / "ecv"),
 }
 _session: dict[str, Path] = {}
 
@@ -60,13 +63,14 @@ def get_path(key: str) -> Path:
     Carpeta raíz de una encuesta o registro.
 
     Se resuelve en este orden: ``set_paths`` en la sesión actual, la variable de entorno
-    (``DANE_DATA_GEIH``, ``DANE_DATA_GEIH_EMPALME``, ``DANE_DATA_EAM``, ``DANE_DATA_EEVV`` o ``DANE_DATA_EMICRON``), el archivo
+    (``DANE_DATA_GEIH``, ``DANE_DATA_GEIH_EMPALME``, ``DANE_DATA_EAM``, ``DANE_DATA_EEVV``, ``DANE_DATA_EMICRON`` o
+    ``DANE_DATA_ECV``), el archivo
     ``~/.config/dane_data/config.json`` y, si nada de eso existe, ``~/dane_data_datos/``.
 
     Parámetros
     ----------
     key
-        ``"geih"``, ``"geih_empalme"``, ``"eam"``, ``"eevv"`` o ``"emicron"``.
+        ``"geih"``, ``"geih_empalme"``, ``"eam"``, ``"eevv"``, ``"emicron"`` o ``"ecv"``.
 
     Devuelve
     --------
@@ -102,13 +106,13 @@ def get_path(key: str) -> Path:
     return default
 
 
-def set_paths(geih=None, geih_empalme=None, eam=None, save: bool = False, eevv=None, emicron=None) -> None:
+def set_paths(geih=None, geih_empalme=None, eam=None, save: bool = False, eevv=None, emicron=None, ecv=None) -> None:
     """
     Fija las carpetas raíz de los datos.
 
     Cada carpeta es la raíz de una encuesta: la GEIH queda en ``<raíz>/datos_csv/<año>/<mes>/``, la EAM en
-    ``<raíz>/datos/<año>/``, las Estadísticas Vitales en ``<raíz>/datos/<tipo>/<año>/`` y la EMICRON en
-    ``<raíz>/datos/<año>/<módulo>.csv``. Las carpetas que no se indican no cambian.
+    ``<raíz>/datos/<año>/``, las Estadísticas Vitales en ``<raíz>/datos/<tipo>/<año>/``, la EMICRON en
+    ``<raíz>/datos/<año>/<módulo>.csv`` y la ECV en ``<raíz>/datos/<año>/<módulo>/``. Las carpetas que no se indican no cambian.
 
     Parámetros
     ----------
@@ -126,6 +130,8 @@ def set_paths(geih=None, geih_empalme=None, eam=None, save: bool = False, eevv=N
         Carpeta de las Estadísticas Vitales.
     emicron
         Carpeta de la Encuesta de Micronegocios (EMICRON).
+    ecv
+        Carpeta de la Encuesta Nacional de Calidad de Vida.
 
     Lanza
     -----
@@ -148,7 +154,7 @@ def set_paths(geih=None, geih_empalme=None, eam=None, save: bool = False, eevv=N
     >>> dd.set_paths(geih="~/datos/GEIH", eam="~/datos/EAM", save=True)  # doctest: +SKIP
     """
     nuevas = {k: v for k, v in (("geih", geih), ("geih_empalme", geih_empalme), ("eam", eam), ("eevv", eevv),
-                                ("emicron", emicron))
+                                ("emicron", emicron), ("ecv", ecv))
               if v is not None}
     if vacias := [k for k, v in nuevas.items() if not str(v).strip()]:
         raise ValueError(f"Carpeta vacía para {', '.join(vacias)}: indique una ruta.")
@@ -175,7 +181,7 @@ def show_paths() -> dict[str, str]:
     Devuelve
     --------
     dict
-        ``{"geih": ..., "geih_empalme": ..., "eam": ..., "eevv": ..., "emicron": ...}`` con las rutas como texto.
+        ``{"geih": ..., "geih_empalme": ..., "eam": ..., "eevv": ..., "emicron": ..., "ecv": ...}`` con las rutas como texto.
 
     Véase también
     -------------
@@ -185,6 +191,6 @@ def show_paths() -> dict[str, str]:
     --------
     >>> import dane_data as dd
     >>> dd.show_paths()  # doctest: +SKIP
-    {'geih': '/home/ana/datos/GEIH', 'geih_empalme': '/home/ana/dane_data_datos/geih/empalme', 'eam': '/home/ana/datos/EAM', 'eevv': '/home/ana/dane_data_datos/eevv', 'emicron': '/home/ana/dane_data_datos/emicron'}
+    {'geih': '/home/ana/datos/GEIH', 'geih_empalme': '/home/ana/dane_data_datos/geih/empalme', 'eam': '/home/ana/datos/EAM', 'eevv': '/home/ana/dane_data_datos/eevv', 'emicron': '/home/ana/dane_data_datos/emicron', 'ecv': '/home/ana/dane_data_datos/ecv'}
     """
     return {k: str(get_path(k)) for k in _KEYS}

@@ -10,6 +10,7 @@ Cada encuesta tiene su carpeta raíz, con esta estructura:
 <raíz EAM>/datos/<año>/*.csv|*.txt
 <raíz EEVV>/datos/<tipo>/<año>/*.csv|*.txt  estadísticas vitales
 <raíz EMICRON>/datos/<año>/<módulo>.csv     micronegocios
+<raíz ECV>/datos/<año>/<módulo>/*.csv|*.dta  calidad de vida
 ```
 
 Las carpetas de los meses conservan el nombre que trae el ZIP del DANE (`Enero 2024`, `ENE_2021`…);
@@ -23,22 +24,23 @@ Por defecto todo queda en `~/dane_data_datos/`. Para usar otras carpetas (por ej
 import dane_data as dd
 
 dd.set_paths(geih="D:/datos/GEIH", geih_empalme="D:/datos/GEIH_empalme", eam="D:/datos/EAM", eevv="D:/datos/EEVV",
-             emicron="D:/datos/EMICRON", save=True)
+             emicron="D:/datos/EMICRON", ecv="D:/datos/ECV", save=True)
 ```
 
 Con `save=True` quedan guardadas en `~/.config/dane_data/config.json` para las próximas sesiones, para la
 línea de comandos y para la aplicación; sin él, valen solo para la sesión actual. Lo mismo se hace desde la
-terminal con `dane-data config --geih RUTA --empalme RUTA --eam RUTA --eevv RUTA --emicron RUTA` o desde la página de inicio de la
+terminal con `dane-data config --geih RUTA --empalme RUTA --eam RUTA --eevv RUTA --emicron RUTA --ecv RUTA` o desde la
+página de inicio de la
 aplicación.
 
 Cada carpeta se resuelve en este orden:
 
 1. {dd}`set_paths()` en la sesión actual.
-2. Las variables de entorno `DANE_DATA_GEIH`, `DANE_DATA_GEIH_EMPALME`, `DANE_DATA_EAM`, `DANE_DATA_EEVV` y
-   `DANE_DATA_EMICRON`.
+2. Las variables de entorno `DANE_DATA_GEIH`, `DANE_DATA_GEIH_EMPALME`, `DANE_DATA_EAM`, `DANE_DATA_EEVV`,
+   `DANE_DATA_EMICRON` y `DANE_DATA_ECV`.
 3. El archivo `~/.config/dane_data/config.json`.
-4. `~/dane_data_datos/geih`, `~/dane_data_datos/geih/empalme`, `~/dane_data_datos/eam`, `~/dane_data_datos/eevv` y
-   `~/dane_data_datos/emicron`.
+4. `~/dane_data_datos/geih`, `~/dane_data_datos/geih/empalme`, `~/dane_data_datos/eam`, `~/dane_data_datos/eevv`,
+   `~/dane_data_datos/emicron` y `~/dane_data_datos/ecv`.
 
 {dd}`show_paths()` muestra las carpetas que se están usando, y {dd}`get_path()` una sola.
 
@@ -55,12 +57,14 @@ dd.eam.download()                       # toda la EAM, 1992–2024
 dd.eevv.download(2025)                  # los tres certificados de las Estadísticas Vitales
 dd.eevv.download(tipos="defunciones")   # todas las defunciones, 1979–2025
 dd.emicron.download(2024)               # todos los módulos de la EMICRON 2024
+dd.ecv.download(2025)                   # los once capítulos de la ECV 2025
 ```
 
 {dd}`geih.download()` y {dd}`eam.download()` buscan los archivos en el catálogo del {term}`ANDA` de cada año, bajan
-los ZIP y extraen los módulos. {dd}`eevv.download()` no busca en el ANDA: tiene una tabla fija con los archivos de cada
-año y certificado (los años están en `dd.eevv.ANIOS_DISPONIBLES`), y {dd}`emicron.download()` tampoco: un ZIP por
-año y módulo (`dd.emicron.MODULOS`), del que extrae el CSV. Las descargas son **incrementales**:
+los ZIP y extraen los módulos. {dd}`eevv.download()` y {dd}`ecv.download()` no buscan en el ANDA: tienen una tabla fija con
+los archivos de cada año y certificado o capítulo (los años están en `dd.eevv.ANIOS_DISPONIBLES` y
+`dd.ecv.ANIOS_DISPONIBLES`), y {dd}`emicron.download()` tampoco: un ZIP por año y módulo (`dd.emicron.MODULOS`), del
+que extrae el CSV. Las descargas son **incrementales**:
 
 * Al terminar un mes se escribe un marcador (`.dane_data_ok`) que registra qué módulos se extrajeron. Una
   descarga posterior salta los meses que ya tienen esos módulos. Si al mes le falta algo (el ZIP del DANE no

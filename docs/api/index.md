@@ -49,6 +49,14 @@ Estadísticas Vitales: descarga, carga armonizada, indicadores y tasas de natali
 Encuesta de Micronegocios: descarga, carga armonizada, indicadores del cuadro I.1 del DANE e informalidad
 empresarial.
 :::
+
+:::{grid-item-card} `dd.ecv`
+:link: ecv
+:link-type: doc
+
+Encuesta Nacional de Calidad de Vida: descarga, carga armonizada, indicadores de la serie del DANE e Índice de
+Pobreza Multidimensional.
+:::
 ::::
 
 ```{toctree}
@@ -59,4 +67,5 @@ geih
 eam
 eevv
 emicron
+ecv
 ```

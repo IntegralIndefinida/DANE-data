@@ -777,7 +777,7 @@ def test_inicio_con_eevv(eevv_root, tmp_path, monkeypatch):
     assert json.loads(archivo.read_text(encoding="utf-8")) == {"eevv": str(tmp_path / "otra")}
 
 
-@pytest.mark.parametrize("encuesta", ["Defunciones", "Nacimientos", "Defunciones fetales", "EMICRON"])
+@pytest.mark.parametrize("encuesta", ["Defunciones", "Nacimientos", "Defunciones fetales", "EMICRON", "ECV"])
 def test_diccionario_eevv(encuesta):
     at = AppTest.from_file(str(PAGINAS / "diccionario.py"), default_timeout=60).run()
     at.radio[0].set_value(encuesta).run()
@@ -790,6 +790,7 @@ def test_las_paginas_estan_en_la_navegacion():
     inicio = (PAGINAS.parent / "Inicio.py").read_text(encoding="utf-8")
     assert "paginas/eevv_vitales.py" in inicio
     assert "paginas/emicron_micronegocios.py" in inicio
+    assert "paginas/ecv_calidad.py" in inicio
 
 
 def test_descargar_emicron(tmp_path, monkeypatch):
@@ -832,7 +833,7 @@ def test_citar_incluye_la_emicron():
     assert not at.exception
     assert "EMICRON" in at.code[0].value  # el título del software
     assert "Encuesta de Micronegocios (EMICRON) [microdatos]" in at.code[2].value
-    assert "Estadísticas Vitales y EMICRON" in Path(dd.__file__).parents[2].joinpath("CITATION.cff").read_text(encoding="utf-8")
+    assert "Estadísticas Vitales, EMICRON y ECV" in Path(dd.__file__).parents[2].joinpath("CITATION.cff").read_text(encoding="utf-8")
 
 
 # ---------------------------------------------------------------------------------------------------- #
@@ -894,3 +895,84 @@ def test_emicron_pagina_sin_datos(tmp_path, monkeypatch):
     at = AppTest.from_file(str(PAGINAS / "emicron_micronegocios.py"), default_timeout=60).run()
     assert not at.exception
     assert any("EMICRON" in w.value for w in at.main.warning)
+
+
+# ---------------------------------------------------------------------------------------------------- #
+# ECV
+# ---------------------------------------------------------------------------------------------------- #
+@pytest.fixture
+def app_ecv(ecv_completo, tmp_path, monkeypatch):
+    monkeypatch.setitem(dd.config._session, "ecv", ecv_completo)
+    monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
+    return AppTest.from_file(str(PAGINAS / "ecv_calidad.py"), default_timeout=60)
+
+
+def test_ecv_sin_datos(tmp_path, monkeypatch):
+    monkeypatch.setitem(dd.config._session, "ecv", tmp_path / "nada")
+    monkeypatch.setattr("streamlit.page_link", lambda *a, **k: None)
+    at = AppTest.from_file(str(PAGINAS / "ecv_calidad.py"), default_timeout=60).run()
+    assert not at.exception
+    assert any("ECV" in w.value for w in at.main.warning)
+
+
+def test_ecv_indicadores(app_ecv):
+    at = app_ecv.run()
+    assert not at.exception
+    assert [m.label for m in at.metric] == ["Hogares", "Personas por hogar", "Hogares con internet", "Afiliados a salud"]
+    assert at.metric[0].value == "150" and at.metric[2].value == "66,7 %"
+    _seleccionar(at, "Variable", "Personas afiliadas a salud (%)")
+    _seleccionar(at, "Desagregar por", "Departamento")
+    assert any("dd.ecv.serie_indicadores([2025], por='departamento')" in c.value for c in at.code)
+
+
+def test_ecv_ipm(app_ecv):
+    at = app_ecv.run()
+    _seleccionar(at, "Vista", "Pobreza multidimensional (IPM)")
+    assert at.metric[0].label == "Personas en pobreza multidimensional"
+    assert at.metric[0].value == "14,3 %"  # 50 de 350 personas
+    _seleccionar(at, "Variable", "Hogares con privación: material inadecuado de pisos (%)")
+    _seleccionar(at, "Desagregar por", "Región (como el DANE)")
+    assert any("dd.ecv.serie_ipm([2025], por='region_ipm')" in c.value for c in at.code)
+
+
+def test_ecv_ipm_sin_los_capitulos(ecv_root, tmp_path, monkeypatch):
+    monkeypatch.setitem(dd.config._session, "ecv", ecv_root)
+    monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
+    at = AppTest.from_file(str(PAGINAS / "ecv_calidad.py"), default_timeout=60).run()
+    assert not at.exception
+    assert at.metric[3].value == "58,9 %"  # el resumen es de 2025, que sí tiene Salud
+    _seleccionar(at, "Vista", "Pobreza multidimensional (IPM)")
+    assert not at.exception
+    assert any("le faltan los capítulos" in w.value for w in at.warning)
+
+
+def test_descargar_ecv(tmp_path, monkeypatch):
+    for clave in ("geih", "geih_empalme", "eam", "eevv", "ecv"):
+        monkeypatch.setitem(dd.config._session, clave, tmp_path / clave)
+    pedidos = []
+    monkeypatch.setattr(dd.ecv, "download", lambda anios, **kw: pedidos.append((list(anios), kw["modulos"])) or [])
+    at = AppTest.from_file(str(PAGINAS / "descargar.py")).run()
+    at.radio[0].set_value("ECV (calidad de vida y pobreza multidimensional)").run()
+    assert not at.exception
+    assert any("1,4 GB" in i.value for i in at.info)  # 2025, con los once capítulos
+    next(m for m in at.multiselect if m.label == "Capítulos").set_value(["caracteristicas", "salud"]).run()
+    next(b for b in at.button if b.label.endswith("Descargar")).click().run()
+    assert not at.exception
+    assert pedidos == [([2025], ["caracteristicas", "salud"])]
+    assert any("modulos=['caracteristicas', 'salud']" in c.value for c in at.code)
+    next(m for m in at.multiselect if m.label == "Capítulos").set_value([]).run()
+    assert next(b for b in at.button if b.label.endswith("Descargar")).disabled
+
+
+def test_inicio_con_ecv(ecv_root, tmp_path, monkeypatch):
+    archivo = tmp_path / "config.json"
+    monkeypatch.setattr(dd.config, "CONFIG_FILE", archivo)
+    monkeypatch.setattr(dd.config, "_session", {"geih": tmp_path / "g", "geih_empalme": tmp_path / "e", "eam": tmp_path / "eam",
+                                                "eevv": tmp_path / "v", "ecv": ecv_root})
+    at = AppTest.from_file(str(PAGINAS / "inicio.py"), default_timeout=60).run()
+    assert not at.exception
+    assert next(m for m in at.metric if m.label == "ECV").value == "3 años"
+    next(t for t in at.text_input if t.label == "ECV").set_value(str(tmp_path / "otra"))
+    next(b for b in at.button if b.label == "Guardar").click().run()
+    assert not at.exception
+    assert json.loads(archivo.read_text(encoding="utf-8")) == {"ecv": str(tmp_path / "otra")}

@@ -90,6 +90,26 @@ ni de 2025.
 
 Las cifras trimestrales no se pueden reproducir: usan factores de expansión trimestrales que no vienen en los microdatos.
 
+## ECV e IPM
+
+Con los datos reales de 2018–2025, las pruebas comparan los 27 indicadores de {dd}`ecv.indicadores()` con el anexo de series
+de la ECV del DANE, y el IPM con los anexos de pobreza multidimensional:
+
+| Qué | Resultado |
+|---|---|
+| Indicadores de la ECV, total nacional y por área (cabecera y centros poblados y rural disperso), 2018–2025 | Exactos |
+| Indicadores de la ECV por departamento | A menos de 0,1 puntos; 5 cifras de 2023 y 2024 difieren entre 0,004 y 0,08 puntos |
+| Las 15 privaciones y la condición de pobre, hogar por hogar, contra la base oficial del IPM (`BDATOS-IPM`) | Exactas en 2018, 2019, 2023, 2024 y 2025; en 2020, 2021 y 2022 difieren 5, 25 y 3 hogares de unos 89.000 |
+| Incidencia, IPM y privaciones de los anexos: nacional, área, región y departamento | Iguales al redondeo del anexo; en 2020 y 2021, a menos de 0,15 puntos (abajo) |
+
+**Diferencias conocidas:**
+
+* **2020:** el DANE armó la inasistencia escolar con su base complementaria (estrategias de estudio en casa, con
+  información del SIMAT), que `dane-data` baja y usa. 4 de 88.310 hogares quedan privados de más: Cauca da 28,3 % y no 28,2 %.
+* **2021:** 21 de 89.203 hogares tienen otra inasistencia escolar en la base del DANE, sin que las variables publicadas
+  expliquen por qué. La incidencia de dos departamentos difiere en 0,1 puntos.
+* El anexo de series de 2024 trae intercambiado el uso de celular de Chocó (88,8 %) y de Córdoba (70,9 %).
+
 Las proyecciones de población se comprueban al generarlas: las áreas suman el total del archivo, los departamentos suman el
 total nacional en cada año y la serie no salta entre los archivos del DANE.
 

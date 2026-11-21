@@ -54,6 +54,12 @@ La EMICRON: negocios de hasta 9 personas, ventas, valor agregado e informalidad 
 * {doc}`emicron`
 :::
 
+:::{grid-item-card} {octicon}`home` Calidad de vida
+La Encuesta Nacional de Calidad de Vida: servicios, salud, educación y el Índice de Pobreza Multidimensional.
+
+* {doc}`ecv`
+:::
+
 :::{grid-item-card} {octicon}`terminal` Línea de comandos
 Descargar los datos, ver el estado y abrir la aplicación desde la terminal.
 
@@ -121,6 +127,13 @@ eevv
 :caption: Micronegocios
 
 emicron
+```
+
+```{toctree}
+:hidden:
+:caption: Calidad de vida
+
+ecv
 ```
 
 ```{toctree}

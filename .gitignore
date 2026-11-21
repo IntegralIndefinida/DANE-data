@@ -18,6 +18,8 @@ docs/api/generated/
 *.dta
 *.zip
 *.parquet
+# documentos metodológicos del DANE que se usan de guía (PDF, XLSX, DDI)
+/referencias_ecv/
 CLAUDE.md
 .claude/
 graphify-out/

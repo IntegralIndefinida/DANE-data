@@ -1,4 +1,4 @@
-"""Datos sintéticos que imitan las rarezas de cada época de la GEIH, la EAM y las Estadísticas Vitales."""
+"""Datos sintéticos que imitan las rarezas de cada época de la GEIH, la EAM, las Estadísticas Vitales y la ECV."""
 
 from pathlib import Path
 
@@ -287,3 +287,66 @@ def emicron_root(tmp_path):
            "P3033,GRUPOS4,GRUPOS12,F_EXP,SEGMENTO,DOMINIO\n"
            "30,1,1,5,5,1,2,44,MAYO,0,0,0,2,03,05,700,1,1\n")
     return root
+
+
+@pytest.fixture
+def ecv_root(tmp_path):
+    """
+    La ECV con las rarezas del ANDA: en las tablas de hogar el hogar es SECUENCIA_ENCUESTA; 2018 trae DPTO y los
+    factores del CNPV 2018 aparte; 2020 no trae REGION; 2025 con encabezados en minúscula y coma decimal.
+    """
+    root = tmp_path / "ecv"
+    d = root / "datos"
+    viv = "DIRECTORIO;SECUENCIA_ENCUESTA;SECUENCIA_P;ORDEN;{geo};FEX_C;CLASE;P4005;P4015\n"
+    hog = "DIRECTORIO;SECUENCIA_ENCUESTA;SECUENCIA_P;ORDEN;FEX_C;P5000;P5010\n"
+    per = "DIRECTORIO;SECUENCIA_ENCUESTA;SECUENCIA_P;ORDEN;FEX_C;P6020;P6040;P6051;P6080\n"
+
+    # --- 2025: la vivienda 1 (Bogotá, cabecera) tiene dos hogares; la 2 es de Antioquia, rural
+    _write(d / "2025" / "vivienda" / "Datos de la vivienda.csv", viv.format(geo="P1_DEPARTAMENTO;REGION").lower()
+           + "1;1;1;1;11;5;100,5;1;1;2\n2;1;1;1;5;6;20;2;3;1\n")
+    _write(d / "2025" / "servicios" / "Servicios del hogar.csv", hog.lower()
+           + "1;1;1;1;100,5;3;2\n1;2;1;1;100,5;1;1\n2;1;1;1;20;2;1\n")
+    _write(d / "2025" / "caracteristicas" / "Características y composición del hogar.csv", per.lower()
+           + "1;1;1;1;100,5;1;45;1;6\n1;2;1;2;100,5;2;8;3;6\n1;1;2;1;100,5;2;70;1;5\n"
+             "2;1;1;1;20;1;30;1;1\n2;2;1;2;20;2;29;2;1\n")
+    _write(d / "2025" / "salud" / "Salud.csv", "DIRECTORIO;SECUENCIA_ENCUESTA;SECUENCIA_P;ORDEN;FEX_C;P6090\n"
+           "1;1;1;1;100,5;1\n1;2;1;2;100,5;2\n1;1;2;1;100,5;1\n2;1;1;1;20;9\n")  # falta una persona
+
+    # --- 2018: DPTO, y el FEX_C de los capítulos no es el del CNPV 2018
+    _write(d / "2018" / "vivienda" / "Datos de la vivienda.csv", viv.format(geo="REGION;DPTO") + "7;1;1;1;2;11;9;2;2;3\n")
+    _write(d / "2018" / "servicios" / "Servicios del hogar.csv", hog + "7;1;1;1;9;2;1\n")
+    _write(d / "2018" / "caracteristicas" / "Caracteristicas y composicion del hogar.csv", per + "7;1;1;1;9;2;33;1;6\n")
+    _write(d / "2018" / "factores" / "Factores de expansión 2018 basados en el CNPV 2018.csv", "DIRECTORIO;FEX_C\n7;5,5\n")
+
+    # --- 2020: sin REGION; la parte rural de Bogotá es de la región Oriental
+    _write(d / "2020" / "vivienda" / "Datos de la vivienda.csv", viv.format(geo="P1_DEPARTAMENTO") + "9;1;1;1;11;4;2;1;1\n")
+    _write(d / "2020" / "servicios" / "Servicios del hogar.csv", hog + "9;1;1;1;4;1;1\n")
+    _write(d / "2020" / "caracteristicas" / "Caracteristicas y composicion del hogar.csv", per + "9;1;1;1;4;1;60;1;6\n")
+    return root
+
+
+@pytest.fixture
+def ecv_completo(tmp_path):
+    """
+    Un año de la ECV (2025) con los once capítulos y las variables de los indicadores y del IPM: dos hogares de Bogotá, uno
+    de una mujer de 70 años que no sabe leer, sin salud y con piso de tierra (pobre) y otro de una pareja que trabaja y un hijo.
+    """
+    d = tmp_path / "ecv_completo" / "datos" / "2025"
+    llaves = "DIRECTORIO;SECUENCIA_ENCUESTA;SECUENCIA_P;ORDEN;FEX_C"
+    _write(d / "vivienda" / "Datos de la vivienda.csv",
+           f"{llaves};P1_DEPARTAMENTO;REGION;CLASE;P4005;P4015;P8520S1;P8520S3;P8520S4;P8520S5\n"
+           "1;1;1;1;100;11;5;1;1;4;1;1;1;1\n2;1;1;1;50;11;5;1;1;7;1;1;1;1\n")
+    hogares = {"servicios": ("P5010;P8526;P8530;P5666", ["2;1;1;1", "1;1;1;2"]),
+               "condiciones": ("P1075;P5230", ["1;2", "2;1"]), "tenencia": ("P5095", ["3", "1"])}
+    for modulo, (columnas, filas) in hogares.items():
+        _write(d / modulo / f"{modulo}.csv", f"{llaves};{columnas}\n" + f"1;1;1;1;100;{filas[0]}\n2;1;1;1;50;{filas[1]}\n")
+    columnas = ("P6020;P6040;P6051;P6080;P6090;P6100;P5665;P8563;P51;P55;P774;P6160;P8586;P8587;P8587S1;P6211;P1088;"
+                "P1088S1;P6216;P6180;P6240;P6250;P6260;P6270;P6351;P7250;P6920;P1910;P1911;P1912;P1084;P1082;P5504")
+    _write(d / "caracteristicas" / "Características y composición del hogar.csv", f"{llaves};{columnas}\n"
+           "1;1;1;1;100;2;40;1;6;1;1;2;;;;;1;2;5;11;;;;;;1;;;;;;1;5;1;5;1;1;\n"
+           "1;2;1;2;100;1;42;2;6;1;1;2;;;;;1;2;5;11;;;;;;1;;;;;;1;5;5;5;2;1;\n"
+           "1;3;1;3;100;1;10;3;6;1;3;2;;;;;1;1;;;;2;5;;;3;;;;;;;5;5;5;5;2;1\n"
+           "2;1;1;1;50;2;70;1;6;2;;2;;;;;2;2;3;3;;;;;;5;;;;;;2;5;5;5;5;2;2\n")
+    for modulo in ("salud", "primera_infancia", "educacion", "fuerza_trabajo", "tic", "trabajo_infantil"):
+        _write(d / modulo / f"{modulo}.csv", f"{llaves}\n1;1;1;1;100\n")
+    return tmp_path / "ecv_completo"
