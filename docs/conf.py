@@ -129,9 +129,9 @@ html_sidebars = {
 
 
 # --------------------------------------------------------------------------- #
-# Páginas generadas: el glosario (dd.geih.GLOSARIO, dd.eam.GLOSARIO, dd.eevv.GLOSARIO, dd.ecv.GLOSARIO), las variables
-# de la EAM, las Estadísticas Vitales y la ECV (ETIQUETAS), las privaciones del IPM y la línea de comandos
-# (cli._parser). Así el texto vive en un solo lugar.
+# Páginas generadas: el glosario (dd.geih.GLOSARIO, dd.eam.GLOSARIO, dd.eevv.GLOSARIO, dd.emicron.GLOSARIO,
+# dd.ecv.GLOSARIO), las variables de la EAM, las Estadísticas Vitales, la EMICRON y la ECV (ETIQUETAS), las privaciones
+# del IPM y la línea de comandos (cli._parser). Así el texto vive en un solo lugar.
 # --------------------------------------------------------------------------- #
 def _glosario(nombre: str, terminos: dict[str, str]) -> None:
     lineas = ["```{glossary}", ":sorted:", ""]
@@ -150,6 +150,7 @@ def _escribir(nombre: str, texto: str) -> None:
 _glosario("glosario_geih.md", dane_data.geih.GLOSARIO)
 _glosario("glosario_eam.md", dane_data.eam.GLOSARIO)
 _glosario("glosario_eevv.md", dane_data.eevv.GLOSARIO)
+_glosario("glosario_emicron.md", dane_data.emicron.GLOSARIO)
 _glosario("glosario_ecv.md", dane_data.ecv.GLOSARIO)
 
 
@@ -183,6 +184,8 @@ def _cli() -> str:
 _escribir("cli.md", _cli())
 _escribir("eam_variables.md", "| Variable | Contenido |\n|---|---|\n" + "".join(
     f"| `{v}` | {e} |\n" for v, e in dane_data.eam.ETIQUETAS.items()))
+_escribir("emicron_variables.md", "| Variable | Contenido |\n|---|---|\n" + "".join(
+    f"| `{v}` | {e} |\n" for v, e in dane_data.emicron.ETIQUETAS.items()))
 for _tipo, _etiquetas in dane_data.eevv.ETIQUETAS.items():
     _escribir(f"eevv_variables_{_tipo}.md", "| Variable | Contenido |\n|---|---|\n" + "".join(
         f"| `{v}` | {e} |\n" for v, e in _etiquetas.items()))

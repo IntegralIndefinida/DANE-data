@@ -26,4 +26,9 @@ graphify-out/
 
 # Parquet que se publica con la librería: las proyecciones de población
 !src/dane_data/data/*.parquet
+
+# Documentación metodológica del DANE: se baja del ANDA; solo se versiona el índice con las fuentes
+/metodologia/**
+!/metodologia/*/
+!/metodologia/*/LEEME.md
 .council/

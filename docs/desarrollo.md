@@ -26,6 +26,7 @@ src/dane_data/
 ├── geih/              downloader.py · loader.py · indicadores.py · agregados.py
 ├── eam/               downloader.py · loader.py · indicadores.py
 ├── eevv/              downloader.py · loader.py · indicadores.py · agregados.py
+├── emicron/           downloader.py · loader.py · indicadores.py
 ├── ecv/               downloader.py · loader.py · indicadores.py · ipm.py · agregados.py
 ├── cli.py             comando dane-data
 └── app/               aplicación Streamlit (Inicio.py + paginas/)
@@ -36,8 +37,8 @@ variables armonizadas van en minúscula y las originales del DANE en mayúscula.
 
 ## Pruebas
 
-* `tests/conftest.py` construye carpetas **sintéticas** de la GEIH, la EAM, las Estadísticas Vitales y la ECV con las rarezas
-  de cada época.
+* `tests/conftest.py` construye carpetas **sintéticas** de la GEIH, la EAM, las Estadísticas Vitales, la EMICRON y la ECV
+  con las rarezas de cada época.
   Cuando aparezca una rareza nueva en los archivos del DANE, agréguela a estos datos.
 * Las pruebas de los descargadores usan ZIP en memoria: nunca se conectan a internet.
 * GitHub Actions (`.github/workflows/pruebas.yml`) corre todas las pruebas en cada push a `main` y en cada
@@ -60,6 +61,15 @@ variables armonizadas van en minúscula y las originales del DANE en mayúscula.
   uv run --extra app python tests/datos/actualizar_eevv_causas.py
   uv run python tests/datos/actualizar_eevv_diccionario.py
   uv run --extra app python tests/datos/actualizar_proyecciones.py
+  ```
+
+* La EMICRON se compara con los anexos del DANE si hay datos en `$DANE_DATA_TEST_EMICRON` o en la carpeta configurada.
+  Cuando el DANE publica un año nuevo, agregue su catálogo al descargador (`_CATALOGOS` en `emicron/downloader.py`) y su
+  anexo a `ANEXOS`, y actualice las cifras y el diccionario:
+
+  ```bash
+  uv run --extra app python tests/datos/actualizar_emicron_publicado.py --cache metodologia/emicron/resultados
+  uv run python tests/datos/actualizar_emicron_diccionario.py
   ```
 
 * La ECV y el IPM se comparan con los anexos del DANE si hay datos en `$DANE_DATA_TEST_ECV` o en la carpeta configurada.

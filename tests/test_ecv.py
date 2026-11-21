@@ -423,7 +423,7 @@ def test_cli_descargar_ecv(monkeypatch, capsys):
     assert cli.main(["descargar", "ecv", "--anios", "2024", "2025", "--modulos", "salud", "tic", "--borrar-zips"]) == 0
     assert llamada == {"years": [2024, 2025], "modulos": ["salud", "tic"], "delete_zips": True, "forzar": False}
     assert cli.main(["descargar", "ecv", "--modulos", "ocupados"]) == 2  # de la GEIH, no de la ECV
-    assert "ocupados no existen" in capsys.readouterr().err
+    assert "no son de esta encuesta: ocupados" in capsys.readouterr().err
     assert cli.main(["descargar", "geih", "--modulos", "salud"]) == 2
     assert cli.main(["descargar", "ecv", "--tipos", "fetales"]) == 2
     assert "no aplica" in capsys.readouterr().err

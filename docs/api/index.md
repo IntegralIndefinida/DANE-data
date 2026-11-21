@@ -42,6 +42,14 @@ establecimientos.
 Estadísticas Vitales: descarga, carga armonizada, indicadores y tasas de natalidad, mortalidad y fecundidad.
 :::
 
+:::{grid-item-card} `dd.emicron`
+:link: emicron
+:link-type: doc
+
+Encuesta de Micronegocios: descarga, carga armonizada, indicadores del cuadro I.1 del DANE e informalidad
+empresarial.
+:::
+
 :::{grid-item-card} `dd.ecv`
 :link: ecv
 :link-type: doc
@@ -58,5 +66,6 @@ general
 geih
 eam
 eevv
+emicron
 ecv
 ```

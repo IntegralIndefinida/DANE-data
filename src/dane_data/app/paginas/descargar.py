@@ -5,7 +5,7 @@ import streamlit as st
 
 import dane_data as dd
 from dane_data.app._ui import (CERTIFICADOS, LogEnPantalla, args_py, disponibles_eam, disponibles_ecv, disponibles_eevv,
-                               disponibles_geih, fmt_num, rutas_actuales)
+                               disponibles_emicron, disponibles_geih, fmt_num, rutas_actuales)
 
 st.title("Descargar datos del DANE")
 st.markdown(
@@ -14,7 +14,8 @@ st.markdown(
 )
 
 encuesta = st.radio("Encuesta", ["GEIH (hogares, mensual)", "EAM (industria, anual)", "Estadísticas Vitales (nacimientos y defunciones)",
-                                 "ECV (calidad de vida y pobreza multidimensional)"], horizontal=True)
+                                 "EMICRON (micronegocios, anual)", "ECV (calidad de vida y pobreza multidimensional)"],
+                       horizontal=True)
 rutas = rutas_actuales()
 
 if encuesta.startswith("GEIH"):
@@ -82,6 +83,34 @@ elif encuesta.startswith("Estadísticas"):
     lanzar = lambda prog, stop: dd.eevv.download(anios, tipos=tipos, delete_zips=borrar, progress=prog,  # noqa: E731
                                                  should_stop=stop, forzar=forzar)
     codigo_py = f"dd.eevv.download({anios!r}, tipos={tipos!r}" + args_py(delete_zips=borrar, forzar=forzar) + ")"
+elif encuesta.startswith("EMICRON"):
+    ya = disponibles_emicron(rutas)
+    tiene = set(ya.anio.unique()) if len(ya) else set()
+    todos = dd.emicron.ANIOS_DISPONIBLES
+    if "descargar_emicron_anios" not in st.session_state:
+        st.session_state["descargar_emicron_anios"] = [a for a in todos if a <= 2024 and a not in tiene][-1:] or [2024]
+    anios = st.multiselect("Años", todos, key="descargar_emicron_anios", placeholder="Elija los años",
+                           format_func=lambda a: f"{a} ✓" if a in tiene else str(a))
+    st.button(f"Seleccionar toda la serie {todos[0]}–{todos[-1]}",
+              on_click=lambda: st.session_state.update(descargar_emicron_anios=list(todos)))
+    st.caption("✓ = ya descargado. 2025 solo cubre las 24 ciudades principales; 2019–2024, todo el país.")
+    OPCIONALES = {m: n for m, n in dd.emicron.MODULOS.items() if m not in dd.emicron.FACTORES and m != "identificacion"}
+    with st.expander("Opciones avanzadas"):
+        modulos = st.multiselect("Módulos", list(OPCIONALES), default=list(OPCIONALES), format_func=OPCIONALES.get,
+                                 placeholder="Elija los módulos",
+                                 help="La identificación y los factores de expansión se bajan siempre: sin ellos no se "
+                                      "puede cargar. No todos los módulos existen todos los años (el COVID solo en 2020).")
+        borrar = st.toggle("Borrar los ZIP después de extraer", value=True)
+        forzar = st.toggle("Volver a bajar lo que ya está descargado",
+                           help="Solo si el DANE corrigió o volvió a publicar esos años: reemplaza lo que hay.")
+    todos_mod = set(modulos) == set(OPCIONALES)
+    # Unos 70 MB por año ya extraídos con todos los módulos; los ZIP pesan unos 45 MB
+    st.info(f"Tamaño aproximado en disco: **{70 * len(anios) if todos_mod else 30 * len(anios)} MB** · "
+            f"destino: `{dd.get_path('emicron')}`")
+    lanzar = lambda prog, stop: dd.emicron.download(anios, modulos=None if todos_mod else modulos,  # noqa: E731
+                                                    delete_zips=borrar, progress=prog, should_stop=stop, forzar=forzar)
+    codigo_py = f"dd.emicron.download({anios!r}" + args_py(modulos=None if todos_mod else modulos, delete_zips=borrar,
+                                                          forzar=forzar) + ")"
 elif encuesta.startswith("ECV"):
     ya = disponibles_ecv(rutas)
     tiene = set(ya.anio.unique()) if len(ya) else set()
@@ -110,7 +139,7 @@ elif encuesta.startswith("ECV"):
                                                 should_stop=stop, forzar=forzar)
     codigo_py = f"dd.ecv.download({anios!r}" + args_py(
         modulos=modulos if set(modulos) != set(CAPITULOS) else None, delete_zips=borrar, forzar=forzar) + ")"
-else:
+elif encuesta.startswith("EAM"):
     ya = disponibles_eam(rutas)
     tiene = set(ya.anio.unique()) if len(ya) else set()
     todos = dd.eam.ANIOS_DISPONIBLES
@@ -182,4 +211,5 @@ with st.expander("Hacerlo desde Python o la terminal", icon=":material/code:"):
     st.code(f"import dane_data as dd\n{codigo_py}", language="python")
     st.code("dane-data descargar geih --anios 2024 2025\ndane-data descargar eam --anios 2022 2023 2024\n"
             "dane-data descargar eevv --anios 2025 --tipos nacimientos defunciones\n"
+            "dane-data descargar emicron --anios 2023 2024\n"
             "dane-data descargar ecv --anios 2025", language="bash")
