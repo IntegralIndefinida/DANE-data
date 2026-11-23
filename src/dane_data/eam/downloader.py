@@ -290,7 +290,9 @@ class EAMDownloader(DescargadorANDA):
     def run_pipeline(self, target_years=None) -> list[str]:
         """Descarga todos los años o los seleccionados. Devuelve lo que no se pudo bajar o extraer."""
         # Si todos los años pedidos tienen catálogo verificado, consultar los 13 catálogos del ANDA no cambiaría nada
-        if target_years is not None and {str(y) for y in target_years} <= set(EAM_KNOWN_CATALOGS):
+        # Una sola pasada: un generador (map, (a for a in ...)) quedaría vacío para lo de abajo
+        target_years = None if target_years is None else [str(y) for y in target_years]
+        if target_years is not None and set(target_years) <= set(EAM_KNOWN_CATALOGS):
             catalogs = dict(EAM_KNOWN_CATALOGS)
         else:
             catalogs = self.discover_catalogs()
@@ -298,7 +300,6 @@ class EAMDownloader(DescargadorANDA):
         years_to_process = sorted(catalogs.keys(), key=lambda y: int(y))
         self.fallidos = []
         if target_years is not None:  # [] es "ningún año", no "todos"
-            target_years = [str(y) for y in target_years]
             # Un fallo y no solo un aviso: si no, pedir un año que no está devolvía "éxito" sin bajar nada
             if desconocidos := [y for y in target_years if y not in catalogs]:
                 self._fallo(f"Años sin catálogo de la EAM en el ANDA: {', '.join(desconocidos)}. "

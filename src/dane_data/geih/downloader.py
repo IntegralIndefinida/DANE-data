@@ -576,7 +576,9 @@ class GEIHDownloader(DescargadorANDA):
         """Descarga todos los años o los seleccionados. Devuelve lo que no se pudo bajar o extraer."""
         verificados = EMPALME_CATALOGS if self.is_empalme else KNOWN_CATALOGS
         # Si todos los años pedidos tienen catálogo verificado, la búsqueda no cambiaría nada (lo verificado gana)
-        if target_years is not None and {str(y) for y in target_years} <= set(verificados):
+        # Una sola pasada: un generador (map, (a for a in ...)) quedaría vacío para lo de abajo
+        target_years = None if target_years is None else [str(y) for y in target_years]
+        if target_years is not None and set(target_years) <= set(verificados):
             catalogs = dict(verificados)
         else:
             catalogs = self.discover_catalogs()
@@ -584,7 +586,6 @@ class GEIHDownloader(DescargadorANDA):
         years_to_process = sorted(catalogs.keys(), key=lambda y: int(y))
         self.fallidos, self._reemplazadas = [], set()
         if target_years is not None:  # [] es "ningún año", no "todos"
-            target_years = [str(y) for y in target_years]
             # Un fallo y no solo un aviso: si no, pedir un año que no está devolvía "éxito" sin bajar nada
             if desconocidos := [y for y in target_years if y not in catalogs]:
                 self._fallo(f"Años sin catálogo de la GEIH en el ANDA: {', '.join(desconocidos)}. "

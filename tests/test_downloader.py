@@ -361,6 +361,9 @@ def test_anios_vacios_o_desconocidos(tmp_path, clase):
     assert len(fallidos) == 1 and "2030" in fallidos[0]  # un año que no está no es un éxito
     dl.run_pipeline(target_years=None)
     assert dl.procesados == ["2024", "2023", "2024"]
+    # Un generador se recorre una sola vez: no puede quedar vacío entre la revisión de catálogos y la descarga
+    dl.run_pipeline(target_years=(a for a in [2023]))
+    assert dl.procesados[-1:] == ["2023"] and len(dl.procesados) == 4
 
 
 def test_modulos_vacios_texto_o_desconocidos(tmp_path):

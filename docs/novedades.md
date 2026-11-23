@@ -6,6 +6,8 @@
 
 * En *Tablas y microdatos* de la aplicación, exportar unos años sueltos (2016 y 2025) ya no reemplaza la exportación de
   todo el rango con los mismos extremos (2016–2025): el nombre del archivo distingue los años elegidos.
+* {dd}`geih.download()` y {dd}`eam.download()` con los años en un generador (`map(int, anios)`, `(a for a in ...)`) no
+  bajaban nada y devolvían una lista vacía, como si todo hubiera salido bien. Ahora bajan esos años.
 
 ## 0.6.0 (20 de noviembre de 2026)
 
