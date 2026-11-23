@@ -24,7 +24,8 @@ from ..stats import _enteros
 from ..geih.loader import _borrar_cache, _guardar_parquet, _usado
 from .indicadores import _lista, indicadores
 from .ipm import COLUMNAS_IPM, MODULOS_IPM, ipm, privaciones
-from .loader import _COMPLEMENTARIA, _EDUCACION, _FACTORES, _INTERNOS, MODULOS, _root, find_files, load
+from .loader import (_COMPLEMENTARIA, _EDUCACION, _FACTORES, _INTERNOS, MODULOS, _aviso_faltan, _root, find_files,
+                     load)
 
 log = logging.getLogger("dane_data.ecv")
 
@@ -163,25 +164,27 @@ def serie_indicadores(
         raise FileNotFoundError(f"No hay datos de la ECV para años={anios} en {_root(root)}. "
                                 "Descárguelos con dane_data.ecv.download(...) o revise dane_data.set_paths(...).")
     _faltan_internos(archivos, root, ipm=False)
+    # Aquí y no en calcular: un año que sale de la caché no vuelve a leer los datos, y el aviso se perdía
+    faltan = {m: a for m in _MODULOS_INDICADORES
+              if (a := [x for x in sorted(archivos) if x not in find_files(x, modulo=m, root=root)])}
+    if faltan:
+        warnings.warn(_aviso_faltan(faltan), UserWarning, stacklevel=2)
     solicitud = json.dumps(_clave_json({"por": llaves, "filtros": filtros, "dropna": dropna}), sort_keys=True,
                            default=str, ensure_ascii=False)
     codigo = _firma_codigo(_CODIGO)
-    partes, avisos = [], []
+    partes = []
     for i, anio in enumerate(sorted(archivos)):
         if progress:
             progress(i / len(archivos), f"Calculando la ECV {anio} (solo la primera vez)")
         digest = hashlib.sha1("|".join([codigo, _firma_anio(anio, root), solicitud]).encode()).hexdigest()[:16]
 
         def calcular(a=anio) -> pd.DataFrame:
-            with warnings.catch_warnings(record=True) as capturados:
-                warnings.simplefilter("always", UserWarning)
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", UserWarning)  # los capítulos que faltan ya se avisaron arriba
                 d = load(a, modulos=_MODULOS_INDICADORES, columns=_COLUMNAS_INDICADORES, root=root)
-            avisos.extend(str(w.message) for w in capturados)
             return indicadores(d[_mascara(d, filtros)] if filtros else d, por=llaves, dropna=dropna)
 
         partes.append(_desde_cache(config.CACHE_DIR / "ecv" / "indicadores" / f"{anio}_{digest}.parquet", calcular))
-    for aviso in dict.fromkeys(avisos):  # los de load, una vez cada uno
-        warnings.warn(aviso, UserWarning, stacklevel=2)
     if progress:
         progress(1.0, "Listo")
     return _unir(partes).sort_values(llaves, ignore_index=True)

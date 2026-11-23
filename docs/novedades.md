@@ -11,6 +11,8 @@
 * Con varias sesiones de la aplicación a la vez (modo aula, o dos pestañas), un cálculo de otra página podía tragarse el
   aviso de que la serie de pobreza mezcla metodologías, y dejar mal puestos los avisos del proceso. Ahora esos cálculos
   no se cruzan.
+* {dd}`ecv.serie_indicadores()` avisaba de los capítulos que faltan solo la primera vez: con el año ya en la caché, las
+  columnas de esos capítulos salían vacías sin explicación. Ahora avisa siempre.
 
 ## 0.6.0 (20 de noviembre de 2026)
 

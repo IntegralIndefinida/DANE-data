@@ -232,6 +232,13 @@ _COLUMNAS_COMPLEMENTARIA = ("ESTRATEGIAS", "EST_RADIO", "EST_TELEVISION", "EST_P
                             "EST_LLAMADA", "ESCUCHA_RADIO", "P1077S7", "P1077S8", "CELULAR_INTELIGENTE", "P5305", "CELULAR")
 
 
+def _aviso_faltan(faltan: dict[str, list[int]]) -> str:
+    """El aviso de ``load`` (y de ``serie_indicadores``) para los capítulos ``{capítulo: años}`` que no están en disco."""
+    return ("ECV: faltan capítulos descargados, que quedan vacíos: "
+            + "; ".join(f"{m} en {', '.join(map(str, a))}" for m, a in faltan.items())
+            + ". Bájelos con dd.ecv.download(años, modulos=[...]).")
+
+
 def _leer(ruta: Path, modulo: str, columns) -> pd.DataFrame:
     """Un capítulo con las llaves de ``load``: en las tablas de hogar, el número del hogar pasa a ``SECUENCIA_P``."""
     unidad = UNIDADES.get(modulo, "vivienda")
@@ -484,9 +491,7 @@ def load(
         # concat y no assign: tras unir varios capítulos, insertar una columna fragmenta la tabla
         partes.append(harmonize(pd.concat([df, pd.Series(np.int16(anio), index=df.index, name="anio")], axis=1)))
     if faltan:
-        warnings.warn("ECV: faltan capítulos descargados, que quedan vacíos: "
-                      + "; ".join(f"{m} en {', '.join(map(str, a))}" for m, a in faltan.items())
-                      + ". Bájelos con dd.ecv.download(años, modulos=[...]).", UserWarning, stacklevel=2)
+        warnings.warn(_aviso_faltan(faltan), UserWarning, stacklevel=2)
     if progress:
         progress(1.0, "Listo")
     return _unir(partes)

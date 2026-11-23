@@ -209,7 +209,8 @@ def test_serie_indicadores_con_cache(ecv_root, tmp_path, monkeypatch):
     assert r.hogares.tolist() == [5.5, 221]  # 2018 con los factores del CNPV 2018
     assert r.pct_afiliados.isna().tolist() == [True, False]  # 2018 no tiene Salud en los datos de prueba
     assert len(list((tmp_path / "cache" / "ecv" / "indicadores").glob("*.parquet"))) == 2
-    pd.testing.assert_frame_equal(dd.ecv.serie_indicadores([2018, 2025], root=ecv_root), r)
+    with pytest.warns(UserWarning, match="faltan capítulos"):  # también desde la caché
+        pd.testing.assert_frame_equal(dd.ecv.serie_indicadores([2018, 2025], root=ecv_root), r)
     with pytest.warns(UserWarning, match="faltan capítulos"):
         r = dd.ecv.serie_indicadores(2025, por="area", filtros={"sexo": ["Mujer"]}, root=ecv_root)
     assert r.area.tolist() == ["Cabecera", "Centros poblados y rural disperso"]
