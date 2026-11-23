@@ -13,7 +13,6 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
-import numbers
 import uuid
 from functools import lru_cache
 from pathlib import Path
@@ -24,7 +23,7 @@ import pandas as pd
 
 from .. import config
 from ..referencias import MESES
-from ..stats import _as_list, _con_categorias, _meses_anotados, peso_mensual_promedio, weighted_quantile
+from ..stats import _as_list, _con_categorias, _enteros, _meses_anotados, peso_mensual_promedio, weighted_quantile
 from .indicadores import _COLUMNAS, indicadores
 from .loader import (CATEGORIAS, MesGEIH, _firma_archivos, _guardar_parquet, _root, _usado,
                      find_months, load)
@@ -134,15 +133,9 @@ def _firma_codigo(archivos: tuple[str, ...] = _CODIGO) -> str:
     return h.hexdigest()[:16]
 
 
-def _meses(meses) -> list[int] | None:
-    if meses is None:
-        return None
-    return sorted({int(m) for m in ([meses] if isinstance(meses, (numbers.Integral, str)) else meses)})
-
-
 def _meses_por_anio(anios, meses, empalme: bool, root) -> dict[int, list[MesGEIH]]:
     """Meses completos en disco (los que usa ``load``), agrupados por año."""
-    meses = _meses(meses)
+    meses = _enteros(meses)
     por_anio: dict[int, list[MesGEIH]] = {}
     for m in find_months(anios, empalme=empalme, root=root):
         if m.completo and (meses is None or m.mes in meses):
@@ -319,7 +312,7 @@ def serie_indicadores(
                 partes.append(r.assign(desagregacion=p or "total", anual=a))
         return pd.concat(partes, ignore_index=True)
 
-    tablas = _por_anio("indicadores", anios, {"filtros": filtros or {}, "meses": _meses(meses)}, calcular,
+    tablas = _por_anio("indicadores", anios, {"filtros": filtros or {}, "meses": _enteros(meses)}, calcular,
                        meses=meses, empalme=empalme, root=root, progress=progress)
     res = pd.concat([t[(t["desagregacion"] == (por or "total")) & (t["anual"] == anual)] for t in tablas],
                     ignore_index=True)
@@ -420,7 +413,7 @@ def serie_frecuencias(
         return _con_categorias(res, x, claves)
 
     solicitud = {"variable": variable, "por": sorted(por), "poblacion": poblacion, "filtros": filtros or {},
-                 "meses": _meses(meses), "columns": columns}
+                 "meses": _enteros(meses), "columns": columns}
     tablas = _por_anio("frecuencias", anios, solicitud, calcular, meses=meses, empalme=empalme, root=root,
                        progress=progress)
     return pd.concat(tablas, ignore_index=True)

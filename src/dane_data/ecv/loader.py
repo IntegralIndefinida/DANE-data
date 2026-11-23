@@ -18,7 +18,6 @@ reemplaza por el del CNPV 2018, que el DANE publicó aparte y que usa la serie o
 
 from __future__ import annotations
 
-import numbers
 import warnings
 from pathlib import Path
 from typing import Iterable
@@ -29,6 +28,7 @@ import pandas as pd
 from .. import config
 from .._hooks import archivos_datos
 from .._io import read_table
+from ..stats import _enteros
 from ..eevv.loader import _categoria, _unir
 from ..referencias import DEPARTAMENTOS
 
@@ -169,9 +169,7 @@ def find_files(years: Iterable[int] | int | None = None, modulo: str = "caracter
     base = _root(root) / "datos"
     if not base.is_dir():
         return {}
-    if years is not None:
-        # numbers.Integral: también un año de numpy (df.anio.max())
-        years = {int(y) for y in ([years] if isinstance(years, (numbers.Integral, str)) else years)}
+    years = _enteros(years)  # también un año de numpy (df.anio.max())
     out = {}
     for carpeta in sorted(p for p in base.iterdir() if p.is_dir() and p.name.isdigit()):
         anio = int(carpeta.name)

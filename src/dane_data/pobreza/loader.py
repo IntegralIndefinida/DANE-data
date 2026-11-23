@@ -32,7 +32,6 @@ Convención, como en la GEIH: en minúscula las variables armonizadas, en MAYÚS
 from __future__ import annotations
 
 import logging
-import numbers
 import warnings
 from pathlib import Path
 from typing import Iterable
@@ -42,6 +41,7 @@ import pandas as pd
 
 from .. import config
 from .._io import read_table
+from ..stats import _enteros
 from ..geih.loader import CATEGORIAS as _CATEGORIAS_GEIH
 from ..referencias import DEPARTAMENTOS, strip_accents
 from .downloader import ARCHIVOS_EMPALME, EXTENSIONES
@@ -110,13 +110,6 @@ def _root(root) -> Path:
     return Path(root).expanduser() if root is not None else config.get_path("pobreza")
 
 
-def _anios(years) -> set[int] | None:
-    if years is None:
-        return None
-    # numbers.Integral: también un año de numpy (df.anio.max())
-    return {int(y) for y in ([years] if isinstance(years, (numbers.Integral, str)) else years)}
-
-
 def _archivo(carpeta: Path, nombre: str) -> Path | None:
     for extension in EXTENSIONES:
         if (ruta := carpeta / f"{nombre}{extension}").is_file():
@@ -149,7 +142,7 @@ def find_files(years: Iterable[int] | int | None = None, root=None) -> dict[int,
     base = _root(root) / "datos"
     if not base.is_dir():
         return {}
-    pedidos = _anios(years)
+    pedidos = _enteros(years)
     out = {}
     # Solo carpetas de año: datos/empalme/ no es un año
     for carpeta in sorted(p for p in base.iterdir() if p.is_dir() and len(p.name) == 4 and p.name.isdigit()):

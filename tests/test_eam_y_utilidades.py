@@ -318,7 +318,7 @@ def test_download_un_anio_y_carpeta_explicita(descargador_falso, tmp_path):
     assert descargador_falso[-1].anios == [2024]
     assert descargador_falso[-1].kw["base_dir"] == tmp_path / "g"
     dd.eam.download("2015", root=tmp_path / "otra")
-    assert descargador_falso[-1].anios == ["2015"]
+    assert descargador_falso[-1].anios == [2015]                # un año en texto queda como número
     assert descargador_falso[-1].kw["base_dir"] == tmp_path / "otra"
 
 

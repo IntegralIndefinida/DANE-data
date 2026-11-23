@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-import numbers
 from typing import Iterable
 
 from .downloader import EAM_KNOWN_CATALOGS, EAMDownloader
 from .indicadores import GLOSARIO, crecimiento, deflactar, panel, participacion, resumen, supervivencia
 from .loader import (CORE, ETIQUETAS, SECTORES, VARIABLES_COMUNES, available, find_files, harmonize,
                      load, _root)
+from ..stats import _enteros
 
 ANIOS_DISPONIBLES = sorted(int(y) for y in EAM_KNOWN_CATALOGS)
 
@@ -73,8 +73,7 @@ def download(
     >>> dd.eam.download([2022, 2023, 2024])  # doctest: +SKIP
     >>> dd.eam.download()  # toda la serie, 1992–2024  # doctest: +SKIP
     """
-    if isinstance(years, (numbers.Integral, str)):
-        years = [years]
+    years = _enteros(years)
     dl = EAMDownloader(
         base_dir=_root(root),
         keep_zips=not delete_zips,

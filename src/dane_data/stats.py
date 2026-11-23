@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import numbers
 import warnings
 from typing import Iterable
 
@@ -13,6 +14,22 @@ def _as_list(x) -> list:
     if x is None:
         return []
     return [x] if isinstance(x, str) else list(x)
+
+
+
+def _enteros(x) -> list[int] | None:
+    """
+    Uno o varios años (o meses) como lista ordenada y sin repetir; ``None`` queda ``None``. Un solo valor (``2024``,
+    ``"2024"``, un entero de numpy) no se recorre: ``"12"`` serían el 1 y el 2. Se recorre una sola vez, así que un
+    generador sirve.
+
+    >>> from dane_data.stats import _enteros
+    >>> _enteros("12"), _enteros(range(2025, 2023, -1)), _enteros(a for a in [3, 1, 3]), _enteros(None)
+    ([12], [2024, 2025], [1, 3], None)
+    """
+    if x is None:
+        return None
+    return sorted({int(v) for v in ([x] if isinstance(x, (numbers.Integral, str)) else x)})
 
 
 def _con_categorias(res: pd.DataFrame, df: pd.DataFrame, por: list[str]) -> pd.DataFrame:

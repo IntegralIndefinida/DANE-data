@@ -11,7 +11,6 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
-import numbers
 import warnings
 from pathlib import Path
 from typing import Callable, Iterable
@@ -21,6 +20,7 @@ import pandas as pd
 from .. import config
 from ..eevv.loader import _unir
 from ..geih.agregados import _clave_json, _firma_codigo, _mascara
+from ..stats import _enteros
 from ..geih.loader import _borrar_cache, _guardar_parquet, _usado
 from .indicadores import _lista, indicadores
 from .ipm import COLUMNAS_IPM, MODULOS_IPM, ipm, privaciones
@@ -101,12 +101,6 @@ def _faltan_internos(anios, root, ipm: bool) -> None:
                          f"oficiales. Bájelos con dd.ecv.download({sorted({a for a, _ in pedidos if a in anios})}).")
 
 
-def _anios_lista(anios) -> list[int] | None:
-    if anios is None:
-        return None
-    return [int(anios)] if isinstance(anios, (numbers.Integral, str)) else [int(a) for a in anios]
-
-
 def serie_indicadores(
     anios: Iterable[int] | int | None = None,
     por: str | Iterable[str] | None = None,
@@ -162,7 +156,7 @@ def serie_indicadores(
     1  2025  18952290.4                73.9           97.2
     >>> dd.ecv.serie_indicadores(2025, por="departamento")  # doctest: +SKIP
     """
-    anios = _anios_lista(anios)
+    anios = _enteros(anios)
     llaves = ["anio", *_lista(por)]
     archivos = find_files(anios, modulo="caracteristicas", root=root)
     if not archivos:
@@ -250,7 +244,7 @@ def serie_ipm(
     1  2025       9.913  0.040
     >>> dd.ecv.serie_ipm(2025, por="departamento")  # doctest: +SKIP
     """
-    anios = _anios_lista(anios)
+    anios = _enteros(anios)
     archivos = find_files(anios, modulo="caracteristicas", root=root)
     if not archivos:
         raise FileNotFoundError(f"No hay datos de la ECV para años={anios} en {_root(root)}. "

@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-import numbers
 from typing import Iterable
 
 from .downloader import EMICRON_KNOWN_FILES, EMICRONDownloader
 from .indicadores import GLOSARIO, a_miles_anuales, indicadores
 from .loader import (CATEGORIAS, CIUDADES, CLAVE, CORE, ETIQUETAS, FACTORES, MODULOS, MONTOS, _modulo_valido, _root,
                      available, find_files, harmonize, load, load_personal)
+from ..stats import _enteros
 
 ANIOS_DISPONIBLES = sorted({a for a, _ in EMICRON_KNOWN_FILES})
 
@@ -75,8 +75,7 @@ def download(
     >>> dd.emicron.download(2024)  # doctest: +SKIP
     >>> dd.emicron.download(range(2019, 2025), modulos=["ventas", "costos"])  # doctest: +SKIP
     """
-    if isinstance(years, (numbers.Integral, str)):
-        years = [years]
+    years = _enteros(years)
     if isinstance(modulos, str):
         modulos = [modulos]
     if modulos is not None:

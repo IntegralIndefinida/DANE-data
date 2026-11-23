@@ -17,6 +17,7 @@ from typing import Iterable
 import pandas as pd
 
 from .referencias import DEPARTAMENTOS, strip_accents
+from .stats import _enteros
 
 _POR = ("departamento", "dpto", "area", "sexo", "edad")
 _NACIONAL = 0  # Valor de dpto en los años que solo tienen total nacional
@@ -118,9 +119,8 @@ def poblacion(
         raise ValueError(f"No se puede desagregar por {desconocidas}. Opciones: {list(_POR)}")
     d = _datos()
     mascara = pd.Series(True, index=d.index)
-    pedidos = None
-    if anios is not None:
-        pedidos = sorted({int(a) for a in ([anios] if isinstance(anios, (numbers.Integral, str)) else anios)})
+    pedidos = _enteros(anios)
+    if pedidos is not None:
         mascara &= d["anio"].isin(pedidos)
     if sexo is not None:
         if sexo not in d["sexo"].cat.categories:

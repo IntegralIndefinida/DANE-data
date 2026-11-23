@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import numbers
 from typing import Iterable
 
 from .downloader import (DEFAULT_MODULES, EMPALME_CATALOGS, KNOWN_CATALOGS, GEIHDownloader)
@@ -11,6 +10,7 @@ from .agregados import (POBLACIONES, POR_PRECALCULADOS, VARIABLES_INDICADORES, e
 from .indicadores import GLOSARIO, indicadores, trimestre_movil
 from .loader import (CATEGORIAS, CONDICIONES, CORE_RAW, GRUPOS_EDAD, MARCOS, MODULOS, NIVELES_EDUC, available,
                      _root, clear_cache, find_months, harmonize, load, load_month, marco_muestral)
+from ..stats import _enteros
 
 ANIOS_DISPONIBLES = sorted(int(y) for y in KNOWN_CATALOGS)
 ANIOS_EMPALME = sorted(int(y) for y in EMPALME_CATALOGS)
@@ -98,8 +98,7 @@ def download(
     >>> dd.geih.download(2025, limit_files=1)  # solo enero, para probar  # doctest: +SKIP
     >>> dd.geih.download(2024, forzar=True)  # el DANE volvió a publicar 2024  # doctest: +SKIP
     """
-    if isinstance(years, (numbers.Integral, str)):
-        years = [years]
+    years = _enteros(years)
     dl = GEIHDownloader(
         base_dir=_root(empalme, root),
         keep_zips=not delete_zips,

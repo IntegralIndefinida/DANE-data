@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import numbers
 from typing import Iterable
 
 from .agregados import clear_cache, serie_indicadores, serie_ipm
@@ -11,6 +10,7 @@ from .indicadores import GLOSARIO, indicadores
 from .ipm import COLUMNAS_IPM, MODULOS_IPM, PRIVACIONES, ipm, privaciones
 from .loader import (CATEGORIAS, ETIQUETAS, KEYS_HOGAR, KEYS_PERSONA, MODULOS, NIVELES, UNIDADES, _root, available,
                      find_files, harmonize, load)
+from ..stats import _enteros
 
 ANIOS_DISPONIBLES = sorted(_CATALOGOS)
 
@@ -82,8 +82,7 @@ def download(
     >>> dd.ecv.download(2025)  # doctest: +SKIP
     >>> dd.ecv.download(range(2018, 2026), modulos=["caracteristicas", "salud"])  # doctest: +SKIP
     """
-    if isinstance(years, (numbers.Integral, str)):
-        years = [years]
+    years = _enteros(years)
     if modulos is None:
         modulos = MODULOS
     elif isinstance(modulos, str):

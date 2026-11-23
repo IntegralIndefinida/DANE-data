@@ -10,7 +10,6 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
-import numbers
 import warnings
 from pathlib import Path
 from typing import Callable, Iterable
@@ -20,6 +19,7 @@ import pandas as pd
 
 from .. import config
 from ..geih.agregados import _clave_json, _firma_codigo, _mascara
+from ..stats import _enteros
 from ..geih.loader import _borrar_cache, _guardar_parquet, _usado
 from ..proyecciones import poblacion
 from .indicadores import _lista, indicadores
@@ -130,12 +130,6 @@ def _por_anio(tabla: str, anios, tipo: str, solicitud: dict, calcular: Callable[
     return partes
 
 
-def _anios_lista(anios) -> list[int] | None:
-    if anios is None:
-        return None
-    return [int(anios)] if isinstance(anios, (numbers.Integral, str)) else [int(a) for a in anios]
-
-
 def _aplicar_filtros(df: pd.DataFrame, filtros: dict | None) -> pd.DataFrame:
     return df[_mascara(df, filtros)] if filtros else df
 
@@ -199,7 +193,7 @@ def serie_indicadores(
     2  2025       441537           11.0         53.8
     >>> dd.eevv.serie_indicadores(2025, por="gran_causa", filtros={"sexo": ["Mujer"]})  # doctest: +SKIP
     """
-    anios = _anios_lista(anios)
+    anios = _enteros(anios)
     if tipo == "defunciones":
         _avisar_cobertura(tipo, anios if anios is not None else find_files(tipo=tipo, root=root))
     llaves = ["anio", *_lista(por)]
@@ -263,7 +257,7 @@ def serie_conteos(
     31                             Enfermedades isquémicas del corazón  49261
     18      Enfermedades crónicas de las vías respiratorias inferiores  18187
     """
-    anios = _anios_lista(anios)
+    anios = _enteros(anios)
     if tipo == "defunciones":
         _avisar_cobertura(tipo, anios if anios is not None else find_files(tipo=tipo, root=root))
     llaves = ["anio", *_lista(por)]
@@ -434,7 +428,7 @@ def tasas(
     >>> dd.eevv.tasas(range(2015, 2026), por="departamento")  # doctest: +SKIP
     """
     por = _por_valido(por)
-    anios = _anios_lista(anios)
+    anios = _enteros(anios)
     tipos = ("defunciones", "nacimientos", "fetales")
     if not any(find_files(anios, tipo=t, root=root) for t in tipos):
         raise FileNotFoundError(
@@ -558,7 +552,7 @@ def tasas_especificas(
     por = _por_valido(por)
     if tipo == "nacimientos" and "sexo" in por:
         raise ValueError("La fecundidad es de las mujeres: no se puede desagregar por sexo.")
-    anios = _anios_lista(anios)
+    anios = _enteros(anios)
     if tipo == "defunciones":
         _avisar_cobertura(tipo, anios if anios is not None else find_files(tipo=tipo, root=root))
     edad, bandas, numerador, denominador = (("edad_madre", _EDADES_MADRE, "nacimientos", "mujeres") if tipo == "nacimientos"

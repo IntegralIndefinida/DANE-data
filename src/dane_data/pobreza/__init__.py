@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import numbers
 from typing import Iterable
 
 from .agregados import clear_cache, serie_indicadores
@@ -11,6 +10,7 @@ from .indicadores import GLOSARIO, indicadores
 from .loader import (CATEGORIAS, CORE, DOMINIOS, ETIQUETAS, GRUPOS_DOMINIO, METODOLOGIAS, TRECE_CIUDADES, _root,
                      available, find_files, harmonize, load)
 from .union import VARIABLES_GEIH, unir_geih
+from ..stats import _enteros
 
 ANIOS_DISPONIBLES = sorted({a for a, _ in POBREZA_KNOWN_FILES if a != "empalme"})
 
@@ -78,8 +78,7 @@ def download(
     >>> dd.pobreza.download(2025)  # doctest: +SKIP
     >>> dd.pobreza.download(range(2012, 2026), archivos="hogares", empalme=True)  # doctest: +SKIP
     """
-    if isinstance(years, (numbers.Integral, str)):
-        years = [years]
+    years = _enteros(years)
     if archivos is None:
         archivos = ARCHIVOS
     elif isinstance(archivos, str):

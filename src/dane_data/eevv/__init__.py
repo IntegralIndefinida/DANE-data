@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import numbers
 from typing import Iterable
 
 from .agregados import clear_cache, serie_conteos, serie_indicadores, tasas, tasas_especificas
@@ -10,6 +9,7 @@ from .downloader import EEVV_KNOWN_FILES, EEVVDownloader
 from .indicadores import GLOSARIO, indicadores
 from .loader import (CATEGORIAS, CORE, ETIQUETAS, GRANDES_CAUSAS, GRUPOS_EDAD, GRUPOS_EDAD_AMPLIOS, TIPOS,
                      _root, _tipo_valido, available, causas, find_files, harmonize, load)
+from ..stats import _enteros
 
 ANIOS_DISPONIBLES = {tipo: sorted(a for a, t in EEVV_KNOWN_FILES if t == tipo) for tipo in TIPOS}
 
@@ -76,8 +76,7 @@ def download(
     >>> dd.eevv.download(2025)  # doctest: +SKIP
     >>> dd.eevv.download(range(2015, 2026), tipos="nacimientos")  # doctest: +SKIP
     """
-    if isinstance(years, (numbers.Integral, str)):
-        years = [years]
+    years = _enteros(years)
     if tipos is None:
         tipos = TIPOS
     elif isinstance(tipos, str):

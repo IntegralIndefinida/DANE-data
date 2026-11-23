@@ -9,7 +9,6 @@ en la GEIH), salvo ``personal_ocupado``, que tiene una fila por trabajador.
 from __future__ import annotations
 
 import logging
-import numbers
 import warnings
 from pathlib import Path
 from typing import Iterable
@@ -19,6 +18,7 @@ import pandas as pd
 
 from .. import config
 from .._io import read_table
+from ..stats import _enteros
 from ..referencias import DEPARTAMENTOS, MESES, strip_accents
 
 log = logging.getLogger("dane_data.emicron")
@@ -53,13 +53,6 @@ def _modulo_valido(modulo: str) -> str:
     return modulo
 
 
-def _anios(years) -> set[int] | None:
-    if years is None:
-        return None
-    # numbers.Integral: también un año de numpy (df.anio.max())
-    return {int(y) for y in ([years] if isinstance(years, (numbers.Integral, str)) else years)}
-
-
 def find_files(years: Iterable[int] | int | None = None, root=None) -> dict[int, dict[str, Path]]:
     """
     Archivos descargados de cada año de la EMICRON.
@@ -85,7 +78,7 @@ def find_files(years: Iterable[int] | int | None = None, root=None) -> dict[int,
     base = _root(root) / "datos"
     if not base.is_dir():
         return {}
-    anios = _anios(years)
+    anios = _enteros(years)
     out = {}
     for carpeta in sorted(p for p in base.iterdir() if p.is_dir() and p.name.isdigit()):
         anio = int(carpeta.name)

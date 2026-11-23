@@ -22,7 +22,6 @@ from __future__ import annotations
 import hashlib
 import inspect
 import logging
-import numbers
 import os
 import re
 import time
@@ -37,6 +36,7 @@ import pandas as pd
 
 from .. import _io, config
 from .._io import columnas, normalize_columns, read_table, sniff
+from ..stats import _enteros
 from ..referencias import DEPARTAMENTOS, MESES, SMLV, strip_accents
 
 log = logging.getLogger("dane_data.geih")
@@ -319,9 +319,7 @@ def find_months(years: Iterable[int] | int | None = None, empalme: bool = False,
     base = _csv_dir(_root(empalme, root))
     if not base.is_dir():
         return []
-    if years is not None:
-        # numbers.Integral: también un año de numpy (df.anio.max())
-        years = {int(y) for y in ([years] if isinstance(years, (numbers.Integral, str)) else years)}
+    years = _enteros(years)  # también un año de numpy (df.anio.max())
     result = []
     for ydir in sorted(p for p in base.iterdir() if p.is_dir() and p.name.isdigit()):
         anio = int(ydir.name)
@@ -1053,15 +1051,13 @@ def load(
     >>> df = dd.geih.load(range(2007, 2026), variables=["fex", "sexo", "ocupado", "ingreso_laboral"])  # doctest: +SKIP
     """
     columns, modules = _lista_columnas(columns), _lista(modules)
-    if isinstance(months, (numbers.Integral, str)):  # "12" se recorrería letra por letra: enero y febrero
-        months = [months]
+    months = _enteros(months)  # "12" es diciembre, no enero y febrero
     conservar = None
     if variables is not None:
         conservar = list(dict.fromkeys(["anio", "mes", *([variables] if isinstance(variables, str) else variables)]))
     meses = find_months(years, empalme=empalme, root=root)
     del_anio = _modulos_por_anio(meses)  # antes de filtrar los meses
     if months is not None:
-        months = {int(m) for m in months}
         meses = [m for m in meses if m.mes in months]
     omitidos = [m for m in meses if not m.completo]
     if omitidos and not incluir_incompletos:

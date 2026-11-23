@@ -18,9 +18,9 @@ import pandas as pd
 from .. import config
 from ..geih.agregados import _firma_codigo, _mascara
 from ..geih.loader import _borrar_cache, _guardar_parquet, _usado
-from ..stats import _as_list
+from ..stats import _as_list, _enteros
 from .indicadores import indicadores
-from .loader import _anios, _archivo, _avisar_metodologias, _root, find_files, load
+from .loader import _archivo, _avisar_metodologias, _root, find_files, load
 
 # Lo que produce el año armonizado (para _firma_codigo). indicadores.py y stats.py no: se recalculan en cada llamada.
 _CODIGO = ("pobreza/loader.py", "pobreza/agregados.py", "_io.py", "referencias.py")
@@ -156,7 +156,7 @@ def serie_indicadores(
     2  2024      31.786              11.690  0.551
     3  2025      28.003               9.638  0.531
     """
-    archivos = find_files(_anios(anios), root=root)
+    archivos = find_files(_enteros(anios), root=root)
     if not archivos:
         raise FileNotFoundError(
             f"No hay datos de pobreza para años={anios} en {_root(root)}. "
