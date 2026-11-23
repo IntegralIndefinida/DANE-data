@@ -20,7 +20,7 @@ import tempfile
 import logging
 from pathlib import Path
 
-from .._hooks import DescargadorANDA, extraer_miembro, sanitize_member_name as _sanitize_comun, url_del_anda, ya_extraido
+from .._hooks import DescargadorANDA, extraer_miembro, sanitize_member_name as _sanitize_comun, ya_extraido
 from ..referencias import MESES, strip_accents
 from .loader import (EXTENSIONES, _RE_DESOCU, _RE_INACT, _RE_NO_OCU, _pick_files, MesGEIH, classify_file,
                      month_from_folder)
@@ -257,42 +257,15 @@ class GEIHDownloader(DescargadorANDA):
         log.info(f"Catálogos identificados para {len(catalogos)} años: {sorted(catalogos)}")
         return catalogos
 
-    def _enlaces(self, catalog_id: str) -> dict:
-        """``{url: nombre}`` de todos los archivos de /get-microdata del catálogo."""
-        microdata_url = f"{self.base_url}/index.php/catalog/{catalog_id}/get-microdata"
-        try:
-            res = self.session.get(microdata_url, timeout=20)
-            res.raise_for_status()
-        except Exception as e:
-            log.error(f"Error accediendo a página de microdatos del catálogo {catalog_id}: {e}")
-            return {}
-
-        # Extraer parámetros de onclick="mostrarModal('filename', 'download_url')"
-        matches = re.findall(r"mostrarModal\(\s*'([^']+)'\s*,\s*'([^']+)'\s*\)", res.text)
-        if not matches:
-            log.warning(f"No se encontraron enlaces de descarga en catálogo {catalog_id}")
-            return {}
-
-        # Deduplicar por URL de descarga
-        unique_files = {}
-        for name, url in matches:
-            clean_url = url_del_anda(url, self.base_url)
-            clean_name = name.strip()
-            if clean_url is None:
-                log.warning(f"Enlace de {clean_name} fuera del ANDA o sin https, se ignora: {url.strip()}")
-                continue
-            if clean_url not in unique_files:
-                unique_files[clean_url] = clean_name
-        return unique_files
-
-    def get_csv_download_links(self, catalog_id: str) -> list:
+    def get_csv_download_links(self, catalog_id: str, enlaces: dict | None = None) -> list:
         """
         Extrae los enlaces de descarga para archivos CSV desde /get-microdata.
         Maneja dos épocas del DANE:
           1. 2007-2021: ZIPs separados por formato (*.csv.zip)
           2. 2022-2026: ZIPs mensuales completos que contienen CSV, DTA y SAV en su interior
+        ``enlaces`` es la página ya leída (``_enlaces``), para no pedirla otra vez.
         """
-        unique_files = self._enlaces(catalog_id)
+        unique_files = self._enlaces(catalog_id) if enlaces is None else enlaces
         if not unique_files:
             return []
 
@@ -325,16 +298,17 @@ class GEIHDownloader(DescargadorANDA):
         Enlaces del año: el CSV de cada mes, salvo los meses de ``CSV_DANADOS``, que se
         cambian por otro formato del mismo catálogo (``item["formato"]``).
         """
-        files = self.get_csv_download_links(catalog_id)
         danados = {} if self.is_empalme else CSV_DANADOS.get(str(year), {})
         if not danados:
-            return files
+            return self.get_csv_download_links(catalog_id)
+        enlaces = self._enlaces(catalog_id)
+        files = self.get_csv_download_links(catalog_id, enlaces)
 
         def formato_de(mes):
             return danados.get(mes, danados.get(None))
 
         alternos = {}
-        for url, nombre in self._enlaces(catalog_id).items():
+        for url, nombre in enlaces.items():
             mes = month_from_folder(nombre)
             buscado = formato_de(mes) if mes else None
             # Los ZIP sin formato en el nombre (p. ej. "Septiembre.zip" en 2021) traen el Stata.

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import re
 import shutil
 import tempfile
 import time
@@ -64,6 +65,28 @@ class DescargadorANDA(ProgressMixin):
         self.session.headers.update({
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
         })
+
+    def _enlaces(self, catalog_id: str) -> dict:
+        """
+        ``{url: nombre}`` de los archivos de /get-microdata del catálogo, sacados de ``mostrarModal('nombre', 'url')``.
+        Solo los del ANDA por https (``url_del_anda``); vacío si la página no responde o no trae enlaces.
+        """
+        try:
+            res = self.session.get(f"{self.base_url}/index.php/catalog/{catalog_id}/get-microdata", timeout=20)
+            res.raise_for_status()
+        except Exception as e:
+            self.log.warning(f"No se pudo leer la página de microdatos del catálogo {catalog_id}: {e}")
+            return {}
+        matches = re.findall(r"mostrarModal\(\s*'([^']+)'\s*,\s*'([^']+)'\s*\)", res.text)
+        if not matches:
+            self.log.warning(f"No se encontraron enlaces de descarga en catálogo {catalog_id}")
+        enlaces = {}
+        for name, url in matches:
+            if (completa := url_del_anda(url, self.base_url)) is None:
+                self.log.warning(f"Enlace de {name.strip()} fuera del ANDA o sin https, se ignora: {url.strip()}")
+            else:
+                enlaces.setdefault(completa, name.strip())
+        return enlaces
 
     def download_file(self, url: str, dest_path: Path, max_retries: int = 3) -> bool:
         """

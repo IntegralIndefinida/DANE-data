@@ -55,7 +55,7 @@ class FakeDownloader(GEIHDownloader):
         self.paquetes = paquetes
         self.descargas = []
 
-    def get_csv_download_links(self, catalog_id):
+    def get_csv_download_links(self, catalog_id, enlaces=None):
         return [{"name": n, "url": n} for n in self.paquetes]
 
     def download_file(self, url, dest_path, max_retries=3):
@@ -295,6 +295,7 @@ class FakeANDA(FakeDownloader):
     get_csv_download_links = GEIHDownloader.get_csv_download_links
 
     def _enlaces(self, catalog_id):
+        self.paginas = getattr(self, "paginas", 0) + 1
         return {n: n for n in self.paquetes}
 
 
@@ -316,6 +317,7 @@ def test_csv_danados_se_bajan_en_otro_formato(tmp_path):
                   base_dir=tmp_path, modules=("caracteristicas",))
     dl.process_year("2011", "182")
     assert dl.descargas == ["Marzo_txt.zip"]
+    assert dl.paginas == 1                               # la página del catálogo se pide una sola vez
     assert sorted(f.name for f in (tmp_path / "datos_csv" / "2011" / "Marzo_txt").glob("*.txt")) == [
         "Cabecera - Caracteristicas generales (Personas).txt", "Resto - Caracteristicas generales (Personas).txt"]
     assert dd.geih.load(2011, root=tmp_path, cache=False)["fex"].tolist() == [84.9491032387525]

@@ -35,7 +35,7 @@ import zipfile
 import logging
 from pathlib import Path
 
-from .._hooks import DescargadorANDA, archivos_datos, extraer_aparte, extraer_miembro, sanitize_member_name, url_del_anda
+from .._hooks import DescargadorANDA, archivos_datos, extraer_aparte, extraer_miembro, sanitize_member_name
 from .loader import EXTENSIONES
 
 log = logging.getLogger("dane_data.eam")
@@ -143,24 +143,11 @@ class EAMDownloader(DescargadorANDA):
         ]
 
         for cid in catalog_ids:
-            microdata_url = f"{self.base_url}/index.php/catalog/{cid}/get-microdata"
-            try:
-                res = self.session.get(microdata_url, timeout=20)
-                res.raise_for_status()
-                matches = re.findall(r"mostrarModal\(\s*'([^']+)'\s*,\s*'([^']+)'\s*\)", res.text)
-                for name, url in matches:
-                    if "tic" in name.lower() or not name.strip().lower().endswith(".zip"):
-                        continue
-                    if (enlace := url_del_anda(url, self.base_url)) is None:
-                        log.warning(f"Enlace de {name.strip()} fuera del ANDA o sin https, se ignora: {url.strip()}")
-                        continue
-                    m = re.search(r"(199\d|20\d\d)", name)
-                    if m:
-                        yr = m.group(1)
-                        if yr not in discovered:
-                            discovered[yr] = (cid, name.strip(), enlace)
-            except Exception as e:
-                log.warning(f"Error consultando microdatos para catálogo {cid}: {e}")
+            for enlace, name in self._enlaces(cid).items():
+                if "tic" in name.lower() or not name.lower().endswith(".zip"):
+                    continue
+                if m := re.search(r"(199\d|20\d\d)", name):
+                    discovered.setdefault(m.group(1), (cid, name, enlace))
 
         # Los verificados ganan; la búsqueda solo agrega años nuevos
         final_catalogs = {**discovered, **EAM_KNOWN_CATALOGS}
