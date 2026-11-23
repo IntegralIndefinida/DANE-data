@@ -16,6 +16,8 @@
 * Un año de la GEIH que la búsqueda del ANDA encuentra antes de que dane-data tenga su salario mínimo (2027, cuando el
   DANE lo publique) dejaba `ratio_smlv` vacío sin aviso, y en la aplicación bajaba los porcentajes de *Ingresos* al
   juntarlo con otros años. Ahora {dd}`geih.load()` avisa y la aplicación deja ese año fuera de esa pestaña, con un aviso.
+* Cerrar la ventana de la aplicación a mitad de una descarga dejaba para siempre el archivo a medias (`.part`, decenas de
+  MB) junto al ZIP. Ahora la siguiente descarga del mismo archivo borra los que llevan más de un día sin escribirse.
 
 ## 0.6.0 (20 de noviembre de 2026)
 

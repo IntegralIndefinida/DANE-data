@@ -746,6 +746,23 @@ def test_temporales_no_chocan_con_otra_descarga(tmp_path, sin_pausas_eam):
     assert list(tmp_path.glob("*.part")) == [ajeno]
 
 
+def test_temporales_abandonados_se_borran(tmp_path, sin_pausas_eam):
+    """El temporal de un proceso que se mató (cerrar la ventana) se borra; el de una descarga en curso no."""
+    import os
+    import time
+
+    dl = EAMDownloader(base_dir=tmp_path)
+    destino = tmp_path / "Enero [1].zip"
+    viejo, en_curso = tmp_path / "Enero [1].zip.0123456789ab.part", tmp_path / "Enero [1].zip.ba9876543210.part"
+    viejo.write_bytes(b"cortado hace dos dias")
+    en_curso.write_bytes(b"otra sesion")
+    hace_dos_dias = time.time() - 2 * 86400
+    os.utime(viejo, (hace_dos_dias, hace_dos_dias))
+    dl.session = _Sesion(_Respuesta(_zip({"a.csv": "x"})))
+    assert dl.download_file("u", destino)
+    assert not viejo.exists() and en_curso.exists()
+
+
 def test_forzar_vuelve_a_bajar_y_reemplaza(tmp_path, sin_pausas_eam):
     """Con forzar se baja de nuevo lo que ya estaba completo, y lo extraído antes no se mezcla."""
     dl = FakeDownloader({"Marzo 2024.zip": _mes_2024()}, base_dir=tmp_path)

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import glob
 import logging
 import re
 import shutil
@@ -160,12 +161,24 @@ class DescargadorANDA:
         return list(self.fallidos)
 
 
+_PARTE_VIEJA = 86400  # segundos sin escribirse tras los cuales un temporal ya no es de ninguna descarga en curso
+
+
 def _temporal(destino: Path) -> Path:
     """
     Nombre temporal único junto a ``destino``. Con uno fijo (``<archivo>.part``), dos descargas del mismo
     año a la vez (dos pestañas, la app en modo aula) escribirían el mismo archivo; en Windows la segunda
     falla porque está en uso.
+
+    Antes borra los temporales de ``destino`` que llevan más de un día sin escribirse: los que dejó un proceso
+    que se mató (cerrar la ventana de la app no deja correr los ``finally``), que con el nombre único nadie más borraría.
     """
+    for viejo in destino.parent.glob(f"{glob.escape(destino.name)}.*.part"):
+        try:
+            if time.time() - viejo.stat().st_mtime > _PARTE_VIEJA:
+                viejo.unlink()
+        except OSError:  # otra sesión ya lo borró, o en Windows está abierto
+            pass
     return destino.with_name(f"{destino.name}.{uuid.uuid4().hex[:12]}.part")
 
 
