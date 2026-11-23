@@ -4,6 +4,8 @@ import io
 import json
 import shutil
 import subprocess
+import threading
+import warnings
 from pathlib import Path
 
 import numpy as np
@@ -1066,3 +1068,37 @@ def test_inicio_con_pobreza(pobreza_root, tmp_path, monkeypatch):
     next(b for b in at.button if b.label == "Guardar").click().run()
     assert not at.exception
     assert json.loads((tmp_path / "c.json").read_text()) == {"pobreza": str(tmp_path / "otra")}
+
+
+def test_avisos_de_dos_sesiones_a_la_vez(monkeypatch):
+    """Cada sesión es un hilo: el «ignore» de las Estadísticas Vitales no se traga el aviso que recoge la pobreza."""
+    from dane_data.app import _ui
+
+    pobreza_adentro, eevv_adentro, aviso_dado = threading.Event(), threading.Event(), threading.Event()
+
+    def pobreza(*a, **kw):
+        pobreza_adentro.set()
+        eevv_adentro.wait(1)  # con el candado, la otra sesión espera afuera y esto se agota
+        warnings.warn("Metodologías distintas", UserWarning)
+        aviso_dado.set()
+        return pd.DataFrame()
+
+    def eevv(*a, **kw):  # se queda adentro (con su «ignore») mientras la pobreza avisa
+        eevv_adentro.set()
+        aviso_dado.wait(5)
+        return pd.DataFrame()
+
+    monkeypatch.setattr(dd.pobreza, "serie_indicadores", pobreza)
+    monkeypatch.setattr(dd.eevv, "serie_indicadores", eevv)
+    filtros = list(warnings.filters)
+    salida = {}
+    hilo = threading.Thread(target=lambda: salida.update(
+        p=_ui.indicadores_pobreza.__wrapped__([2024], None, False, False, ())))
+    hilo.start()
+    pobreza_adentro.wait(5)
+    otro = threading.Thread(target=lambda: _ui.indicadores_eevv.__wrapped__([2024], "defunciones", None, {}, ()))
+    otro.start()
+    hilo.join(5)
+    otro.join(5)
+    assert salida["p"][1] == ["Metodologías distintas"]
+    assert warnings.filters == filtros

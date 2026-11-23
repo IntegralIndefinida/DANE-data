@@ -3,7 +3,7 @@ import warnings
 import streamlit as st
 
 import dane_data as dd
-from dane_data.app._ui import fmt_num, barras, botones_descarga, codigo, grafico, linea, selector_eam
+from dane_data.app._ui import AVISOS, fmt_num, barras, botones_descarga, codigo, grafico, linea, selector_eam
 
 st.title("Panel y microdatos EAM")
 
@@ -36,7 +36,7 @@ with tab1:
         help="El ANDA reemplaza los valores de grupos de establecimientos (casi siempre 3) por el promedio del "
              "grupo. Las sumas no cambian, pero esos valores no son los de cada planta: para análisis por "
              "establecimiento conviene excluirlos.")
-    with warnings.catch_warnings():  # el aviso de dd.eam.panel se muestra abajo, en la página
+    with AVISOS, warnings.catch_warnings():  # el aviso de dd.eam.panel se muestra abajo, en la página
         warnings.simplefilter("ignore", UserWarning)
         pan = dd.eam.panel(eam, balanceado=bal, excluir_microagregados=sin_micro)
     n_est = pan.index.get_level_values("nordest").nunique()

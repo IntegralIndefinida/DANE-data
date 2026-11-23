@@ -8,6 +8,9 @@
   todo el rango con los mismos extremos (2016–2025): el nombre del archivo distingue los años elegidos.
 * {dd}`geih.download()` y {dd}`eam.download()` con los años en un generador (`map(int, anios)`, `(a for a in ...)`) no
   bajaban nada y devolvían una lista vacía, como si todo hubiera salido bien. Ahora bajan esos años.
+* Con varias sesiones de la aplicación a la vez (modo aula, o dos pestañas), un cálculo de otra página podía tragarse el
+  aviso de que la serie de pobreza mezcla metodologías, y dejar mal puestos los avisos del proceso. Ahora esos cálculos
+  no se cruzan.
 
 ## 0.6.0 (20 de noviembre de 2026)
 

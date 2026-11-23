@@ -3,8 +3,8 @@ import warnings
 import streamlit as st
 
 import dane_data as dd
-from dane_data.app._ui import (MAX_SERIES, barras, botones_descarga, codigo, disponibles_emicron, fmt_num, fmt_pct, grafico,
-                               linea, rutas_actuales, sin_datos, variacion)
+from dane_data.app._ui import (AVISOS, MAX_SERIES, barras, botones_descarga, codigo, disponibles_emicron, fmt_num, fmt_pct,
+                               grafico, linea, rutas_actuales, sin_datos, variacion)
 
 st.title("Micronegocios")
 st.markdown("Negocios de **hasta 9 personas ocupadas** de los patrones y trabajadores por cuenta propia que encuentra la GEIH "
@@ -14,7 +14,7 @@ st.markdown("Negocios de **hasta 9 personas ocupadas** de los patrones y trabaja
 # Los avisos de load se guardan con los datos: si no, solo se verían la primera vez (después la caché no los repite)
 @st.cache_resource(max_entries=1, show_spinner="Cargando la EMICRON…")
 def _cargar(anios: tuple, rutas: tuple):
-    with warnings.catch_warnings(record=True) as avisos:
+    with AVISOS, warnings.catch_warnings(record=True) as avisos:
         warnings.simplefilter("always")
         df = dd.emicron.load(list(anios))
     return df, list(dict.fromkeys(str(a.message) for a in avisos))
@@ -45,7 +45,7 @@ filtro = '\nemi = emi[emi["ciudad"].notna()]  # las 24 ciudades en todos los añ
 
 
 def _indicadores(por: list[str]):
-    with warnings.catch_warnings(record=True) as avisos_ind:
+    with AVISOS, warnings.catch_warnings(record=True) as avisos_ind:
         warnings.simplefilter("always")
         res = dd.emicron.indicadores(emi, por=["anio", *por])
     return res, [str(a.message) for a in avisos_ind]

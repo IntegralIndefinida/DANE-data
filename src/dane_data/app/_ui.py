@@ -6,6 +6,7 @@ import io
 import logging
 import re
 import textwrap
+import threading
 import warnings
 from collections import deque
 
@@ -29,6 +30,10 @@ MAX_SERIES = len(PALETA)
 RAMPA = ["#86b6ef", "#70a1dd", "#5a8ccb", "#4477b9", "#2f63a7", "#184f95"]
 GRIS = "#898781"  # «Sin información» y parecidos, que no van en el orden
 SIN_DATO = re.compile(r"desconocid|sin informaci|sin detalle", re.IGNORECASE)
+# warnings.catch_warnings cambia los filtros de avisos de todo el proceso, y cada sesión de Streamlit es un hilo del mismo
+# proceso: sin este candado, el «ignore» de una sesión se tragaba los avisos que recogía otra (los de metodologías de la
+# pobreza), y si salían en otro orden los avisos quedaban mal puestos para siempre. Todo catch_warnings de la app va con él.
+AVISOS = threading.RLock()
 
 
 def _rampa(n: int) -> list[str]:
@@ -315,7 +320,7 @@ def cargar_eam(anios: tuple, extra: tuple, rutas: tuple) -> pd.DataFrame:
 @st.cache_data(max_entries=50, show_spinner=False)
 def indicadores_eevv(anios, tipo: str, por: str | None, filtros: dict, rutas: tuple) -> pd.DataFrame:
     barra, progreso = _barra("Preparando indicadores…")
-    with warnings.catch_warnings():
+    with AVISOS, warnings.catch_warnings():
         warnings.simplefilter("ignore", UserWarning)
         res = dd.eevv.serie_indicadores(anios, tipo, por=por, filtros=filtros or None, progress=progreso)
     barra.empty()
@@ -325,7 +330,7 @@ def indicadores_eevv(anios, tipo: str, por: str | None, filtros: dict, rutas: tu
 @st.cache_data(max_entries=50, show_spinner=False)
 def conteos_eevv(anios, tipo: str, por: str | None, filtros: dict, rutas: tuple) -> pd.DataFrame:
     barra, progreso = _barra("Preparando la tabla…")
-    with warnings.catch_warnings():
+    with AVISOS, warnings.catch_warnings():
         warnings.simplefilter("ignore", UserWarning)
         res = dd.eevv.serie_conteos(anios, tipo, por=por, filtros=filtros or None, progress=progreso)
     barra.empty()
@@ -338,7 +343,7 @@ def conteos_eevv(anios, tipo: str, por: str | None, filtros: dict, rutas: tuple)
 def indicadores_pobreza(anios, por: str | None, empalme: bool, departamental: bool,
                         rutas: tuple) -> tuple[pd.DataFrame, list[str]]:
     barra, progreso = _barra("Preparando los indicadores de pobreza (la primera vez lee los archivos del DANE)…")
-    with warnings.catch_warnings(record=True) as avisos:
+    with AVISOS, warnings.catch_warnings(record=True) as avisos:
         warnings.simplefilter("always", UserWarning)
         res = dd.pobreza.serie_indicadores(anios, por=por, empalme=empalme, departamental=departamental,
                                            progress=progreso)
@@ -349,7 +354,7 @@ def indicadores_pobreza(anios, por: str | None, empalme: bool, departamental: bo
 @st.cache_data(max_entries=20, show_spinner=False)
 def tasas_eevv(anios, por: str | None, rutas: tuple) -> pd.DataFrame:
     barra, progreso = _barra("Calculando las tasas…")
-    with warnings.catch_warnings():
+    with AVISOS, warnings.catch_warnings():
         warnings.simplefilter("ignore", UserWarning)
         res = dd.eevv.tasas(anios, por=por, progress=progreso)
     barra.empty()
@@ -361,7 +366,7 @@ def tasas_eevv(anios, por: str | None, rutas: tuple) -> pd.DataFrame:
 @st.cache_data(max_entries=50, show_spinner=False)
 def indicadores_ecv(anios, por: str | None, rutas: tuple) -> pd.DataFrame:
     barra, progreso = _barra("Preparando indicadores…")
-    with warnings.catch_warnings():
+    with AVISOS, warnings.catch_warnings():
         warnings.simplefilter("ignore", UserWarning)
         res = dd.ecv.serie_indicadores(anios, por=por, progress=progreso)
     barra.empty()
@@ -371,7 +376,7 @@ def indicadores_ecv(anios, por: str | None, rutas: tuple) -> pd.DataFrame:
 @st.cache_data(max_entries=50, show_spinner=False)
 def ipm_ecv(anios, por: str | None, rutas: tuple) -> pd.DataFrame:
     barra, progreso = _barra("Calculando el IPM…")
-    with warnings.catch_warnings():
+    with AVISOS, warnings.catch_warnings():
         warnings.simplefilter("ignore", UserWarning)
         res = dd.ecv.serie_ipm(anios, por=por, progress=progreso)
     barra.empty()
