@@ -372,6 +372,13 @@ def test_tablas_y_microdatos_sin_cargar_todos_los_anios(geih_root, tmp_path, mon
              if f.read_text(encoding="utf-8-sig").startswith("anio;mes;fex")]
     assert len(excel) == 1 and len(list((geih_root / "exportaciones").glob("*.csv"))) == 3
 
+    # Los mismos años de los extremos con otros en medio: otro archivo (el nombre solo trae el primero y el último)
+    for anios in ([2016, 2025], [2016, 2021, 2025]):
+        at.multiselect(key="exp_anios").set_value(anios).run()
+        next(b for b in at.button if b.label == "Exportar a CSV").click().run()
+    assert not at.exception
+    assert len(list((geih_root / "exportaciones").glob("*.csv"))) == 5
+
 
 def _solo_un_mes(load):
     """La app nunca debe pedir más de un mes de microdatos a la vez."""

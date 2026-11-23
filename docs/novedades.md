@@ -1,5 +1,12 @@
 # Novedades
 
+## Sin publicar
+
+**Correcciones**
+
+* En *Tablas y microdatos* de la aplicación, exportar unos años sueltos (2016 y 2025) ya no reemplaza la exportación de
+  todo el rango con los mismos extremos (2016–2025): el nombre del archivo distingue los años elegidos.
+
 ## 0.6.0 (20 de noviembre de 2026)
 
 **Nuevo**

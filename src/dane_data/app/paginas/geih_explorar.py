@@ -239,8 +239,9 @@ with tab3:
                            key="exp_excel", help="Con la configuración regional de Colombia, Excel abre en una "
                                                  "sola columna un CSV separado por comas.")
     formato = dict(sep=";", decimal=",") if para_excel else {}
-    # Una huella de la selección en el nombre: dos exportaciones distintas no se pisan
-    seleccion = json.dumps([poblacion, sel["filtros"], sel["meses"], sorted(columnas), elegidas, formato],
+    # Una huella de la selección en el nombre: dos exportaciones distintas no se pisan. Lleva los años porque el
+    # nombre solo dice el primero y el último (2016 y 2025 solos, o 2016–2025 completo)
+    seleccion = json.dumps([list(anios), poblacion, sel["filtros"], sel["meses"], sorted(columnas), elegidas, formato],
                            default=str)
     huella = hashlib.sha1(seleccion.encode()).hexdigest()[:6]
     destino = (dd.get_path("geih_empalme" if sel["empalme"] else "geih") / "exportaciones"
