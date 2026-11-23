@@ -39,7 +39,12 @@ class DownloadCancelled(Exception):
     """
 
 
-class ProgressMixin:
+class DescargadorANDA:
+    """Lo común de los descargadores: la sesión HTTP, la descarga de cada ZIP y los ganchos de progreso y cancelación."""
+
+    base_url = "https://microdatos.dane.gov.co"
+    log = logging.getLogger("dane_data")  # cada descargador pone el suyo
+    forzar = False  # volver a bajar y extraer aunque ya esté en disco
     progress: ProgressFn | None = None
     should_stop: Callable[[], bool] | None = None
 
@@ -50,14 +55,6 @@ class ProgressMixin:
     def _check_stop(self) -> None:
         if self.should_stop is not None and self.should_stop():
             raise DownloadCancelled("Descarga cancelada por el usuario.")
-
-
-class DescargadorANDA(ProgressMixin):
-    """Lo común de los descargadores: la sesión HTTP y la descarga de cada ZIP."""
-
-    base_url = "https://microdatos.dane.gov.co"
-    log = logging.getLogger("dane_data")  # cada descargador pone el suyo
-    forzar = False  # volver a bajar y extraer aunque ya esté en disco
 
     def _abrir_sesion(self) -> None:
         self.fallidos: list[str] = []
