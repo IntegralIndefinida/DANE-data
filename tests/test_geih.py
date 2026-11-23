@@ -346,6 +346,16 @@ def test_cache_del_mes_cambia_con_el_codigo_que_lee(geih_root, monkeypatch, requ
     assert loader._cache_path(mes, "core", None) != antes
 
 
+def test_cache_del_mes_ignora_columnas_que_no_cambian_la_lectura(geih_root):
+    """Pedir en ``columns`` una variable de CORE_RAW o una que no está en los archivos no crea otra caché del mes."""
+    from dane_data.geih import loader
+
+    mes = dd.geih.find_months(2025, root=geih_root)[0]
+    core = loader._cache_path(mes, "core", None)
+    assert loader._cache_path(mes, ["smlv", "ingreso laboral", "OCI"], None) == core
+    assert loader._cache_path(mes, ["p5000"], None) == loader._cache_path(mes, ["P5000", "smlv"], None) != core
+
+
 def test_un_solo_nombre_sin_lista(geih_root, eam_root):
     """Un solo valor o nombre en vez de una lista no se parte en letras."""
     df = dd.geih.load(2016, root=geih_root, cache=False)

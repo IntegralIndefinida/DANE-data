@@ -921,7 +921,15 @@ def _firma_lectura() -> str:
 
 
 def _cache_path(mes: MesGEIH, columns, modules) -> Path:
-    cols = "all" if columns == "all" else ",".join(sorted({c.upper() for c in (columns if columns not in (None, "core") else [])}))
+    if columns == "all":
+        cols = "all"
+    else:
+        # Solo las extra que cambian lo que lee load_month: las de CORE_RAW se leen siempre, y las que no están en
+        # ningún archivo del mes (p. ej. una armonizada como "smlv") no salen. Así no crean otra caché del mes.
+        extra = {c.upper() for c in (columns if columns not in (None, "core") else [])} - set(CORE_RAW)
+        if extra:
+            extra &= set().union(*(_header(f) for files in mes.archivos.values() for f in files))
+        cols = ",".join(sorted(extra))
     key = "|".join([_firma_lectura(), *_firma_archivos(mes), cols, ",".join(sorted(modules or MODULOS))])
     digest = hashlib.sha1(key.encode()).hexdigest()[:16]
     return config.CACHE_DIR / "geih" / f"{mes.anio}_{mes.mes:02d}_{digest}.parquet"
