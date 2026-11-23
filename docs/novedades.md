@@ -18,6 +18,9 @@
   juntarlo con otros años. Ahora {dd}`geih.load()` avisa y la aplicación deja ese año fuera de esa pestaña, con un aviso.
 * Cerrar la ventana de la aplicación a mitad de una descarga dejaba para siempre el archivo a medias (`.part`, decenas de
   MB) junto al ZIP. Ahora la siguiente descarga del mismo archivo borra los que llevan más de un día sin escribirse.
+* {dd}`geih.load()` con una variable que ya se lee siempre (`columns=["OCI"]`) o que no está en los archivos del DANE
+  (`columns=["smlv"]`) volvía a leer todos los meses desde los CSV, como si fuera otra carga, y guardaba otra copia en
+  la caché. Ahora usa la caché que ya tenía.
 
 ## 0.6.0 (20 de noviembre de 2026)
 
