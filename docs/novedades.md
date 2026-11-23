@@ -13,6 +13,9 @@
   no se cruzan.
 * {dd}`ecv.serie_indicadores()` avisaba de los capítulos que faltan solo la primera vez: con el año ya en la caché, las
   columnas de esos capítulos salían vacías sin explicación. Ahora avisa siempre.
+* Un año de la GEIH que la búsqueda del ANDA encuentra antes de que dane-data tenga su salario mínimo (2027, cuando el
+  DANE lo publique) dejaba `ratio_smlv` vacío sin aviso, y en la aplicación bajaba los porcentajes de *Ingresos* al
+  juntarlo con otros años. Ahora {dd}`geih.load()` avisa y la aplicación deja ese año fuera de esa pestaña, con un aviso.
 
 ## 0.6.0 (20 de noviembre de 2026)
 

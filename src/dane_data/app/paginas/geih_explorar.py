@@ -165,7 +165,12 @@ t
 with tab2:
     st.markdown("**Ocupados con ingreso laboral** (con los filtros de la barra lateral)")
     freq = frecuencias_geih(anios, "ingreso_laboral", (), "ocupado", **{**comunes, "columnas": ()})
-    oc = freq[freq["ingreso_laboral"] > 0]
+    # Sin el salario mínimo del año, su ingreso no se puede pasar a salarios mínimos: contado en el total y no en los
+    # tramos, los porcentajes salían más bajos
+    if sin_smlv := [a for a in anios if a not in dd.SMLV]:
+        st.warning(f"Esta versión de dane-data no tiene el salario mínimo de {', '.join(map(str, sin_smlv))}: esos años "
+                   "no se incluyen aquí. Actualice dane-data.", icon=":material/warning:")
+    oc = freq[(freq["ingreso_laboral"] > 0) & freq["anio"].isin(list(dd.SMLV))]
     if oc.empty:
         st.info("No hay ocupados con ingreso en la selección (la GEIH 2007 no trae ingresos laborales).")
     else:

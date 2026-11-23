@@ -71,6 +71,19 @@ def test_mes_completo_en_dos_carpetas_no_se_duplica(geih_root, caplog):
     assert "varias carpetas" in caplog.text
 
 
+def test_cada_anio_del_anda_tiene_salario_minimo():
+    """Un catálogo nuevo en KNOWN_CATALOGS sin su SMLV dejaría ratio_smlv vacío en ese año."""
+    assert set(dd.geih.ANIOS_DISPONIBLES) <= set(dd.SMLV)
+
+
+def test_anio_sin_salario_minimo_avisa(geih_root, caplog, monkeypatch):
+    monkeypatch.delitem(dd.SMLV, 2016)
+    with caplog.at_level("WARNING", logger="dane_data.geih"):
+        df = dd.geih.load(2016, root=geih_root, cache=False)
+    assert "salario mínimo de 2016" in caplog.text
+    assert df["ratio_smlv"].isna().all()
+
+
 def test_carpeta_del_mes_sin_archivos_reconocidos(geih_root):
     """Junto al mes, otra carpeta con el nombre del mes pero sin módulos (un diccionario): no falla."""
     otra = geih_root / "datos_csv" / "2016" / "Enero_documentacion"

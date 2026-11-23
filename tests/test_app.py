@@ -285,6 +285,20 @@ def test_salario_minimo_sin_formula(geih_root, tmp_path, monkeypatch):
     assert texto.count("\\$") == texto.count("$") > 0
 
 
+def test_anio_sin_salario_minimo_no_cuenta_en_los_tramos(geih_root, tmp_path, monkeypatch):
+    """Un año sin SMLV contaba en el total y no en los tramos: los porcentajes de cada tramo salían más bajos."""
+    monkeypatch.setitem(dd.config._session, "geih", geih_root)
+    monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
+    at = AppTest.from_file(str(PAGINAS / "geih_explorar.py"), default_timeout=60).run()
+    at.multiselect(key="exp_anios").set_value([2025]).run()
+    solo_2025 = next(m.value for m in at.metric if m.label.startswith("Ganan ≈ 1"))
+    monkeypatch.delitem(dd.SMLV, 2016)
+    at.multiselect(key="exp_anios").set_value([2016, 2025]).run()
+    assert not at.exception
+    assert any("salario mínimo de 2016" in w.value for w in at.warning)
+    assert next(m.value for m in at.metric if m.label.startswith("Ganan ≈ 1")) == solo_2025
+
+
 def test_aviso_si_falta_un_modulo_nuevo(geih_root, tmp_path, monkeypatch):
     """Datos bajados antes de que dane-data extrajera Migración: se dice cómo bajarla, en vez de una tabla vacía."""
     (geih_root / "datos_csv" / "2025" / "Enero 2025" / "Migración.CSV").unlink()

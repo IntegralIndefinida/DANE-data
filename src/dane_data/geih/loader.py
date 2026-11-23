@@ -1072,6 +1072,10 @@ def load(
             f"No hay datos GEIH para años={years}, meses={months} en {_root(empalme, root)}. "
             "Descárguelos con dane_data.geih.download(...) o revise dane_data.set_paths(...)."
         )
+    # Un año nuevo que la búsqueda del ANDA encuentra antes de que dane-data tenga su salario mínimo
+    if harmonize_vars and (sin_smlv := sorted({m.anio for m in meses} - set(SMLV))):
+        log.warning(f"dd.SMLV no tiene el salario mínimo de {', '.join(map(str, sin_smlv))}: smlv y ratio_smlv quedan "
+                    "vacíos en esos años. Actualice dane-data.")
     # Un mes sin un módulo que sí traen los demás meses de su año, o (hasta 2021) sin su parte Cabecera o Resto,
     # queda con esas variables vacías, o vacías en la zona de la parte que falta
     pedidos = set(modules or MODULOS)
