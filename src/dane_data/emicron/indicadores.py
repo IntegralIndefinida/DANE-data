@@ -8,7 +8,7 @@ from typing import Iterable
 import numpy as np
 import pandas as pd
 
-from ..stats import _con_categorias, _motivo_sin_peso
+from ..stats import _as_list as _lista, _con_categorias, _motivo_sin_peso
 
 GLOSARIO = {
     "Micronegocio": "Unidad económica con hasta 9 personas ocupadas que desarrolla una actividad productiva de bienes o "
@@ -40,12 +40,6 @@ _CONTEOS = ["personal_ocupado", "trabajadores_remunerados", "socios", "familiare
 def a_miles_anuales(mensual_por_peso: pd.Series | float) -> pd.Series | float:
     """Un total mensual en pesos, expandido, como lo publica el DANE: anual y en miles de pesos."""
     return mensual_por_peso * 12 / 1000
-
-
-def _lista(por) -> list[str]:
-    if por is None:
-        return []
-    return [por] if isinstance(por, str) else list(por)
 
 
 def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = "anio", peso: str = "fex",

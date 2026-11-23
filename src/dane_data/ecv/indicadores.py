@@ -7,7 +7,7 @@ from typing import Iterable
 import numpy as np
 import pandas as pd
 
-from ..stats import _con_categorias
+from ..stats import _as_list as _lista, _con_categorias
 
 GLOSARIO = {
     "ECV": "Encuesta Nacional de Calidad de Vida del DANE: anual desde 2010, por muestreo, con un capítulo del "
@@ -31,12 +31,6 @@ _TENENCIAS = {"Propia, totalmente pagada": "propia_pagada", "Propia, la están p
               "Posesión sin título (ocupante de hecho)": "ocupante_de_hecho", "Propiedad colectiva": "propiedad_colectiva"}
 _DE_HOGAR = ("energia", "acueducto", "alcantarillado", "recoleccion_basuras", "gas_natural", "internet_hogar",
              "se_considera_pobre")
-
-
-def _lista(por) -> list[str]:
-    if por is None:
-        return []
-    return [por] if isinstance(por, str) else list(por)
 
 
 def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, dropna: bool = True) -> pd.DataFrame:

@@ -7,7 +7,7 @@ from typing import Iterable
 import numpy as np
 import pandas as pd
 
-from ..stats import _con_categorias
+from ..stats import _as_list as _lista, _con_categorias
 
 GLOSARIO = {
     "Estadísticas Vitales": "Registro de los certificados de nacimiento y de defunción, no una encuesta: no tiene "
@@ -56,12 +56,6 @@ GLOSARIO = {
     "Mortalidad neonatal": "Defunciones de 0 a 27 días completos de vida por cada 1.000 nacidos vivos. La precoz, de 0 a 6 días.",
     "Mortalidad perinatal": "Mortinatos y defunciones de 0 a 6 días por cada 1.000 nacidos vivos más mortinatos.",
 }
-
-
-def _lista(por) -> list[str]:
-    if por is None:
-        return []
-    return [por] if isinstance(por, str) else list(por)
 
 
 def _tipo_de(df: pd.DataFrame) -> str:
