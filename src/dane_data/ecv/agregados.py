@@ -10,10 +10,8 @@ from __future__ import annotations
 
 import hashlib
 import json
-import logging
 import warnings
-from pathlib import Path
-from typing import Callable, Iterable
+from typing import Iterable
 
 import pandas as pd
 
@@ -21,13 +19,11 @@ from .. import config
 from ..eevv.loader import _unir
 from ..geih.agregados import _clave_json, _firma_codigo, _mascara
 from ..stats import _enteros
-from ..geih.loader import _borrar_cache, _guardar_parquet, _usado
+from ..geih.loader import _borrar_cache, _desde_cache
 from .indicadores import _lista, indicadores
 from .ipm import COLUMNAS_IPM, MODULOS_IPM, ipm, privaciones
 from .loader import (_COMPLEMENTARIA, _EDUCACION, _FACTORES, _INTERNOS, MODULOS, _aviso_faltan, _root, find_files,
                      load)
-
-log = logging.getLogger("dane_data.ecv")
 
 # Lo que produce los resultados (para _firma_codigo)
 _CODIGO = ("ecv/loader.py", "ecv/indicadores.py", "ecv/ipm.py", "ecv/agregados.py", "_io.py", "referencias.py", "stats.py",
@@ -72,22 +68,6 @@ def _firma_anio(anio: int, root) -> str:
             estado = ruta.stat()
             partes.append(f"{modulo}|{ruta.name}|{estado.st_size}|{estado.st_mtime_ns}")
     return ";".join(partes)
-
-
-def _desde_cache(ruta: Path, calcular: Callable[[], pd.DataFrame]) -> pd.DataFrame:
-    if ruta.exists():
-        try:
-            tabla = pd.read_parquet(ruta)
-            _usado(ruta)
-            return tabla
-        except Exception:  # caché corrupta: se regenera
-            pass
-    tabla = calcular()
-    try:
-        _guardar_parquet(tabla, ruta, "ecv")
-    except Exception as e:  # disco lleno, sin permisos, etc.
-        log.debug(f"No se pudo guardar caché {ruta}: {e}")
-    return tabla
 
 
 def _faltan_internos(anios, root, ipm: bool) -> None:
@@ -184,7 +164,8 @@ def serie_indicadores(
                 d = load(a, modulos=_MODULOS_INDICADORES, columns=_COLUMNAS_INDICADORES, root=root)
             return indicadores(d[_mascara(d, filtros)] if filtros else d, por=llaves, dropna=dropna)
 
-        partes.append(_desde_cache(config.CACHE_DIR / "ecv" / "indicadores" / f"{anio}_{digest}.parquet", calcular))
+        partes.append(_desde_cache(config.CACHE_DIR / "ecv" / "indicadores" / f"{anio}_{digest}.parquet", calcular,
+                                   "ecv"))
     if progress:
         progress(1.0, "Listo")
     return _unir(partes).sort_values(llaves, ignore_index=True)
@@ -267,7 +248,8 @@ def serie_ipm(
         def calcular(a=anio) -> pd.DataFrame:
             return privaciones(load(a, modulos=MODULOS_IPM, columns=COLUMNAS_IPM, root=root))
 
-        partes.append(_desde_cache(config.CACHE_DIR / "ecv" / "privaciones" / f"{anio}_{digest}.parquet", calcular))
+        partes.append(_desde_cache(config.CACHE_DIR / "ecv" / "privaciones" / f"{anio}_{digest}.parquet", calcular,
+                                   "ecv"))
     if progress:
         progress(1.0, "Listo")
     llaves = ["anio", *_lista(por)]

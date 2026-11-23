@@ -17,7 +17,7 @@ import pandas as pd
 
 from .. import config
 from ..geih.agregados import _firma_codigo, _mascara
-from ..geih.loader import _borrar_cache, _guardar_parquet, _usado
+from ..geih.loader import _borrar_cache, _desde_cache
 from ..stats import _as_list, _enteros
 from .indicadores import indicadores
 from .loader import _archivo, _avisar_metodologias, _root, find_files, load
@@ -72,22 +72,13 @@ def _armonizado(anio: int, ruta: Path, empalme: bool, root) -> pd.DataFrame:
     """Un año de :func:`load`, leído de la caché si ya se armonizó con los mismos archivos y el mismo código."""
     partes = [_firma_codigo(_CODIGO), f"empalme={empalme}", *map(_firma, _usados(anio, ruta, empalme, root))]
     digest = hashlib.sha1("|".join(partes).encode()).hexdigest()[:16]
-    destino = config.CACHE_DIR / "pobreza" / "anios" / f"{anio}_{digest}.parquet"
-    if destino.exists():
-        try:
-            tabla = pd.read_parquet(destino)
-            _usado(destino)
-            return tabla
-        except Exception:  # caché corrupta: se regenera
-            pass
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", UserWarning)  # serie_indicadores avisa una sola vez
-        tabla = load(anio, empalme=empalme, root=root)
-    try:
-        _guardar_parquet(tabla, destino, "pobreza")
-    except Exception:  # disco lleno, sin permisos, etc.
-        pass
-    return tabla
+
+    def leer() -> pd.DataFrame:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)  # serie_indicadores avisa una sola vez
+            return load(anio, empalme=empalme, root=root)
+
+    return _desde_cache(config.CACHE_DIR / "pobreza" / "anios" / f"{anio}_{digest}.parquet", leer, "pobreza")
 
 
 def serie_indicadores(

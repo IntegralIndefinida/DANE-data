@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import logging
 import uuid
 from functools import lru_cache
 from pathlib import Path
@@ -25,10 +24,8 @@ from .. import config
 from ..referencias import MESES
 from ..stats import _as_list, _con_categorias, _enteros, _meses_anotados, peso_mensual_promedio, weighted_quantile
 from .indicadores import _COLUMNAS, indicadores
-from .loader import (CATEGORIAS, MesGEIH, _firma_archivos, _guardar_parquet, _root, _usado,
+from .loader import (CATEGORIAS, MesGEIH, _desde_cache, _firma_archivos, _root,
                      find_months, load)
-
-log = logging.getLogger("dane_data.geih")
 
 # Lo que lee `indicadores` más las desagregaciones y filtros de la app.
 VARIABLES_INDICADORES = ["anio", "mes", "fex", "pet", "fuerza_trabajo", "ocupado", "desocupado", "inactivo",
@@ -183,22 +180,13 @@ def _por_anio(tipo: str, anios, solicitud: dict, calcular: Callable[[int], pd.Da
         firma = [_firma_codigo(), texto, *(s for m in ms for s in _firma_archivos(m))]
         digest = hashlib.sha1("|".join(firma).encode()).hexdigest()[:16]
         ruta = config.CACHE_DIR / "geih" / tipo / f"{serie}_{anio}_{digest}.parquet"
-        tabla = None
-        if ruta.exists():
-            try:
-                tabla = pd.read_parquet(ruta)
-                _usado(ruta)
-            except Exception:  # caché corrupta: se regenera
-                tabla = None
-        if tabla is None:
+
+        def calcular_anio(a=anio, i=i) -> pd.DataFrame:
             if progress:
-                progress(i / len(por_anio), f"Calculando {anio} (solo la primera vez)")
-            tabla = calcular(anio)
-            try:
-                _guardar_parquet(tabla, ruta)
-            except Exception as e:  # disco lleno, sin permisos, etc.
-                log.debug(f"No se pudo guardar caché {ruta}: {e}")
-        partes.append(tabla)
+                progress(i / len(por_anio), f"Calculando {a} (solo la primera vez)")
+            return calcular(a)
+
+        partes.append(_desde_cache(ruta, calcular_anio))
     if progress:
         progress(1.0, "Listo")
     return partes

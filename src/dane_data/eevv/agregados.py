@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import logging
 import warnings
 from pathlib import Path
 from typing import Callable, Iterable
@@ -20,12 +19,10 @@ import pandas as pd
 from .. import config
 from ..geih.agregados import _clave_json, _firma_codigo, _mascara
 from ..stats import _enteros
-from ..geih.loader import _borrar_cache, _guardar_parquet, _usado
+from ..geih.loader import _borrar_cache, _desde_cache
 from ..proyecciones import poblacion
 from .indicadores import _lista, indicadores
 from .loader import _SIN_DETALLE, _avisar_cobertura, _root, _tipo_valido, _unir, find_files, load
-
-log = logging.getLogger("dane_data.eevv")
 
 _MIL = 1000
 
@@ -80,22 +77,6 @@ def clear_cache(dias: float | None = None) -> int:
     return _borrar_cache("eevv", dias)
 
 
-def _desde_cache(ruta: Path, calcular: Callable[[], pd.DataFrame]) -> pd.DataFrame:
-    if ruta.exists():
-        try:
-            tabla = pd.read_parquet(ruta)
-            _usado(ruta)
-            return tabla
-        except Exception:  # caché corrupta: se regenera
-            pass
-    tabla = calcular()
-    try:
-        _guardar_parquet(tabla, ruta, "eevv")
-    except Exception as e:  # disco lleno, sin permisos, etc.
-        log.debug(f"No se pudo guardar caché {ruta}: {e}")
-    return tabla
-
-
 def _armonizado(tipo: str, anio: int, ruta: Path) -> pd.DataFrame:
     """Un año ya armonizado. Leerlo de la caché es unas diez veces más rápido que del archivo del DANE."""
     digest = hashlib.sha1("|".join([_firma_codigo(_CODIGO), _firma_archivo(ruta)]).encode()).hexdigest()[:16]
@@ -105,7 +86,7 @@ def _armonizado(tipo: str, anio: int, ruta: Path) -> pd.DataFrame:
             warnings.simplefilter("ignore", UserWarning)  # las funciones de este módulo avisan una sola vez
             return load(anio, tipo=tipo, root=ruta.parents[3])
 
-    return _desde_cache(config.CACHE_DIR / "eevv" / tipo / "anios" / f"{anio}_{digest}.parquet", leer)
+    return _desde_cache(config.CACHE_DIR / "eevv" / tipo / "anios" / f"{anio}_{digest}.parquet", leer, "eevv")
 
 
 def _por_anio(tabla: str, anios, tipo: str, solicitud: dict, calcular: Callable[[pd.DataFrame], pd.DataFrame], root=None,
@@ -124,7 +105,7 @@ def _por_anio(tabla: str, anios, tipo: str, solicitud: dict, calcular: Callable[
             progress(i / len(archivos), f"Calculando {tipo} {anio} (solo la primera vez)")
         digest = hashlib.sha1("|".join([_firma_codigo(_CODIGO), _firma_archivo(ruta), texto]).encode()).hexdigest()[:16]
         destino = config.CACHE_DIR / "eevv" / tipo / tabla / f"{anio}_{digest}.parquet"
-        partes.append(_desde_cache(destino, lambda a=anio, r=ruta: calcular(_armonizado(tipo, a, r))))
+        partes.append(_desde_cache(destino, lambda a=anio, r=ruta: calcular(_armonizado(tipo, a, r)), "eevv"))
     if progress:
         progress(1.0, "Listo")
     return partes

@@ -29,7 +29,7 @@ import uuid
 from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
-from typing import Iterable
+from typing import Callable, Iterable
 
 import numpy as np
 import pandas as pd
@@ -1105,25 +1105,14 @@ def load(
     for i, mes in enumerate(meses):
         if progress:
             progress(i / len(meses), f"Leyendo {MESES[mes.mes]} {mes.anio}")
-        cpath = _cache_path(mes, columns, modules) if cache else None
-        df = None
-        if cpath is not None and cpath.exists():
-            try:
-                df = pd.read_parquet(cpath)
-                _usado(cpath)
-            except Exception:  # caché corrupta: se regenera
-                df = None
-        if df is None:
-            try:
-                df = load_month(mes, columns=columns, modules=modules)
-            except FileNotFoundError as e:
-                log.warning(str(e))
-                continue
-            if cpath is not None:
-                try:
-                    _guardar_parquet(df, cpath)
-                except Exception as e:  # columnas de tipo mixto, disco lleno, etc.
-                    log.debug(f"No se pudo guardar caché {cpath}: {e}")
+        def leer(m=mes) -> pd.DataFrame:
+            return load_month(m, columns=columns, modules=modules)
+
+        try:
+            df = _desde_cache(_cache_path(mes, columns, modules), leer) if cache else leer()
+        except FileNotFoundError as e:
+            log.warning(str(e))
+            continue
         # Mes a mes (harmonize es fila a fila): evita armonizar y copiar el frame
         # concatenado de muchos años, que no cabe en memoria.
         if harmonize_vars:
@@ -1239,3 +1228,23 @@ def _guardar_parquet(df: pd.DataFrame, ruta: Path, carpeta: str = "geih") -> Non
     finally:
         tmp.unlink(missing_ok=True)
     _limpiar_cache_vieja(carpeta)  # al escribir algo nuevo, lo viejo que nadie usa
+
+
+def _desde_cache(ruta: Path, calcular: Callable[[], pd.DataFrame], carpeta: str = "geih") -> pd.DataFrame:
+    """
+    La tabla guardada en ``ruta`` (y la marca como usada); si no está o no se puede leer, ``calcular()``, que se guarda
+    ahí. ``carpeta`` es la de la caché (``"geih"``, ``"eevv"``, ``"ecv"`` o ``"pobreza"``), como en ``_guardar_parquet``.
+    """
+    if ruta.exists():
+        try:
+            tabla = pd.read_parquet(ruta)
+            _usado(ruta)
+            return tabla
+        except Exception:  # caché corrupta: se regenera
+            pass
+    tabla = calcular()
+    try:
+        _guardar_parquet(tabla, ruta, carpeta)
+    except Exception as e:  # columnas de tipo mixto, disco lleno, sin permisos, etc.
+        logging.getLogger(f"dane_data.{carpeta}").debug(f"No se pudo guardar caché {ruta}: {e}")
+    return tabla
