@@ -177,8 +177,8 @@ dane-data descargar ecv --anios 2025 --modulos caracteristicas salud
 dane-data config --geih RUTA --empalme RUTA --eam RUTA --ecv RUTA
 ```
 
-Vea [`examples/01_primeros_pasos.ipynb`](https://github.com/IntegralIndefinida/DANE-data/blob/main/examples/01_primeros_pasos.ipynb)
-para un recorrido completo.
+Vea [Primeros pasos](https://integralindefinida.github.io/DANE-data/primeros_pasos.html) para un recorrido completo,
+con los resultados de cada paso.
 
 ### Variables armonizadas
 
