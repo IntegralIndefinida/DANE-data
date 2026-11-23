@@ -71,7 +71,8 @@ def geih_root(tmp_path):
     _write(m / "Resto - Desocupados.csv", "Directorio;Secuencia_p;Orden;Dsi;Fex_c_2011\n")
     _write(m / "Cabecera - Inactivos.csv", "Directorio;Secuencia_p;Orden;Ini;Fex_c_2011\n")
     oi = "Directorio;Secuencia_p;Orden;P7495;P7500S1A1;Fex_c_2011\n"
-    _write(m / "Cabecera - Otros ingresos.csv", oi + "1;1;1;1;800000;100,5\n2;1;1;2; ;200,0\n")
+    # 1.79769313486232e+308: así escribe el ANDA las celdas vacías de septiembre a diciembre de 2017
+    _write(m / "Cabecera - Otros ingresos.csv", oi + "1;1;1;1;800000;100,5\n2;1;1;2;1.79769313486232e+308;200,0\n")
     _write(m / "Resto - Otros ingresos.csv", oi + "3;1;1;1;150000;300,25\n")
     # Carpeta que no es un mes (debe ignorarse)
     (base / "2016" / "Total_fact_exp_dto").mkdir(parents=True)

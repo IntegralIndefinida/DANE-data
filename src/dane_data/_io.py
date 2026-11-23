@@ -157,6 +157,12 @@ def columnas(path: Path, case: str = "upper") -> list[str]:
         return normalize_columns(fh.readline().rstrip("\r\n").split(sep), case)
 
 
+# GEIH de septiembre a diciembre de 2017 (catálogo 458): el CSV del ANDA escribe las celdas vacías como el mayor
+# double redondeado a 15 cifras, que se pasa del máximo y pandas lo lee como infinito. Es un vacío (ver README,
+# "Diferencias con la documentación del DANE").
+_VACIO_DBL_MAX = "1.79769313486232e+308"
+
+
 def read_table(
     path: Path,
     columns: Iterable[str] | Callable[[str], bool] | None = None,
@@ -191,7 +197,7 @@ def read_table(
         return _coerce_numeric(df.loc[:, ~df.columns.duplicated()], "/".join(path.parts[-3:]))
 
     sep, encoding = sniff(path)
-    kwargs = dict(sep=sep, usecols=usecols, low_memory=False)
+    kwargs = dict(sep=sep, usecols=usecols, low_memory=False, na_values=[_VACIO_DBL_MAX])
     try:
         df = pd.read_csv(path, encoding=encoding, **kwargs)
     except UnicodeDecodeError:

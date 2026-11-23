@@ -21,6 +21,11 @@
 * {dd}`geih.load()` con una variable que ya se lee siempre (`columns=["OCI"]`) o que no está en los archivos del DANE
   (`columns=["smlv"]`) volvía a leer todos los meses desde los CSV, como si fuera otra carga, y guardaba otra copia en
   la caché. Ahora usa la caché que ya tenía.
+* En la GEIH de septiembre a diciembre de 2017, `ingreso_laboral` y `ratio_smlv` salían en infinito para unos 4.500
+  ocupados por mes, e `ingreso_no_laboral` para unas 50.000 personas: los CSV del ANDA de esos meses escriben las celdas
+  vacías como `1.79769313486232e+308`. Ahora se leen como vacías. Los promedios de ingreso de 2017 salían infinitos, y
+  las medianas y los porcentajes por salarios mínimos contaban a esas personas como si ganaran más que todas. Como cambia la lectura, la caché de
+  cada mes se rehace una vez.
 
 ## 0.6.0 (20 de noviembre de 2026)
 
