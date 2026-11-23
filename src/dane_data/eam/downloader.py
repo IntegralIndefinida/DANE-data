@@ -185,37 +185,16 @@ class EAMDownloader(DescargadorANDA):
         try:
             with zipfile.ZipFile(zip_path, "r") as z:
                 members = [m for m in z.infolist() if not m.is_dir()]
-
-                # 1. Buscar .csv
-                csv_members = [m for m in members if m.filename.lower().endswith(".csv")]
-                if csv_members:
-                    for m in csv_members:
+                # EXTENSIONES va en orden de preferencia: .csv, .txt y, si no hay ninguno (2024), el .dta tal cual.
+                # Antes el .dta se convertía a TXT con pd.read_stata, que cambiaba los códigos por las etiquetas.
+                for extension in EXTENSIONES:
+                    for m in (m for m in members if m.filename.lower().endswith(extension)):
                         target = dest_dir / sanitize_member_name(m.filename)
                         extraer_miembro(z, m, target)
                         extracted_files.append(target)
-                    log.info(f"  → Extraído formato CSV: {[f.name for f in extracted_files]}")
-                    return extracted_files
-
-                # 2. Buscar .txt
-                txt_members = [m for m in members if m.filename.lower().endswith(".txt")]
-                if txt_members:
-                    for m in txt_members:
-                        target = dest_dir / sanitize_member_name(m.filename)
-                        extraer_miembro(z, m, target)
-                        extracted_files.append(target)
-                    log.info(f"  → Extraído formato TXT (alternativa al no haber CSV): {[f.name for f in extracted_files]}")
-                    return extracted_files
-
-                # 3. Si no hay .csv ni .txt (caso año 2024), el .dta tal cual. Antes se convertía a TXT
-                # con pd.read_stata, que cambiaba los códigos por las etiquetas de valor.
-                dta_members = [m for m in members if m.filename.lower().endswith(".dta")]
-                if dta_members:
-                    for m in dta_members:
-                        target = dest_dir / sanitize_member_name(m.filename)
-                        extraer_miembro(z, m, target)
-                        extracted_files.append(target)
-                    log.info(f"  → Extraído formato Stata (no hay CSV ni TXT): {[f.name for f in extracted_files]}")
-                    return extracted_files
+                    if extracted_files:
+                        log.info(f"  → Extraído formato {extension[1:].upper()}: {[f.name for f in extracted_files]}")
+                        return extracted_files
 
         except zipfile.BadZipFile:
             log.error(f"El archivo {zip_path.name} está corrupto o no es un ZIP válido; se borra para volver "

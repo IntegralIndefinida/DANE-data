@@ -637,6 +637,16 @@ class FakeEAMDownloader(EAMDownloader):
         return True
 
 
+def test_eam_extrae_solo_el_formato_preferido(tmp_path):
+    for i, (contenido, esperado) in enumerate((({"a.dta": b"x", "a.txt": "x\n", "a.csv": "x\n"}, ["a.csv"]),
+                                               ({"b.dta": b"x", "b.txt": "x\n"}, ["b.txt"]))):
+        zip_path = tmp_path / f"{i}.zip"
+        zip_path.write_bytes(_zip(contenido))
+        archivos = EAMDownloader(base_dir=tmp_path).extract_preferred_format(zip_path, tmp_path / str(i))
+        assert [f.name for f in archivos] == esperado
+        assert [f.name for f in (tmp_path / str(i)).iterdir()] == esperado
+
+
 def test_eam_stata_se_usa_tal_cual_con_sus_codigos(tmp_path):
     """El .dta de 2024 no se convierte: el cargador lo lee con los códigos, no con las etiquetas de valor."""
     dta = io.BytesIO()
