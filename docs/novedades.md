@@ -12,6 +12,10 @@
 * {dd}`geih.indicadores()` deja fuera por defecto a quien no tiene valor en la variable de `por` (`dropna=True`), como
   {dd}`geih.serie_indicadores()` y los `indicadores` de las demás encuestas: las dos formas de calcular lo mismo daban
   tablas con un número distinto de filas. Para conservar la fila del grupo vacío, use `dropna=False`.
+* La línea de comandos habla en español también en la ayuda (`-h`) y en los errores de argumentos, que argparse escribía
+  en inglés. `dane-data` sin subcomando muestra la ayuda en vez de un error; `--modulos` con un módulo que no es de la
+  encuesta dice cuáles sí son (antes mezclaba los 29 de la GEIH, la EMICRON y la ECV), y `dane-data estado` sin ningún
+  dato dice cómo empezar.
 
 **Correcciones**
 

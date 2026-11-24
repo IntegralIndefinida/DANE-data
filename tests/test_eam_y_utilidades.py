@@ -274,6 +274,21 @@ def test_cli_descarga_con_fallas_sale_con_error(descargador_falso, monkeypatch):
     assert cli_main(["descargar", "eam", "--anios", "2024"]) == 1
 
 
+def test_cli_en_espanol_y_sin_subcomando(descargador_falso, capsys, monkeypatch, tmp_path):
+    """argparse escribía en inglés; sin subcomando era un error, y --modulos mezclaba los nombres de tres encuestas."""
+    assert cli_main([]) == 0
+    assert "uso: dane-data" in capsys.readouterr().out
+    with pytest.raises(SystemExit):
+        cli_main(["descargar", "gieh"])
+    assert "opción no válida: 'gieh' (elija entre geih" in capsys.readouterr().err
+    assert cli_main(["descargar", "geih", "--modulos", "fuerza"]) == 2
+    assert "módulos que no son de esta encuesta: fuerza" in capsys.readouterr().err
+    assert not descargador_falso
+    monkeypatch.setattr(dd.config, "_session", {k: tmp_path / k for k in dd.config._KEYS})
+    assert cli_main(["estado"]) == 0
+    assert "Para empezar:  dane-data descargar geih" in capsys.readouterr().out
+
+
 @pytest.mark.parametrize("argv", [["descargar", "eam", "--modulos", "ocupados"], ["descargar", "eam", "--empalme"],
                                   ["descargar", "eam", "--limite", "1"], ["descargar", "geih", "--tic"]])
 def test_cli_descargar_opciones_de_otra_encuesta(descargador_falso, capsys, argv):

@@ -91,8 +91,10 @@ def _cmd_estado(args) -> int:
                        ("eevv", "Est. Vitales"), ("emicron", "EMICRON"), ("ecv", "ECV"),
                        ("pobreza", "Pobreza")):
         print(f"{label:15s} {config.get_path(key)}")
+    hay = False
     for emp in (False, True):
         av = geih.available(empalme=emp)
+        hay |= not av.empty
         nombre = "GEIH empalme" if emp else "GEIH principal"
         if av.empty:
             print(f"\n{nombre}: sin datos")
@@ -101,43 +103,48 @@ def _cmd_estado(args) -> int:
         print(f"\n{nombre}:")
         print(resumen.to_string())
     av = eam.available()
+    hay |= not av.empty
     print("\nEAM:", "sin datos" if av.empty else f"{len(av)} años ({av.anio.min()}–{av.anio.max()})")
     av = eevv.available()
+    hay |= not av.empty
     print("\nEstadísticas Vitales:", "sin datos" if av.empty else "")
     for tipo, d in av.groupby("tipo", sort=False):
         print(f"  {tipo}: {len(d)} años ({d.anio.min()}–{d.anio.max()})")
     av = emicron.available()
+    hay |= not av.empty
     anios = sorted(av.anio.unique())
     print("\nEMICRON:", "sin datos" if av.empty else f"{len(anios)} años ({anios[0]}–{anios[-1]}), {len(av)} módulos")
     av = ecv.available()
     av = av[av["modulo"].isin(ecv.MODULOS)]
+    hay |= not av.empty
     print("\nECV:", "sin datos" if av.empty else "")
     for anio, d in av.groupby("anio"):
         print(f"  {anio}: {len(d)} de {len(ecv.MODULOS)} capítulos")
     av = pobreza.available()
+    hay |= not av.empty
     anios = av.anio.dropna()
     # Los que usa load(empalme=True); el departamental de 2021 todavía no
     empalme = "sí" if {"empalme_2012_2020", "lineas_2012_2018", "hogares_empalmado_2021"} <= set(av.archivo) else "no"
     print("\nPobreza monetaria:", "sin datos" if av.empty else
           (f"{anios.nunique()} años ({anios.min()}–{anios.max()})" if len(anios) else "sin años")
           + f"; archivos del empalme 2012–2021: {empalme}")
+    if not hay:
+        print("\nPara empezar:  dane-data descargar geih --anios 2025   (o abra la aplicación:  dane-data app)")
     return 0
 
 
 def _cmd_config(args) -> int:
+    # --empalme es la clave geih_empalme; las demás opciones se llaman como su clave
+    carpetas = {clave: getattr(args, "empalme" if clave == "geih_empalme" else clave) for clave in config._KEYS}
     try:
-        config.set_paths(geih=args.geih, geih_empalme=args.empalme, eam=args.eam, eevv=args.eevv, emicron=args.emicron,
-                         ecv=args.ecv, pobreza=args.pobreza,
-                         save=True)
+        config.set_paths(**carpetas, save=True)
     except ValueError as e:  # una carpeta vacía
         print(f"dane-data config: {e}", file=sys.stderr)
         return 2
     print(f"Guardado en {config.CONFIG_FILE}")
     for k, v in config.show_paths().items():
         print(f"  {k:13s} {v}")
-    for clave, valor in (("geih", args.geih), ("geih_empalme", args.empalme), ("eam", args.eam), ("eevv", args.eevv),
-                         ("emicron", args.emicron), ("ecv", args.ecv),
-                          ("pobreza", args.pobreza)):
+    for clave, valor in carpetas.items():
         env = config._KEYS[clave][0]
         if valor is not None and os.environ.get(env):
             print(f"  Aviso: la variable de entorno {env} ({os.environ[env]}) tiene prioridad sobre el archivo "
@@ -186,10 +193,39 @@ def _cmd_descargar(args) -> int:
     return 1 if fallidos else 0  # el resumen de lo que falló ya quedó en el registro
 
 
+# argparse escribe en inglés el uso, los errores y la ayuda (-h); la CLI es para estudiantes. El orden importa:
+# "argument " va al final porque está dentro de otros textos.
+_ARGPARSE_ES = (("usage:", "uso:"), ("positional arguments:", "argumentos:"), ("options:", "opciones:"),
+                ("show this help message and exit", "mostrar esta ayuda y salir"),
+                ("the following arguments are required", "faltan los argumentos"),
+                ("invalid choice", "opción no válida"), ("choose from", "elija entre"),
+                ("unrecognized arguments", "argumentos desconocidos"),
+                ("expected at least one argument", "falta al menos un valor"), ("expected one argument", "falta un valor"),
+                ("invalid int value", "no es un número entero"), ("argument ", "argumento "))
+
+
+def _es(texto: str) -> str:
+    for en, es in _ARGPARSE_ES:
+        texto = texto.replace(en, es)
+    return texto
+
+
+class _Parser(argparse.ArgumentParser):
+    def format_help(self) -> str:
+        return _es(super().format_help())
+
+    def format_usage(self) -> str:
+        return _es(super().format_usage())
+
+    def error(self, message):
+        self.print_usage(sys.stderr)
+        self.exit(2, f"{self.prog}: error: {_es(message)}\n")
+
+
 def _parser() -> argparse.ArgumentParser:
     """Argumentos del comando; ``docs/conf.py`` arma con ellos la referencia de la línea de comandos."""
-    p = argparse.ArgumentParser(prog="dane-data", description="Microdatos DANE (GEIH, EAM, Estadísticas Vitales, EMICRON, ECV y pobreza monetaria) para economistas.")
-    sub = p.add_subparsers(dest="cmd", required=True)
+    p = _Parser(prog="dane-data", description="Microdatos DANE (GEIH, EAM, Estadísticas Vitales, EMICRON, ECV y pobreza monetaria) para economistas.")
+    sub = p.add_subparsers(dest="cmd")  # sin subcomando, main muestra la ayuda
 
     a = sub.add_parser("app", help="Abrir la aplicación gráfica en el navegador")
     a.add_argument("--port", type=int, default=8501, help="Puerto preferido (si está ocupado se usa el siguiente)")
@@ -215,9 +251,9 @@ def _parser() -> argparse.ArgumentParser:
     d = sub.add_parser("descargar", help="Descargar microdatos del DANE")
     d.add_argument("encuesta", choices=["geih", "eam", "eevv", "emicron", "ecv", "pobreza"])
     d.add_argument("--anios", nargs="+", type=int, help="Años (por defecto todos)")
-    d.add_argument("--modulos", nargs="+",
-                   choices=list(dict.fromkeys([*geih.DEFAULT_MODULES, *emicron.MODULOS, *ecv.MODULOS])),
-                   help="GEIH, EMICRON o ECV: módulos a bajar (por defecto todos)")
+    # Sin choices: los de las tres encuestas juntos daban un error en inglés con 29 nombres; _cmd_descargar
+    # valida los de cada encuesta
+    d.add_argument("--modulos", nargs="+", help="GEIH, EMICRON o ECV: módulos a bajar (por defecto todos)")
     d.add_argument("--empalme", action="store_true",
                    help="GEIH: serie de empalme 2010–2020. Pobreza: también los archivos para comparar 2012–2021 con el "
                         "marco 2018")
@@ -235,7 +271,11 @@ def _parser() -> argparse.ArgumentParser:
 
 
 def main(argv=None) -> int:
-    args = _parser().parse_args(argv)
+    parser = _parser()
+    args = parser.parse_args(argv)
+    if args.cmd is None:  # antes: «error: the following arguments are required: cmd»
+        parser.print_help()
+        return 0
     try:
         return args.fn(args)
     except KeyboardInterrupt:
