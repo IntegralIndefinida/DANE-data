@@ -7,7 +7,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 import dane_data as dd
-from dane_data.app._ui import (GRIS, fmt_num, MAX_SERIES, PALETA, _barra, _estilo, args_py, barras, botones_descarga,
+from dane_data.app._ui import (GRIS, fmt_num, MAX_SERIES, PALETA, _con_barra, _estilo, args_py, barras, botones_descarga,
                              codigo, fmt_pct, fmt_pesos, frecuencias_geih, grafico, muestra_geih, rutas_actuales,
                              seleccion_geih, tabla_geih)
 from dane_data.geih.loader import _modulos_por_anio, _modulos_sin_extraer
@@ -254,11 +254,9 @@ with tab3:
     st.caption(f"Se escribe un CSV de {fmt_num(n_total)} filas en `{destino}`, un mes a la vez: no hace falta "
                "tener todos los meses en memoria.")
     if st.button("Exportar a CSV", key="exportar"):
-        barra, progreso = _barra("Exportando…")
-        filas = dd.geih.exportar(list(anios), destino, variables=elegidas, poblacion=poblacion,
-                                 filtros=sel["filtros"] or None, meses=sel["meses"], columns=list(columnas) or "core",
-                                 empalme=sel["empalme"], progress=progreso, **formato)
-        barra.empty()
+        filas = _con_barra("Exportando…", dd.geih.exportar, list(anios), destino, variables=elegidas, poblacion=poblacion,
+                           filtros=sel["filtros"] or None, meses=sel["meses"], columns=list(columnas) or "core",
+                           empalme=sel["empalme"], **formato)
         st.success(f"Listo: {fmt_num(filas)} filas en `{destino}`.")
         if destino.stat().st_size < 100e6:
             st.download_button("Descargar el CSV", destino.read_bytes(), destino.name, "text/csv",

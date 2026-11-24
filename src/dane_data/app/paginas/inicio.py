@@ -3,9 +3,7 @@ from pathlib import Path
 import streamlit as st
 
 import dane_data as dd
-from dane_data.app._ui import (aviso_version_nueva, disponibles_eam, disponibles_ecv, disponibles_eevv, disponibles_emicron,
-                               disponibles_geih, disponibles_pobreza,
-                               rutas_actuales)
+from dane_data.app._ui import (aviso_version_nueva, disponibles, rutas_actuales)
 
 st.title("DANE-data")
 # El aviso va arriba pero se llena al final: sin internet, la consulta no demora el resto de la página
@@ -80,12 +78,12 @@ st.info(
 # ---------------------------------------------------------------- Estado de datos
 st.subheader("Datos disponibles en este computador")
 rutas = rutas_actuales()
-g, e, ge = disponibles_geih(False, rutas), disponibles_eam(rutas), disponibles_geih(True, rutas)
-v = disponibles_eevv(rutas)
-mi = disponibles_emicron(rutas)
-c = disponibles_ecv(rutas)
+g, e, ge = disponibles("geih", rutas, False), disponibles("eam", rutas), disponibles("geih", rutas, True)
+v = disponibles("eevv", rutas)
+mi = disponibles("emicron", rutas)
+c = disponibles("ecv", rutas)
 c = c[c["modulo"] == "caracteristicas"] if len(c) else c
-pm = disponibles_pobreza(rutas)
+pm = disponibles("pobreza", rutas)
 pm_anios = pm.anio.dropna() if len(pm) else pm.anio  # las filas del empalme no tienen año
 
 m1, m2, m3, m4, m5, m6, m7 = st.columns(7)

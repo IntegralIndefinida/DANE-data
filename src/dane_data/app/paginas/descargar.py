@@ -4,9 +4,7 @@ import threading
 import streamlit as st
 
 import dane_data as dd
-from dane_data.app._ui import (CERTIFICADOS, LogEnPantalla, args_py, disponibles_eam, disponibles_ecv, disponibles_eevv,
-                               disponibles_emicron, disponibles_geih, disponibles_pobreza, fmt_num,
-                               rutas_actuales)
+from dane_data.app._ui import (CERTIFICADOS, LogEnPantalla, args_py, disponibles, fmt_num, rutas_actuales)
 
 st.title("Descargar datos del DANE")
 st.markdown(
@@ -25,7 +23,7 @@ if encuesta.startswith("GEIH"):
                      help="El empalme re-pondera 2010–2020 con el censo 2018 para empalmar con 2021 en adelante.")
     empalme = serie.startswith("Empalme")
     anios_ok = dd.geih.ANIOS_EMPALME if empalme else dd.geih.ANIOS_DISPONIBLES
-    ya = disponibles_geih(empalme, rutas)
+    ya = disponibles("geih", rutas, empalme)
     tiene = set(ya.anio.unique()) if len(ya) else set()
     anios = st.multiselect("Años", anios_ok, default=[anios_ok[-1]], placeholder="Elija los años",
                            format_func=lambda a: f"{a} ✓" if a in tiene else str(a))
@@ -60,7 +58,7 @@ if encuesta.startswith("GEIH"):
         modules=modulos if set(modulos) != set(NOMBRES) else None, empalme=empalme, delete_zips=borrar,
         limit_files=1 if prueba else None, forzar=forzar) + ")"
 elif encuesta.startswith("Estadísticas"):
-    ya = disponibles_eevv(rutas)
+    ya = disponibles("eevv", rutas)
     elegidos = st.multiselect("Certificados", list(CERTIFICADOS), default=list(CERTIFICADOS), placeholder="Elija los certificados",
                               help="Defunciones desde 1979; nacimientos y defunciones fetales desde 1998.")
     tipos = [CERTIFICADOS[c] for c in elegidos]
@@ -86,7 +84,7 @@ elif encuesta.startswith("Estadísticas"):
                                                  should_stop=stop, forzar=forzar)
     codigo_py = f"dd.eevv.download({anios!r}, tipos={tipos!r}" + args_py(delete_zips=borrar, forzar=forzar) + ")"
 elif encuesta.startswith("EMICRON"):
-    ya = disponibles_emicron(rutas)
+    ya = disponibles("emicron", rutas)
     tiene = set(ya.anio.unique()) if len(ya) else set()
     todos = dd.emicron.ANIOS_DISPONIBLES
     if "descargar_emicron_anios" not in st.session_state:
@@ -114,7 +112,7 @@ elif encuesta.startswith("EMICRON"):
     codigo_py = f"dd.emicron.download({anios!r}" + args_py(modulos=None if todos_mod else modulos, delete_zips=borrar,
                                                           forzar=forzar) + ")"
 elif encuesta.startswith("ECV"):
-    ya = disponibles_ecv(rutas)
+    ya = disponibles("ecv", rutas)
     tiene = set(ya.anio.unique()) if len(ya) else set()
     anios = st.multiselect("Años", dd.ecv.ANIOS_DISPONIBLES, default=[dd.ecv.ANIOS_DISPONIBLES[-1]], placeholder="Elija los años",
                            format_func=lambda a: f"{a} ✓" if a in tiene else str(a))
@@ -142,7 +140,7 @@ elif encuesta.startswith("ECV"):
     codigo_py = f"dd.ecv.download({anios!r}" + args_py(
         modulos=modulos if set(modulos) != set(CAPITULOS) else None, delete_zips=borrar, forzar=forzar) + ")"
 elif encuesta.startswith("Pobreza"):
-    ya = disponibles_pobreza(rutas)
+    ya = disponibles("pobreza", rutas)
     tiene = set(ya.anio.dropna().astype(int)) if len(ya) else set()  # las filas del empalme no tienen año
     todos = dd.pobreza.ANIOS_DISPONIBLES
     if "descargar_pobreza_anios" not in st.session_state:
@@ -169,7 +167,7 @@ elif encuesta.startswith("Pobreza"):
     codigo_py = f"dd.pobreza.download({anios!r}, archivos={archivos!r}" + args_py(
         empalme=empalme, delete_zips=borrar, forzar=forzar) + ")"
 elif encuesta.startswith("EAM"):
-    ya = disponibles_eam(rutas)
+    ya = disponibles("eam", rutas)
     tiene = set(ya.anio.unique()) if len(ya) else set()
     todos = dd.eam.ANIOS_DISPONIBLES
     faltan = [a for a in todos if a not in tiene]

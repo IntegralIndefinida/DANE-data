@@ -3,7 +3,7 @@ import warnings
 import streamlit as st
 
 import dane_data as dd
-from dane_data.app._ui import (AVISOS, MAX_SERIES, barras, botones_descarga, codigo, disponibles_emicron, fmt_num, fmt_pct,
+from dane_data.app._ui import (AVISOS, MAX_SERIES, barras, botones_descarga, codigo, disponibles, fmt_num, fmt_pct,
                                grafico, linea, rutas_actuales, sin_datos, variacion)
 
 st.title("Micronegocios")
@@ -21,7 +21,7 @@ def _cargar(anios: tuple, rutas: tuple):
 
 
 rutas = rutas_actuales()
-av = disponibles_emicron(rutas)
+av = disponibles("emicron", rutas)
 if av.empty:
     sin_datos("EMICRON")
 NACIONAL, CIUDADES = "Total nacional (2019–2024)", "24 ciudades (2019–2025)"

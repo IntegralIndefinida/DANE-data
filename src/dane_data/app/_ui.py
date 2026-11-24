@@ -260,41 +260,47 @@ def _barra(texto: str):
     return barra, lambda f, m: barra.progress(min(f, 1.0), text=m)
 
 
+def _con_barra(texto: str, fn, *args, silenciar: bool = False, **kw):
+    """
+    ``fn(*args, progress=..., **kw)`` con una barra de progreso que se quita al terminar, también si falla (antes quedaba
+    encima del error). Con ``silenciar``, sin los UserWarning de cobertura: la página los muestra aparte.
+    """
+    barra, progreso = _barra(texto)
+    try:
+        if not silenciar:
+            return fn(*args, progress=progreso, **kw)
+        with AVISOS, warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            return fn(*args, progress=progreso, **kw)
+    finally:
+        barra.empty()
+
+
 # Los resultados de la GEIH salen de dd.geih.serie_*: se calculan año por año y quedan en disco, así
 # que nunca hay más de un año de microdatos en memoria. `meses_disp` va en la llave para que un mes
 # recién descargado se vea.
 @st.cache_data(max_entries=50, show_spinner=False)
 def serie_geih(anios: tuple, por: str | None, anual: bool, empalme: bool, filtros: dict, meses: tuple | None,
                meses_disp: tuple, rutas: tuple) -> pd.DataFrame:
-    barra, progreso = _barra("Preparando indicadores…")
-    res = dd.geih.serie_indicadores(list(anios), por=por, anual=anual, empalme=empalme, progress=progreso,
-                                    filtros=filtros or None, meses=list(meses) if meses else None)
-    barra.empty()
-    return res
+    return _con_barra("Preparando indicadores…", dd.geih.serie_indicadores, list(anios), por=por, anual=anual,
+                      empalme=empalme, filtros=filtros or None, meses=list(meses) if meses else None)
 
 
 @st.cache_data(max_entries=100, show_spinner=False)
 def tabla_geih(anios: tuple, por: tuple, variable: str | None, estadistico: str, poblacion: str | None,
                filtros: dict, meses: tuple | None, dropna: bool, columnas: tuple, empalme: bool,
                meses_disp: tuple, rutas: tuple) -> pd.DataFrame:
-    barra, progreso = _barra("Preparando la tabla…")
-    res = dd.geih.serie_tabla(list(anios), list(por), variable, estadistico, poblacion, filtros or None,
-                              list(meses) if meses else None, dropna, list(columnas) or "core", empalme,
-                              progress=progreso)
-    barra.empty()
-    return res
+    return _con_barra("Preparando la tabla…", dd.geih.serie_tabla, list(anios), list(por), variable, estadistico,
+                      poblacion, filtros or None, list(meses) if meses else None, dropna, list(columnas) or "core",
+                      empalme)
 
 
 @st.cache_data(max_entries=50, show_spinner=False)
 def frecuencias_geih(anios: tuple, variable: str | None, por: tuple, poblacion: str | None, filtros: dict,
                      meses: tuple | None, columnas: tuple, empalme: bool, meses_disp: tuple,
                      rutas: tuple) -> pd.DataFrame:
-    barra, progreso = _barra("Preparando la distribución…")
-    res = dd.geih.serie_frecuencias(list(anios), variable, list(por), poblacion, filtros or None,
-                                    list(meses) if meses else None, list(columnas) or "core", empalme,
-                                    progress=progreso)
-    barra.empty()
-    return res
+    return _con_barra("Preparando la distribución…", dd.geih.serie_frecuencias, list(anios), variable, list(por),
+                      poblacion, filtros or None, list(meses) if meses else None, list(columnas) or "core", empalme)
 
 
 @st.cache_data(max_entries=5, show_spinner="Leyendo un mes de microdatos…")
@@ -319,22 +325,14 @@ def cargar_eam(anios: tuple, extra: tuple, rutas: tuple) -> pd.DataFrame:
 # (rutas_actuales()) es parte de la llave: si la carpeta cambia por fuera de la app, se recalcula.
 @st.cache_data(max_entries=50, show_spinner=False)
 def indicadores_eevv(anios, tipo: str, por: str | None, filtros: dict, rutas: tuple) -> pd.DataFrame:
-    barra, progreso = _barra("Preparando indicadores…")
-    with AVISOS, warnings.catch_warnings():
-        warnings.simplefilter("ignore", UserWarning)
-        res = dd.eevv.serie_indicadores(anios, tipo, por=por, filtros=filtros or None, progress=progreso)
-    barra.empty()
-    return res
+    return _con_barra("Preparando indicadores…", dd.eevv.serie_indicadores, anios, tipo, por=por,
+                      filtros=filtros or None, silenciar=True)
 
 
 @st.cache_data(max_entries=50, show_spinner=False)
 def conteos_eevv(anios, tipo: str, por: str | None, filtros: dict, rutas: tuple) -> pd.DataFrame:
-    barra, progreso = _barra("Preparando la tabla…")
-    with AVISOS, warnings.catch_warnings():
-        warnings.simplefilter("ignore", UserWarning)
-        res = dd.eevv.serie_conteos(anios, tipo, por=por, filtros=filtros or None, progress=progreso)
-    barra.empty()
-    return res
+    return _con_barra("Preparando la tabla…", dd.eevv.serie_conteos, anios, tipo, por=por, filtros=filtros or None,
+                      silenciar=True)
 
 
 # La pobreza también sale año por año de la caché en disco (dd.pobreza.serie_indicadores). A diferencia de las EEVV, sus avisos
@@ -342,45 +340,28 @@ def conteos_eevv(anios, tipo: str, por: str | None, filtros: dict, rutas: tuple)
 @st.cache_data(max_entries=50, show_spinner=False)
 def indicadores_pobreza(anios, por: str | None, empalme: bool, departamental: bool,
                         rutas: tuple) -> tuple[pd.DataFrame, list[str]]:
-    barra, progreso = _barra("Preparando los indicadores de pobreza (la primera vez lee los archivos del DANE)…")
     with AVISOS, warnings.catch_warnings(record=True) as avisos:
         warnings.simplefilter("always", UserWarning)
-        res = dd.pobreza.serie_indicadores(anios, por=por, empalme=empalme, departamental=departamental,
-                                           progress=progreso)
-    barra.empty()
+        res = _con_barra("Preparando los indicadores de pobreza (la primera vez lee los archivos del DANE)…",
+                         dd.pobreza.serie_indicadores, anios, por=por, empalme=empalme, departamental=departamental)
     return res, list(dict.fromkeys(str(a.message) for a in avisos if issubclass(a.category, UserWarning)))
 
 
 @st.cache_data(max_entries=20, show_spinner=False)
 def tasas_eevv(anios, por: str | None, rutas: tuple) -> pd.DataFrame:
-    barra, progreso = _barra("Calculando las tasas…")
-    with AVISOS, warnings.catch_warnings():
-        warnings.simplefilter("ignore", UserWarning)
-        res = dd.eevv.tasas(anios, por=por, progress=progreso)
-    barra.empty()
-    return res
+    return _con_barra("Calculando las tasas…", dd.eevv.tasas, anios, por=por, silenciar=True)
 
 
 # La ECV, como las Estadísticas Vitales: año por año con dd.ecv.serie_*, en disco. Sus avisos (capítulos que faltan, IPM de
 # 2020) se muestran en la página.
 @st.cache_data(max_entries=50, show_spinner=False)
 def indicadores_ecv(anios, por: str | None, rutas: tuple) -> pd.DataFrame:
-    barra, progreso = _barra("Preparando indicadores…")
-    with AVISOS, warnings.catch_warnings():
-        warnings.simplefilter("ignore", UserWarning)
-        res = dd.ecv.serie_indicadores(anios, por=por, progress=progreso)
-    barra.empty()
-    return res
+    return _con_barra("Preparando indicadores…", dd.ecv.serie_indicadores, anios, por=por, silenciar=True)
 
 
 @st.cache_data(max_entries=50, show_spinner=False)
 def ipm_ecv(anios, por: str | None, rutas: tuple) -> pd.DataFrame:
-    barra, progreso = _barra("Calculando el IPM…")
-    with AVISOS, warnings.catch_warnings():
-        warnings.simplefilter("ignore", UserWarning)
-        res = dd.ecv.serie_ipm(anios, por=por, progress=progreso)
-    barra.empty()
-    return res
+    return _con_barra("Calculando el IPM…", dd.ecv.serie_ipm, anios, por=por, silenciar=True)
 
 
 def rutas_actuales() -> tuple:
@@ -389,33 +370,10 @@ def rutas_actuales() -> tuple:
 
 
 @st.cache_data(ttl=30, show_spinner=False)
-def disponibles_geih(empalme: bool, rutas: tuple) -> pd.DataFrame:
-    return dd.geih.available(empalme=empalme)
-
-
-@st.cache_data(ttl=30, show_spinner=False)
-def disponibles_eam(rutas: tuple) -> pd.DataFrame:
-    return dd.eam.available()
-
-
-@st.cache_data(ttl=30, show_spinner=False)
-def disponibles_eevv(rutas: tuple) -> pd.DataFrame:
-    return dd.eevv.available()
-
-
-@st.cache_data(ttl=30, show_spinner=False)
-def disponibles_emicron(rutas: tuple) -> pd.DataFrame:
-    return dd.emicron.available()
-
-
-@st.cache_data(ttl=30, show_spinner=False)
-def disponibles_ecv(rutas: tuple) -> pd.DataFrame:
-    return dd.ecv.available()
-
-
-@st.cache_data(ttl=30, show_spinner=False)
-def disponibles_pobreza(rutas: tuple) -> pd.DataFrame:
-    return dd.pobreza.available()
+def disponibles(fuente: str, rutas: tuple, empalme: bool = False) -> pd.DataFrame:
+    """``dd.<fuente>.available()`` (``"geih"``, ``"eam"``, ``"eevv"``, ``"emicron"``, ``"ecv"`` o ``"pobreza"``)."""
+    modulo = getattr(dd, fuente)
+    return modulo.available(empalme=empalme) if fuente == "geih" else modulo.available()
 
 
 # --------------------------------------------------------------------------- #
@@ -577,7 +535,7 @@ def seleccion_geih(clave: str = "geih", varios_anios: bool = True, ayuda_anios: 
                          help="La serie de empalme re-pondera 2010–2020 con el censo 2018, para comparar "
                               "con los datos desde 2021 sin saltos.")
     empalme = serie != "Principal"
-    av = disponibles_geih(empalme, rutas_actuales())
+    av = disponibles("geih", rutas_actuales(), empalme)
     if av.empty:
         sin_datos("GEIH")
     av = av[av.completo]
@@ -644,7 +602,7 @@ CERTIFICADOS = {"Defunciones": "defunciones", "Nacimientos": "nacimientos", "Def
 
 def seleccion_eevv(clave: str = "eevv") -> dict:
     """Dibuja la barra lateral de las Estadísticas Vitales y devuelve la selección, sin cargar datos."""
-    av = disponibles_eevv(rutas_actuales())
+    av = disponibles("eevv", rutas_actuales())
     if av.empty:
         sin_datos("serie de Estadísticas Vitales")
     with st.sidebar:
@@ -710,7 +668,7 @@ def serie_anual(res: pd.DataFrame, columna: str, por: str | None, tipo_valor: st
 # --------------------------------------------------------------------------- #
 def seleccion_ecv(clave: str = "ecv") -> dict:
     """Dibuja la barra lateral de la ECV y devuelve los años elegidos, sin cargar datos."""
-    av = disponibles_ecv(rutas_actuales())
+    av = disponibles("ecv", rutas_actuales())
     av = av[av["modulo"] == "caracteristicas"]  # sin Características no hay personas ni hogares
     if av.empty:
         sin_datos("ECV")
@@ -727,7 +685,7 @@ def seleccion_ecv(clave: str = "ecv") -> dict:
 # Selector EAM (barra lateral compartida)
 # --------------------------------------------------------------------------- #
 def selector_eam(extra: tuple = (), clave: str = "eam"):
-    av = disponibles_eam(rutas_actuales())
+    av = disponibles("eam", rutas_actuales())
     if av.empty:
         sin_datos("EAM")
     with st.sidebar:

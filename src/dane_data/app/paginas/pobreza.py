@@ -1,14 +1,15 @@
 import streamlit as st
 
 import dane_data as dd
-from dane_data.app._ui import (AYUDA_ANIOS, MAX_SERIES, args_py, barras, botones_descarga, codigo, disponibles_pobreza,
-                               fmt_grande, fmt_num, fmt_pct, grafico, indicadores_pobreza, linea, rutas_actuales, sin_datos)
+from dane_data.app._ui import (AYUDA_ANIOS, MAX_SERIES, args_py, barras, botones_descarga, codigo, disponibles,
+                               fmt_grande, fmt_num, fmt_pct, grafico, indicadores_pobreza, linea, rutas_actuales,
+                               sin_datos)
 
 st.title("Pobreza monetaria")
 st.caption("**Medición de Pobreza Monetaria y Desigualdad del DANE.** Sale de la GEIH: el DANE calcula el ingreso per cápita "
            "de cada hogar y lo compara con la línea de pobreza de su ciudad o zona. Las cifras son de personas.")
 rutas = rutas_actuales()
-av = disponibles_pobreza(rutas)
+av = disponibles("pobreza", rutas)
 anios_disp = sorted(int(a) for a in av.anio.dropna()) if len(av) else []  # las filas del empalme no tienen año
 if not anios_disp:
     sin_datos("pobreza monetaria", "No se encontraron datos de la pobreza monetaria en la carpeta configurada.")
