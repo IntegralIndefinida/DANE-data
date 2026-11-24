@@ -8,6 +8,9 @@
   (`modules=["fuerza_trabajo", "desocupados"]`): no los unía, y la tasa de desocupación salía 0 % y la TGP 100 % sin
   ningún aviso. Ahora acepta también los nombres de `download`, falla con un nombre desconocido y avisa si los módulos
   pedidos no alcanzan para la condición de actividad (por ejemplo, sin `no_ocupados`).
+* Un filtro con un valor mal escrito en una variable categórica (`filtros={"sexo": ["mujer"]}`) devolvía una tabla vacía
+  sin explicación, en {dd}`geih.filtrar()` y en las funciones `serie_*` de la GEIH, las Estadísticas Vitales, la ECV y la
+  pobreza. Ahora falla y dice cuáles son los valores posibles.
 * En *Tablas y microdatos* de la aplicación, exportar unos años sueltos (2016 y 2025) ya no reemplaza la exportación de
   todo el rango con los mismos extremos (2016–2025): el nombre del archivo distingue los años elegidos.
 * {dd}`geih.download()` y {dd}`eam.download()` con los años en un generador (`map(int, anios)`, `(a for a in ...)`) no

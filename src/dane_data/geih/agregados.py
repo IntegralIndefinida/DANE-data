@@ -49,7 +49,8 @@ def filtrar(df: pd.DataFrame, filtros: dict | None = None, poblacion: str | None
     filtros
         ``{columna: [valores]}`` para conservar esos valores, o ``{columna: (mínimo, máximo)}`` para un
         rango con los extremos incluidos. Por ejemplo, ``{"sexo": ["Mujer"], "edad": (15, 28)}``. Si la
-        columna no existe (una variable que ese año no trae), ninguna fila cumple el filtro.
+        columna no existe (una variable que ese año no trae), ninguna fila cumple el filtro. En una variable
+        categórica (``sexo``, ``zona``...), un valor que no es una de sus categorías (``"mujer"``) es un error.
     poblacion
         Una de ``POBLACIONES``: ``"pet"``, ``"fuerza_trabajo"``, ``"ocupado"``, ``"desocupado"`` o
         ``"inactivo"``.
@@ -101,7 +102,14 @@ def _mascara(df: pd.DataFrame, filtros: dict | None, poblacion: str | None = Non
             mask &= df[col].between(*cond)
         else:
             # Un solo valor ("Mujer", 11) cuenta como lista: list("Mujer") lo partiría en letras
-            mask &= df[col].isin([cond] if isinstance(cond, str) or not hasattr(cond, "__iter__") else list(cond))
+            valores = [cond] if isinstance(cond, str) or not hasattr(cond, "__iter__") else list(cond)
+            # Las categóricas tienen categorías fijas: otro valor ("mujer") es un error de escritura, que antes daba una
+            # tabla vacía sin explicación. Como falla, nunca queda en la caché de las serie_*.
+            if isinstance(df[col].dtype, pd.CategoricalDtype) and (
+                    raros := [v for v in valores if not pd.isna(v) and v not in df[col].cat.categories]):
+                raise ValueError(f"filtros: {col} no tiene {', '.join(map(repr, raros))}. Opciones: "
+                                 f"{', '.join(map(str, df[col].cat.categories))}.")
+            mask &= df[col].isin(valores)
     if poblacion:
         mask &= df[poblacion].eq(1).fillna(False).astype(bool)
     return mask

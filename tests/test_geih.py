@@ -582,6 +582,18 @@ def test_serie_indicadores_con_filtros_y_meses(geih_root, tmp_path, monkeypatch)
         pd.testing.assert_frame_equal(serie, esperado)
 
 
+def test_filtro_con_un_valor_que_no_es_categoria_falla(geih_root, tmp_path, monkeypatch):
+    """«mujer» por «Mujer» daba una tabla vacía sin explicación, también en las serie_* (y la guardaba en la caché)."""
+    monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
+    df = dd.geih.load(2016, root=geih_root, cache=False)
+    with pytest.raises(ValueError, match="sexo no tiene 'mujer'. Opciones: Hombre, Mujer"):
+        dd.geih.filtrar(df, {"sexo": ["mujer"]})
+    for _ in range(2):  # la segunda vez tampoco sale de la caché
+        with pytest.raises(ValueError, match="sexo no tiene 'mujer'"):
+            dd.geih.serie_indicadores(2016, root=geih_root, filtros={"sexo": "mujer"})
+    assert len(dd.geih.filtrar(df, {"sexo": ["Mujer", np.nan]}))  # un vacío no es un error de escritura
+
+
 def test_porcentaje_con_grupo_exterior_vacio(geih_root, tmp_path, monkeypatch):
     """Las personas sin posición ocupacional (NaN: no ocupadas) también suman 100 % dentro de su grupo."""
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
