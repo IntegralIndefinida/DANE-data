@@ -6,6 +6,14 @@ import streamlit as st
 import dane_data as dd
 from dane_data.app._ui import (CERTIFICADOS, LogEnPantalla, args_py, disponibles, fmt_num, rutas_actuales)
 
+def opciones_disco(periodo: str = "años", ahorro: str = "") -> tuple[bool, bool]:
+    """Los dos interruptores que comparten todas las encuestas: borrar los ZIP y volver a bajar."""
+    borrar = st.toggle(f"Borrar los ZIP después de extraer{ahorro}", value=True)
+    forzar = st.toggle("Volver a bajar lo que ya está descargado",
+                       help=f"Solo si el DANE corrigió o volvió a publicar esos {periodo}: reemplaza lo que hay.")
+    return borrar, forzar
+
+
 st.title("Descargar datos del DANE")
 st.markdown(
     "Los archivos se bajan del **Archivo Nacional de Datos (ANDA)** del DANE y se guardan en su computador. "
@@ -19,7 +27,9 @@ encuesta = st.radio("Encuesta", ["GEIH (hogares, mensual)", "EAM (industria, anu
 rutas = rutas_actuales()
 
 if encuesta.startswith("GEIH"):
-    serie = st.radio("Serie", ["Principal (2007–2026)", "Empalme (2010–2020)"], horizontal=True,
+    principal, emp = dd.geih.ANIOS_DISPONIBLES, dd.geih.ANIOS_EMPALME
+    serie = st.radio("Serie", [f"Principal ({principal[0]}–{principal[-1]})", f"Empalme ({emp[0]}–{emp[-1]})"],
+                     horizontal=True,
                      help="El empalme re-pondera 2010–2020 con el censo 2018 para empalmar con 2021 en adelante.")
     empalme = serie.startswith("Empalme")
     anios_ok = dd.geih.ANIOS_EMPALME if empalme else dd.geih.ANIOS_DISPONIBLES
@@ -45,9 +55,7 @@ if encuesta.startswith("GEIH"):
                                  help="Para los indicadores laborales se necesitan al menos: características, "
                                       "fuerza de trabajo, ocupados y desocupados.")
         prueba = st.toggle("Solo el primer mes de cada año (para probar)")
-        borrar = st.toggle("Borrar los ZIP después de extraer (ahorra ~40 % de espacio)", value=True)
-        forzar = st.toggle("Volver a bajar lo que ya está descargado",
-                           help="Solo si el DANE corrigió o volvió a publicar esos meses: reemplaza lo que hay.")
+        borrar, forzar = opciones_disco("meses", " (ahorra ~40 % de espacio)")
     st.info(f"Tamaño aproximado: **{fmt_num(0.7 * len(anios) if not prueba else 0.05 * len(anios), 1)} GB** · "
             f"destino: `{dd.get_path('geih_empalme' if empalme else 'geih')}`")
     lanzar = lambda prog, stop: dd.geih.download(  # noqa: E731
@@ -74,9 +82,7 @@ elif encuesta.startswith("Estadísticas"):
               on_click=lambda: st.session_state.update(descargar_eevv_anios=list(todos)))
     st.caption("✓ = ya descargado. Algunos ZIP del DANE traen varios años (2008–2011, 2012–2013, 2017–2018): se baja el paquete "
                "entero aunque pida uno solo.")
-    borrar = st.toggle("Borrar los ZIP después de extraer", value=True)
-    forzar = st.toggle("Volver a bajar lo que ya está descargado",
-                       help="Solo si el DANE corrigió o volvió a publicar esos años: reemplaza lo que hay.")
+    borrar, forzar = opciones_disco()
     # Promedio por año en disco, ya extraído (toda la serie ocupa unos 3,6 GB)
     peso = sum({"nacimientos": 90, "defunciones": 40, "fetales": 5}[t] for t in tipos) * len(anios)
     st.info(f"Tamaño aproximado en disco: **{peso} MB** · destino: `{dd.get_path('eevv')}`")
@@ -100,9 +106,7 @@ elif encuesta.startswith("EMICRON"):
                                  placeholder="Elija los módulos",
                                  help="La identificación y los factores de expansión se bajan siempre: sin ellos no se "
                                       "puede cargar. No todos los módulos existen todos los años (el COVID solo en 2020).")
-        borrar = st.toggle("Borrar los ZIP después de extraer", value=True)
-        forzar = st.toggle("Volver a bajar lo que ya está descargado",
-                           help="Solo si el DANE corrigió o volvió a publicar esos años: reemplaza lo que hay.")
+        borrar, forzar = opciones_disco()
     todos_mod = set(modulos) == set(OPCIONALES)
     # Unos 70 MB por año ya extraídos con todos los módulos; los ZIP pesan unos 45 MB
     st.info(f"Tamaño aproximado en disco: **{70 * len(anios) if todos_mod else 30 * len(anios)} MB** · "
@@ -129,9 +133,7 @@ elif encuesta.startswith("ECV"):
                                  placeholder="Elija los capítulos",
                                  help="Los indicadores usan todos menos trabajo infantil; el IPM, vivienda, servicios, "
                                       "condiciones, salud, primera infancia, educación y fuerza de trabajo.")
-        borrar = st.toggle("Borrar los ZIP después de extraer", value=True)
-        forzar = st.toggle("Volver a bajar lo que ya está descargado",
-                           help="Solo si el DANE corrigió o volvió a publicar esos años: reemplaza lo que hay.")
+        borrar, forzar = opciones_disco()
     # Los ZIP de 2024 y 2025 pesan mucho más: unos 1,4 GB con los once capítulos, contra 150 MB de los años anteriores
     peso = sum(1.4 if a >= 2024 else 0.15 for a in anios) * len(modulos) / len(CAPITULOS)
     st.info(f"Tamaño aproximado de la descarga: **{fmt_num(peso, 1)} GB** · destino: `{dd.get_path('ecv')}`")
@@ -155,9 +157,7 @@ elif encuesta.startswith("Pobreza"):
     personas = st.toggle("Bajar también el archivo de personas",
                          help="Los componentes del ingreso de cada persona. Los indicadores solo necesitan el de hogares; "
                               "el de personas ocupa unas seis veces más.")
-    borrar = st.toggle("Borrar los ZIP después de extraer", value=True)
-    forzar = st.toggle("Volver a bajar lo que ya está descargado",
-                       help="Solo si el DANE corrigió o volvió a publicar esos años: reemplaza lo que hay.")
+    borrar, forzar = opciones_disco()
     archivos = ["hogares", "personas"] if personas else ["hogares"]
     # Ya extraído: unos 36 MB por año los hogares y 220 MB las personas (toda la serie ocupa 3,7 GB)
     peso = (36 + 220 * personas) * len(anios) + 100 * empalme
@@ -177,13 +177,10 @@ elif encuesta.startswith("EAM"):
         st.session_state["descargar_eam_anios"] = faltan[-5:]
     anios = st.multiselect("Años", todos, key="descargar_eam_anios", placeholder="Elija los años",
                            format_func=lambda a: f"{a} ✓" if a in tiene else str(a))
-    c1, c2 = st.columns(2)
-    c1.button("Seleccionar toda la serie 1992–2024",
+    st.button(f"Seleccionar toda la serie {todos[0]}–{todos[-1]}",
               on_click=lambda: st.session_state.update(descargar_eam_anios=list(todos)))
     tic = st.toggle("Incluir módulo de TIC (2008–2018)")
-    borrar = st.toggle("Borrar los ZIP después de extraer", value=True)
-    forzar = st.toggle("Volver a bajar lo que ya está descargado",
-                       help="Solo si el DANE corrigió o volvió a publicar esos años: reemplaza lo que hay.")
+    borrar, forzar = opciones_disco()
     st.info(f"Tamaño aproximado: **{10 * len(anios)} MB** · destino: `{dd.get_path('eam')}`")
     lanzar = lambda prog, stop: dd.eam.download(anios, include_tic=tic, delete_zips=borrar,  # noqa: E731
                                                 progress=prog, should_stop=stop, forzar=forzar)

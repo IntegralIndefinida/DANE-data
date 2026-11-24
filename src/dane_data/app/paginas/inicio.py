@@ -10,7 +10,7 @@ st.title("DANE-data")
 hueco_version = st.empty()
 st.markdown(
     "#### Microdatos del DANE listos para analizar\n"
-    "Esta aplicación descarga, organiza y resume cuatro fuentes oficiales de Colombia publicadas por el DANE:"
+    "Esta aplicación descarga, organiza y resume seis fuentes oficiales de Colombia publicadas por el DANE:"
 )
 
 c1, c2, c3, c4, c5 = st.columns(5)

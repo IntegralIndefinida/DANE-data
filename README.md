@@ -81,9 +81,12 @@ dane-data app          # o doble clic en el lanzador; el navegador se abre solo
 | Tablas y microdatos | Tablas ponderadas a la medida, distribución de ingresos frente al salario mínimo, exportación |
 | Indicadores industriales | Producción, valor agregado, empleo, productividad y participación laboral por sector o departamento |
 | Panel y microdatos EAM | Panel de establecimientos (balanceado o no), supervivencia, exportación |
+| Pobreza monetaria | Incidencia, brecha y severidad de la pobreza y la pobreza extrema, Gini e ingreso per cápita, con la serie empalmada 2012–2025 |
 | Nacimientos y defunciones | Indicadores de los tres certificados, tasas sobre la población y causas de muerte |
+| Micronegocios | Indicadores de la EMICRON: ventas, valor agregado, empleo y registros, por ciudad o zona, sexo del propietario, actividad o sitio del negocio |
 | Calidad de vida y pobreza | Indicadores de la ECV (servicios, internet, salud, educación, TIC) y el Índice de Pobreza Multidimensional, por área, región, departamento o sexo del jefe |
 | Diccionario | Buscador de variables con las etiquetas y categorías oficiales del DANE |
+| Cómo citar | La cita de dane-data y de los datos del DANE, en APA y BibTeX |
 
 Cada tabla se descarga en CSV, Excel o Stata, y cada página muestra el código Python equivalente, que se
 puede copiar a un notebook para seguir desde ahí.

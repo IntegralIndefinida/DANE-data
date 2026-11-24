@@ -187,7 +187,7 @@ def _cmd_descargar(args) -> int:
 
 
 def _parser() -> argparse.ArgumentParser:
-    """Argumentos del comando (también los documenta ``docs/guia/cli.md`` con sphinx-argparse)."""
+    """Argumentos del comando; ``docs/conf.py`` arma con ellos la referencia de la línea de comandos."""
     p = argparse.ArgumentParser(prog="dane-data", description="Microdatos DANE (GEIH, EAM, Estadísticas Vitales, EMICRON, ECV y pobreza monetaria) para economistas.")
     sub = p.add_subparsers(dest="cmd", required=True)
 
