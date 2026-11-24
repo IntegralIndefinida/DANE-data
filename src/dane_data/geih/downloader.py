@@ -21,6 +21,7 @@ import logging
 from pathlib import Path
 
 from .._hooks import DescargadorANDA, extraer_miembro, sanitize_member_name as _sanitize_comun, ya_extraido
+from ..stats import _opciones
 from ..referencias import MESES, strip_accents
 from .loader import (EXTENSIONES, _RE_DESOCU, _RE_INACT, _RE_NO_OCU, _pick_files, MesGEIH, classify_file,
                      month_from_folder)
@@ -203,13 +204,9 @@ class GEIHDownloader(DescargadorANDA):
         self.raw_dir = self.base_dir / "raw_zips"
         self.csv_dir = self.base_dir / "datos_csv"
         self.keep_zips = keep_zips
-        if isinstance(modules, str):  # un solo módulo: tuple("ocupados") lo partiría en letras
-            modules = [modules]
-        modules = DEFAULT_MODULES if modules is None else tuple(modules)
+        modules = _opciones(modules, DEFAULT_MODULES, "Módulo")
         if not modules:
             raise ValueError("modules está vacío: elija al menos un módulo, o None para todos.")
-        if desconocidos := [m for m in modules if m not in DEFAULT_MODULES]:
-            raise ValueError(f"Módulos desconocidos: {desconocidos}. Opciones: {list(DEFAULT_MODULES)}.")
         self.modules = modules
 
         self._abrir_sesion()

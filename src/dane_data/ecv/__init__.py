@@ -10,7 +10,7 @@ from .indicadores import GLOSARIO, indicadores
 from .ipm import COLUMNAS_IPM, MODULOS_IPM, PRIVACIONES, ipm, privaciones
 from .loader import (CATEGORIAS, ETIQUETAS, KEYS_HOGAR, KEYS_PERSONA, MODULOS, NIVELES, UNIDADES, _root, available,
                      find_files, harmonize, load)
-from ..stats import _enteros
+from ..stats import _enteros, _opciones
 
 ANIOS_DISPONIBLES = sorted(_CATALOGOS)
 
@@ -83,13 +83,7 @@ def download(
     >>> dd.ecv.download(range(2018, 2026), modulos=["caracteristicas", "salud"])  # doctest: +SKIP
     """
     years = _enteros(years)
-    if modulos is None:
-        modulos = MODULOS
-    elif isinstance(modulos, str):
-        modulos = (modulos,)
-    modulos = tuple(modulos)
-    if desconocidos := [m for m in modulos if m not in MODULOS]:
-        raise ValueError(f"Módulo desconocido {desconocidos[0]!r}. Opciones: {list(MODULOS)}")
+    modulos = _opciones(modulos, MODULOS, "Módulo")
     dl = ECVDownloader(
         base_dir=_root(root),
         keep_zips=not delete_zips,

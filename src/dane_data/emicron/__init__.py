@@ -6,9 +6,9 @@ from typing import Iterable
 
 from .downloader import EMICRON_KNOWN_FILES, EMICRONDownloader
 from .indicadores import GLOSARIO, a_miles_anuales, indicadores
-from .loader import (CATEGORIAS, CIUDADES, CLAVE, CORE, ETIQUETAS, FACTORES, MODULOS, MONTOS, _modulo_valido, _root,
+from .loader import (CATEGORIAS, CIUDADES, CLAVE, CORE, ETIQUETAS, FACTORES, MODULOS, MONTOS, _root,
                      available, find_files, harmonize, load, load_personal)
-from ..stats import _enteros
+from ..stats import _enteros, _opciones
 
 ANIOS_DISPONIBLES = sorted({a for a, _ in EMICRON_KNOWN_FILES})
 
@@ -76,10 +76,8 @@ def download(
     >>> dd.emicron.download(range(2019, 2025), modulos=["ventas", "costos"])  # doctest: +SKIP
     """
     years = _enteros(years)
-    if isinstance(modulos, str):
-        modulos = [modulos]
-    if modulos is not None:
-        modulos = [_modulo_valido(m) for m in modulos]
+    if modulos is not None:  # None: el descargador decide (todos)
+        modulos = list(_opciones(modulos, MODULOS, "Módulo"))
     dl = EMICRONDownloader(
         base_dir=_root(root),
         keep_zips=not delete_zips,

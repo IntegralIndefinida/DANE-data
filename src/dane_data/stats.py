@@ -32,6 +32,27 @@ def _enteros(x) -> list[int] | None:
     return sorted({int(v) for v in ([x] if isinstance(x, (numbers.Integral, str)) else x)})
 
 
+def _opciones(valores, validas, nombre: str) -> tuple:
+    """
+    Uno o varios ``valores`` como tupla, si todos están en ``validas``; ``None`` son todas. Si no, ``ValueError`` con
+    ``nombre`` (``"Módulo"``, ``"Tipo"``...) y las opciones.
+
+    >>> from dane_data.stats import _opciones
+    >>> _opciones("a", ("a", "b"), "Módulo"), _opciones(None, ("a", "b"), "Módulo")
+    (('a',), ('a', 'b'))
+    >>> _opciones(["a", "c"], ("a", "b"), "Módulo")
+    Traceback (most recent call last):
+    ...
+    ValueError: Módulo desconocido 'c'. Opciones: a, b.
+    """
+    if valores is None:
+        return tuple(validas)
+    valores = (valores,) if isinstance(valores, str) else tuple(valores)  # tuple("ocupados") lo partiría en letras
+    if raros := [v for v in valores if v not in validas]:
+        raise ValueError(f"{nombre} desconocido {', '.join(map(repr, raros))}. Opciones: {', '.join(validas)}.")
+    return valores
+
+
 def _con_categorias(res: pd.DataFrame, df: pd.DataFrame, por: list[str]) -> pd.DataFrame:
     """
     Devuelve a las columnas de ``por`` el tipo categórico que tienen en ``df``. Con varias llaves, dropna=False

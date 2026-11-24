@@ -8,8 +8,8 @@ from .agregados import clear_cache, serie_conteos, serie_indicadores, tasas, tas
 from .downloader import EEVV_KNOWN_FILES, EEVVDownloader
 from .indicadores import GLOSARIO, indicadores
 from .loader import (CATEGORIAS, CORE, ETIQUETAS, GRANDES_CAUSAS, GRUPOS_EDAD, GRUPOS_EDAD_AMPLIOS, TIPOS,
-                     _root, _tipo_valido, available, causas, find_files, harmonize, load)
-from ..stats import _enteros
+                     _root, available, causas, find_files, harmonize, load)
+from ..stats import _enteros, _opciones
 
 ANIOS_DISPONIBLES = {tipo: sorted(a for a, t in EEVV_KNOWN_FILES if t == tipo) for tipo in TIPOS}
 
@@ -77,11 +77,7 @@ def download(
     >>> dd.eevv.download(range(2015, 2026), tipos="nacimientos")  # doctest: +SKIP
     """
     years = _enteros(years)
-    if tipos is None:
-        tipos = TIPOS
-    elif isinstance(tipos, str):
-        tipos = (tipos,)
-    tipos = tuple(_tipo_valido(t) for t in tipos)
+    tipos = _opciones(tipos, TIPOS, "Tipo")
     dl = EEVVDownloader(
         base_dir=_root(root),
         keep_zips=not delete_zips,

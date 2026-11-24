@@ -18,7 +18,7 @@ import pandas as pd
 
 from .. import config
 from .._io import read_table
-from ..stats import _enteros
+from ..stats import _enteros, _opciones
 from ..referencias import DEPARTAMENTOS, MESES, strip_accents
 
 log = logging.getLogger("dane_data.emicron")
@@ -45,12 +45,6 @@ FACTORES = ("fex_ajustado", "fex_dpto")
 
 def _root(root) -> Path:
     return Path(root).expanduser() if root is not None else config.get_path("emicron")
-
-
-def _modulo_valido(modulo: str) -> str:
-    if modulo not in MODULOS:
-        raise ValueError(f"Módulo desconocido {modulo!r}. Opciones: {', '.join(MODULOS)}")
-    return modulo
 
 
 def find_files(years: Iterable[int] | int | None = None, root=None) -> dict[int, dict[str, Path]]:
@@ -437,10 +431,8 @@ def load(
             f"No hay datos de la EMICRON para años={years} en {_root(root)}. "
             "Descárguelos con dane_data.emicron.download(...) o revise dane_data.set_paths(...)."
         )
-    if isinstance(modulos, str):
-        modulos = [modulos]
     # Los factores se leen siempre y aparte (_factor quita sus filas vacías o repetidas): no se unen como un módulo
-    pedidos = None if modulos is None else [m for m in map(_modulo_valido, modulos) if m not in FACTORES]
+    pedidos = None if modulos is None else [m for m in _opciones(modulos, MODULOS, "Módulo") if m not in FACTORES]
     if pedidos is not None and "personal_ocupado" in pedidos:
         raise ValueError("personal_ocupado tiene una fila por persona: cárguelo con dane_data.emicron.load_personal.")
     if isinstance(columns, str) and columns not in ("core", "all"):

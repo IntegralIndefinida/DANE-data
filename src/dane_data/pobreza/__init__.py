@@ -10,7 +10,7 @@ from .indicadores import GLOSARIO, indicadores
 from .loader import (CATEGORIAS, CORE, DOMINIOS, ETIQUETAS, GRUPOS_DOMINIO, METODOLOGIAS, TRECE_CIUDADES, _root,
                      available, find_files, harmonize, load)
 from .union import VARIABLES_GEIH, unir_geih
-from ..stats import _enteros
+from ..stats import _enteros, _opciones
 
 ANIOS_DISPONIBLES = sorted({a for a, _ in POBREZA_KNOWN_FILES if a != "empalme"})
 
@@ -79,12 +79,7 @@ def download(
     >>> dd.pobreza.download(range(2012, 2026), archivos="hogares", empalme=True)  # doctest: +SKIP
     """
     years = _enteros(years)
-    if archivos is None:
-        archivos = ARCHIVOS
-    elif isinstance(archivos, str):
-        archivos = (archivos,)
-    if desconocidos := [a for a in archivos if a not in ARCHIVOS]:
-        raise ValueError(f"Archivo desconocido {desconocidos}. Opciones: {list(ARCHIVOS)}")
+    archivos = _opciones(archivos, ARCHIVOS, "Archivo")
     dl = PobrezaDownloader(base_dir=_root(root), keep_zips=not delete_zips, progress=progress,
                            should_stop=should_stop, forzar=forzar)
     return dl.run_pipeline(target_years=years, archivos=tuple(archivos), empalme=empalme)

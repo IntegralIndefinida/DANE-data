@@ -371,7 +371,7 @@ def test_anios_vacios_o_desconocidos(tmp_path, clase):
 def test_modulos_vacios_texto_o_desconocidos(tmp_path):
     with pytest.raises(ValueError, match="vacío"):
         GEIHDownloader(base_dir=tmp_path, modules=[])
-    with pytest.raises(ValueError, match="desconocidos"):
+    with pytest.raises(ValueError, match="Módulo desconocido 'ocupado'"):
         GEIHDownloader(base_dir=tmp_path, modules=["ocupado"])
     assert GEIHDownloader(base_dir=tmp_path, modules="ocupados").modules == ("ocupados",)
 
