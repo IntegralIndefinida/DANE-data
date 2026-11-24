@@ -517,3 +517,29 @@ def test_tabla_sin_peso_conserva_el_divisor_de_meses():
     df.attrs["meses_por_anio"], df.attrs["meses_por_anio_filas"] = {2024: 3}, 3
     with pytest.warns(UserWarning):
         assert dd.tabla(df)["total"].iloc[0] == 30.0  # (30 + 60) / 3, no (30 + 60) / 2
+
+
+REAL_EAM = Path(__import__("os").environ.get("DANE_DATA_TEST_EAM", dd.get_path("eam")))
+# Diferencias del archivo del ANDA con lo publicado (README, «Diferencias con la documentación del DANE», EAM): 2011 frente a
+# la serie 1956–2011 «con mezcla de combustibles», el personal de 2004–2011 y los 41 establecimientos que faltan en 1992
+EAM_SIN_COMPARAR = {(2011, "produccion_bruta"), (2011, "consumo_intermedio"), (2011, "valor_agregado"),
+                    (1992, "establecimientos"), *((a, "personal_total") for a in range(2004, 2012))}
+
+
+@pytest.mark.skipif(not (REAL_EAM / "datos").is_dir(), reason="sin datos reales de la EAM")
+def test_real_eam_coincide_con_lo_publicado():
+    """
+    Los totales nacionales de dd.eam.resumen frente a la serie histórica 1992–2011 y los anexos 2015–2024 del DANE
+    (tests/datos/dane_eam_publicado.csv): montos y establecimientos a menos de 0,05 %, personal a menos de 0,15 %.
+    """
+    pub = pd.read_csv(Path(__file__).parent / "datos" / "dane_eam_publicado.csv")
+    anios = sorted(set(pub["anio"]) & set(dd.eam.available(root=REAL_EAM)["anio"]))
+    if not anios:
+        pytest.skip("ningún año descargado tiene cifras publicadas")
+    res = dd.eam.resumen(dd.eam.load(anios, root=REAL_EAM), por="anio")
+    m = pub.merge(res.melt(id_vars="anio", value_vars=sorted(set(pub["variable"])), var_name="variable", value_name="micro"),
+                  on=["anio", "variable"])
+    m = m[[(a, v) not in EAM_SIN_COMPARAR for a, v in zip(m["anio"], m["variable"])]]
+    tolerancia = np.where(m["variable"] == "personal_total", 0.0015, 0.0005)
+    distintas = m[(m["micro"] / m["valor"] - 1).abs() > tolerancia]
+    assert distintas.empty, distintas.to_string()

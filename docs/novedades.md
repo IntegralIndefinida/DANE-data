@@ -6,6 +6,9 @@
 
 * {dd}`eam.indicadores()` es otro nombre de {dd}`eam.resumen()`, como `dd.<encuesta>.indicadores(df)` en las demás
   encuestas: antes `dd.eam.indicadores(df)` fallaba con `'module' object is not callable`.
+* La EAM se compara con las cifras del DANE, como las demás encuestas: los totales nacionales de 1992–2011 y 2015–2024
+  coinciden con la serie histórica y los anexos, salvo unas diferencias del archivo del ANDA en 1992, 2004–2011 y 2011,
+  que ahora están en {doc}`guia/diferencias`.
 
 **Cambios**
 
