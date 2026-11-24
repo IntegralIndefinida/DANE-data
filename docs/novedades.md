@@ -7,6 +7,12 @@
 * {dd}`eam.indicadores()` es otro nombre de {dd}`eam.resumen()`, como `dd.<encuesta>.indicadores(df)` en las demás
   encuestas: antes `dd.eam.indicadores(df)` fallaba con `'module' object is not callable`.
 
+**Cambios**
+
+* {dd}`geih.indicadores()` deja fuera por defecto a quien no tiene valor en la variable de `por` (`dropna=True`), como
+  {dd}`geih.serie_indicadores()` y los `indicadores` de las demás encuestas: las dos formas de calcular lo mismo daban
+  tablas con un número distinto de filas. Para conservar la fila del grupo vacío, use `dropna=False`.
+
 **Correcciones**
 
 * {dd}`geih.load()` ignoraba los módulos con un nombre desconocido o con el nombre que usa {dd}`geih.download()`

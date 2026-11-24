@@ -302,7 +302,7 @@ def serie_indicadores(
         partes = []
         for p in POR_PRECALCULADOS:
             for a in (True, False):
-                r = indicadores(df, por=p, anual=a)
+                r = indicadores(df, por=p, anual=a, dropna=False)  # el grupo vacío se guarda; dropna lo quita abajo
                 if p:
                     r = r.rename(columns={p: "grupo"}).astype({"grupo": object})
                 partes.append(r.assign(desagregacion=p or "total", anual=a))

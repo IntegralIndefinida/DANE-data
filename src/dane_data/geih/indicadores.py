@@ -45,7 +45,7 @@ def _informales(df: pd.DataFrame, col: str, sufijo: str, ocupado: np.ndarray, w:
 
 
 def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, anual: bool = True,
-                dropna: bool = False) -> pd.DataFrame:
+                dropna: bool = True) -> pd.DataFrame:
     r"""
     Indicadores del mercado laboral, ponderados como los calcula el DANE.
 
@@ -64,8 +64,9 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, anual:
         mes.
     dropna
         Dejar fuera a las personas con valor vacío en alguna variable de ``por`` (por ejemplo, el
-        ``nivel_educativo`` de los menores que no responden educación). Si False, forman una fila con el
-        grupo vacío, y los grupos suman el total.
+        ``nivel_educativo`` de los menores que no responden educación), como en ``serie_indicadores`` y en los
+        ``indicadores`` de las demás encuestas. Si False, forman una fila con el grupo vacío, y los grupos suman el
+        total.
 
     Devuelve
     --------

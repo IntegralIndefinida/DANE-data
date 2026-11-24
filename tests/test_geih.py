@@ -524,8 +524,8 @@ def test_trimestre_movil_no_cruza_el_cambio_de_marco():
 
 def test_serie_indicadores_sin_grupo_vacio(geih_root, tmp_path, monkeypatch):
     """
-    Por defecto serie_indicadores deja fuera la fila de nivel educativo vacío (en los datos reales, los
-    menores fuera de la PET); indicadores la conserva para que los grupos sumen el total.
+    Por defecto serie_indicadores e indicadores dejan fuera la fila de nivel educativo vacío (en los datos reales, los
+    menores fuera de la PET); con dropna=False la conservan para que los grupos sumen el total.
     """
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
     mod = sys.modules["dane_data.geih.agregados"]
@@ -538,12 +538,12 @@ def test_serie_indicadores_sin_grupo_vacio(geih_root, tmp_path, monkeypatch):
 
     monkeypatch.setattr(mod, "load", sin_educacion)
     df = sin_educacion(2016, root=geih_root, cache=False)
-    con_vacio = dd.geih.indicadores(df, por="nivel_educativo")
+    con_vacio = dd.geih.indicadores(df, por="nivel_educativo", dropna=False)
     assert con_vacio["nivel_educativo"].isna().sum() == 1
     assert con_vacio["n_muestra"].sum() == len(df)                  # los grupos suman el total
     serie = dd.geih.serie_indicadores(2016, por="nivel_educativo", root=geih_root)
     assert serie["nivel_educativo"].notna().all() and len(serie) == len(con_vacio) - 1
-    pd.testing.assert_frame_equal(serie, dd.geih.indicadores(df, por="nivel_educativo", dropna=True))
+    pd.testing.assert_frame_equal(serie, dd.geih.indicadores(df, por="nivel_educativo"))  # el mismo valor por defecto
     pd.testing.assert_frame_equal(
         dd.geih.serie_indicadores(2016, por="nivel_educativo", root=geih_root, dropna=False), con_vacio)
 

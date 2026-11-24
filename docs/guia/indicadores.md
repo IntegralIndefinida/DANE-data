@@ -128,7 +128,7 @@ años en memoria: calcula cada año por separado y lo guarda en disco (vea {doc}
 
 Quien no tiene valor en la variable de `por` queda fuera: por ejemplo, el `nivel_educativo` de los menores
 que no responden educación, casi todos fuera de la PET. Con `dropna=False` forman una fila con el grupo
-vacío, como en {dd}`geih.indicadores()`, que los conserva por defecto para que los grupos sumen el total.
+vacío, para que los grupos sumen el total; {dd}`geih.indicadores()` hace lo mismo.
 
 ### Filtros
 
