@@ -110,7 +110,7 @@ df = dd.geih.load(2025)                                  # todos los meses
 df = dd.geih.load([2024, 2025], months=[1, 2, 3])        # primer trimestre
 df = dd.geih.load(2025, columns=["P6500", "P7070"])      # + variables DANE extra
 df = dd.geih.load(2016, empalme=True)                    # serie de empalme (marco 2018)
-df = dd.geih.load(range(2015, 2026), variables=["fex", "sexo", "ocupado"])  # solo esas columnas
+pocas = dd.geih.load(range(2015, 2026), variables=["fex", "sexo", "ocupado"])  # solo esas columnas
 
 # 4. Indicadores laborales ponderados
 dd.geih.indicadores(df)                                  # TGP, TO, TD, informalidad, ingresos…
