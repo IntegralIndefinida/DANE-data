@@ -53,6 +53,26 @@ def _opciones(valores, validas, nombre: str) -> tuple:
     return valores
 
 
+def _exigir(df: pd.DataFrame, columnas, ayuda: str = "") -> None:
+    """
+    ``ValueError`` en español si a ``df`` le falta alguna de ``columnas``, con la que solo cambia en mayúsculas si la hay
+    (``"Sexo"`` → ``"sexo"``; por parecido, a ``desocupado`` le sugeriría ``ocupado``); sin esto, pandas solo dice
+    ``KeyError: 'pet'``.
+
+    >>> import pandas as pd
+    >>> from dane_data.stats import _exigir
+    >>> _exigir(pd.DataFrame({"sexo": [1]}), ["Sexo", "pet"], "Cargue más variables.")
+    Traceback (most recent call last):
+    ...
+    ValueError: Faltan columnas: 'Sexo' (¿quiso decir 'sexo'?), 'pet'. Cargue más variables.
+    """
+    if faltan := [c for c in dict.fromkeys(columnas) if c not in df.columns]:
+        nombres = {str(c).lower(): c for c in df.columns}
+        detalle = ", ".join(f"{c!r}" + (f" (¿quiso decir {p!r}?)" if (p := nombres.get(str(c).lower())) else "")
+                            for c in faltan)
+        raise ValueError(f"Faltan columnas: {detalle}." + (f" {ayuda}" if ayuda else ""))
+
+
 def _con_categorias(res: pd.DataFrame, df: pd.DataFrame, por: list[str]) -> pd.DataFrame:
     """
     Devuelve a las columnas de ``por`` el tipo categórico que tienen en ``df``. Con varias llaves, dropna=False
@@ -384,6 +404,7 @@ def tabla(
     if estadistico not in ("total", "porcentaje", "media", "mediana"):
         raise ValueError("estadistico debe ser 'total', 'porcentaje', 'media' o 'mediana'.")
     por = _as_list(por)
+    _exigir(df, [*por, *([variable] if variable else []), *([peso] if peso else [])])
     # Solo las columnas que se usan: copiar todo df duplica la memoria (con columns="all", varios GB)
     usadas = [*por, *([variable] if variable else []), *(c for c in ("anio", "mes") if c in df.columns),
               *([peso] if peso else [])]

@@ -24,7 +24,7 @@ from .. import config
 from ..referencias import MESES
 from ..stats import _as_list, _con_categorias, _enteros, _meses_anotados, peso_mensual_promedio, weighted_quantile
 from .indicadores import _COLUMNAS, indicadores
-from .loader import (CATEGORIAS, MesGEIH, _desde_cache, _firma_archivos, _root,
+from .loader import (CATEGORIAS, MesGEIH, _desde_cache, _firma_archivos, _meses, _root,
                      find_months, load)
 
 # Lo que lee `indicadores` más las desagregaciones y filtros de la app.
@@ -140,7 +140,7 @@ def _firma_codigo(archivos: tuple[str, ...] = _CODIGO) -> str:
 
 def _meses_por_anio(anios, meses, empalme: bool, root) -> dict[int, list[MesGEIH]]:
     """Meses completos en disco (los que usa ``load``), agrupados por año."""
-    meses = _enteros(meses)
+    meses = _meses(meses)
     por_anio: dict[int, list[MesGEIH]] = {}
     for m in find_months(anios, empalme=empalme, root=root):
         if m.completo and (meses is None or m.mes in meses):

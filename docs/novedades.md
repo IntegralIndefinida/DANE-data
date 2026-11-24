@@ -11,6 +11,9 @@
 * Un filtro con un valor mal escrito en una variable categórica (`filtros={"sexo": ["mujer"]}`) devolvía una tabla vacía
   sin explicación, en {dd}`geih.filtrar()` y en las funciones `serie_*` de la GEIH, las Estadísticas Vitales, la ECV y la
   pobreza. Ahora falla y dice cuáles son los valores posibles.
+* {dd}`geih.indicadores()` y {dd}`tabla()` sin una columna que necesitan fallaban con un `KeyError` de pandas
+  (`KeyError: 'pet'`). Ahora dicen qué columnas faltan, cómo cargarlas y, si solo cambia la mayúscula (`por="Sexo"`),
+  cuál quiso decir. Un mes fuera de 1–12 (`months=13`) ya no pide descargarlo: dice que el mes no existe.
 * En *Tablas y microdatos* de la aplicación, exportar unos años sueltos (2016 y 2025) ya no reemplaza la exportación de
   todo el rango con los mismos extremos (2016–2025): el nombre del archivo distingue los años elegidos.
 * {dd}`geih.download()` y {dd}`eam.download()` con los años en un generador (`map(int, anios)`, `(a for a in ...)`) no

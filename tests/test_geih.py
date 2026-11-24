@@ -594,6 +594,20 @@ def test_filtro_con_un_valor_que_no_es_categoria_falla(geih_root, tmp_path, monk
     assert len(dd.geih.filtrar(df, {"sexo": ["Mujer", np.nan]}))  # un vacío no es un error de escritura
 
 
+def test_errores_en_espanol_con_lo_que_falta(geih_root, tmp_path, monkeypatch):
+    """Antes eran KeyError de pandas ('pet') o un «descárguelo» para el mes 13."""
+    monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
+    df = dd.geih.load(2016, root=geih_root, cache=False, variables=["fex", "sexo", "ocupado"])
+    with pytest.raises(ValueError, match=r"Faltan columnas: 'pet', 'fuerza_trabajo'.*VARIABLES_INDICADORES"):
+        dd.geih.indicadores(df)
+    with pytest.raises(ValueError, match=r"'Sexo' \(¿quiso decir 'sexo'\?\)"):
+        dd.tabla(df, por="Sexo")
+    with pytest.raises(ValueError, match="Mes fuera de 1–12: 13"):
+        dd.geih.load(2016, months=13, root=geih_root)
+    with pytest.raises(ValueError, match="Mes fuera de 1–12: 0"):
+        dd.geih.serie_indicadores(2016, meses=[0, 1], root=geih_root)
+
+
 def test_porcentaje_con_grupo_exterior_vacio(geih_root, tmp_path, monkeypatch):
     """Las personas sin posición ocupacional (NaN: no ocupadas) también suman 100 % dentro de su grupo."""
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")

@@ -907,6 +907,14 @@ _NOMBRE_DE_DESCARGA = {"fuerza_trabajo": "fuerza", "otras_formas_trabajo": "otra
                        "inactivos": "no_ocupados"}
 
 
+def _meses(meses) -> list[int] | None:
+    """Los meses pedidos (``_enteros``), entre 1 y 12: con 13, el error decía que faltaba descargarlo."""
+    meses = _enteros(meses)
+    if meses and (raros := [m for m in meses if not 1 <= m <= 12]):
+        raise ValueError(f"Mes fuera de 1–12: {', '.join(map(str, raros))}.")
+    return meses
+
+
 def _modulos_pedidos(modules) -> list[str] | None:
     """``modules`` de ``load``/``load_month`` validados; un nombre desconocido se ignoraba y dejaba la TD en 0 %."""
     if modules is None:
@@ -1073,7 +1081,7 @@ def load(
     >>> df = dd.geih.load(range(2007, 2026), variables=["fex", "sexo", "ocupado", "ingreso_laboral"])  # doctest: +SKIP
     """
     columns, modules = _lista_columnas(columns), _modulos_pedidos(modules)
-    months = _enteros(months)  # "12" es diciembre, no enero y febrero
+    months = _meses(months)  # "12" es diciembre, no enero y febrero
     conservar = None
     if variables is not None:
         conservar = list(dict.fromkeys(["anio", "mes", *([variables] if isinstance(variables, str) else variables)]))

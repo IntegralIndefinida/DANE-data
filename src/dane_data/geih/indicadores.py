@@ -7,7 +7,7 @@ from typing import Iterable
 import numpy as np
 import pandas as pd
 
-from ..stats import _as_list, _con_categorias, peso_mensual_promedio, weighted_mean, weighted_quantile
+from ..stats import _as_list, _con_categorias, _exigir, peso_mensual_promedio, weighted_mean, weighted_quantile
 from .loader import marco_muestral
 
 GLOSARIO = {
@@ -146,6 +146,8 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, anual:
     por = _as_list(por)
     time_keys = ["anio"] if anual else ["anio", "mes"]
     keys = time_keys + por
+    _exigir(df, [*keys, "fex", "pet", "fuerza_trabajo", "ocupado", "desocupado", "inactivo", "ingreso_laboral"],
+            f"Cárguelas con dd.geih.load(..., variables=dd.geih.VARIABLES_INDICADORES + {por!r}), o sin variables=.")
 
     # Solo las sumas ponderadas que hacen falta: copiar el frame entero duplica la memoria
     # con muchos años.
