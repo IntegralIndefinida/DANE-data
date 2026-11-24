@@ -2,6 +2,11 @@
 
 ## Sin publicar
 
+**Novedades**
+
+* {dd}`eam.indicadores()` es otro nombre de {dd}`eam.resumen()`, como `dd.<encuesta>.indicadores(df)` en las demás
+  encuestas: antes `dd.eam.indicadores(df)` fallaba con `'module' object is not callable`.
+
 **Correcciones**
 
 * {dd}`geih.load()` ignoraba los módulos con un nombre desconocido o con el nombre que usa {dd}`geih.download()`

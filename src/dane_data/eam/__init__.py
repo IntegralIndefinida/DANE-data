@@ -6,6 +6,10 @@ from typing import Iterable
 
 from .downloader import EAM_KNOWN_CATALOGS, EAMDownloader
 from .indicadores import GLOSARIO, crecimiento, deflactar, panel, participacion, resumen, supervivencia
+
+# Las demás encuestas tienen dd.<encuesta>.indicadores(df); dd.eam.indicadores era el submódulo y daba «'module' object
+# is not callable». El submódulo sigue en sys.modules (import dane_data.eam.indicadores).
+indicadores = resumen
 from .loader import (CORE, ETIQUETAS, SECTORES, VARIABLES_COMUNES, available, find_files, harmonize,
                      load, _root)
 from ..stats import _enteros
@@ -87,6 +91,6 @@ def download(
 
 __all__ = [
     "download", "load", "available", "find_files", "harmonize", "resumen", "participacion",
-    "crecimiento", "deflactar", "panel", "supervivencia", "GLOSARIO", "ETIQUETAS", "SECTORES",
+    "crecimiento", "deflactar", "panel", "supervivencia", "indicadores", "GLOSARIO", "ETIQUETAS", "SECTORES",
     "CORE", "VARIABLES_COMUNES", "ANIOS_DISPONIBLES",
 ]

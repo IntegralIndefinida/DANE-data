@@ -31,7 +31,8 @@ def resumen(df: pd.DataFrame, por: str | Iterable[str] | None = ("anio",)) -> pd
     """
     Agregados industriales por grupo.
 
-    Suma las variables de los establecimientos de cada grupo y calcula los indicadores derivados.
+    Suma las variables de los establecimientos de cada grupo y calcula los indicadores derivados. También se llama
+    ``dd.eam.indicadores``, como en las demás encuestas.
 
     Parámetros
     ----------

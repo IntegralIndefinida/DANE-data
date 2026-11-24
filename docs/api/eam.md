@@ -38,6 +38,7 @@ miles de pesos corrientes. Vea {doc}`../guia/eam`.
    :nosignatures:
 
    resumen
+   indicadores
    participacion
    crecimiento
    deflactar
