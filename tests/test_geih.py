@@ -195,6 +195,22 @@ def test_aviso_de_modulos_que_faltan_en_un_mes(geih_root, caplog):
     assert "Meses sin módulos" not in caplog.text
 
 
+def test_modules_valida_y_acepta_los_nombres_de_download(geih_root, caplog):
+    """Un nombre desconocido se ignoraba y la TD salía 0 % sin aviso: ahora falla, y los nombres de download valen."""
+    with pytest.raises(ValueError, match="Módulo desconocido 'ocupado'"):
+        dd.geih.load(2016, root=geih_root, cache=False, modules=["caracteristicas", "ocupado"])
+    with caplog.at_level("WARNING", logger="dane_data.geih"):
+        de_descarga = dd.geih.load(2016, root=geih_root, cache=False,
+                                   modules=["caracteristicas", "fuerza_trabajo", "ocupados", "desocupados", "inactivos"])
+        de_carga = dd.geih.load(2016, root=geih_root, cache=False,
+                                modules=["caracteristicas", "fuerza", "ocupados", "no_ocupados"])
+    pd.testing.assert_frame_equal(de_descarga, de_carga)
+    assert "condición de actividad" not in caplog.text
+    with caplog.at_level("WARNING", logger="dane_data.geih"):
+        dd.geih.load(2016, root=geih_root, cache=False, modules=["caracteristicas", "fuerza", "ocupados"])
+    assert "falta desocupados: la condición de actividad" in caplog.text
+
+
 def test_aviso_de_partes_y_de_modulos_sin_extraer(geih_root, caplog):
     """Sin «Resto - Otros ingresos» se avisa la parte; sin el módulo en todo el año (bajado con una versión que no lo
     extraía), cómo volver a bajarlo, salvo de marzo a julio de 2020, cuando el DANE no lo publicó."""

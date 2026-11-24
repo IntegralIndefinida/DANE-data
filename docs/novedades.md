@@ -4,6 +4,10 @@
 
 **Correcciones**
 
+* {dd}`geih.load()` ignoraba los módulos con un nombre desconocido o con el nombre que usa {dd}`geih.download()`
+  (`modules=["fuerza_trabajo", "desocupados"]`): no los unía, y la tasa de desocupación salía 0 % y la TGP 100 % sin
+  ningún aviso. Ahora acepta también los nombres de `download`, falla con un nombre desconocido y avisa si los módulos
+  pedidos no alcanzan para la condición de actividad (por ejemplo, sin `no_ocupados`).
 * En *Tablas y microdatos* de la aplicación, exportar unos años sueltos (2016 y 2025) ya no reemplaza la exportación de
   todo el rango con los mismos extremos (2016–2025): el nombre del archivo distingue los años elegidos.
 * {dd}`geih.download()` y {dd}`eam.download()` con los años en un generador (`map(int, anios)`, `(a for a in ...)`) no

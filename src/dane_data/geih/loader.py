@@ -36,7 +36,7 @@ import pandas as pd
 
 from .. import _io, config
 from .._io import columnas, normalize_columns, read_table, sniff
-from ..stats import _enteros
+from ..stats import _enteros, _opciones
 from ..referencias import DEPARTAMENTOS, MESES, SMLV, strip_accents
 
 log = logging.getLogger("dane_data.geih")
@@ -493,7 +493,7 @@ def load_month(mes: MesGEIH, columns="core", modules: Iterable[str] | None = Non
     >>> crudo.shape  # doctest: +SKIP
     (70648, 61)
     """
-    columns, modules = _lista_columnas(columns), _lista(modules)
+    columns, modules = _lista_columnas(columns), _modulos_pedidos(modules)
     if columns == "all":
         selector = None
     else:
@@ -902,6 +902,18 @@ def _lista_columnas(columns):
     return columns if columns in ("core", "all") else _lista(columns)
 
 
+# Nombres de download (DEFAULT_MODULES) que en load son otro módulo: se aceptan los dos
+_NOMBRE_DE_DESCARGA = {"fuerza_trabajo": "fuerza", "otras_formas_trabajo": "otras", "desocupados": "no_ocupados",
+                       "inactivos": "no_ocupados"}
+
+
+def _modulos_pedidos(modules) -> list[str] | None:
+    """``modules`` de ``load``/``load_month`` validados; un nombre desconocido se ignoraba y dejaba la TD en 0 %."""
+    if modules is None:
+        return None
+    return list(dict.fromkeys(_opciones([_NOMBRE_DE_DESCARGA.get(m, m) for m in _lista(modules)], MODULOS, "Módulo")))
+
+
 @lru_cache(maxsize=1)
 def _firma_lectura() -> str:
     """
@@ -996,7 +1008,9 @@ def load(
     harmonize_vars
         Agregar variables armonizadas (``sexo``, ``condicion``...).
     modules
-        Subconjunto de ``dane_data.geih.MODULOS`` a fusionar.
+        Subconjunto de ``dane_data.geih.MODULOS`` a fusionar. También valen los nombres de ``download``
+        (``"fuerza_trabajo"``, ``"desocupados"``...). Sin ``fuerza``, ``ocupados`` o ``no_ocupados`` la condición de
+        actividad queda incompleta, y se avisa.
     cache
         Guarda cada mes procesado en ``~/.cache/dane_data`` (parquet) para
         que la siguiente carga sea casi instantánea.
@@ -1058,7 +1072,7 @@ def load(
 
     >>> df = dd.geih.load(range(2007, 2026), variables=["fex", "sexo", "ocupado", "ingreso_laboral"])  # doctest: +SKIP
     """
-    columns, modules = _lista_columnas(columns), _lista(modules)
+    columns, modules = _lista_columnas(columns), _modulos_pedidos(modules)
     months = _enteros(months)  # "12" es diciembre, no enero y febrero
     conservar = None
     if variables is not None:
@@ -1087,6 +1101,15 @@ def load(
     # Un mes sin un módulo que sí traen los demás meses de su año, o (hasta 2021) sin su parte Cabecera o Resto,
     # queda con esas variables vacías, o vacías en la zona de la parte que falta
     pedidos = set(modules or MODULOS)
+    if modules and harmonize_vars:
+        # Lo que pide faltantes, pero solo con los módulos pedidos: sin no_ocupados, la TD sale 0 % sin error
+        sin = {f for m in meses for f in MesGEIH(m.anio, m.mes, m.carpeta,
+                                                  {k: v for k, v in m.archivos.items()
+                                                   if k in pedidos | {"caracteristicas"}}).faltantes}  # se lee siempre
+        if sin:
+            log.warning(f"Con modules={sorted(pedidos)} falta {', '.join(sorted(sin))}: la condición de actividad "
+                        "(ocupado, desocupado, inactivo, pet) queda incompleta y la TD y la TGP saldrían mal. Agregue "
+                        "esos módulos ('desocupados' es 'no_ocupados') o use modules=None.")
     huecos: dict[tuple, list] = {}
     for m in meses:
         faltan = sorted((del_anio[m.anio] & pedidos) - set(m.archivos))
