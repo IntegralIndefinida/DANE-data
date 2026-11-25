@@ -2,9 +2,9 @@
 dane-data — microdatos del DANE (GEIH, EAM, Estadísticas Vitales, EMICRON, ECV y pobreza monetaria) listos para analizar.
 
     import dane_data as dd
-    dd.set_paths(geih="~/datos/GEIH/data", eam="~/datos/EAM/data", save=True)
+    dd.set_paths(geih="~/datos/GEIH/data", eam="~/datos/EAM/data", guardar=True)
 
-    df = dd.geih.load(2025, months=[1, 2, 3])
+    df = dd.geih.load(2025, meses=[1, 2, 3])
     dd.geih.indicadores(df, por="sexo")
 
     eam = dd.eam.load(range(2015, 2025))

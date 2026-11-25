@@ -36,7 +36,7 @@ import pandas as pd
 
 from .. import _io, config
 from .._io import columnas, normalize_columns, read_table, sniff
-from ..stats import _enteros, _opciones
+from ..stats import _con_nombres_viejos, _enteros, _opciones
 from ..referencias import DEPARTAMENTOS, MESES, SMLV, strip_accents
 
 log = logging.getLogger("dane_data.geih")
@@ -240,14 +240,14 @@ class MesGEIH:
         return not self.faltantes
 
 
-def _root(empalme: bool, root) -> Path:
-    if root is not None:
-        return Path(root).expanduser()
+def _root(empalme: bool, raiz) -> Path:
+    if raiz is not None:
+        return Path(raiz).expanduser()
     return config.get_path("geih_empalme" if empalme else "geih")
 
 
-def _csv_dir(root: Path) -> Path:
-    return root / "datos_csv" if (root / "datos_csv").is_dir() else root
+def _csv_dir(raiz: Path) -> Path:
+    return raiz / "datos_csv" if (raiz / "datos_csv").is_dir() else raiz
 
 
 def _pick_files(files: list[Path]) -> dict[str, list[Path]]:
@@ -278,7 +278,8 @@ def _pick_files(files: list[Path]) -> dict[str, list[Path]]:
     return out
 
 
-def find_months(years: Iterable[int] | int | None = None, empalme: bool = False, root=None) -> list[MesGEIH]:
+@_con_nombres_viejos
+def find_months(anios: Iterable[int] | int | None = None, empalme: bool = False, raiz=None) -> list[MesGEIH]:
     """
     Meses de la GEIH que hay en disco.
 
@@ -288,11 +289,11 @@ def find_months(years: Iterable[int] | int | None = None, empalme: bool = False,
 
     Parámetros
     ----------
-    years
+    anios
         Año o lista de años. ``None`` para todos.
     empalme
         Buscar en la carpeta de la serie de empalme.
-    root
+    raiz
         Carpeta raíz. Por defecto, la configurada (``dd.get_path``).
 
     Devuelve
@@ -316,14 +317,14 @@ def find_months(years: Iterable[int] | int | None = None, empalme: bool = False,
     >>> meses[0].modulos  # doctest: +SKIP
     ['caracteristicas', 'fuerza', 'migracion', 'no_ocupados', 'ocupados', 'otras', 'otros_ingresos', 'vivienda']
     """
-    base = _csv_dir(_root(empalme, root))
+    base = _csv_dir(_root(empalme, raiz))
     if not base.is_dir():
         return []
-    years = _enteros(years)  # también un año de numpy (df.anio.max())
+    anios = _enteros(anios)  # también un año de numpy (df.anio.max())
     result = []
     for ydir in sorted(p for p in base.iterdir() if p.is_dir() and p.name.isdigit()):
         anio = int(ydir.name)
-        if years is not None and anio not in years:
+        if anios is not None and anio not in anios:
             continue
         for mdir in sorted(p for p in ydir.iterdir() if p.is_dir()):
             mes = month_from_folder(mdir.name)
@@ -361,7 +362,8 @@ def _mtime(mes: MesGEIH) -> float:
     return max(fechas, default=0.0)
 
 
-def available(empalme: bool = False, root=None) -> pd.DataFrame:
+@_con_nombres_viejos
+def available(empalme: bool = False, raiz=None) -> pd.DataFrame:
     """
     Tabla de los meses de la GEIH descargados.
 
@@ -369,7 +371,7 @@ def available(empalme: bool = False, root=None) -> pd.DataFrame:
     ----------
     empalme
         Revisar la serie de empalme en vez de la principal.
-    root
+    raiz
         Carpeta raíz. Por defecto, la configurada (``dd.get_path``).
 
     Devuelve
@@ -397,7 +399,7 @@ def available(empalme: bool = False, root=None) -> pd.DataFrame:
     rows = [
         {"anio": m.anio, "mes": m.mes, "nombre_mes": MESES[m.mes], "carpeta": m.carpeta.name,
          "modulos": ", ".join(m.modulos), "completo": m.completo, "faltantes": ", ".join(m.faltantes)}
-        for m in find_months(empalme=empalme, root=root)
+        for m in find_months(empalme=empalme, raiz=raiz)
     ]
     return pd.DataFrame(rows, columns=["anio", "mes", "nombre_mes", "carpeta", "modulos", "completo", "faltantes"])
 
@@ -440,10 +442,10 @@ def _markers(path: Path) -> dict[str, int]:
     return {}
 
 
-def _read_module(files: list[Path], columns) -> pd.DataFrame:
+def _read_module(files: list[Path], columnas) -> pd.DataFrame:
     frames = []
     for f in files:
-        df = read_table(f, columns=columns)
+        df = read_table(f, columns=columnas)
         if len(df.columns):
             frames.append(df.assign(**_markers(f)))
     if not frames:
@@ -451,7 +453,8 @@ def _read_module(files: list[Path], columns) -> pd.DataFrame:
     return pd.concat(frames, ignore_index=True, sort=False) if len(frames) > 1 else frames[0]
 
 
-def load_month(mes: MesGEIH, columns="core", modules: Iterable[str] | None = None) -> pd.DataFrame:
+@_con_nombres_viejos
+def load_month(mes: MesGEIH, columnas="core", modulos: Iterable[str] | None = None) -> pd.DataFrame:
     """
     Une los módulos de un mes en una tabla de personas, sin armonizar.
 
@@ -464,10 +467,10 @@ def load_month(mes: MesGEIH, columns="core", modules: Iterable[str] | None = Non
     ----------
     mes
         Un mes de ``find_months``.
-    columns
+    columnas
         ``"core"`` (las de ``CORE_RAW``), ``"all"`` (todas) o una lista de variables DANE que se suman a
         las de ``CORE_RAW``.
-    modules
+    modulos
         Módulos a unir (de ``MODULOS``). Por defecto, todos los que haya.
 
     Devuelve
@@ -493,13 +496,13 @@ def load_month(mes: MesGEIH, columns="core", modules: Iterable[str] | None = Non
     >>> crudo.shape  # doctest: +SKIP
     (70648, 61)
     """
-    columns, modules = _lista_columnas(columns), _modulos_pedidos(modules)
-    if columns == "all":
+    columnas, modulos = _lista_columnas(columnas), _modulos_pedidos(modulos)
+    if columnas == "all":
         selector = None
     else:
-        wanted = set(CORE_RAW) | ({c.upper() for c in columns} if columns not in (None, "core") else set())
+        wanted = set(CORE_RAW) | ({c.upper() for c in columnas} if columnas not in (None, "core") else set())
         selector = wanted.__contains__
-    modules = set(modules or MODULOS)
+    modulos = set(modulos or MODULOS)
 
     if "caracteristicas" not in mes.archivos:
         raise FileNotFoundError(f"{mes.carpeta}: falta el módulo de características generales")
@@ -507,7 +510,7 @@ def load_month(mes: MesGEIH, columns="core", modules: Iterable[str] | None = Non
 
     # Una columna que está en varios módulos sale del primero: los nuevos (otros ingresos, migración) van al final
     for modulo in ("fuerza", "ocupados", "no_ocupados", "otras", "vivienda", "otros_ingresos", "migracion"):
-        if modulo not in mes.archivos or modulo not in modules:
+        if modulo not in mes.archivos or modulo not in modulos:
             continue
         df = _read_module(mes.archivos[modulo], selector)
         base = _merge_new_columns(base, df, KEYS_HOGAR if modulo == "vivienda" else KEYS_PERSONA)
@@ -897,9 +900,9 @@ def _lista(x):
     return [x] if isinstance(x, str) else x
 
 
-def _lista_columnas(columns):
+def _lista_columnas(columnas):
     """Como ``_lista``, salvo los valores especiales ``"core"`` y ``"all"``."""
-    return columns if columns in ("core", "all") else _lista(columns)
+    return columnas if columnas in ("core", "all") else _lista(columnas)
 
 
 # Nombres de download (DEFAULT_MODULES) que en load son otro módulo: se aceptan los dos
@@ -915,11 +918,11 @@ def _meses(meses) -> list[int] | None:
     return meses
 
 
-def _modulos_pedidos(modules) -> list[str] | None:
-    """``modules`` de ``load``/``load_month`` validados; un nombre desconocido se ignoraba y dejaba la TD en 0 %."""
-    if modules is None:
+def _modulos_pedidos(modulos) -> list[str] | None:
+    """``modulos`` de ``load``/``load_month`` validados; un nombre desconocido se ignoraba y dejaba la TD en 0 %."""
+    if modulos is None:
         return None
-    return list(dict.fromkeys(_opciones([_NOMBRE_DE_DESCARGA.get(m, m) for m in _lista(modules)], MODULOS, "Módulo")))
+    return list(dict.fromkeys(_opciones([_NOMBRE_DE_DESCARGA.get(m, m) for m in _lista(modulos)], MODULOS, "Módulo")))
 
 
 @lru_cache(maxsize=1)
@@ -940,17 +943,17 @@ def _firma_lectura() -> str:
     return hashlib.sha1("|".join(partes).encode()).hexdigest()[:16]
 
 
-def _cache_path(mes: MesGEIH, columns, modules) -> Path:
-    if columns == "all":
+def _cache_path(mes: MesGEIH, columnas, modulos) -> Path:
+    if columnas == "all":
         cols = "all"
     else:
         # Solo las extra que cambian lo que lee load_month: las de CORE_RAW se leen siempre, y las que no están en
         # ningún archivo del mes (p. ej. una armonizada como "smlv") no salen. Así no crean otra caché del mes.
-        extra = {c.upper() for c in (columns if columns not in (None, "core") else [])} - set(CORE_RAW)
+        extra = {c.upper() for c in (columnas if columnas not in (None, "core") else [])} - set(CORE_RAW)
         if extra:
             extra &= set().union(*(_header(f) for files in mes.archivos.values() for f in files))
         cols = ",".join(sorted(extra))
-    key = "|".join([_firma_lectura(), *_firma_archivos(mes), cols, ",".join(sorted(modules or MODULOS))])
+    key = "|".join([_firma_lectura(), *_firma_archivos(mes), cols, ",".join(sorted(modulos or MODULOS))])
     digest = hashlib.sha1(key.encode()).hexdigest()[:16]
     return config.CACHE_DIR / "geih" / f"{mes.anio}_{mes.mes:02d}_{digest}.parquet"
 
@@ -982,16 +985,17 @@ def _modulos_sin_extraer(meses: list[MesGEIH], del_anio: dict[int, set]) -> dict
     return {modulo: sorted(anios) for modulo, anios in sin.items()}
 
 
+@_con_nombres_viejos
 def load(
-    years: Iterable[int] | int,
-    months: Iterable[int] | int | None = None,
-    columns="core",
+    anios: Iterable[int] | int,
+    meses: Iterable[int] | int | None = None,
+    columnas="core",
     empalme: bool = False,
-    harmonize_vars: bool = True,
-    modules: Iterable[str] | None = None,
-    root=None,
+    armonizar: bool = True,
+    modulos: Iterable[str] | None = None,
+    raiz=None,
     cache: bool = True,
-    progress=None,
+    progreso=None,
     incluir_incompletos: bool = False,
     variables: Iterable[str] | None = None,
 ) -> pd.DataFrame:
@@ -1004,25 +1008,25 @@ def load(
 
     Parámetros
     ----------
-    years
+    anios
         Año o lista de años.
-    months
+    meses
         Mes o lista de meses (1–12); None para todos los disponibles.
-    columns
+    columnas
         ``"core"`` (por defecto), ``"all"`` o lista de variables DANE extra,
         por ejemplo ``["P6500", "P7070"]``.
     empalme
         Usar la serie de empalme (2010–2020, marco 2018).
-    harmonize_vars
+    armonizar
         Agregar variables armonizadas (``sexo``, ``condicion``...).
-    modules
+    modulos
         Subconjunto de ``dane_data.geih.MODULOS`` a fusionar. También valen los nombres de ``download``
         (``"fuerza_trabajo"``, ``"desocupados"``...). Sin ``fuerza``, ``ocupados`` o ``no_ocupados`` la condición de
         actividad queda incompleta, y se avisa.
     cache
         Guarda cada mes procesado en ``~/.cache/dane_data`` (parquet) para
         que la siguiente carga sea casi instantánea.
-    progress
+    progreso
         Función opcional ``(fraccion, mensaje)``.
     incluir_incompletos
         Por defecto se omiten (con aviso) los meses a los que
@@ -1033,7 +1037,7 @@ def load(
         Conservar solo estas variables (armonizadas o del DANE; ``anio`` y
         ``mes`` siempre). Cada mes se recorta al leerlo, así que la memoria depende
         solo de lo que se conserva: útil para juntar muchos años. Las variables DANE
-        que no están en ``CORE_RAW`` deben pedirse también en ``columns``.
+        que no están en ``CORE_RAW`` deben pedirse también en ``columnas``.
 
     Devuelve
     --------
@@ -1069,57 +1073,57 @@ def load(
     Ejemplos
     --------
     >>> import dane_data as dd
-    >>> df = dd.geih.load(2025, months=[1, 2, 3])  # doctest: +SKIP
+    >>> df = dd.geih.load(2025, meses=[1, 2, 3])  # doctest: +SKIP
     >>> dd.geih.indicadores(df, por="sexo")  # doctest: +SKIP
 
     Variables del DANE que no están en ``CORE_RAW``:
 
-    >>> df = dd.geih.load(2024, columns=["P6500", "P7070"])  # doctest: +SKIP
+    >>> df = dd.geih.load(2024, columnas=["P6500", "P7070"])  # doctest: +SKIP
 
     Muchos años, solo con lo necesario:
 
     >>> df = dd.geih.load(range(2007, 2026), variables=["fex", "sexo", "ocupado", "ingreso_laboral"])  # doctest: +SKIP
     """
-    columns, modules = _lista_columnas(columns), _modulos_pedidos(modules)
-    months = _meses(months)  # "12" es diciembre, no enero y febrero
+    columnas, modulos = _lista_columnas(columnas), _modulos_pedidos(modulos)
+    meses = _meses(meses)  # "12" es diciembre, no enero y febrero
     conservar = None
     if variables is not None:
         conservar = list(dict.fromkeys(["anio", "mes", *([variables] if isinstance(variables, str) else variables)]))
-    meses = find_months(years, empalme=empalme, root=root)
-    del_anio = _modulos_por_anio(meses)  # antes de filtrar los meses
-    if months is not None:
-        meses = [m for m in meses if m.mes in months]
-    omitidos = [m for m in meses if not m.completo]
+    encontrados = find_months(anios, empalme=empalme, raiz=raiz)
+    del_anio = _modulos_por_anio(encontrados)  # antes de filtrar los meses
+    if meses is not None:
+        encontrados = [m for m in encontrados if m.mes in meses]
+    omitidos = [m for m in encontrados if not m.completo]
     if omitidos and not incluir_incompletos:
         detalle = "; ".join(f"{MESES[m.mes]} {m.anio} (falta {', '.join(m.faltantes)})" for m in omitidos)
         if any("CSV del DANE" in f for m in omitidos for f in m.faltantes):
             detalle += (". Vuelva a descargar esos años con dane_data.geih.download(...): para esos meses "
                         "se baja otro formato del ANDA")
         log.warning(f"Se omiten meses incompletos: {detalle}. Use incluir_incompletos=True para cargarlos.")
-        meses = [m for m in meses if m.completo]
-    if not meses:
+        encontrados = [m for m in encontrados if m.completo]
+    if not encontrados:
         raise FileNotFoundError(
-            f"No hay datos GEIH para años={years}, meses={months} en {_root(empalme, root)}. "
+            f"No hay datos GEIH para años={anios}, meses={meses} en {_root(empalme, raiz)}. "
             "Descárguelos con dane_data.geih.download(...) o revise dane_data.set_paths(...)."
         )
     # Un año nuevo que la búsqueda del ANDA encuentra antes de que dane-data tenga su salario mínimo
-    if harmonize_vars and (sin_smlv := sorted({m.anio for m in meses} - set(SMLV))):
+    if armonizar and (sin_smlv := sorted({m.anio for m in encontrados} - set(SMLV))):
         log.warning(f"dd.SMLV no tiene el salario mínimo de {', '.join(map(str, sin_smlv))}: smlv y ratio_smlv quedan "
                     "vacíos en esos años. Actualice dane-data.")
     # Un mes sin un módulo que sí traen los demás meses de su año, o (hasta 2021) sin su parte Cabecera o Resto,
     # queda con esas variables vacías, o vacías en la zona de la parte que falta
-    pedidos = set(modules or MODULOS)
-    if modules and harmonize_vars:
+    pedidos = set(modulos or MODULOS)
+    if modulos and armonizar:
         # Lo que pide faltantes, pero solo con los módulos pedidos: sin no_ocupados, la TD sale 0 % sin error
-        sin = {f for m in meses for f in MesGEIH(m.anio, m.mes, m.carpeta,
+        sin = {f for m in encontrados for f in MesGEIH(m.anio, m.mes, m.carpeta,
                                                   {k: v for k, v in m.archivos.items()
                                                    if k in pedidos | {"caracteristicas"}}).faltantes}  # se lee siempre
         if sin:
-            log.warning(f"Con modules={sorted(pedidos)} falta {', '.join(sorted(sin))}: la condición de actividad "
+            log.warning(f"Con modulos={sorted(pedidos)} falta {', '.join(sorted(sin))}: la condición de actividad "
                         "(ocupado, desocupado, inactivo, pet) queda incompleta y la TD y la TGP saldrían mal. Agregue "
-                        "esos módulos ('desocupados' es 'no_ocupados') o use modules=None.")
+                        "esos módulos ('desocupados' es 'no_ocupados') o use modulos=None.")
     huecos: dict[tuple, list] = {}
-    for m in meses:
+    for m in encontrados:
         faltan = sorted((del_anio[m.anio] & pedidos) - set(m.archivos))
         faltan += [nombre for modulo, nombre in m.partes_faltantes(_OPCIONALES) if modulo in pedidos]
         if faltan:
@@ -1132,29 +1136,29 @@ def load(
                     "Características); en otro mes, vuelva a descargarlo con dane_data.geih.download(...).")
     # Años bajados antes de que dane-data extrajera Otros ingresos y Migración: no los trae ningún mes del año, así
     # que el aviso anterior no sale, y sus variables quedarían vacías sin explicación
-    for modulo, anios in _modulos_sin_extraer(meses, del_anio).items():
+    for modulo, sin_modulo in _modulos_sin_extraer(encontrados, del_anio).items():
         if modulo not in pedidos:
             continue
-        log.warning(f"Ningún mes de {', '.join(map(str, anios))} en disco trae el módulo {modulo}: sus variables quedan "
+        log.warning(f"Ningún mes de {', '.join(map(str, sin_modulo))} en disco trae el módulo {modulo}: sus variables quedan "
                     "vacías. Si se bajaron con una versión de dane-data que no lo extraía, vuelva a bajarlo con "
-                    f"dane_data.geih.download({anios}, forzar=True, modules=['{modulo}']"
+                    f"dane_data.geih.download({sin_modulo}, forzar=True, modulos=['{modulo}']"
                     f"{', empalme=True' if empalme else ''}).")
 
     frames = []
-    for i, mes in enumerate(meses):
-        if progress:
-            progress(i / len(meses), f"Leyendo {MESES[mes.mes]} {mes.anio}")
+    for i, mes in enumerate(encontrados):
+        if progreso:
+            progreso(i / len(encontrados), f"Leyendo {MESES[mes.mes]} {mes.anio}")
         def leer(m=mes) -> pd.DataFrame:
-            return load_month(m, columns=columns, modules=modules)
+            return load_month(m, columnas=columnas, modulos=modulos)
 
         try:
-            df = _desde_cache(_cache_path(mes, columns, modules), leer) if cache else leer()
+            df = _desde_cache(_cache_path(mes, columnas, modulos), leer) if cache else leer()
         except FileNotFoundError as e:
             log.warning(str(e))
             continue
         # Mes a mes (harmonize es fila a fila): evita armonizar y copiar el frame
         # concatenado de muchos años, que no cabe en memoria.
-        if harmonize_vars:
+        if armonizar:
             # El DANE publica el empalme con la PET de 15 años o más, pero el archivo de
             # octubre de 2012 (catálogo 760) la marca con la definición anterior (12+ urbano,
             # 10+ rural). Ver README, "Diferencias con la documentación del DANE".
@@ -1162,8 +1166,8 @@ def load(
         if conservar is not None:
             df = df[[c for c in conservar if c in df.columns]].copy()  # sin copia, la vista retiene el mes entero
         frames.append(df)
-    if progress:
-        progress(1.0, "Listo")
+    if progreso:
+        progreso(1.0, "Listo")
     if not frames:
         raise FileNotFoundError("Ningún mes pudo leerse (faltan módulos de características).")
 

@@ -10,18 +10,19 @@ from .indicadores import GLOSARIO, indicadores
 from .ipm import COLUMNAS_IPM, MODULOS_IPM, PRIVACIONES, ipm, privaciones
 from .loader import (CATEGORIAS, ETIQUETAS, KEYS_HOGAR, KEYS_PERSONA, MODULOS, NIVELES, UNIDADES, _root, available,
                      find_files, harmonize, load)
-from ..stats import _enteros, _opciones
+from ..stats import _con_nombres_viejos, _enteros, _opciones
 
 ANIOS_DISPONIBLES = sorted(_CATALOGOS)
 
 
+@_con_nombres_viejos
 def download(
-    years: Iterable[int] | int | None = None,
+    anios: Iterable[int] | int | None = None,
     modulos: Iterable[str] | str | None = None,
-    root=None,
-    delete_zips: bool = False,
-    progress=None,
-    should_stop=None,
+    raiz=None,
+    borrar_zips: bool = False,
+    progreso=None,
+    detener=None,
     forzar: bool = False,
 ) -> list[str]:
     """
@@ -32,23 +33,23 @@ def download(
     IPM: sin ellos las cifras no son las oficiales.
 
     Ocupa espacio: los 11 capítulos de un año son unos 1,4 GB en ZIP en 2025 (menos en los años anteriores), más lo
-    extraído; ``delete_zips=True`` borra los ZIP. Una descarga cortada vuelve a empezar ese ZIP.
+    extraído; ``borrar_zips=True`` borra los ZIP. Una descarga cortada vuelve a empezar ese ZIP.
 
     Parámetros
     ----------
-    years
+    anios
         Año o lista de años. ``None`` descarga 2018–2025; una lista vacía, ninguno. Los años que no están en el ANDA se
         saltan y quedan en la lista que se devuelve.
     modulos
         Capítulo o lista de capítulos de ``dd.ecv.MODULOS``. ``None`` para todos: los usan las variables armonizadas,
         los indicadores y el IPM.
-    root
+    raiz
         Carpeta de destino. Por defecto, la de ``dd.get_path("ecv")``.
-    delete_zips
+    borrar_zips
         Borrar cada ZIP después de extraerlo.
-    progress
-        Función ``progress(fraccion, mensaje)`` que recibe el avance.
-    should_stop
+    progreso
+        Función ``progreso(fraccion, mensaje)`` que recibe el avance.
+    detener
         Función sin argumentos; si devuelve True, la descarga se detiene con ``DownloadCancelled``.
     forzar
         Volver a bajar y extraer aunque ya esté en disco, por ejemplo si el DANE corrigió los archivos. Lo extraído
@@ -64,7 +65,7 @@ def download(
     ValueError
         Si algún capítulo no es de ``dd.ecv.MODULOS``.
     DownloadCancelled
-        Si ``should_stop()`` devolvió True.
+        Si ``detener()`` devolvió True.
 
     Véase también
     -------------
@@ -82,16 +83,16 @@ def download(
     >>> dd.ecv.download(2025)  # doctest: +SKIP
     >>> dd.ecv.download(range(2018, 2026), modulos=["caracteristicas", "salud"])  # doctest: +SKIP
     """
-    years = _enteros(years)
+    anios = _enteros(anios)
     modulos = _opciones(modulos, MODULOS, "Módulo")
     dl = ECVDownloader(
-        base_dir=_root(root),
-        keep_zips=not delete_zips,
-        progress=progress,
-        should_stop=should_stop,
+        base_dir=_root(raiz),
+        keep_zips=not borrar_zips,
+        progress=progreso,
+        should_stop=detener,
         forzar=forzar,
     )
-    return dl.run_pipeline(target_years=years, modulos=modulos)
+    return dl.run_pipeline(target_years=anios, modulos=modulos)
 
 
 __all__ = [

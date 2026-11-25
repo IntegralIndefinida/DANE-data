@@ -10,19 +10,20 @@ from .indicadores import GLOSARIO, indicadores
 from .loader import (CATEGORIAS, CORE, DOMINIOS, ETIQUETAS, GRUPOS_DOMINIO, METODOLOGIAS, TRECE_CIUDADES, _root,
                      available, find_files, harmonize, load)
 from .union import VARIABLES_GEIH, unir_geih
-from ..stats import _enteros, _opciones
+from ..stats import _con_nombres_viejos, _enteros, _opciones
 
 ANIOS_DISPONIBLES = sorted({a for a, _ in POBREZA_KNOWN_FILES if a != "empalme"})
 
 
+@_con_nombres_viejos
 def download(
-    years: Iterable[int] | int | None = None,
+    anios: Iterable[int] | int | None = None,
     archivos: Iterable[str] | str | None = None,
     empalme: bool = False,
-    root=None,
-    delete_zips: bool = False,
-    progress=None,
-    should_stop=None,
+    raiz=None,
+    borrar_zips: bool = False,
+    progreso=None,
+    detener=None,
     forzar: bool = False,
 ) -> list[str]:
     """
@@ -33,7 +34,7 @@ def download(
 
     Parámetros
     ----------
-    years
+    anios
         Año o lista de años (2012–2025). ``None`` descarga toda la serie (unos 1,4 GB de ZIP); una lista vacía, ninguno.
         Los años que no están en el ANDA quedan en la lista que se devuelve.
     archivos
@@ -42,14 +43,14 @@ def download(
     empalme
         Bajar también, a ``<carpeta>/datos/empalme/``, los archivos para comparar 2012–2021 con las cifras del marco
         2018: el factor de empalme 2012–2020, los hogares empalmados de 2021 y las líneas actualizadas de 2012–2018.
-        Se bajan una sola vez, cualquiera que sea ``years``.
-    root
+        Se bajan una sola vez, cualquiera que sea ``anios``.
+    raiz
         Carpeta de destino. Por defecto, la de ``dd.get_path("pobreza")``.
-    delete_zips
+    borrar_zips
         Borrar cada ZIP después de extraerlo.
-    progress
-        Función ``progress(fraccion, mensaje)`` que recibe el avance.
-    should_stop
+    progreso
+        Función ``progreso(fraccion, mensaje)`` que recibe el avance.
+    detener
         Función sin argumentos; si devuelve True, la descarga se detiene con ``DownloadCancelled``.
     forzar
         Volver a bajar y extraer aunque ya esté en disco, por ejemplo si el DANE corrigió los archivos. Lo extraído
@@ -65,12 +66,12 @@ def download(
     ValueError
         Si algún archivo no es ``"hogares"`` ni ``"personas"``.
     DownloadCancelled
-        Si ``should_stop()`` devolvió True.
+        Si ``detener()`` devolvió True.
 
     Notas
     -----
     Desde 2023 el DANE publica hogares y personas en un solo ZIP (unos 120 MB): pedir solo ``"hogares"`` lo baja
-    entero. El ZIP queda en ``<carpeta>/raw_zips/`` salvo con ``delete_zips``.
+    entero. El ZIP queda en ``<carpeta>/raw_zips/`` salvo con ``borrar_zips``.
 
     Ejemplos
     --------
@@ -78,11 +79,11 @@ def download(
     >>> dd.pobreza.download(2025)  # doctest: +SKIP
     >>> dd.pobreza.download(range(2012, 2026), archivos="hogares", empalme=True)  # doctest: +SKIP
     """
-    years = _enteros(years)
+    anios = _enteros(anios)
     archivos = _opciones(archivos, ARCHIVOS, "Archivo")
-    dl = PobrezaDownloader(base_dir=_root(root), keep_zips=not delete_zips, progress=progress,
-                           should_stop=should_stop, forzar=forzar)
-    return dl.run_pipeline(target_years=years, archivos=tuple(archivos), empalme=empalme)
+    dl = PobrezaDownloader(base_dir=_root(raiz), keep_zips=not borrar_zips, progress=progreso,
+                           should_stop=detener, forzar=forzar)
+    return dl.run_pipeline(target_years=anios, archivos=tuple(archivos), empalme=empalme)
 
 
 __all__ = [

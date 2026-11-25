@@ -18,7 +18,7 @@ def test_carpeta_pobreza(tmp_path, monkeypatch):
     monkeypatch.setattr(dd.config, "_session", {})
     monkeypatch.delenv("DANE_DATA_POBREZA", raising=False)
     assert dd.get_path("pobreza") == dd.config.DEFAULT_HOME / "pobreza"
-    dd.set_paths(pobreza=tmp_path / "x", save=True)
+    dd.set_paths(pobreza=tmp_path / "x", guardar=True)
     assert json.loads((tmp_path / "c.json").read_text())["pobreza"] == str(tmp_path / "x")
     assert dd.show_paths()["pobreza"] == str(tmp_path / "x")
     monkeypatch.setattr(dd.config, "_session", {})
@@ -36,7 +36,7 @@ def test_carpeta_pobreza(tmp_path, monkeypatch):
 def test_armoniza_todas_las_epocas(pobreza_root):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", UserWarning)
-        df = dd.pobreza.load(root=pobreza_root)
+        df = dd.pobreza.load(raiz=pobreza_root)
     assert sorted(df.anio.unique()) == [2012, 2014, 2017, 2018, 2019, 2021, 2022, 2023, 2025]
     assert (df.groupby("anio").size() == 3).all()
     for c in ("dominio", "departamento", "zona", "ingreso_pc", "linea_pobreza", "fex", "fex_dpto"):
@@ -48,7 +48,7 @@ def test_armoniza_todas_las_epocas(pobreza_root):
     h22 = pd.read_csv(ruta, sep=";", decimal=",")
     h22.loc[2, "Dpto"] = 11
     h22.to_csv(ruta, sep=";", decimal=",", index=False)
-    assert dd.pobreza.load(2022, root=pobreza_root).departamento.tolist()[2] == "Cundinamarca"
+    assert dd.pobreza.load(2022, raiz=pobreza_root).departamento.tolist()[2] == "Cundinamarca"
     # 2014 (número de 1 a 24) y 2025 (nombre) bien traducidos
     assert (df.groupby("DIRECTORIO", observed=True).departamento.nunique() == 1).all()
     assert set(df.loc[df.DIRECTORIO == 3, "departamento"]) == {"Cundinamarca"}
@@ -62,31 +62,31 @@ def test_armoniza_todas_las_epocas(pobreza_root):
 
 
 def test_columnas(pobreza_root):
-    df = dd.pobreza.load(2018, root=pobreza_root)
+    df = dd.pobreza.load(2018, raiz=pobreza_root)
     assert list(df.columns) == ["DIRECTORIO", "SECUENCIA_P", *dd.pobreza.ETIQUETAS]
-    todo = dd.pobreza.load(2018, root=pobreza_root, columns="all")
+    todo = dd.pobreza.load(2018, raiz=pobreza_root, columnas="all")
     assert {"POBRE", "INDIGENTE", "INGPCUG"} <= set(todo.columns)
-    assert "POBRE" in dd.pobreza.load(2018, root=pobreza_root, columns="POBRE").columns
-    crudo = dd.pobreza.load(2018, root=pobreza_root, harmonize_vars=False)
+    assert "POBRE" in dd.pobreza.load(2018, raiz=pobreza_root, columnas="POBRE").columns
+    crudo = dd.pobreza.load(2018, raiz=pobreza_root, armonizar=False)
     assert "ingreso_pc" not in crudo and "INGPCUG" in crudo and (crudo.anio == 2018).all()
 
 
 def test_avisa_si_mezcla_metodologias_o_marcos(pobreza_root):
     with pytest.warns(UserWarning, match="MESEP"):
-        dd.pobreza.load([2018, 2019], root=pobreza_root)
+        dd.pobreza.load([2018, 2019], raiz=pobreza_root)
     with pytest.warns(UserWarning, match="marco"):
-        dd.pobreza.load([2021, 2022], root=pobreza_root)
+        dd.pobreza.load([2021, 2022], raiz=pobreza_root)
     with warnings.catch_warnings():
         warnings.simplefilter("error")
-        dd.pobreza.load([2022, 2023], root=pobreza_root)
-        dd.pobreza.load([2012, 2025], root=pobreza_root, empalme=True)
+        dd.pobreza.load([2022, 2023], raiz=pobreza_root)
+        dd.pobreza.load([2012, 2025], raiz=pobreza_root, empalme=True)
 
 
 def test_empalme(pobreza_root):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", UserWarning)
-        crudo = dd.pobreza.load([2017, 2019, 2021, 2022], root=pobreza_root)
-    emp = dd.pobreza.load([2017, 2019, 2021, 2022], root=pobreza_root, empalme=True)
+        crudo = dd.pobreza.load([2017, 2019, 2021, 2022], raiz=pobreza_root)
+    emp = dd.pobreza.load([2017, 2019, 2021, 2022], raiz=pobreza_root, empalme=True)
     c, e = (d.set_index(["anio", "DIRECTORIO"]) for d in (crudo, emp))
     # 2012–2020: fex × FEX_G
     assert np.allclose(e.loc[2017, "fex"], c.loc[2017, "fex"] * 0.5)
@@ -109,14 +109,14 @@ def test_empalme_exige_todos_los_hogares_y_los_archivos(pobreza_root):
     fex_g = pd.read_csv(emp, sep=";")
     fex_g.iloc[1:].to_csv(emp, sep=";", index=False)  # falta un hogar de 2012
     with pytest.raises(ValueError, match="1 hogares de 2012"):
-        dd.pobreza.load(2012, root=pobreza_root, empalme=True)
+        dd.pobreza.load(2012, raiz=pobreza_root, empalme=True)
     pd.concat([fex_g, fex_g.iloc[[0]]]).to_csv(emp, sep=";", index=False)  # uno repetido
     with pytest.raises(ValueError, match="repetidas"):
-        dd.pobreza.load(2012, root=pobreza_root, empalme=True)
+        dd.pobreza.load(2012, raiz=pobreza_root, empalme=True)
     emp.unlink()
     with pytest.raises(FileNotFoundError, match="empalme=True"):
-        dd.pobreza.load(2012, root=pobreza_root, empalme=True)
-    dd.pobreza.load(2022, root=pobreza_root, empalme=True)  # desde 2022 no hace falta
+        dd.pobreza.load(2012, raiz=pobreza_root, empalme=True)
+    dd.pobreza.load(2022, raiz=pobreza_root, empalme=True)  # desde 2022 no hace falta
 
 
 def test_falla_con_dominio_desconocido_o_sin_linea(pobreza_root):
@@ -125,24 +125,24 @@ def test_falla_con_dominio_desconocido_o_sin_linea(pobreza_root):
     df.loc[0, "Dominio"] = "MARTE"
     df.to_csv(ruta, sep=";", index=False)
     with pytest.raises(ValueError, match="MARTE"):
-        dd.pobreza.load(2019, root=pobreza_root)
+        dd.pobreza.load(2019, raiz=pobreza_root)
     df.loc[0, "Dominio"] = "BOGOTA"
     df["Lp"] = df["Lp"].astype(object)
     df.loc[0, "Lp"] = ""
     df.to_csv(ruta, sep=";", index=False)
     with pytest.raises(ValueError, match="linea_pobreza"):
-        dd.pobreza.load(2019, root=pobreza_root)
+        dd.pobreza.load(2019, raiz=pobreza_root)
 
 
 def test_find_files_y_available(pobreza_root):
     (pobreza_root / "datos" / "notas").mkdir()
-    assert sorted(dd.pobreza.find_files(root=pobreza_root)) == [2012, 2014, 2017, 2018, 2019, 2021, 2022, 2023, 2025]
-    assert list(dd.pobreza.find_files([2014, 2030], root=pobreza_root)) == [2014]
-    av = dd.pobreza.available(root=pobreza_root)
+    assert sorted(dd.pobreza.find_files(raiz=pobreza_root)) == [2012, 2014, 2017, 2018, 2019, 2021, 2022, 2023, 2025]
+    assert list(dd.pobreza.find_files([2014, 2030], raiz=pobreza_root)) == [2014]
+    av = dd.pobreza.available(raiz=pobreza_root)
     assert av.anio.notna().sum() == 9 and not av.personas.any()
     assert set(av.loc[av.anio.isna(), "archivo"]) == set(dd.pobreza.ARCHIVOS_EMPALME)
     with pytest.raises(FileNotFoundError, match="download"):
-        dd.pobreza.load(2030, root=pobreza_root)
+        dd.pobreza.load(2030, raiz=pobreza_root)
 
 
 # ---------------------------------------------------------------------------------------------------- #
@@ -196,17 +196,17 @@ def test_indicadores_por_grupo_y_contexto():
         dd.pobreza.indicadores(pd.concat([df.assign(empalmado=False), df.assign(empalmado=True)]))
     with pytest.raises(ValueError, match="Hogares sin dato"):
         dd.pobreza.indicadores(df.assign(fex=[1.0, np.nan, 1.0]))
-    with pytest.raises(ValueError, match="harmonize_vars"):
+    with pytest.raises(ValueError, match="armonizar"):
         dd.pobreza.indicadores(df.drop(columns="ingreso_pc"))
 
 
 def test_indicadores_con_load(pobreza_root):
-    df = dd.pobreza.load(2025, root=pobreza_root)
+    df = dd.pobreza.load(2025, raiz=pobreza_root)
     assert df.grupo_dominio.tolist() == ["13 ciudades y áreas metropolitanas", "13 ciudades y áreas metropolitanas",
                                          "Centros poblados y rural disperso"]
     r = dd.pobreza.indicadores(df, por="grupo_dominio")
     assert r.grupo_dominio.dtype == dd.pobreza.CATEGORIAS["grupo_dominio"] and len(r) == 2
-    emp = dd.pobreza.load([2019, 2025], root=pobreza_root, empalme=True)
+    emp = dd.pobreza.load([2019, 2025], raiz=pobreza_root, empalme=True)
     assert emp.empalmado.all()
     assert list(dd.pobreza.indicadores(emp, por="anio").anio) == [2019, 2025]
 
@@ -224,10 +224,10 @@ def test_serie_igual_a_load_e_indicadores(pobreza_root, cache_tmp):
     for empalme in (False, True):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", UserWarning)
-            serie = dd.pobreza.serie_indicadores(anios, por="zona", empalme=empalme, root=pobreza_root)
-            directo = dd.pobreza.indicadores(dd.pobreza.load(anios, empalme=empalme, root=pobreza_root), por=["anio", "zona"])
+            serie = dd.pobreza.serie_indicadores(anios, por="zona", empalme=empalme, raiz=pobreza_root)
+            directo = dd.pobreza.indicadores(dd.pobreza.load(anios, empalme=empalme, raiz=pobreza_root), por=["anio", "zona"])
         pd.testing.assert_frame_equal(serie, directo)
-    filtrada = dd.pobreza.serie_indicadores(2025, filtros={"dominio": ["Bogotá"]}, root=pobreza_root)
+    filtrada = dd.pobreza.serie_indicadores(2025, filtros={"dominio": ["Bogotá"]}, raiz=pobreza_root)
     assert filtrada.hogares_muestra.tolist() == [1]
 
 
@@ -236,35 +236,35 @@ def test_serie_usa_la_cache_y_se_invalida(pobreza_root, cache_tmp, monkeypatch):
     lecturas = []
     leer = loader.read_table
     monkeypatch.setattr(loader, "read_table", lambda ruta, **kw: lecturas.append(Path(ruta).name) or leer(ruta, **kw))
-    primera = dd.pobreza.serie_indicadores([2019, 2021], empalme=True, root=pobreza_root)
+    primera = dd.pobreza.serie_indicadores([2019, 2021], empalme=True, raiz=pobreza_root)
     # 2019 y 2021 no usan las líneas de 2012–2018: no se leen
     assert sorted(set(lecturas)) == ["empalme_2012_2020.csv", "hogares.csv", "hogares_empalmado_2021.csv",
                                      "hogares_empalmado_dpto_2021.csv"]
     lecturas.clear()
-    pd.testing.assert_frame_equal(dd.pobreza.serie_indicadores([2019, 2021], empalme=True, root=pobreza_root), primera)
+    pd.testing.assert_frame_equal(dd.pobreza.serie_indicadores([2019, 2021], empalme=True, raiz=pobreza_root), primera)
     assert lecturas == []
     # Sin empalme es otra entrada de la caché
-    dd.pobreza.serie_indicadores(2019, root=pobreza_root)
+    dd.pobreza.serie_indicadores(2019, raiz=pobreza_root)
     assert lecturas == ["hogares.csv"]
     # Cambia el factor de empalme: se recalcula 2019, que lo usa, y no 2021, que no
     lecturas.clear()
     emp = pobreza_root / "datos" / "empalme" / "empalme_2012_2020.csv"
     emp.write_text(emp.read_text().replace(";0.5", ";0.25"))
-    nueva = dd.pobreza.serie_indicadores([2019, 2021], empalme=True, root=pobreza_root)
+    nueva = dd.pobreza.serie_indicadores([2019, 2021], empalme=True, raiz=pobreza_root)
     assert "hogares_empalmado_2021.csv" not in lecturas and "empalme_2012_2020.csv" in lecturas
     assert nueva.personas[0] == primera.personas[0] / 2 and nueva.personas[1] == primera.personas[1]
     assert dd.pobreza.clear_cache() > 0 and dd.pobreza.clear_cache() == 0
 
 
 def test_serie_avisa_una_vez_aun_desde_la_cache(pobreza_root, cache_tmp):
-    dd.pobreza.serie_indicadores(2018, root=pobreza_root)
-    dd.pobreza.serie_indicadores(2019, root=pobreza_root)
+    dd.pobreza.serie_indicadores(2018, raiz=pobreza_root)
+    dd.pobreza.serie_indicadores(2019, raiz=pobreza_root)
     with warnings.catch_warnings(record=True) as avisos:
         warnings.simplefilter("always")
-        dd.pobreza.serie_indicadores([2018, 2019], root=pobreza_root)
+        dd.pobreza.serie_indicadores([2018, 2019], raiz=pobreza_root)
     assert len(avisos) == 1 and "empalme=True" in str(avisos[0].message)
     with pytest.raises(FileNotFoundError, match="download"):
-        dd.pobreza.serie_indicadores(2030, root=pobreza_root)
+        dd.pobreza.serie_indicadores(2030, raiz=pobreza_root)
 
 
 # ---------------------------------------------------------------------------------------------------- #
@@ -280,7 +280,7 @@ def _personas_geih(**kw):
 
 
 def test_unir_geih(pobreza_root):
-    per = dd.pobreza.unir_geih(_personas_geih(), root=pobreza_root)
+    per = dd.pobreza.unir_geih(_personas_geih(), raiz=pobreza_root)
     assert per.pobre.tolist()[:3] == [True, True, False] and pd.isna(per.pobre.iloc[3])
     assert per.fex_pobreza.tolist()[:3] == [10.0, 10.0, 20.0] and per.fex.tolist() == [5.0] * 4  # el de la GEIH no cambia
     assert per.dominio.tolist()[:3] == ["Bogotá", "Bogotá", "Medellín"]
@@ -288,21 +288,21 @@ def test_unir_geih(pobreza_root):
     assert cob["personas"] == 1.0 and cob["departamentos_no_medidos"] == ["San Andrés"]
     assert per.attrs["meses_omitidos"] == []  # se conservan los de la GEIH
     # Con los hogares ya cargados, y solo algunas variables
-    hog = dd.pobreza.load(2025, root=pobreza_root)
+    hog = dd.pobreza.load(2025, raiz=pobreza_root)
     solo = dd.pobreza.unir_geih(_personas_geih(), hogares=hog, variables=["ingreso_pc"])
     assert list(solo.columns[-2:]) == ["ingreso_pc", "fex_pobreza"]
 
 
 def test_unir_geih_avisa_y_falla(pobreza_root):
     with pytest.warns(UserWarning, match="Solo 66.7%"):
-        dd.pobreza.unir_geih(_personas_geih(DIRECTORIO=[1, 1, 7, 9]), root=pobreza_root)  # el hogar 7 no está
+        dd.pobreza.unir_geih(_personas_geih(DIRECTORIO=[1, 1, 7, 9]), raiz=pobreza_root)  # el hogar 7 no está
     with pytest.raises(ValueError, match="Ninguna persona"):
-        dd.pobreza.unir_geih(_personas_geih(mes=[5, 5, 5, 5]), root=pobreza_root)
+        dd.pobreza.unir_geih(_personas_geih(mes=[5, 5, 5, 5]), raiz=pobreza_root)
     with pytest.raises(ValueError, match="ya tiene"):
-        dd.pobreza.unir_geih(_personas_geih(pobre=True), root=pobreza_root)
+        dd.pobreza.unir_geih(_personas_geih(pobre=True), raiz=pobreza_root)
     with pytest.raises(ValueError, match="agregue 'DIRECTORIO'"):
-        dd.pobreza.unir_geih(_personas_geih().drop(columns="DIRECTORIO"), root=pobreza_root)
-    hog = dd.pobreza.load(2025, root=pobreza_root)
+        dd.pobreza.unir_geih(_personas_geih().drop(columns="DIRECTORIO"), raiz=pobreza_root)
+    hog = dd.pobreza.load(2025, raiz=pobreza_root)
     with pytest.raises(ValueError, match="repiten llave"):
         dd.pobreza.unir_geih(_personas_geih(), hogares=pd.concat([hog, hog]))
 
@@ -342,7 +342,7 @@ def test_cli_estado_pobreza(pobreza_root, tmp_path, monkeypatch, capsys):
 # ---------------------------------------------------------------------------------------------------- #
 # Cifras departamentales
 def test_indicadores_departamentales(pobreza_root):
-    df = dd.pobreza.load(2025, root=pobreza_root)
+    df = dd.pobreza.load(2025, raiz=pobreza_root)
     with pytest.warns(UserWarning, match="departamental=True"):
         nacional = dd.pobreza.indicadores(df, por="departamento")
     dpto = dd.pobreza.indicadores(df, por="departamento", departamental=True)
@@ -351,7 +351,7 @@ def test_indicadores_departamentales(pobreza_root):
 
 
 def test_departamental_con_empalme(pobreza_root):
-    emp = dd.pobreza.load([2019, 2021, 2022], root=pobreza_root, empalme=True)
+    emp = dd.pobreza.load([2019, 2021, 2022], raiz=pobreza_root, empalme=True)
     e = emp.set_index(["anio", "DIRECTORIO"])
     # 2021: ingreso y factor del archivo departamental, distintos de los nacionales
     assert (e.loc[2021, "fex_dpto"] == 7).all() and (e.loc[2021, "fex"] == 40).all()
@@ -365,14 +365,14 @@ def test_departamental_con_empalme(pobreza_root):
     assert r.personas.sum() == pytest.approx(7 * (4 + 2 + 3)) and nac.personas[0] == 40 * 9
     # Sin el archivo departamental, 2021 queda sin factor departamental (el nacional funciona igual)
     (pobreza_root / "datos" / "empalme" / "hogares_empalmado_dpto_2021.csv").unlink()
-    sin = dd.pobreza.load(2021, root=pobreza_root, empalme=True)
+    sin = dd.pobreza.load(2021, raiz=pobreza_root, empalme=True)
     assert sin.fex_dpto.isna().all() and (sin.ingreso_pc_dpto == sin.ingreso_pc).all()
 
 
 # ---------------------------------------------------------------------------------------------------- #
 # Con los datos reales: contra los anexos del DANE (tests/datos/dane_pobreza_publicado.csv)
 REAL = Path(os.environ.get("DANE_DATA_TEST_POBREZA", dd.get_path("pobreza")))
-hay_datos_reales = pytest.mark.skipif(not dd.pobreza.find_files(root=REAL), reason="sin datos reales de pobreza")
+hay_datos_reales = pytest.mark.skipif(not dd.pobreza.find_files(raiz=REAL), reason="sin datos reales de pobreza")
 PUBLICADO = Path(__file__).parent / "datos" / "dane_pobreza_publicado.csv"
 # Las 7 ciudades con área metropolitana: el dominio es el área metropolitana
 _AM = {"Barranquilla", "Bucaramanga", "Cali", "Cúcuta", "Manizales", "Medellín", "Pereira"}
@@ -387,7 +387,7 @@ _CONOCIDAS: set = set()
 
 def _calculado(anios, root):
     """Lo mismo que publica el DANE, en el formato del CSV: (anio, nivel, dominio, indicador) -> valor."""
-    serie = lambda por=None, **kw: dd.pobreza.serie_indicadores(anios, por=por, empalme=True, root=root, **kw)  # noqa: E731
+    serie = lambda por=None, **kw: dd.pobreza.serie_indicadores(anios, por=por, empalme=True, raiz=root, **kw)  # noqa: E731
     partes = [serie().assign(dominio="Nacional", nivel="nacional"),
               serie("zona").assign(dominio=lambda d: d.zona.map({"Urbano (cabecera)": "Cabeceras",
                                                                   "Rural (centros poblados y disperso)":
@@ -396,7 +396,7 @@ def _calculado(anios, root):
               serie("dominio").assign(dominio=lambda d: d.dominio.map(_ETIQUETA_DOMINIO), nivel="nacional")]
     desde_2021 = [a for a in anios if a >= 2021]
     if desde_2021:
-        dpto = dd.pobreza.serie_indicadores(desde_2021, por="departamento", empalme=True, root=root, departamental=True)
+        dpto = dd.pobreza.serie_indicadores(desde_2021, por="departamento", empalme=True, raiz=root, departamental=True)
         partes.append(dpto.assign(dominio=dpto.departamento.astype(str), nivel="departamental"))
     largo = pd.concat(partes, ignore_index=True).melt(id_vars=["anio", "nivel", "dominio"],
                                                       value_vars=list(_TOLERANCIA_POR_INDICADOR), var_name="indicador")
@@ -416,7 +416,7 @@ _TOLERANCIA_POR_INDICADOR = {
 def test_real_coincide_con_lo_publicado():
     """Toda la serie empalmada 2012–2025 contra los anexos nacional y departamental del DANE."""
     publicado = pd.read_csv(PUBLICADO)
-    anios = sorted(set(dd.pobreza.find_files(root=REAL)) & set(publicado.anio))
+    anios = sorted(set(dd.pobreza.find_files(raiz=REAL)) & set(publicado.anio))
     hay_empalme = all((REAL / "datos" / "empalme" / f"{n}.csv").exists() or (REAL / "datos" / "empalme" / f"{n}.dta").exists()
                       for n in ("empalme_2012_2020", "lineas_2012_2018", "hogares_empalmado_2021"))
     if not hay_empalme:

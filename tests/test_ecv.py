@@ -18,7 +18,7 @@ def test_carpeta_ecv(tmp_path, monkeypatch):
     monkeypatch.setattr(dd.config, "_session", {})
     monkeypatch.delenv("DANE_DATA_ECV", raising=False)
     assert dd.get_path("ecv") == dd.config.DEFAULT_HOME / "ecv"
-    dd.set_paths(ecv=tmp_path / "x", save=True)
+    dd.set_paths(ecv=tmp_path / "x", guardar=True)
     assert json.loads((tmp_path / "c.json").read_text())["ecv"] == str(tmp_path / "x")
     assert dd.show_paths()["ecv"] == str(tmp_path / "x")
     monkeypatch.setattr(dd.config, "_session", {})
@@ -56,7 +56,7 @@ def _load(*args, **kw):
 
 
 def test_load_personas_une_hogar_y_vivienda(ecv_root):
-    df = _load(2025, modulos=["servicios", "salud"], root=ecv_root)
+    df = _load(2025, modulos=["servicios", "salud"], raiz=ecv_root)
     assert len(df) == 5
     assert not df.duplicated(dd.ecv.KEYS_PERSONA).any()
     assert df.fex.tolist() == [100.5, 100.5, 100.5, 20.0, 20.0]
@@ -80,20 +80,20 @@ def test_load_personas_une_hogar_y_vivienda(ecv_root):
 
 
 def test_load_hogares(ecv_root):
-    df = _load(2025, nivel="hogar", root=ecv_root)
+    df = _load(2025, nivel="hogar", raiz=ecv_root)
     assert len(df) == 3 and df.fex.sum() == 221
     assert list(df[dd.ecv.KEYS_HOGAR].itertuples(index=False, name=None)) == [(1, 1), (1, 2), (2, 1)]
     assert "SECUENCIA_ENCUESTA" not in df and "sexo" not in df
     with pytest.raises(ValueError, match="capítulo de personas"):
-        dd.ecv.load(2025, modulos="salud", nivel="hogar", root=ecv_root)
+        dd.ecv.load(2025, modulos="salud", nivel="hogar", raiz=ecv_root)
     with pytest.raises(ValueError, match="Nivel desconocido"):
-        dd.ecv.load(2025, nivel="vivienda", root=ecv_root)
+        dd.ecv.load(2025, nivel="vivienda", raiz=ecv_root)
     with pytest.raises(ValueError, match="Módulo desconocido"):
-        dd.ecv.load(2025, modulos="gastos", root=ecv_root)
+        dd.ecv.load(2025, modulos="gastos", raiz=ecv_root)
 
 
 def test_load_varios_anios_y_factores_de_2018(ecv_root):
-    df = _load([2018, 2020, 2025], root=ecv_root)
+    df = _load([2018, 2020, 2025], raiz=ecv_root)
     assert df.groupby("anio").size().to_dict() == {2018: 1, 2020: 1, 2025: 5}
     fila = df[df.anio == 2018].iloc[0]
     assert (fila.fex, fila.FEX_C, fila.FEX_C_ORIGINAL) == (5.5, 5.5, 9)  # el del CNPV 2018
@@ -106,18 +106,18 @@ def test_load_varios_anios_y_factores_de_2018(ecv_root):
 
 def test_load_avisa_lo_que_falta(ecv_root):
     with pytest.warns(UserWarning, match="salud en 2018"):
-        df = dd.ecv.load([2018, 2025], modulos="salud", root=ecv_root)
+        df = dd.ecv.load([2018, 2025], modulos="salud", raiz=ecv_root)
     assert df[df.anio == 2018].P6090.isna().all()
     (ecv_root / "datos" / "2018" / "factores" / "Factores de expansión 2018 basados en el CNPV 2018.csv").unlink()
     with pytest.warns(UserWarning, match="CNPV 2018"):
-        df = dd.ecv.load(2018, root=ecv_root)
+        df = dd.ecv.load(2018, raiz=ecv_root)
     assert df.fex.tolist() == [9]
     with pytest.raises(FileNotFoundError, match="dane_data.ecv.download"):
-        dd.ecv.load(2019, root=ecv_root)
+        dd.ecv.load(2019, raiz=ecv_root)
 
 
 def test_load_columns_limita_lo_que_se_lee(ecv_root):
-    df = _load(2025, modulos="servicios", columns=["P5010"], root=ecv_root)
+    df = _load(2025, modulos="servicios", columnas=["P5010"], raiz=ecv_root)
     assert "P5010" in df and "P5000" not in df and "P4005" not in df
     assert {"sexo", "edad", "region", "fex"} <= set(df.columns)  # las armonizadas siempre
 
@@ -204,19 +204,19 @@ def test_indicadores_por_grupo_y_de_hogares():
 def test_serie_indicadores_con_cache(ecv_root, tmp_path, monkeypatch):
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
     with pytest.warns(UserWarning, match="faltan capítulos"):
-        r = dd.ecv.serie_indicadores([2018, 2025], root=ecv_root)
+        r = dd.ecv.serie_indicadores([2018, 2025], raiz=ecv_root)
     assert r.anio.tolist() == [2018, 2025]
     assert r.hogares.tolist() == [5.5, 221]  # 2018 con los factores del CNPV 2018
     assert r.pct_afiliados.isna().tolist() == [True, False]  # 2018 no tiene Salud en los datos de prueba
     assert len(list((tmp_path / "cache" / "ecv" / "indicadores").glob("*.parquet"))) == 2
     with pytest.warns(UserWarning, match="faltan capítulos"):  # también desde la caché
-        pd.testing.assert_frame_equal(dd.ecv.serie_indicadores([2018, 2025], root=ecv_root), r)
+        pd.testing.assert_frame_equal(dd.ecv.serie_indicadores([2018, 2025], raiz=ecv_root), r)
     with pytest.warns(UserWarning, match="faltan capítulos"):
-        r = dd.ecv.serie_indicadores(2025, por="area", filtros={"sexo": ["Mujer"]}, root=ecv_root)
+        r = dd.ecv.serie_indicadores(2025, por="area", filtros={"sexo": ["Mujer"]}, raiz=ecv_root)
     assert r.area.tolist() == ["Cabecera", "Centros poblados y rural disperso"]
     assert dd.ecv.clear_cache() == 3
     with pytest.raises(FileNotFoundError):
-        dd.ecv.serie_indicadores(2019, root=ecv_root)
+        dd.ecv.serie_indicadores(2019, raiz=ecv_root)
 
 
 # ---------------------------------------------------------------------------------------------------- #
@@ -343,9 +343,9 @@ def test_umbral_y_agregados_del_ipm():
 
 def test_serie_ipm_pide_los_capitulos(ecv_root):
     with pytest.raises(ValueError, match="le faltan los capítulos"):
-        dd.ecv.serie_ipm(2025, root=ecv_root)
+        dd.ecv.serie_ipm(2025, raiz=ecv_root)
     with pytest.raises(FileNotFoundError):
-        dd.ecv.serie_ipm(2019, root=ecv_root)
+        dd.ecv.serie_ipm(2019, raiz=ecv_root)
 
 
 # ---------------------------------------------------------------------------------------------------- #
@@ -370,12 +370,12 @@ def _comparar(publicado: pd.DataFrame, calculado: list[pd.DataFrame], llave: str
 def test_real_indicadores_coinciden_con_la_serie_del_dane():
     """Los 27 indicadores de la serie 2018–2025 del DANE, nacionales, por área y por departamento."""
     publicado = pd.read_csv(DATOS / "dane_ecv_publicado.csv")
-    anios = sorted(set(publicado.anio) & set(dd.ecv.available(root=REAL).anio))
+    anios = sorted(set(publicado.anio) & set(dd.ecv.available(raiz=REAL).anio))
     publicado = publicado[publicado.anio.isin(anios)]
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", UserWarning)
-        partes = [dd.ecv.serie_indicadores(anios, root=REAL)] + [
-            dd.ecv.serie_indicadores(anios, por=k, root=REAL).rename(columns={k: "dominio"}) for k in ("area", "departamento")]
+        partes = [dd.ecv.serie_indicadores(anios, raiz=REAL)] + [
+            dd.ecv.serie_indicadores(anios, por=k, raiz=REAL).rename(columns={k: "dominio"}) for k in ("area", "departamento")]
     x = _comparar(publicado, partes, "dominio")
     x = x[~x.apply(lambda f: (f.anio, f.dominio, f.indicador) in _ECV_DIFERENCIAS, axis=1)]
     assert x.calculado.notna().all(), x[x.calculado.isna()].head()
@@ -393,12 +393,12 @@ def test_real_indicadores_coinciden_con_la_serie_del_dane():
 def test_real_ipm_coincide_con_los_anexos_del_dane():
     """Incidencia, IPM y privaciones de los anexos del IPM, nacional, por área, región y departamento, en 2018–2025."""
     publicado = pd.read_csv(DATOS / "dane_ipm_publicado.csv")
-    anios = sorted(set(publicado.anio) & set(dd.ecv.available(root=REAL).anio))
+    anios = sorted(set(publicado.anio) & set(dd.ecv.available(raiz=REAL).anio))
     publicado = publicado[publicado.anio.isin(anios)]
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", UserWarning)
-        partes = [dd.ecv.serie_ipm(anios, root=REAL)] + [
-            dd.ecv.serie_ipm(anios, por=k, root=REAL).rename(columns={k: "dominio"})
+        partes = [dd.ecv.serie_ipm(anios, raiz=REAL)] + [
+            dd.ecv.serie_ipm(anios, por=k, raiz=REAL).rename(columns={k: "dominio"})
             for k in ("area", "region_ipm", "departamento")]
     x = _comparar(publicado, partes, "dominio")
     assert x.calculado.notna().all(), x[x.calculado.isna()].head()
@@ -435,9 +435,9 @@ def test_series_exigen_los_archivos_internos(ecv_root, tmp_path, monkeypatch):
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
     (ecv_root / "datos" / "2018" / "factores" / "Factores de expansión 2018 basados en el CNPV 2018.csv").unlink()
     with pytest.raises(ValueError, match="factores de 2018"):
-        dd.ecv.serie_indicadores(2018, root=ecv_root)
+        dd.ecv.serie_indicadores(2018, raiz=ecv_root)
     with pytest.raises(ValueError, match="factores de 2018"):
-        dd.ecv.serie_ipm(2018, root=ecv_root)
+        dd.ecv.serie_ipm(2018, raiz=ecv_root)
 
 
 def test_muestra_nacional_avisa_si_bota_casi_todo():
@@ -467,7 +467,7 @@ def test_real_ipm_hogar_por_hogar(anio):
                                                        "INANSISTENCIA_ESCOLAR": "INASISTENCIA_ESCOLAR"})
     if (dane["SECUENCIA_P"] == 1).all():  # algunos años guardan el hogar en SECUENCIA_ENCUESTA
         dane["SECUENCIA_P"] = dane["SECUENCIA_ENCUESTA"]
-    hogares = dd.ecv.privaciones(dd.ecv.load(anio, modulos=dd.ecv.MODULOS_IPM, columns=dd.ecv.COLUMNAS_IPM, root=REAL))
+    hogares = dd.ecv.privaciones(dd.ecv.load(anio, modulos=dd.ecv.MODULOS_IPM, columnas=dd.ecv.COLUMNAS_IPM, raiz=REAL))
     x = hogares.merge(dane, on=["DIRECTORIO", "SECUENCIA_P"])
     assert len(x) == len(dane) == len(hogares)
     distintos = (x[[p for p in dd.ecv.PRIVACIONES]].to_numpy() != x[[p.upper() for p in dd.ecv.PRIVACIONES]].to_numpy()).any(axis=1)

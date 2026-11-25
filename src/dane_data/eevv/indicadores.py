@@ -66,7 +66,7 @@ def _tipo_de(df: pd.DataFrame) -> str:
         return "defunciones"
     if "causa_cie" in df.columns:
         return "fetales"
-    raise ValueError("Los datos no están armonizados: use dd.eevv.load(...) con harmonize_vars=True.")
+    raise ValueError("Los datos no están armonizados: use dd.eevv.load(...) con armonizar=True.")
 
 
 def _sumar(grupos, mascara: pd.Series) -> pd.Series:

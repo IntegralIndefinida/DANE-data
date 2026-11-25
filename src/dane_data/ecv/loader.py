@@ -27,7 +27,7 @@ import pandas as pd
 from .. import config
 from .._hooks import archivos_datos
 from .._io import read_table
-from ..stats import _avisar, _enteros
+from ..stats import _avisar, _con_nombres_viejos, _enteros
 from ..eevv.loader import _categoria, _unir
 from ..referencias import DEPARTAMENTOS
 
@@ -125,8 +125,8 @@ ETIQUETAS = {
 NIVELES = tuple(ETIQUETAS)
 
 
-def _root(root) -> Path:
-    return Path(root).expanduser() if root is not None else config.get_path("ecv")
+def _root(raiz) -> Path:
+    return Path(raiz).expanduser() if raiz is not None else config.get_path("ecv")
 
 
 def _modulo_valido(modulo: str) -> str:
@@ -135,17 +135,18 @@ def _modulo_valido(modulo: str) -> str:
     return modulo
 
 
-def find_files(years: Iterable[int] | int | None = None, modulo: str = "caracteristicas", root=None) -> dict[int, Path]:
+@_con_nombres_viejos
+def find_files(anios: Iterable[int] | int | None = None, modulo: str = "caracteristicas", raiz=None) -> dict[int, Path]:
     """
     Archivo de datos de un capítulo en cada año descargado.
 
     Parámetros
     ----------
-    years
+    anios
         Año o lista de años. ``None`` para todos.
     modulo
         Uno de ``dd.ecv.MODULOS``.
-    root
+    raiz
         Carpeta raíz. Por defecto, la configurada (``dd.get_path("ecv")``).
 
     Devuelve
@@ -165,25 +166,26 @@ def find_files(years: Iterable[int] | int | None = None, modulo: str = "caracter
     {2025: PosixPath('/home/ana/dane_data_datos/ecv/datos/2025/salud/Salud.CSV')}
     """
     _modulo_valido(modulo)
-    base = _root(root) / "datos"
+    base = _root(raiz) / "datos"
     if not base.is_dir():
         return {}
-    years = _enteros(years)  # también un año de numpy (df.anio.max())
+    anios = _enteros(anios)  # también un año de numpy (df.anio.max())
     out = {}
     for carpeta in sorted(p for p in base.iterdir() if p.is_dir() and p.name.isdigit()):
         anio = int(carpeta.name)
-        if (years is None or anio in years) and (archivos := archivos_datos(carpeta / modulo, EXTENSIONES)):
+        if (anios is None or anio in anios) and (archivos := archivos_datos(carpeta / modulo, EXTENSIONES)):
             out[anio] = max(archivos, key=lambda f: (f.suffix.lower() != ".dta", f.stat().st_size))
     return out
 
 
-def available(root=None) -> pd.DataFrame:
+@_con_nombres_viejos
+def available(raiz=None) -> pd.DataFrame:
     """
     Qué capítulos de cada año están descargados.
 
     Parámetros
     ----------
-    root
+    raiz
         Carpeta raíz. Por defecto, la configurada (``dd.get_path("ecv")``).
 
     Devuelve
@@ -205,7 +207,7 @@ def available(root=None) -> pd.DataFrame:
     1  2025  servicios  Servicios del hogar.CSV       20.9
     """
     filas = [{"anio": anio, "modulo": modulo, "archivo": f.name, "tamano_mb": round(f.stat().st_size / 1e6, 1)}
-             for modulo in (*MODULOS, *_INTERNOS) for anio, f in find_files(modulo=modulo, root=root).items()]
+             for modulo in (*MODULOS, *_INTERNOS) for anio, f in find_files(modulo=modulo, raiz=raiz).items()]
     tabla = pd.DataFrame(filas, columns=["anio", "modulo", "archivo", "tamano_mb"])
     return tabla.sort_values("anio", kind="stable").reset_index(drop=True)
 
@@ -238,11 +240,11 @@ def _aviso_faltan(faltan: dict[str, list[int]]) -> str:
             + ". Bájelos con dd.ecv.download(años, modulos=[...]).")
 
 
-def _leer(ruta: Path, modulo: str, columns) -> pd.DataFrame:
+def _leer(ruta: Path, modulo: str, columnas) -> pd.DataFrame:
     """Un capítulo con las llaves de ``load``: en las tablas de hogar, el número del hogar pasa a ``SECUENCIA_P``."""
     unidad = UNIDADES.get(modulo, "vivienda")
     llaves = {"vivienda": ["DIRECTORIO"], "hogar": ["DIRECTORIO", "SECUENCIA_ENCUESTA"], "persona": KEYS_PERSONA}[unidad]
-    pedir = None if columns is None else [*llaves, "FEX_C", *columns]
+    pedir = None if columnas is None else [*llaves, "FEX_C", *columnas]
     df = read_table(ruta, columns=pedir)
     if unidad == "hogar":
         df = df.drop(columns=["SECUENCIA_P", "ORDEN"], errors="ignore").rename(columns={"SECUENCIA_ENCUESTA": "SECUENCIA_P"})
@@ -258,9 +260,9 @@ def _unir_capitulo(base: pd.DataFrame, otro: pd.DataFrame, llaves: list[str]) ->
                       else "one_to_one") if nuevas else base
 
 
-def _factores_2018(df: pd.DataFrame, root) -> pd.DataFrame:
+def _factores_2018(df: pd.DataFrame, raiz) -> pd.DataFrame:
     """En 2018, el FEX_C del CNPV 2018 (por vivienda) en lugar del de los capítulos, que queda en FEX_C_ORIGINAL."""
-    archivo = find_files(2018, modulo=_FACTORES, root=root).get(2018)
+    archivo = find_files(2018, modulo=_FACTORES, raiz=raiz).get(2018)
     if archivo is None:
         _avisar("ECV 2018: faltan los factores de expansión basados en el CNPV 2018, así que se usa el FEX_C de "
                 "los capítulos y los totales no son los de la serie oficial. Bájelos con dd.ecv.download(2018).",
@@ -399,20 +401,21 @@ def harmonize(df: pd.DataFrame) -> pd.DataFrame:
     return pd.concat([df, pd.DataFrame(nuevas, index=df.index)], axis=1)
 
 
+@_con_nombres_viejos
 def load(
-    years: Iterable[int] | int | None = None,
+    anios: Iterable[int] | int | None = None,
     modulos: Iterable[str] | str | None = None,
     nivel: str = "persona",
-    columns: Iterable[str] | None = None,
-    root=None,
-    progress=None,
+    columnas: Iterable[str] | None = None,
+    raiz=None,
+    progreso=None,
 ) -> pd.DataFrame:
     """
     Carga la ECV descargada: una fila por persona (o por hogar), con los capítulos pedidos unidos por sus llaves.
 
     Parámetros
     ----------
-    years
+    anios
         Año o lista de años. ``None`` para todos los descargados.
     modulos
         Capítulos de ``dd.ecv.MODULOS`` que se agregan. Siempre va el que trae a todas las personas
@@ -420,13 +423,13 @@ def load(
     nivel
         ``"persona"`` o ``"hogar"``. Con ``"hogar"`` solo se pueden pedir capítulos de hogar (``servicios``,
         ``tenencia``, ``condiciones``) y la ``vivienda``.
-    columns
+    columnas
         Variables originales que se leen de cada capítulo, además de las llaves y de las que necesitan las
         armonizadas. ``None`` para todas.
-    root
+    raiz
         Carpeta raíz. Por defecto, la configurada (``dd.get_path("ecv")``).
-    progress
-        Función ``progress(fraccion, mensaje)`` que recibe el avance.
+    progreso
+        Función ``progreso(fraccion, mensaje)`` que recibe el avance.
 
     Devuelve
     --------
@@ -454,43 +457,43 @@ def load(
     >>> hogares = dd.ecv.load(2025, modulos="tenencia", nivel="hogar")  # doctest: +SKIP
     """
     modulos = _modulos_validos(modulos, nivel)
-    columns = None if columns is None else [*dict.fromkeys([*columns, *_ARMONIZAR])]
-    bases = find_files(years, modulo=modulos[0], root=root)
+    columnas = None if columnas is None else [*dict.fromkeys([*columnas, *_ARMONIZAR])]
+    bases = find_files(anios, modulo=modulos[0], raiz=raiz)
     if not bases:
-        raise FileNotFoundError(f"No hay {modulos[0]} de la ECV para años={years} en {_root(root)}. "
+        raise FileNotFoundError(f"No hay {modulos[0]} de la ECV para años={anios} en {_root(raiz)}. "
                                 "Descárguela con dane_data.ecv.download(...) o revise dane_data.set_paths(...).")
     faltan: dict[str, list[int]] = {}
     partes = []
     for i, (anio, ruta) in enumerate(sorted(bases.items())):
-        if progress:
-            progress(i / len(bases), f"Leyendo la ECV {anio}")
-        df = _leer(ruta, modulos[0], columns)
+        if progreso:
+            progreso(i / len(bases), f"Leyendo la ECV {anio}")
+        df = _leer(ruta, modulos[0], columnas)
         llaves = KEYS_PERSONA if nivel == "persona" else KEYS_HOGAR
         for modulo in [m for m in modulos[1:] if m != "vivienda"]:
-            if (otro := find_files(anio, modulo=modulo, root=root).get(anio)) is None:
+            if (otro := find_files(anio, modulo=modulo, raiz=raiz).get(anio)) is None:
                 faltan.setdefault(modulo, []).append(anio)
                 continue
-            df = _unir_capitulo(df, _leer(otro, modulo, columns), llaves if UNIDADES[modulo] == nivel else KEYS_HOGAR)
-        vivienda = find_files(anio, modulo="vivienda", root=root).get(anio)
+            df = _unir_capitulo(df, _leer(otro, modulo, columnas), llaves if UNIDADES[modulo] == nivel else KEYS_HOGAR)
+        vivienda = find_files(anio, modulo="vivienda", raiz=raiz).get(anio)
         if vivienda is None:
             faltan.setdefault("vivienda", []).append(anio)
         else:
-            cols_viv = None if "vivienda" in modulos and columns is None else [*_GEOGRAFIA, *(columns or [])]
+            cols_viv = None if "vivienda" in modulos and columnas is None else [*_GEOGRAFIA, *(columnas or [])]
             df = _unir_capitulo(df, _leer(vivienda, "vivienda", cols_viv), ["DIRECTORIO"])
         if anio == 2018:
-            df = _factores_2018(df, root)
-        if anio == 2020 and nivel == "persona" and (columns is None and "educacion" in modulos
-                                                     or columns is not None and set(columns) & set(_COLUMNAS_COMPLEMENTARIA)):
-            if (complementaria := find_files(2020, modulo=_COMPLEMENTARIA, root=root).get(2020)) is None:
+            df = _factores_2018(df, raiz)
+        if anio == 2020 and nivel == "persona" and (columnas is None and "educacion" in modulos
+                                                     or columnas is not None and set(columnas) & set(_COLUMNAS_COMPLEMENTARIA)):
+            if (complementaria := find_files(2020, modulo=_COMPLEMENTARIA, raiz=raiz).get(2020)) is None:
                 faltan.setdefault(_COMPLEMENTARIA, []).append(2020)
             else:
-                pedidas = None if columns is None else ["DIRECTORIO", "SECUENCIA_P", "ORDEN", *columns]
+                pedidas = None if columnas is None else ["DIRECTORIO", "SECUENCIA_P", "ORDEN", *columnas]
                 extra = read_table(complementaria, columns=pedidas).rename(columns={"ORDEN": "SECUENCIA_ENCUESTA"})
                 df = _unir_capitulo(df, extra, KEYS_PERSONA)
         # concat y no assign: tras unir varios capítulos, insertar una columna fragmenta la tabla
         partes.append(harmonize(pd.concat([df, pd.Series(np.int16(anio), index=df.index, name="anio")], axis=1)))
     if faltan:
         _avisar(_aviso_faltan(faltan), UserWarning)
-    if progress:
-        progress(1.0, "Listo")
+    if progreso:
+        progreso(1.0, "Listo")
     return _unir(partes)

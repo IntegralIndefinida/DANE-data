@@ -33,7 +33,7 @@ import pandas as pd
 from .. import config
 from .._hooks import archivos_datos
 from .._io import read_table
-from ..stats import _enteros
+from ..stats import _con_nombres_viejos, _enteros
 from ..referencias import DEPARTAMENTOS
 
 log = logging.getLogger("dane_data.eam")
@@ -118,23 +118,24 @@ _CIIU_COL = re.compile(r"^ciiu(_?\d)?(n\d)?$")
 _FUERA_DE_LA_CLAVE = {"nordemp", "nordest", "dpto", "periodo", "valorven"}
 
 
-def _root(root) -> Path:
-    return Path(root).expanduser() if root is not None else config.get_path("eam")
+def _root(raiz) -> Path:
+    return Path(raiz).expanduser() if raiz is not None else config.get_path("eam")
 
 
-def _data_dir(root: Path) -> Path:
-    return root / "datos" if (root / "datos").is_dir() else root
+def _data_dir(raiz: Path) -> Path:
+    return raiz / "datos" if (raiz / "datos").is_dir() else raiz
 
 
-def find_files(years: Iterable[int] | int | None = None, root=None) -> dict[int, Path]:
+@_con_nombres_viejos
+def find_files(anios: Iterable[int] | int | None = None, raiz=None) -> dict[int, Path]:
     """
     Archivo de datos de cada año de la EAM descargado.
 
     Parámetros
     ----------
-    years
+    anios
         Año o lista de años. ``None`` para todos.
-    root
+    raiz
         Carpeta raíz. Por defecto, la configurada (``dd.get_path("eam")``).
 
     Devuelve
@@ -149,14 +150,14 @@ def find_files(years: Iterable[int] | int | None = None, root=None) -> dict[int,
     >>> dd.eam.find_files(2024)  # doctest: +SKIP
     {2024: PosixPath('/home/ana/datos/EAM/datos/2024/EAM_ANONIMIZADA_2024.txt')}
     """
-    base = _data_dir(_root(root))
+    base = _data_dir(_root(raiz))
     if not base.is_dir():
         return {}
-    years = _enteros(years)  # también un año de numpy (df.anio.max())
+    anios = _enteros(anios)  # también un año de numpy (df.anio.max())
     out = {}
     for ydir in sorted(p for p in base.iterdir() if p.is_dir() and p.name.isdigit()):
         anio = int(ydir.name)
-        if years is not None and anio not in years:
+        if anios is not None and anio not in anios:
             continue
         files = archivos_datos(ydir, EXTENSIONES)
         if files:
@@ -166,13 +167,14 @@ def find_files(years: Iterable[int] | int | None = None, root=None) -> dict[int,
     return out
 
 
-def available(root=None) -> pd.DataFrame:
+@_con_nombres_viejos
+def available(raiz=None) -> pd.DataFrame:
     """
     Tabla de los años de la EAM descargados.
 
     Parámetros
     ----------
-    root
+    raiz
         Carpeta raíz. Por defecto, la configurada.
 
     Devuelve
@@ -194,7 +196,7 @@ def available(root=None) -> pd.DataFrame:
     32  2024  EAM_ANONIMIZADA_2024.txt       14.0
     """
     rows =[{"anio": y, "archivo": f.name, "tamano_mb": round(f.stat().st_size / 1e6, 1)}
-            for y, f in find_files(root=root).items()]
+            for y, f in find_files(raiz=raiz).items()]
     return pd.DataFrame(rows, columns=["anio", "archivo", "tamano_mb"])
 
 
@@ -300,30 +302,31 @@ def harmonize(df: pd.DataFrame, anio: int) -> pd.DataFrame:
     return df
 
 
+@_con_nombres_viejos
 def load(
-    years: Iterable[int] | int | None = None,
-    columns="core",
-    harmonize_vars: bool = True,
-    root=None,
-    progress=None,
+    anios: Iterable[int] | int | None = None,
+    columnas="core",
+    armonizar: bool = True,
+    raiz=None,
+    progreso=None,
 ) -> pd.DataFrame:
     """
     Carga la EAM: un establecimiento-año por fila, con las variables armonizadas.
 
     Parámetros
     ----------
-    years
+    anios
         Año, lista o rango de años. ``None`` para todos los descargados.
-    columns
+    columnas
         ``"core"`` (las de ``CORE``, comparables entre años; por defecto), ``"all"`` o una lista de
         variables extra en minúscula o mayúscula, por ejemplo ``["c3r10c1", "c4r5c1"]``.
-    harmonize_vars
+    armonizar
         Agregar ``ciiu``, ``ciiu_rev``, ``division``, ``sector``, ``departamento``, ``microagregado`` y
         ``grupo_microagregacion``. Si False, solo ``anio``.
-    root
+    raiz
         Carpeta raíz. Por defecto, la configurada.
-    progress
-        Función ``progress(fraccion, mensaje)`` que recibe el avance.
+    progreso
+        Función ``progreso(fraccion, mensaje)`` que recibe el avance.
 
     Devuelve
     --------
@@ -362,28 +365,28 @@ def load(
     1  2022  2392         4       23  Minerales no metálicos  Cundinamarca
     2  2022  2429         4       24       Metalurgia básica     Antioquia
     """
-    files = find_files(years, root=root)
+    files = find_files(anios, raiz=raiz)
     if not files:
         raise FileNotFoundError(
-            f"No hay datos EAM para años={years} en {_root(root)}. "
+            f"No hay datos EAM para años={anios} en {_root(raiz)}. "
             "Descárguelos con dane_data.eam.download(...) o revise dane_data.set_paths(...)."
         )
-    if isinstance(columns, str) and columns not in ("core", "all"):
-        columns = [columns]  # un solo nombre: list("valagri") lo partiría en letras
-    if columns == "all":
+    if isinstance(columnas, str) and columnas not in ("core", "all"):
+        columnas = [columnas]  # un solo nombre: list("valagri") lo partiría en letras
+    if columnas == "all":
         selector = None
     else:
-        wanted = set(CORE) | ({c.lower() for c in columns} if columns not in (None, "core") else set())
+        wanted = set(CORE) | ({c.lower() for c in columnas} if columnas not in (None, "core") else set())
         selector = lambda c: c in wanted or bool(_CIIU_COL.match(c))  # noqa: E731
 
     frames = []
     for i, (anio, path) in enumerate(sorted(files.items())):
-        if progress:
-            progress(i / len(files), f"Leyendo EAM {anio}")
+        if progreso:
+            progreso(i / len(files), f"Leyendo EAM {anio}")
         df = read_table(path, columns=selector, case="lower")
-        frames.append(harmonize(df, anio) if harmonize_vars else df.assign(anio=anio))
-    if progress:
-        progress(1.0, "Listo")
+        frames.append(harmonize(df, anio) if armonizar else df.assign(anio=anio))
+    if progreso:
+        progreso(1.0, "Listo")
     out = pd.concat(frames, ignore_index=True, sort=False)
     for c in ("nordemp", "nordest"):
         if c in out.columns:

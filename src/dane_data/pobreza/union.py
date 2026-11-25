@@ -6,7 +6,7 @@ from typing import Iterable
 
 import pandas as pd
 
-from ..stats import _avisar
+from ..stats import _avisar, _con_nombres_viejos
 from .loader import LLAVES, load
 
 _LLAVES = ["anio", "mes", *LLAVES]
@@ -26,12 +26,13 @@ def _llaves_enteras(df: pd.DataFrame, que: str) -> pd.DataFrame:
     return llaves.astype("int64")
 
 
+@_con_nombres_viejos
 def unir_geih(
     geih: pd.DataFrame,
     hogares: pd.DataFrame | None = None,
     variables: Iterable[str] | None = None,
     empalme: bool = False,
-    root=None,
+    raiz=None,
     minimo: float = 0.95,
 ) -> pd.DataFrame:
     """
@@ -54,7 +55,7 @@ def unir_geih(
     empalme
         Si se cargan los hogares, cargarlos con el empalme de la pobreza al marco 2018 (vea :func:`load`). No es la serie
         de empalme de la GEIH (``dd.geih.load(empalme=True)``), que es otra cosa.
-    root
+    raiz
         Carpeta de la pobreza, si se cargan los hogares.
     minimo
         Avisar si menos de esta fracción de las personas de la GEIH, en los departamentos que mide la pobreza, encuentra
@@ -98,7 +99,7 @@ def unir_geih(
         raise ValueError(f"La GEIH ya tiene {choque}: quítelas antes de unir o elija otras variables.")
     llaves_geih = _llaves_enteras(geih, "La GEIH")
     if hogares is None:
-        hogares = load(sorted(llaves_geih["anio"].unique()), empalme=empalme, root=root)
+        hogares = load(sorted(llaves_geih["anio"].unique()), empalme=empalme, raiz=raiz)
     if faltan := [v for v in [*variables, "fex"] if v not in hogares.columns]:
         raise ValueError(f"Los hogares no traen {faltan}.")
     llaves_hog = _llaves_enteras(hogares, "Los hogares")

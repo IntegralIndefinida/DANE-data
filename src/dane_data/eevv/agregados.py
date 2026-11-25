@@ -18,7 +18,7 @@ import pandas as pd
 
 from .. import config
 from ..geih.agregados import _clave_json, _firma_codigo, _mascara
-from ..stats import _avisar, _enteros
+from ..stats import _avisar, _con_nombres_viejos, _enteros
 from ..geih.loader import _borrar_cache, _desde_cache
 from ..proyecciones import poblacion
 from .indicadores import _lista, indicadores
@@ -84,30 +84,30 @@ def _armonizado(tipo: str, anio: int, ruta: Path) -> pd.DataFrame:
     def leer() -> pd.DataFrame:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", UserWarning)  # las funciones de este módulo avisan una sola vez
-            return load(anio, tipo=tipo, root=ruta.parents[3])
+            return load(anio, tipo=tipo, raiz=ruta.parents[3])
 
     return _desde_cache(config.CACHE_DIR / "eevv" / tipo / "anios" / f"{anio}_{digest}.parquet", leer, "eevv")
 
 
-def _por_anio(tabla: str, anios, tipo: str, solicitud: dict, calcular: Callable[[pd.DataFrame], pd.DataFrame], root=None,
-              progress=None) -> list[pd.DataFrame]:
+def _por_anio(tabla: str, anios, tipo: str, solicitud: dict, calcular: Callable[[pd.DataFrame], pd.DataFrame], raiz=None,
+              progreso=None) -> list[pd.DataFrame]:
     """``calcular(datos del año)`` para cada año, leído de la caché si ya se hizo con los mismos archivos y solicitud."""
-    archivos = find_files(anios, tipo=_tipo_valido(tipo), root=root)
+    archivos = find_files(anios, tipo=_tipo_valido(tipo), raiz=raiz)
     if not archivos:
         raise FileNotFoundError(
-            f"No hay datos de {tipo} para años={anios} en {_root(root)}. "
+            f"No hay datos de {tipo} para años={anios} en {_root(raiz)}. "
             "Descárguelos con dane_data.eevv.download(...) o revise dane_data.set_paths(...)."
         )
     texto = json.dumps(_clave_json(solicitud), sort_keys=True, default=str, ensure_ascii=False)
     partes = []
     for i, (anio, ruta) in enumerate(sorted(archivos.items())):
-        if progress:
-            progress(i / len(archivos), f"Calculando {tipo} {anio} (solo la primera vez)")
+        if progreso:
+            progreso(i / len(archivos), f"Calculando {tipo} {anio} (solo la primera vez)")
         digest = hashlib.sha1("|".join([_firma_codigo(_CODIGO), _firma_archivo(ruta), texto]).encode()).hexdigest()[:16]
         destino = config.CACHE_DIR / "eevv" / tipo / tabla / f"{anio}_{digest}.parquet"
         partes.append(_desde_cache(destino, lambda a=anio, r=ruta: calcular(_armonizado(tipo, a, r)), "eevv"))
-    if progress:
-        progress(1.0, "Listo")
+    if progreso:
+        progreso(1.0, "Listo")
     return partes
 
 
@@ -115,14 +115,15 @@ def _aplicar_filtros(df: pd.DataFrame, filtros: dict | None) -> pd.DataFrame:
     return df[_mascara(df, filtros)] if filtros else df
 
 
+@_con_nombres_viejos
 def serie_indicadores(
     anios: Iterable[int] | int | None = None,
     tipo: str = "defunciones",
     por: str | Iterable[str] | None = None,
     filtros: dict | None = None,
     dropna: bool = True,
-    root=None,
-    progress=None,
+    raiz=None,
+    progreso=None,
 ) -> pd.DataFrame:
     """
     Indicadores por año sin tener toda la serie en memoria.
@@ -142,10 +143,10 @@ def serie_indicadores(
         Solo estas filas: ``{columna: [valores]}`` o ``{columna: (mínimo, máximo)}``.
     dropna
         Quitar las filas de los registros sin dato en ``por``.
-    root
+    raiz
         Carpeta raíz. Por defecto, la configurada.
-    progress
-        Función ``progress(fraccion, mensaje)`` que recibe el avance.
+    progreso
+        Función ``progreso(fraccion, mensaje)`` que recibe el avance.
 
     Devuelve
     --------
@@ -176,24 +177,25 @@ def serie_indicadores(
     """
     anios = _enteros(anios)
     if tipo == "defunciones":
-        _avisar_cobertura(tipo, anios if anios is not None else find_files(tipo=tipo, root=root))
+        _avisar_cobertura(tipo, anios if anios is not None else find_files(tipo=tipo, raiz=raiz))
     llaves = ["anio", *_lista(por)]
 
     def calcular(d: pd.DataFrame) -> pd.DataFrame:
         return indicadores(_aplicar_filtros(d, filtros), por=llaves, dropna=dropna)
 
-    partes = _por_anio("indicadores", anios, tipo, {"por": llaves, "filtros": filtros, "dropna": dropna}, calcular, root, progress)
+    partes = _por_anio("indicadores", anios, tipo, {"por": llaves, "filtros": filtros, "dropna": dropna}, calcular, raiz, progreso)
     return _unir(partes).sort_values(llaves, ignore_index=True)
 
 
+@_con_nombres_viejos
 def serie_conteos(
     anios: Iterable[int] | int | None = None,
     tipo: str = "defunciones",
     por: str | Iterable[str] | None = None,
     filtros: dict | None = None,
     dropna: bool = True,
-    root=None,
-    progress=None,
+    raiz=None,
+    progreso=None,
 ) -> pd.DataFrame:
     """
     Cuántos certificados hay por año y grupo, sin tener toda la serie en memoria.
@@ -210,10 +212,10 @@ def serie_conteos(
         Solo estas filas: ``{columna: [valores]}`` o ``{columna: (mínimo, máximo)}``.
     dropna
         Quitar las filas de los registros sin dato en ``por``.
-    root
+    raiz
         Carpeta raíz. Por defecto, la configurada.
-    progress
-        Función ``progress(fraccion, mensaje)`` que recibe el avance.
+    progreso
+        Función ``progreso(fraccion, mensaje)`` que recibe el avance.
 
     Devuelve
     --------
@@ -240,14 +242,14 @@ def serie_conteos(
     """
     anios = _enteros(anios)
     if tipo == "defunciones":
-        _avisar_cobertura(tipo, anios if anios is not None else find_files(tipo=tipo, root=root))
+        _avisar_cobertura(tipo, anios if anios is not None else find_files(tipo=tipo, raiz=raiz))
     llaves = ["anio", *_lista(por)]
 
     def calcular(d: pd.DataFrame) -> pd.DataFrame:
         d = _aplicar_filtros(d, filtros)
         return d.groupby(llaves, observed=True, dropna=dropna, sort=True).size().rename("n").reset_index()
 
-    partes = _por_anio("conteos", anios, tipo, {"por": llaves, "filtros": filtros, "dropna": dropna}, calcular, root, progress)
+    partes = _por_anio("conteos", anios, tipo, {"por": llaves, "filtros": filtros, "dropna": dropna}, calcular, raiz, progreso)
     return _unir(partes).sort_values(llaves, ignore_index=True)
 
 
@@ -266,9 +268,9 @@ def _para_tasas(d: pd.DataFrame, por: list[str]) -> pd.DataFrame:
     return d
 
 
-def _contar_para_tasas(tipo: str, anios, por: list[str], root, progress=None) -> pd.DataFrame:
+def _contar_para_tasas(tipo: str, anios, por: list[str], raiz, progreso=None) -> pd.DataFrame:
     """Los hechos de un tipo por año y grupo. Vacío si ese tipo no está descargado: las demás tasas sí se pueden calcular."""
-    if not find_files(anios, tipo=tipo, root=root):
+    if not find_files(anios, tipo=tipo, raiz=raiz):
         return pd.DataFrame(columns=["anio", *por])
     llaves = ["anio", *por]
 
@@ -292,7 +294,7 @@ def _contar_para_tasas(tipo: str, anios, por: list[str], root, progress=None) ->
             res["mortinatos"] = mortinatos.astype("float64")
         return res.reset_index()
 
-    partes = _por_anio("para_tasas", anios, tipo, {"por": por}, calcular, root, progress)
+    partes = _por_anio("para_tasas", anios, tipo, {"por": por}, calcular, raiz, progreso)
     return pd.concat(partes, ignore_index=True)
 
 
@@ -302,10 +304,10 @@ def _poblacion_por(anios: list[int], por: list[str], **kw) -> pd.DataFrame:
         return poblacion(anios, por=por, **kw)
 
 
-def _anios_descargados(anios, tipos, root) -> list[int]:
+def _anios_descargados(anios, tipos, raiz) -> list[int]:
     if anios is not None:
         return anios
-    return sorted({a for t in tipos for a in find_files(tipo=t, root=root)})
+    return sorted({a for t in tipos for a in find_files(tipo=t, raiz=raiz)})
 
 
 def _por_valido(por) -> list[str]:
@@ -321,11 +323,12 @@ def _avisar_sin_poblacion(res: pd.DataFrame, por: list[str]) -> None:
                 "Las proyecciones por departamento empiezan en 1985.", UserWarning)
 
 
+@_con_nombres_viejos
 def tasas(
     anios: Iterable[int] | int | None = None,
     por: str | Iterable[str] | None = None,
-    root=None,
-    progress=None,
+    raiz=None,
+    progreso=None,
 ) -> pd.DataFrame:
     """
     Tasas de natalidad, mortalidad y fecundidad con las proyecciones de población del DANE.
@@ -340,10 +343,10 @@ def tasas(
     por
         ``"departamento"`` (de residencia), ``"sexo"`` o ``"area"`` (de residencia: ``"Cabecera"`` o ``"Centros poblados y
         rural disperso"``), o una lista de ellos.
-    root
+    raiz
         Carpeta raíz de las Estadísticas Vitales. Por defecto, la configurada.
-    progress
-        Función ``progress(fraccion, mensaje)`` que recibe el avance.
+    progreso
+        Función ``progreso(fraccion, mensaje)`` que recibe el avance.
 
     Devuelve
     --------
@@ -411,14 +414,14 @@ def tasas(
     por = _por_valido(por)
     anios = _enteros(anios)
     tipos = ("defunciones", "nacimientos", "fetales")
-    if not any(find_files(anios, tipo=t, root=root) for t in tipos):
+    if not any(find_files(anios, tipo=t, raiz=raiz) for t in tipos):
         raise FileNotFoundError(
-            f"No hay Estadísticas Vitales para años={anios} en {_root(root)}. "
+            f"No hay Estadísticas Vitales para años={anios} en {_root(raiz)}. "
             "Descárguelas con dane_data.eevv.download(...) o revise dane_data.set_paths(...)."
         )
     llaves = ["anio", *por]
-    disponibles = _anios_descargados(anios, tipos, root)
-    con_defunciones = find_files(tipo="defunciones", root=root)
+    disponibles = _anios_descargados(anios, tipos, raiz)
+    con_defunciones = find_files(tipo="defunciones", raiz=raiz)
     _avisar_cobertura("defunciones", [a for a in disponibles if a in con_defunciones])
 
     res = None
@@ -426,8 +429,8 @@ def tasas(
         # Fetales casi siempre traen sexo indeterminado: por sexo no dicen nada
         if tipo == "fetales" and "sexo" in por:
             continue
-        avance = None if progress is None else lambda f, m, i=i: progress((i + f) / len(tipos), m)
-        conteo = _contar_para_tasas(tipo, disponibles, por, root, avance)
+        avance = None if progreso is None else lambda f, m, i=i: progreso((i + f) / len(tipos), m)
+        conteo = _contar_para_tasas(tipo, disponibles, por, raiz, avance)
         res = conteo if res is None else res.merge(conteo, how="outer", on=llaves)
     for columna in ("nacimientos", "defunciones", "defunciones_menores_1", "defunciones_neonatales",
                     "defunciones_neonatales_precoces", "defunciones_maternas", "fetales", "mortinatos"):
@@ -450,8 +453,8 @@ def tasas(
     res["mortalidad_perinatal"] = (_MIL * (res["mortinatos"] + res["defunciones_neonatales_precoces"])
                                    / (res["nacimientos"] + res["mortinatos"]))
     res["tasa_global_fecundidad"] = np.nan
-    if "sexo" not in por and find_files(anios, tipo="nacimientos", root=root):
-        especificas = tasas_especificas(disponibles, "nacimientos", por, root=root)
+    if "sexo" not in por and find_files(anios, tipo="nacimientos", raiz=raiz):
+        especificas = tasas_especificas(disponibles, "nacimientos", por, raiz=raiz)
         fertil = especificas[especificas["edad_madre"].isin([f"De {a} a {b} años" for a, b in _EDADES_FERTILES])]
         tgf = (5 * (fertil["nacimientos"] / fertil["mujeres"]).groupby([fertil[k] for k in llaves], observed=True).sum(min_count=7)
                ).rename("_tgf").reset_index()
@@ -465,12 +468,13 @@ def tasas(
     return res[orden].replace([np.inf, -np.inf], np.nan).sort_values(llaves, ignore_index=True)
 
 
+@_con_nombres_viejos
 def tasas_especificas(
     anios: Iterable[int] | int | None = None,
     tipo: str = "nacimientos",
     por: str | Iterable[str] | None = None,
-    root=None,
-    progress=None,
+    raiz=None,
+    progreso=None,
 ) -> pd.DataFrame:
     """
     Tasas por grupo de edad: fecundidad de las mujeres, o mortalidad.
@@ -484,10 +488,10 @@ def tasas_especificas(
         defunciones por grupo de edad sobre las personas de esa edad.
     por
         ``"departamento"`` (de residencia), ``"area"`` y, solo en defunciones, ``"sexo"``. Un nombre o una lista.
-    root
+    raiz
         Carpeta raíz. Por defecto, la configurada.
-    progress
-        Función ``progress(fraccion, mensaje)`` que recibe el avance.
+    progreso
+        Función ``progreso(fraccion, mensaje)`` que recibe el avance.
 
     Devuelve
     --------
@@ -535,7 +539,7 @@ def tasas_especificas(
         raise ValueError("La fecundidad es de las mujeres: no se puede desagregar por sexo.")
     anios = _enteros(anios)
     if tipo == "defunciones":
-        _avisar_cobertura(tipo, anios if anios is not None else find_files(tipo=tipo, root=root))
+        _avisar_cobertura(tipo, anios if anios is not None else find_files(tipo=tipo, raiz=raiz))
     edad, bandas, numerador, denominador = (("edad_madre", _EDADES_MADRE, "nacimientos", "mujeres") if tipo == "nacimientos"
                                             else ("grupo_edad", _EDADES_DEFUNCION, "defunciones", "poblacion"))
     llaves = ["anio", *por]
@@ -550,7 +554,7 @@ def tasas_especificas(
             conteo[numerador] = conteo[numerador].astype("float64").mask(conteo[edad].isin(menores))
         return conteo[conteo[edad].isin(list(bandas))]
 
-    partes = _por_anio("especificas", anios, tipo, {"por": por}, calcular, root, progress)
+    partes = _por_anio("especificas", anios, tipo, {"por": por}, calcular, raiz, progreso)
     conteo = pd.concat(partes, ignore_index=True)
     disponibles = sorted(conteo["anio"].unique().tolist())
     sexo_pob = {"sexo": "Mujer"} if tipo == "nacimientos" else {}

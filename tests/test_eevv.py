@@ -17,7 +17,7 @@ def test_carpeta_eevv(tmp_path, monkeypatch):
     monkeypatch.setattr(dd.config, "_session", {})
     monkeypatch.delenv("DANE_DATA_EEVV", raising=False)
     assert dd.get_path("eevv") == dd.config.DEFAULT_HOME / "eevv"
-    dd.set_paths(eevv=tmp_path / "x", save=True)
+    dd.set_paths(eevv=tmp_path / "x", guardar=True)
     assert json.loads((tmp_path / "c.json").read_text())["eevv"] == str(tmp_path / "x")
     assert dd.show_paths()["eevv"] == str(tmp_path / "x")
     monkeypatch.setattr(dd.config, "_session", {})
@@ -32,7 +32,7 @@ def test_carpeta_eevv(tmp_path, monkeypatch):
 def _def(root, anio):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        return dd.eevv.load(anio, root=root)
+        return dd.eevv.load(anio, raiz=root)
 
 
 def test_load_varias_epocas_con_el_mismo_esquema(eevv_root):
@@ -47,9 +47,9 @@ def test_load_varias_epocas_con_el_mismo_esquema(eevv_root):
 
 def test_load_sin_datos(tmp_path):
     with pytest.raises(FileNotFoundError, match="dane_data.eevv.download"):
-        dd.eevv.load(2020, root=tmp_path)
+        dd.eevv.load(2020, raiz=tmp_path)
     with pytest.raises(ValueError, match="Tipo desconocido"):
-        dd.eevv.load(2020, tipo="bautizos", root=tmp_path)
+        dd.eevv.load(2020, tipo="bautizos", raiz=tmp_path)
 
 
 def test_grupos_de_edad_de_las_tres_epocas(eevv_root):
@@ -79,7 +79,7 @@ def test_menor_un_anio(eevv_root):
 
 def test_primer_semestre_de_1991_sin_detalle_de_edad(eevv_root):
     with pytest.warns(UserWarning, match="1991"):
-        d = dd.eevv.load(1991, root=eevv_root)
+        d = dd.eevv.load(1991, raiz=eevv_root)
     d = d.set_index(["mes", "sexo"])
     enero_junio = d.loc[(3, "Hombre")]
     assert enero_junio["grupo_edad"] == "Menor de 10 años, sin detalle"
@@ -91,11 +91,11 @@ def test_primer_semestre_de_1991_sin_detalle_de_edad(eevv_root):
 
 def test_aviso_de_cobertura_de_1979(eevv_root):
     with pytest.warns(UserWarning, match="incompletos"):
-        dd.eevv.load(1979, root=eevv_root)
+        dd.eevv.load(1979, raiz=eevv_root)
     with warnings.catch_warnings():
         warnings.simplefilter("error")
-        dd.eevv.load(2025, root=eevv_root)
-        dd.eevv.load(1998, tipo="nacimientos", root=eevv_root)
+        dd.eevv.load(2025, raiz=eevv_root)
+        dd.eevv.load(1998, tipo="nacimientos", raiz=eevv_root)
 
 
 def test_lugares_codigo_antiguo_de_caqueta_y_residencias_especiales(eevv_root):
@@ -191,7 +191,7 @@ def test_muertes_maternas_como_la_ficha_del_dane():
 def test_neonatales_por_epoca(eevv_root):
     """0 a 6 y 0 a 27 días, con los códigos de GRU_ED1 de cada época; antes de 1998 el 3 junta de 7 a 29 días."""
     with pytest.warns(UserWarning, match="1991"):
-        d = dd.eevv.load([1979, 1991, 1998, 2025], root=eevv_root)
+        d = dd.eevv.load([1979, 1991, 1998, 2025], raiz=eevv_root)
     a = d[d.anio == 2025].set_index("grupo_edad")
     assert bool(a.loc["Menor de 1 año", "neonatal"]) and bool(a.loc["Menor de 1 año", "neonatal_precoz"])
     assert not a.loc["De 85 años y más", "neonatal"]
@@ -224,7 +224,7 @@ def test_listas_de_causas_completas():
 
 
 def test_nacimientos(eevv_root):
-    d = dd.eevv.load([1998, 2025], tipo="nacimientos", root=eevv_root)
+    d = dd.eevv.load([1998, 2025], tipo="nacimientos", raiz=eevv_root)
     assert set(d.columns) == set(dd.eevv.ETIQUETAS["nacimientos"])
     a = d[d.anio == 1998].set_index("sexo")
     h, m = a.loc["Hombre"], a.loc["Mujer"]
@@ -251,7 +251,7 @@ def test_nacimientos(eevv_root):
 def test_fetales(eevv_root):
     with warnings.catch_warnings():
         warnings.simplefilter("error")  # el texto de N_HIJOSM no debe romper nada
-        d = dd.eevv.load([1998, 2009], tipo="fetales", root=eevv_root)
+        d = dd.eevv.load([1998, 2009], tipo="fetales", raiz=eevv_root)
     assert set(d.columns) == set(dd.eevv.ETIQUETAS["fetales"])
     a = d[d.anio == 1998].set_index("sexo")
     assert a.loc["Hombre", "gestacion_grupo"] == "De 28 y más"  # en 1998–2007 el 3 es «28 y más»
@@ -265,25 +265,25 @@ def test_fetales(eevv_root):
 
 
 def test_regimen_de_salud_fetal_desde_2024_cambia_de_nombre(eevv_root):
-    d = dd.eevv.load(2025, tipo="fetales", root=eevv_root)
+    d = dd.eevv.load(2025, tipo="fetales", raiz=eevv_root)
     assert d["regimen_salud"].tolist() == ["Subsidiado"]
 
 
 def test_columnas(eevv_root):
-    d = dd.eevv.load(2025, columns=["GRU_ED1", "otrsitiode"], root=eevv_root)
+    d = dd.eevv.load(2025, columnas=["GRU_ED1", "otrsitiode"], raiz=eevv_root)
     assert {"GRU_ED1", "OTRSITIODE", "grupo_edad"} <= set(d.columns)
     assert "C_BAS1" not in d.columns
-    d = dd.eevv.load(2025, columns="GRU_ED1", root=eevv_root)
+    d = dd.eevv.load(2025, columnas="GRU_ED1", raiz=eevv_root)
     assert "GRU_ED1" in d.columns
-    d = dd.eevv.load(2025, columns="all", root=eevv_root)
+    d = dd.eevv.load(2025, columnas="all", raiz=eevv_root)
     assert {"C_BAS1", "OTRSITIODE", "grupo_edad"} <= set(d.columns)
-    d = dd.eevv.load(2025, harmonize_vars=False, root=eevv_root)
+    d = dd.eevv.load(2025, armonizar=False, raiz=eevv_root)
     assert "C_BAS1" in d.columns and "grupo_edad" not in d.columns and d["anio"].eq(2025).all()
 
 
 def test_progreso(eevv_root):
     avance = []
-    dd.eevv.load(2025, root=eevv_root, progress=lambda f, m: avance.append(f))
+    dd.eevv.load(2025, raiz=eevv_root, progreso=lambda f, m: avance.append(f))
     assert avance == [0.0, 1.0]
 
 
@@ -315,7 +315,7 @@ def test_indicadores_menores_vacio_en_1991(eevv_root):
 
 
 def test_indicadores_nacimientos(eevv_root):
-    r = dd.eevv.indicadores(dd.eevv.load(2025, tipo="nacimientos", root=eevv_root)).iloc[0]
+    r = dd.eevv.indicadores(dd.eevv.load(2025, tipo="nacimientos", raiz=eevv_root)).iloc[0]
     assert r["nacimientos"] == 3
     assert r["razon_sexo"] == 100  # un hombre, una mujer; el indeterminado no cuenta
     # Sobre quienes tienen el dato: 2 de los 3 nacimientos
@@ -329,14 +329,14 @@ def test_indicadores_nacimientos(eevv_root):
 
 
 def test_indicadores_vacios_sin_el_dato(eevv_root):
-    r = dd.eevv.indicadores(dd.eevv.load(1998, tipo="nacimientos", root=eevv_root), por="anio").iloc[0]
+    r = dd.eevv.indicadores(dd.eevv.load(1998, tipo="nacimientos", raiz=eevv_root), por="anio").iloc[0]
     assert pd.isna(r["pct_prematuro"])
     assert pd.isna(r["pct_bajo_peso_pretermino"]) and pd.isna(r["pct_bajo_peso_a_termino"])  # sin T_GES_AGRU_CIE
     assert r["pct_cesarea"] == 50
 
 
 def test_indicadores_fetales(eevv_root):
-    r = dd.eevv.indicadores(dd.eevv.load(1998, tipo="fetales", root=eevv_root)).iloc[0]
+    r = dd.eevv.indicadores(dd.eevv.load(1998, tipo="fetales", raiz=eevv_root)).iloc[0]
     assert r["fetales"] == 2 and "hombres" not in r.index
     assert r["pct_madre_adolescente"] == 100
     # Bajo peso y prematuros son de nacidos vivos: en fetales, casi todos abortos, pasarían de 95 % y no medirían nada
@@ -352,7 +352,7 @@ def test_indicadores_dropna(eevv_root):
 
 def test_indicadores_sin_armonizar(eevv_root):
     with pytest.raises(ValueError, match="armonizados"):
-        dd.eevv.indicadores(dd.eevv.load(2025, harmonize_vars=False, root=eevv_root))
+        dd.eevv.indicadores(dd.eevv.load(2025, armonizar=False, raiz=eevv_root))
 
 
 @pytest.mark.parametrize("tipo, anios, por, filtros", [
@@ -364,56 +364,56 @@ def test_indicadores_sin_armonizar(eevv_root):
     ("fetales", [1998, 2009], "sexo", None),
 ])
 def test_serie_indicadores_igual_a_los_microdatos(eevv_root, cache, tipo, anios, por, filtros):
-    d = dd.eevv.load(anios, tipo=tipo, root=eevv_root)
+    d = dd.eevv.load(anios, tipo=tipo, raiz=eevv_root)
     if filtros:
         d = dd.geih.filtrar(d, filtros)
     llaves = ["anio", *([por] if isinstance(por, str) else por or [])]
     esperado = dd.eevv.indicadores(d, por=llaves).astype({"anio": "int64"})
-    res = dd.eevv.serie_indicadores(anios, tipo, por=por, filtros=filtros, root=eevv_root).astype({"anio": "int64"})
+    res = dd.eevv.serie_indicadores(anios, tipo, por=por, filtros=filtros, raiz=eevv_root).astype({"anio": "int64"})
     pd.testing.assert_frame_equal(res, esperado.sort_values(llaves, ignore_index=True), check_categorical=False, check_dtype=False)
 
 
 def test_serie_usa_la_cache_y_se_invalida(eevv_root, cache, monkeypatch):
-    primera = dd.eevv.serie_indicadores(2025, root=eevv_root)
+    primera = dd.eevv.serie_indicadores(2025, raiz=eevv_root)
     assert list(cache.rglob("*.parquet"))
 
     def no_debe_leer(*a, **k):
         raise AssertionError("debió usar la caché")
 
     monkeypatch.setattr(dd.eevv.agregados, "load", no_debe_leer)
-    pd.testing.assert_frame_equal(dd.eevv.serie_indicadores(2025, root=eevv_root), primera)
+    pd.testing.assert_frame_equal(dd.eevv.serie_indicadores(2025, raiz=eevv_root), primera)
     # Un filtro nuevo se calcula de la caché del año armonizado, sin volver a leer el archivo del DANE
-    assert dd.eevv.serie_indicadores(2025, filtros={"sexo": ["Mujer"]}, root=eevv_root)["defunciones"].tolist() == [1]
+    assert dd.eevv.serie_indicadores(2025, filtros={"sexo": ["Mujer"]}, raiz=eevv_root)["defunciones"].tolist() == [1]
     monkeypatch.undo()
     monkeypatch.setattr(dd.config, "CACHE_DIR", cache)
 
     # Si el archivo cambia, se recalcula
     archivo = next((eevv_root / "datos" / "defunciones" / "2025").iterdir())
     archivo.write_bytes(archivo.read_bytes() + '"05","001","1","1","","2025","01","1","5","14","04","99","9","05","001","1","5","0","I219","307","051"\n'.encode("latin-1"))
-    assert dd.eevv.serie_indicadores(2025, root=eevv_root)["defunciones"].tolist() == [4]
+    assert dd.eevv.serie_indicadores(2025, raiz=eevv_root)["defunciones"].tolist() == [4]
 
 
 def test_serie_conteos(eevv_root, cache):
-    r = dd.eevv.serie_conteos([1998, 2025], por="sexo", root=eevv_root)
+    r = dd.eevv.serie_conteos([1998, 2025], por="sexo", raiz=eevv_root)
     assert r.set_index(["anio", "sexo"])["n"].to_dict() == {(1998, "Hombre"): 1, (1998, "Mujer"): 2, (2025, "Hombre"): 2, (2025, "Mujer"): 1}
-    r = dd.eevv.serie_conteos(2025, por="causa_105_nombre", root=eevv_root)
+    r = dd.eevv.serie_conteos(2025, por="causa_105_nombre", raiz=eevv_root)
     assert "Agresiones (homicidios) y secuelas" in r["causa_105_nombre"].tolist()
-    assert dd.eevv.serie_conteos(2025, por="departamento_residencia", dropna=False, root=eevv_root)["n"].sum() == 3
+    assert dd.eevv.serie_conteos(2025, por="departamento_residencia", dropna=False, raiz=eevv_root)["n"].sum() == 3
 
 
 def test_serie_sin_datos(tmp_path, cache):
     with pytest.raises(FileNotFoundError, match="eevv.download"):
-        dd.eevv.serie_indicadores(2025, root=tmp_path)
+        dd.eevv.serie_indicadores(2025, raiz=tmp_path)
 
 
 def test_serie_avisa_una_vez_de_la_cobertura(eevv_root, cache):
     with pytest.warns(UserWarning, match="incompletos") as avisos:
-        dd.eevv.serie_indicadores(1979, root=eevv_root)
+        dd.eevv.serie_indicadores(1979, raiz=eevv_root)
     assert len(avisos) == 1
 
 
 def test_clear_cache(eevv_root, cache):
-    dd.eevv.serie_indicadores(2025, root=eevv_root)
+    dd.eevv.serie_indicadores(2025, raiz=eevv_root)
     n = len(list(cache.rglob("*.parquet")))
     assert n >= 2  # el año armonizado y el resultado
     assert dd.eevv.clear_cache(dias=1) == 0
@@ -431,7 +431,7 @@ def test_cache_sin_usar_se_borra_sola(eevv_root, cache):
         f.parent.mkdir(parents=True, exist_ok=True)
         f.write_bytes(b"x")
         os.utime(f, (time.time() - 100 * 86400,) * 2)
-    dd.eevv.serie_indicadores(2025, root=eevv_root)
+    dd.eevv.serie_indicadores(2025, raiz=eevv_root)
     assert not viejo.exists() and de_la_geih.exists()
 
 
@@ -443,7 +443,7 @@ def _poblacion(anio, **kw):
 
 
 def test_tasas_a_mano(eevv_root, cache):
-    r = dd.eevv.tasas(2025, root=eevv_root).iloc[0]
+    r = dd.eevv.tasas(2025, raiz=eevv_root).iloc[0]
     pob = _poblacion(2025)
     assert r["poblacion"] == pob
     assert (r["nacimientos"], r["defunciones"], r["fetales"]) == (3, 3, 1)
@@ -464,7 +464,7 @@ def test_tasas_a_mano(eevv_root, cache):
 
 
 def test_tasas_por_departamento_usa_la_residencia(eevv_root, cache):
-    r = dd.eevv.tasas(2025, por="departamento", root=eevv_root).set_index("departamento")
+    r = dd.eevv.tasas(2025, por="departamento", raiz=eevv_root).set_index("departamento")
     # Defunciones: residentes en Cauca y Antioquia; el de residencia en blanco queda por fuera, aunque ocurrió en Atlántico
     assert r["defunciones"].dropna().to_dict() == {"Antioquia": 1, "Cauca": 1}
     assert "Atlántico" not in r.index
@@ -477,7 +477,7 @@ def test_tasas_por_departamento_usa_la_residencia(eevv_root, cache):
 
 
 def test_tasas_por_sexo_y_area(eevv_root, cache):
-    r = dd.eevv.tasas(2025, por="sexo", root=eevv_root).set_index("sexo")
+    r = dd.eevv.tasas(2025, por="sexo", raiz=eevv_root).set_index("sexo")
     assert r.loc["Hombre", "poblacion"] == _poblacion(2025, sexo="Hombre")
     assert r.loc["Hombre", "defunciones"] == 2 and r.loc["Mujer", "defunciones"] == 1
     assert r.loc["Mujer", "tasa_mortalidad"] == pytest.approx(1000 / _poblacion(2025, sexo="Mujer"))
@@ -487,7 +487,7 @@ def test_tasas_por_sexo_y_area(eevv_root, cache):
     assert r.loc["Mujer", "defunciones_maternas"] == 1
     # La mortalidad infantil sí: el menor de un año es un niño, y nació un niño
     assert r.loc["Hombre", "mortalidad_infantil"] == pytest.approx(1000 * 1 / 1)
-    r = dd.eevv.tasas(2025, por="area", root=eevv_root).set_index("area")
+    r = dd.eevv.tasas(2025, por="area", raiz=eevv_root).set_index("area")
     resto = "Centros poblados y rural disperso"
     assert r.loc[resto, "poblacion"] == _poblacion(2025, area=resto)
     # Centro poblado + rural disperso = centros poblados y rural disperso; el indeterminado sin área queda por fuera
@@ -497,41 +497,41 @@ def test_tasas_por_sexo_y_area(eevv_root, cache):
 
 def test_tasas_avisos_de_cobertura_y_anios_sin_poblacion(eevv_root, cache):
     with pytest.warns(UserWarning, match="incompletos"):
-        r = dd.eevv.tasas(1979, root=eevv_root).iloc[0]
+        r = dd.eevv.tasas(1979, raiz=eevv_root).iloc[0]
     assert r["poblacion"] == _poblacion(1979) and r["tasa_mortalidad"] > 0
     assert pd.isna(r["tasa_natalidad"]) and pd.isna(r["mortalidad_infantil"])
     # Los dos avisos: pytest.warns vuelve a lanzar los que no coinciden
     with pytest.warns(UserWarning, match="1985"), pytest.warns(UserWarning, match="incompletos"):
-        r = dd.eevv.tasas(1979, por="departamento", root=eevv_root)
+        r = dd.eevv.tasas(1979, por="departamento", raiz=eevv_root)
     assert r["defunciones"].sum() == 2 and r["tasa_mortalidad"].isna().all()
 
 
 def test_tasas_1991_sin_mortalidad_infantil(eevv_root, cache):
     with pytest.warns(UserWarning, match="1991"):
-        r = dd.eevv.tasas(1991, root=eevv_root).iloc[0]
+        r = dd.eevv.tasas(1991, raiz=eevv_root).iloc[0]
     assert pd.isna(r["defunciones_menores_1"]) and pd.isna(r["mortalidad_infantil"]) and r["tasa_mortalidad"] > 0
 
 
 def test_tasas_solo_con_lo_descargado(eevv_root, cache):
     # 2009 solo tiene fetales
-    r = dd.eevv.tasas(2009, root=eevv_root).iloc[0]
+    r = dd.eevv.tasas(2009, raiz=eevv_root).iloc[0]
     assert r["fetales"] == 1 and pd.isna(r["nacimientos"]) and pd.isna(r["mortalidad_perinatal"])
     assert r["mortinatos"] == 0  # menos de 22 semanas y de 1.000 gramos: aborto
 
 
 def test_tasas_errores(tmp_path, eevv_root, cache):
     with pytest.raises(FileNotFoundError, match="eevv.download"):
-        dd.eevv.tasas(2025, root=tmp_path)
+        dd.eevv.tasas(2025, raiz=tmp_path)
     with pytest.raises(ValueError, match="municipio"):
-        dd.eevv.tasas(2025, por="municipio", root=eevv_root)
+        dd.eevv.tasas(2025, por="municipio", raiz=eevv_root)
     with pytest.raises(ValueError, match="fetales"):
-        dd.eevv.tasas_especificas(2025, "fetales", root=eevv_root)
+        dd.eevv.tasas_especificas(2025, "fetales", raiz=eevv_root)
     with pytest.raises(ValueError, match="mujeres"):
-        dd.eevv.tasas_especificas(2025, "nacimientos", por="sexo", root=eevv_root)
+        dd.eevv.tasas_especificas(2025, "nacimientos", por="sexo", raiz=eevv_root)
 
 
 def test_tasas_especificas_fecundidad(eevv_root, cache):
-    r = dd.eevv.tasas_especificas(2025, "nacimientos", root=eevv_root).set_index("edad_madre")
+    r = dd.eevv.tasas_especificas(2025, "nacimientos", raiz=eevv_root).set_index("edad_madre")
     assert len(r) == 9  # de 10 a 54 años, también los grupos sin nacimientos
     assert r.loc["De 15 a 19 años", "nacimientos"] == 1
     assert r.loc["De 15 a 19 años", "mujeres"] == _poblacion(2025, sexo="Mujer", edades=(15, 19))
@@ -540,20 +540,20 @@ def test_tasas_especificas_fecundidad(eevv_root, cache):
 
 
 def test_tasas_especificas_mortalidad(eevv_root, cache):
-    r = dd.eevv.tasas_especificas(2025, "defunciones", root=eevv_root).set_index("grupo_edad")
+    r = dd.eevv.tasas_especificas(2025, "defunciones", raiz=eevv_root).set_index("grupo_edad")
     assert len(r) == 19  # menor de 1, 1–4, 16 quinquenios y 85 o más; sin la edad desconocida
     assert r.loc["Menor de 1 año", "poblacion"] == _poblacion(2025, edades=0)
     assert r.loc["De 85 años y más", "poblacion"] == _poblacion(2025, edades=(85, 100))
     assert r.loc["De 85 años y más", "defunciones"] == 1
     # Por 100.000, como la ficha técnica de la tasa específica de mortalidad del DANE
     assert r.loc["De 85 años y más", "tasa"] == pytest.approx(100_000 / _poblacion(2025, edades=(85, 100)))
-    r = dd.eevv.tasas_especificas(2025, "defunciones", por="sexo", root=eevv_root).set_index(["sexo", "grupo_edad"])
+    r = dd.eevv.tasas_especificas(2025, "defunciones", por="sexo", raiz=eevv_root).set_index(["sexo", "grupo_edad"])
     assert r.loc[("Mujer", "De 30 a 34 años"), "poblacion"] == _poblacion(2025, sexo="Mujer", edades=(30, 34))
 
 
 def test_tasas_especificas_1991_menores_vacios(eevv_root, cache):
     with pytest.warns(UserWarning, match="1991"):
-        r = dd.eevv.tasas_especificas(1991, "defunciones", root=eevv_root).set_index("grupo_edad")
+        r = dd.eevv.tasas_especificas(1991, "defunciones", raiz=eevv_root).set_index("grupo_edad")
     assert r.loc[["Menor de 1 año", "De 1 a 4 años", "De 5 a 9 años"], "tasa"].isna().all()
     assert r.loc["De 85 años y más", "defunciones"] == 1
 
@@ -616,7 +616,7 @@ def test_real_coincide_con_lo_publicado(tipo):
     assert len(publicado) == 18
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", UserWarning)
-        conteo = dd.eevv.serie_conteos(publicado.index.tolist(), tipo, por="sexo", dropna=False, root=REAL)
+        conteo = dd.eevv.serie_conteos(publicado.index.tolist(), tipo, por="sexo", dropna=False, raiz=REAL)
     total = conteo.groupby("anio")["n"].sum()
     pd.testing.assert_series_equal(total, publicado["total"], check_names=False, check_index_type=False)
     for sexo, columna in (("Hombre", "hombres"), ("Mujer", "mujeres")):
@@ -631,7 +631,7 @@ def test_real_coincide_por_departamento(tipo):
     publicado = pd.read_csv(DATOS / "dane_eevv_departamentos.csv")
     publicado = publicado[publicado["tipo"] == tipo]
     columna = f"dpto_{publicado['base'].iloc[0]}"
-    conteo = dd.eevv.serie_conteos(sorted(publicado["anio"].unique()), tipo, por=columna, root=REAL)
+    conteo = dd.eevv.serie_conteos(sorted(publicado["anio"].unique()), tipo, por=columna, raiz=REAL)
     res = conteo.rename(columns={columna: "dpto"}).astype({"dpto": "int64", "anio": "int64"})
     res = res[res["dpto"].isin(publicado["dpto"])].set_index(["anio", "dpto"])["n"].sort_index()
     pd.testing.assert_series_equal(res, publicado.set_index(["anio", "dpto"])["total"].sort_index(), check_names=False)
@@ -642,7 +642,7 @@ def test_real_grupos_de_edad_coinciden_con_gru_ed2():
     """El DANE agrupa GRU_ED2 aparte desde 1992: el grupo amplio armonizado debe dar lo mismo, salvo errores sueltos."""
     amplios = dict(enumerate(dd.eevv.GRUPOS_EDAD_AMPLIOS[:7], start=1))
     for anio in (1992, 1997, 1998, 2007, 2008, 2025):
-        d = dd.eevv.load(anio, columns=["GRU_ED2"], root=REAL)
+        d = dd.eevv.load(anio, columnas=["GRU_ED2"], raiz=REAL)
         esperado = pd.to_numeric(d["GRU_ED2"]).map(amplios)
         assert (d["grupo_edad_amplio"].astype("object") == esperado).mean() > 0.9995, anio
 
@@ -660,7 +660,7 @@ def test_real_serie_sin_saltos():
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", UserWarning)
         for tipo in dd.eevv.TIPOS:
-            t = dd.eevv.serie_conteos(tipo=tipo, root=REAL).set_index("anio")["n"]
+            t = dd.eevv.serie_conteos(tipo=tipo, raiz=REAL).set_index("anio")["n"]
             assert list(t.index) == list(range(t.index.min(), 2026)), tipo
             variacion = t.pct_change().abs().dropna()
             saltos = {int(a) for a in variacion[variacion > 0.10].index} - conocidos[tipo]
@@ -671,9 +671,9 @@ def test_real_serie_sin_saltos():
 def test_real_neonatales_y_gestacion_coinciden_con_los_cuadros():
     """Cuadro 1 de defunciones 2025: 265 de menos de una hora, 495 de 1 a 23 horas, 1 237 de 1 a 6 días y 991 de 7 a 27.
     Cuadro 4 de fetales 2025: 13 234 de menos de 22 semanas."""
-    r = dd.eevv.indicadores(dd.eevv.load(2025, root=REAL)).iloc[0]
+    r = dd.eevv.indicadores(dd.eevv.load(2025, raiz=REAL)).iloc[0]
     assert (r["neonatales_precoces"], r["neonatales"]) == (265 + 495 + 1237, 265 + 495 + 1237 + 991)
-    f = dd.eevv.load(2025, tipo="fetales", root=REAL)
+    f = dd.eevv.load(2025, tipo="fetales", raiz=REAL)
     assert f["gestacion_grupo"].eq("Menos de 22").sum() == 13234
 
 
@@ -686,7 +686,7 @@ BAJO_PESO_DANE = {2014: (8.8, 60.4, 3.4), 2015: (8.8, 60.9, 3.4), 2016: (9.1, 60
 
 @hay_datos_reales
 def test_real_bajo_peso_coincide_con_el_boletin():
-    r = dd.eevv.serie_indicadores(list(BAJO_PESO_DANE), tipo="nacimientos", root=REAL).set_index("anio")
+    r = dd.eevv.serie_indicadores(list(BAJO_PESO_DANE), tipo="nacimientos", raiz=REAL).set_index("anio")
     columnas = ("pct_bajo_peso", "pct_bajo_peso_pretermino", "pct_bajo_peso_a_termino")
     for anio, cifras in BAJO_PESO_DANE.items():
         for columna, publicado in zip(columnas, cifras):
@@ -697,7 +697,7 @@ def test_real_bajo_peso_coincide_con_el_boletin():
 @hay_datos_reales
 def test_real_materna_coincide_con_el_cuadro_8():
     """El cuadro 8 de 2025 trae 355 defunciones maternas: todo el capítulo O, con 151 O96 y 4 O97, que la razón no usa."""
-    d = dd.eevv.load(2025, root=REAL)
+    d = dd.eevv.load(2025, raiz=REAL)
     r = dd.eevv.indicadores(d).iloc[0]
     assert (r["maternas"], r["maternas_tardias"]) == (200, 151)
     assert d["causa_cie"].astype("string").str.startswith("O97").sum() == 4

@@ -40,7 +40,7 @@ import pandas as pd
 
 from .. import config
 from .._io import read_table
-from ..stats import _avisar, _enteros
+from ..stats import _avisar, _con_nombres_viejos, _enteros
 from ..geih.loader import CATEGORIAS as _CATEGORIAS_GEIH
 from ..referencias import DEPARTAMENTOS, strip_accents
 from .downloader import ARCHIVOS_EMPALME, EXTENSIONES
@@ -105,8 +105,8 @@ ETIQUETAS = {
 }
 
 
-def _root(root) -> Path:
-    return Path(root).expanduser() if root is not None else config.get_path("pobreza")
+def _root(raiz) -> Path:
+    return Path(raiz).expanduser() if raiz is not None else config.get_path("pobreza")
 
 
 def _archivo(carpeta: Path, nombre: str) -> Path | None:
@@ -116,15 +116,16 @@ def _archivo(carpeta: Path, nombre: str) -> Path | None:
     return None
 
 
-def find_files(years: Iterable[int] | int | None = None, root=None) -> dict[int, Path]:
+@_con_nombres_viejos
+def find_files(anios: Iterable[int] | int | None = None, raiz=None) -> dict[int, Path]:
     """
     Archivo de hogares de cada año descargado.
 
     Parámetros
     ----------
-    years
+    anios
         Año o lista de años. ``None`` para todos.
-    root
+    raiz
         Carpeta raíz. Por defecto, la configurada (``dd.get_path("pobreza")``).
 
     Devuelve
@@ -138,10 +139,10 @@ def find_files(years: Iterable[int] | int | None = None, root=None) -> dict[int,
     >>> dd.pobreza.find_files(2025)  # doctest: +SKIP
     {2025: PosixPath('/home/ana/dane_data_datos/pobreza/datos/2025/hogares.csv')}
     """
-    base = _root(root) / "datos"
+    base = _root(raiz) / "datos"
     if not base.is_dir():
         return {}
-    pedidos = _enteros(years)
+    pedidos = _enteros(anios)
     out = {}
     # Solo carpetas de año: datos/empalme/ no es un año
     for carpeta in sorted(p for p in base.iterdir() if p.is_dir() and len(p.name) == 4 and p.name.isdigit()):
@@ -151,13 +152,14 @@ def find_files(years: Iterable[int] | int | None = None, root=None) -> dict[int,
     return out
 
 
-def available(root=None) -> pd.DataFrame:
+@_con_nombres_viejos
+def available(raiz=None) -> pd.DataFrame:
     """
     Tabla de lo descargado de la pobreza monetaria.
 
     Parámetros
     ----------
-    root
+    raiz
         Carpeta raíz. Por defecto, la configurada.
 
     Devuelve
@@ -179,9 +181,9 @@ def available(root=None) -> pd.DataFrame:
     13  2025               2025     True      True      260.1
     14  <NA>  empalme_2012_2020    False     False       75.7
     """
-    base = _root(root) / "datos"
+    base = _root(raiz) / "datos"
     filas = []
-    for anio, ruta in find_files(root=root).items():
+    for anio, ruta in find_files(raiz=raiz).items():
         personas = _archivo(ruta.parent, "personas")
         filas.append({"anio": anio, "archivo": str(anio), "hogares": True, "personas": personas is not None,
                       "tamano_mb": round(sum(f.stat().st_size for f in (ruta, personas) if f) / 1e6, 1)})
@@ -301,11 +303,11 @@ def _clasificar(df: pd.DataFrame, anio: int) -> pd.DataFrame:
 # --------------------------------------------------------------------------- #
 # Empalme al marco 2018
 # --------------------------------------------------------------------------- #
-def _leer_empalme(nombre: str, root) -> pd.DataFrame:
-    ruta = _archivo(_root(root) / "datos" / "empalme", nombre)
+def _leer_empalme(nombre: str, raiz) -> pd.DataFrame:
+    ruta = _archivo(_root(raiz) / "datos" / "empalme", nombre)
     if ruta is None:
         raise FileNotFoundError(
-            f"Falta {nombre} en {_root(root) / 'datos' / 'empalme'}. Descárguelo con "
+            f"Falta {nombre} en {_root(raiz) / 'datos' / 'empalme'}. Descárguelo con "
             "dane_data.pobreza.download(empalme=True)."
         )
     tabla = read_table(ruta)
@@ -379,34 +381,35 @@ def _avisar_metodologias(anios: Iterable[int], empalme: bool) -> None:
         )
 
 
+@_con_nombres_viejos
 def load(
-    years: Iterable[int] | int | None = None,
+    anios: Iterable[int] | int | None = None,
     empalme: bool = False,
-    columns="core",
-    harmonize_vars: bool = True,
-    root=None,
-    progress=None,
+    columnas="core",
+    armonizar: bool = True,
+    raiz=None,
+    progreso=None,
 ) -> pd.DataFrame:
     """
     Carga la Medición de Pobreza Monetaria y Desigualdad: un hogar por fila, con las variables armonizadas.
 
     Parámetros
     ----------
-    years
+    anios
         Año, lista o rango de años (2012–2025). ``None`` para todos los descargados.
     empalme
         Llevar 2012–2021 al marco 2018 para comparar con 2022 en adelante, como la serie que publica el DANE: factor de
         empalme en 2012–2020, líneas actualizadas en 2012–2018 e ingreso empalmado en 2021. Necesita los archivos de
         ``download(empalme=True)``. Los años desde 2022 no cambian.
-    columns
+    columnas
         ``"core"`` (solo las variables armonizadas y las llaves; por defecto), ``"all"`` (también todas las del DANE) o
         una lista de variables del DANE para agregar, por ejemplo ``["P5090", "NINDIGENTES"]``.
-    harmonize_vars
+    armonizar
         Agregar las variables armonizadas. Si False, solo las del DANE y ``anio`` (no compatible con ``empalme``).
-    root
+    raiz
         Carpeta raíz. Por defecto, la configurada.
-    progress
-        Función ``progress(fraccion, mensaje)`` que recibe el avance.
+    progreso
+        Función ``progreso(fraccion, mensaje)`` que recibe el avance.
 
     Devuelve
     --------
@@ -446,42 +449,42 @@ def load(
     >>> round(float((peso * hog.pobre).sum() / peso.sum() * 100), 1)  # doctest: +SKIP
     28.0
     """
-    archivos = find_files(years, root=root)
+    archivos = find_files(anios, raiz=raiz)
     if not archivos:
         raise FileNotFoundError(
-            f"No hay datos de pobreza para años={years} en {_root(root)}. "
+            f"No hay datos de pobreza para años={anios} en {_root(raiz)}. "
             "Descárguelos con dane_data.pobreza.download(...) o revise dane_data.set_paths(...)."
         )
-    if empalme and not harmonize_vars:
-        raise ValueError("empalme=True necesita harmonize_vars=True.")
+    if empalme and not armonizar:
+        raise ValueError("empalme=True necesita armonizar=True.")
     _avisar_metodologias(archivos, empalme)
-    if isinstance(columns, str) and columns not in ("core", "all"):
-        columns = [columns]  # un solo nombre: list("P5090") lo partiría en letras
-    extras = [] if isinstance(columns, str) else [c.upper() for c in columns]
-    leer = None if columns == "all" else set(CORE) | set(extras)
+    if isinstance(columnas, str) and columnas not in ("core", "all"):
+        columnas = [columnas]  # un solo nombre: list("P5090") lo partiría en letras
+    extras = [] if isinstance(columnas, str) else [c.upper() for c in columnas]
+    leer = None if columnas == "all" else set(CORE) | set(extras)
     fuentes = {}
     if empalme:  # solo los archivos que usan los años pedidos (el factor 2012–2020 pesa 75 MB)
         necesarios = {"empalme_2012_2020": min(archivos) <= 2020, "lineas_2012_2018": min(archivos) <= 2018,
                       "hogares_empalmado_2021": 2021 in archivos}
-        fuentes = {n: _leer_empalme(n, root) for n, hace_falta in necesarios.items() if hace_falta}
-        if 2021 in archivos and _archivo(_root(root) / "datos" / "empalme", "hogares_empalmado_dpto_2021"):
-            fuentes["hogares_empalmado_dpto_2021"] = _leer_empalme("hogares_empalmado_dpto_2021", root)  # opcional
+        fuentes = {n: _leer_empalme(n, raiz) for n, hace_falta in necesarios.items() if hace_falta}
+        if 2021 in archivos and _archivo(_root(raiz) / "datos" / "empalme", "hogares_empalmado_dpto_2021"):
+            fuentes["hogares_empalmado_dpto_2021"] = _leer_empalme("hogares_empalmado_dpto_2021", raiz)  # opcional
 
     partes = []
     for i, (anio, ruta) in enumerate(sorted(archivos.items())):
-        if progress:
-            progress(i / len(archivos), f"Leyendo pobreza {anio}")
+        if progreso:
+            progreso(i / len(archivos), f"Leyendo pobreza {anio}")
         crudo = read_table(ruta, columns=None if leer is None else (lambda c: c in leer))
-        if not harmonize_vars:
+        if not armonizar:
             partes.append(crudo.assign(anio=anio))
             continue
         d = harmonize(crudo, anio)
         if empalme and anio <= 2021:
             d = _empalmar(d, anio, fuentes)
         d["empalmado"] = empalme  # desde 2022 ya está en el marco 2018: con empalme=True es la misma serie
-        if columns != "all":
+        if columnas != "all":
             d = d[[*LLAVES, *ETIQUETAS, *[c for c in extras if c in d.columns and c not in LLAVES]]]
         partes.append(d)
-    if progress:
-        progress(1.0, "Listo")
+    if progreso:
+        progreso(1.0, "Listo")
     return pd.concat(partes, ignore_index=True)

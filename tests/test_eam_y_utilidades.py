@@ -1,4 +1,5 @@
 import json
+import warnings
 from pathlib import Path
 
 import numpy as np
@@ -35,12 +36,12 @@ def test_eam_sin_departamento(tmp_path):
     archivo = tmp_path / "datos" / "2016" / "EAM_2016.csv"
     archivo.parent.mkdir(parents=True)
     archivo.write_text("nordest;ciiu4;valagri\n10;1011;80\n", encoding="utf-8")
-    eam = dd.eam.load(2016, root=tmp_path)
+    eam = dd.eam.load(2016, raiz=tmp_path)
     assert eam["departamento"].isna().all() and eam["sector"].notna().all()
 
 
 def test_eam_load_harmonizes(eam_root):
-    eam = dd.eam.load(root=eam_root)
+    eam = dd.eam.load(raiz=eam_root)
     assert sorted(eam["anio"].unique()) == [1992, 2016, 2024]
     assert all(c == c.lower() for c in eam.columns)
     r = eam.set_index(["anio", "nordest"])
@@ -64,7 +65,7 @@ def test_eam_microagregacion(tmp_path):
         "7;16;5;1011;0;0;0;0\n8;17;5;1011;0;0;0;0\n"  # sin datos
         "9;18;5;1011;7;9;3;8\n",
         encoding="utf-8")
-    eam = dd.eam.load(root=tmp_path).set_index("nordest")
+    eam = dd.eam.load(raiz=tmp_path).set_index("nordest")
     assert eam.loc[eam["microagregado"]].index.tolist() == [10, 11, 12, 14, 15]
     grupo = eam["grupo_microagregacion"]
     assert grupo[10] == grupo[11] == grupo[12] != grupo[14] == grupo[15]
@@ -72,7 +73,7 @@ def test_eam_microagregacion(tmp_path):
 
 
 def test_eam_panel_microagregados(eam_root):
-    eam = dd.eam.load(root=eam_root)
+    eam = dd.eam.load(raiz=eam_root)
     eam.loc[(eam["anio"] == 2016) & (eam["nordest"] == 10), "microagregado"] = True
     with pytest.warns(UserWarning, match="1 de 3 establecimientos"):
         dd.eam.panel(eam)
@@ -87,7 +88,7 @@ def test_eam_panel_microagregados(eam_root):
 
 
 def test_eam_resumen(eam_root):
-    eam = dd.eam.load(root=eam_root)
+    eam = dd.eam.load(raiz=eam_root)
     r = dd.eam.resumen(eam, por="anio").set_index("anio")
     assert r.loc[1992, "valor_agregado"] == 60
     assert r.loc[1992, "establecimientos"] == 2
@@ -96,7 +97,7 @@ def test_eam_resumen(eam_root):
 
 
 def test_eam_resumen_sin_por(eam_root):
-    eam = dd.eam.load(root=eam_root)
+    eam = dd.eam.load(raiz=eam_root)
     r = dd.eam.resumen(eam, por=None)
     assert len(r) == 1
     assert r["valor_agregado"].item() == 300
@@ -120,7 +121,7 @@ def test_eam_resumen_con_vacios():
 
 
 def test_eam_panel_and_survival(eam_root):
-    eam = dd.eam.load(root=eam_root)
+    eam = dd.eam.load(raiz=eam_root)
     bal = dd.eam.panel(eam, balanceado=True)
     assert set(bal.index.get_level_values("nordest")) == {10}
     s = dd.eam.supervivencia(eam)
@@ -128,13 +129,35 @@ def test_eam_panel_and_survival(eam_root):
 
 
 def test_eam_deflactar(eam_root):
-    eam = dd.eam.load(root=eam_root)
+    eam = dd.eam.load(raiz=eam_root)
     defl = pd.Series({1992: 50.0, 2016: 100.0, 2024: 200.0})
     d = dd.eam.deflactar(eam, ["valagri"], defl)
     assert d.loc[d.anio.eq(2024), "valagri_real"].item() == pytest.approx(60)
     with pytest.warns(UserWarning, match="no encontraron deflactor") as avisos:
         dd.eam.deflactar(eam, ["valagri"], defl.drop(1992))
     assert avisos[0].filename == __file__                   # apunta a la línea del usuario, no a la librería
+
+
+def test_nombres_viejos_de_los_parametros(eam_root, geih_root):
+    """Los nombres en inglés de antes siguen funcionando, con un FutureWarning que apunta aquí; los dos a la vez, no."""
+    with pytest.warns(FutureWarning, match="`root` está obsoleto: use `raiz`") as avisos:
+        eam = dd.eam.load(root=eam_root)
+    assert [a.filename for a in avisos] == [__file__]
+    pd.testing.assert_frame_equal(eam, dd.eam.load(raiz=eam_root))
+    with pytest.raises(TypeError, match="`root` y `raiz`"):
+        dd.eam.load(root=eam_root, raiz=eam_root)
+    with pytest.raises(TypeError, match="`years` y `anios`"):   # el nuevo por posición
+        dd.eam.load(None, years=[2016])
+    # Las gemelas aceptan los mismos nombres: antes load pedía years y serie_indicadores, anios
+    with pytest.warns(FutureWarning, match="`years` está obsoleto: use `anios`"):
+        serie = dd.geih.serie_indicadores(years=2016, raiz=geih_root)
+    pd.testing.assert_frame_equal(serie, dd.geih.serie_indicadores(anios=2016, raiz=geih_root))
+    assert len(dd.geih.load(anios=2016, meses=1, raiz=geih_root, cache=False))
+    # Con el decorador en medio, el aviso propio de la función también apunta a la línea del usuario
+    with warnings.catch_warnings(record=True) as avisos:
+        warnings.simplefilter("always")
+        dd.eam.deflactar(eam, ["valagri"], pd.Series({2016: 100.0, 2024: 200.0}), on="anio")
+    assert [(a.category, a.filename) for a in avisos] == [(FutureWarning, __file__), (UserWarning, __file__)]
 
 
 def test_texto_que_se_pierde_al_convertir_se_avisa(tmp_path, caplog):
@@ -160,7 +183,7 @@ def test_coma_decimal_minoritaria_no_se_pierde(tmp_path):
     encabezado = "nordemp;nordest;dpto;ciiu2;periodo;prodbr2;consin2;valagri;pertotal;pperytem;salpeyte;prespyte\n"
     (tmp_path / "datos" / "1998").mkdir(parents=True)
     (tmp_path / "datos" / "1998" / "EAM_1998.csv").write_text(encabezado + "\n".join(filas) + "\n", encoding="utf-8")
-    eam = dd.eam.load(1998, root=tmp_path)
+    eam = dd.eam.load(1998, raiz=tmp_path)
     assert eam["valagri"].notna().all()
     assert eam["valagri"].sum() == pytest.approx(300 * 40 + 40981953.3333333 - 2746.5)
 
@@ -200,7 +223,7 @@ def test_config_persistence(tmp_path, monkeypatch):
     monkeypatch.setattr(dd.config, "CONFIG_FILE", tmp_path / "c.json")
     monkeypatch.setattr(dd.config, "_session", {})
     monkeypatch.delenv("DANE_DATA_EAM", raising=False)
-    dd.set_paths(eam=tmp_path / "x", save=True)
+    dd.set_paths(eam=tmp_path / "x", guardar=True)
     assert json.loads((tmp_path / "c.json").read_text())["eam"] == str(tmp_path / "x")
     monkeypatch.setattr(dd.config, "_session", {})
     assert dd.get_path("eam") == tmp_path / "x"
@@ -258,13 +281,13 @@ def test_cli_descargar_geih_y_eam(descargador_falso, tmp_path):
 
 
 def test_download_expande_la_carpeta_personal(descargador_falso, monkeypatch, tmp_path):
-    """root="~/..." se descarga donde load lo busca, no en una carpeta llamada "~" dentro de la actual."""
+    """raiz="~/..." se descarga donde load lo busca, no en una carpeta llamada "~" dentro de la actual."""
     monkeypatch.setattr(dd.eevv, "EEVVDownloader", _DescargadorFalso)
     monkeypatch.setenv("HOME", str(tmp_path))
     monkeypatch.setenv("USERPROFILE", str(tmp_path))       # Windows
-    dd.geih.download(2024, root="~/geih")
-    dd.eam.download(2024, root="~/eam")
-    dd.eevv.download(2024, root="~/eevv")
+    dd.geih.download(2024, raiz="~/geih")
+    dd.eam.download(2024, raiz="~/eam")
+    dd.eevv.download(2024, raiz="~/eevv")
     assert [dl.kw["base_dir"] for dl in descargador_falso] == [tmp_path / "geih", tmp_path / "eam", tmp_path / "eevv"]
 
 
@@ -313,7 +336,7 @@ def test_variables_xdg_vacias_o_relativas_se_ignoran(monkeypatch, valor, esperad
 def test_carpeta_relativa_se_guarda_completa(config_aislada, monkeypatch, tmp_path):
     """Guardada como "misdatos", cada proceso la buscaría en su propia carpeta actual."""
     monkeypatch.chdir(tmp_path)
-    dd.set_paths(geih="misdatos", eam="../otra/eam", save=True)
+    dd.set_paths(geih="misdatos", eam="../otra/eam", guardar=True)
     guardado = json.loads(config_aislada.read_text(encoding="utf-8"))
     assert guardado == {"geih": str(tmp_path / "misdatos"), "eam": str(tmp_path.parent / "otra" / "eam")}
     assert dd.get_path("geih") == tmp_path / "misdatos"
@@ -332,7 +355,7 @@ def test_download_un_anio_y_carpeta_explicita(descargador_falso, tmp_path):
     assert descargador_falso[-1].anios == [2024]
     assert descargador_falso[-1].anios == [2024]
     assert descargador_falso[-1].kw["base_dir"] == tmp_path / "g"
-    dd.eam.download("2015", root=tmp_path / "otra")
+    dd.eam.download("2015", raiz=tmp_path / "otra")
     assert descargador_falso[-1].anios == [2015]                # un año en texto queda como número
     assert descargador_falso[-1].kw["base_dir"] == tmp_path / "otra"
 
@@ -362,12 +385,12 @@ def config_aislada(monkeypatch, tmp_path):
 
 
 def test_set_paths_guarda_solo_lo_pedido(config_aislada, tmp_path):
-    dd.set_paths(eam=tmp_path / "solo_sesion")                 # sin save: solo esta sesión
-    dd.set_paths(geih=tmp_path / "geih", save=True)
+    dd.set_paths(eam=tmp_path / "solo_sesion")                 # sin guardar: solo esta sesión
+    dd.set_paths(geih=tmp_path / "geih", guardar=True)
     assert json.loads(config_aislada.read_text(encoding="utf-8")) == {"geih": str(tmp_path / "geih")}
     assert not list(config_aislada.parent.glob("*.tmp"))
     with pytest.raises(ValueError, match="vacía"):
-        dd.set_paths(eam="  ", save=True)
+        dd.set_paths(eam="  ", guardar=True)
     assert dd.get_path("eam") == tmp_path / "solo_sesion"     # el error no cambió nada
 
 
@@ -375,7 +398,7 @@ def test_config_que_no_es_un_objeto(config_aislada):
     config_aislada.parent.mkdir(parents=True)
     config_aislada.write_text("[1, 2]", encoding="utf-8")
     assert dd.get_path("geih") == dd.config.DEFAULT_HOME / "geih"
-    dd.set_paths(eam="/datos/eam", save=True)
+    dd.set_paths(eam="/datos/eam", guardar=True)
     assert json.loads(config_aislada.read_text(encoding="utf-8")) == {"eam": "/datos/eam"}
 
 
@@ -476,7 +499,7 @@ def test_abre_navegador_cuando_responde(monkeypatch):
 
 
 def test_eam_anio_de_numpy(eam_root):
-    eam = dd.eam.load(np.int64(2016), root=eam_root)
+    eam = dd.eam.load(np.int64(2016), raiz=eam_root)
     assert eam["anio"].unique().tolist() == [2016]
 
 
@@ -539,10 +562,10 @@ def test_real_eam_coincide_con_lo_publicado():
     2004–2011 el personal publicado es la suma de las cuatro categorías, sin los aprendices que pertotal sí cuenta.
     """
     pub = pd.read_csv(Path(__file__).parent / "datos" / "dane_eam_publicado.csv")
-    anios = sorted(set(pub["anio"]) & set(dd.eam.available(root=REAL_EAM)["anio"]))
+    anios = sorted(set(pub["anio"]) & set(dd.eam.available(raiz=REAL_EAM)["anio"]))
     if not anios:
         pytest.skip("ningún año descargado tiene cifras publicadas")
-    eam = dd.eam.load(anios, columns=EAM_CATEGORIAS_PERSONAL, root=REAL_EAM)
+    eam = dd.eam.load(anios, columnas=EAM_CATEGORIAS_PERSONAL, raiz=REAL_EAM)
     res = dd.eam.resumen(eam, por="anio").set_index("anio")
     sin_aprendices = eam.groupby("anio")[EAM_CATEGORIAS_PERSONAL].sum().sum(axis=1)
     años = res.index.isin(EAM_SIN_APRENDICES)

@@ -12,18 +12,19 @@ from .indicadores import GLOSARIO, crecimiento, deflactar, panel, participacion,
 indicadores = resumen
 from .loader import (CORE, ETIQUETAS, SECTORES, VARIABLES_COMUNES, available, find_files, harmonize,
                      load, _root)
-from ..stats import _enteros
+from ..stats import _con_nombres_viejos, _enteros
 
 ANIOS_DISPONIBLES = sorted(int(y) for y in EAM_KNOWN_CATALOGS)
 
 
+@_con_nombres_viejos
 def download(
-    years: Iterable[int] | int | None = None,
-    root=None,
-    include_tic: bool = False,
-    delete_zips: bool = False,
-    progress=None,
-    should_stop=None,
+    anios: Iterable[int] | int | None = None,
+    raiz=None,
+    incluir_tic: bool = False,
+    borrar_zips: bool = False,
+    progreso=None,
+    detener=None,
     forzar: bool = False,
 ) -> list[str]:
     """
@@ -33,19 +34,19 @@ def download(
 
     Parámetros
     ----------
-    years
+    anios
         Año o lista de años entre 1992 y 2024. ``None`` descarga toda la serie (unos 330 MB); una lista
         vacía, ninguno. Los años que no están en el ANDA se
         saltan y quedan en la lista que se devuelve.
-    root
+    raiz
         Carpeta de destino. Por defecto, la de ``dd.get_path("eam")``.
-    include_tic
+    incluir_tic
         Bajar también el módulo de tecnologías de la información (TIC), 2008–2018.
-    delete_zips
+    borrar_zips
         Borrar cada ZIP después de extraerlo.
-    progress
-        Función ``progress(fraccion, mensaje)`` que recibe el avance.
-    should_stop
+    progreso
+        Función ``progreso(fraccion, mensaje)`` que recibe el avance.
+    detener
         Función sin argumentos; si devuelve True, la descarga se detiene con ``DownloadCancelled``.
     forzar
         Volver a bajar y extraer aunque ya esté en disco, por ejemplo si el DANE corrigió los archivos. Lo
@@ -60,7 +61,7 @@ def download(
     Lanza
     -----
     DownloadCancelled
-        Si ``should_stop()`` devolvió True.
+        Si ``detener()`` devolvió True.
 
     Véase también
     -------------
@@ -77,16 +78,16 @@ def download(
     >>> dd.eam.download([2022, 2023, 2024])  # doctest: +SKIP
     >>> dd.eam.download()  # toda la serie, 1992–2024  # doctest: +SKIP
     """
-    years = _enteros(years)
+    anios = _enteros(anios)
     dl = EAMDownloader(
-        base_dir=_root(root),
-        keep_zips=not delete_zips,
-        include_tic=include_tic,
-        progress=progress,
-        should_stop=should_stop,
+        base_dir=_root(raiz),
+        keep_zips=not borrar_zips,
+        include_tic=incluir_tic,
+        progress=progreso,
+        should_stop=detener,
         forzar=forzar,
     )
-    return dl.run_pipeline(target_years=years)
+    return dl.run_pipeline(target_years=anios)
 
 
 __all__ = [

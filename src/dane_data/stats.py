@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import functools
+import inspect
 import numbers
 import os
 import sys
@@ -26,6 +28,36 @@ def _avisar(mensaje: str, categoria: type[Warning] = UserWarning) -> None:
             and not archivo.startswith(_APP):
         marco, nivel = marco.f_back, nivel + 1
     warnings.warn(mensaje, categoria, stacklevel=nivel)
+
+
+# Nombres en inglés de los parámetros de la API pública hasta 0.6.0. Siguen funcionando con un FutureWarning (el
+# DeprecationWarning no se ve en los notebooks). Quitar en una versión futura, junto con _con_nombres_viejos.
+_NOMBRES_VIEJOS = {
+    "years": "anios", "months": "meses", "columns": "columnas", "modules": "modulos", "root": "raiz",
+    "progress": "progreso", "should_stop": "detener", "delete_zips": "borrar_zips", "include_tic": "incluir_tic",
+    "limit_files": "limite_archivos", "harmonize_vars": "armonizar", "save": "guardar", "key": "clave",
+    "values": "valores", "weights": "pesos", "on": "llaves",
+}
+
+
+def _con_nombres_viejos(funcion):
+    """
+    Decorador: ``funcion`` acepta también el nombre en inglés de sus parámetros (``_NOMBRES_VIEJOS``), con un
+    FutureWarning que apunta a la línea del usuario. Pasar el nombre viejo y el nuevo a la vez es un TypeError.
+    """
+    parametros = list(inspect.signature(funcion).parameters)
+    viejos = {viejo: nuevo for viejo, nuevo in _NOMBRES_VIEJOS.items() if nuevo in parametros}
+
+    @functools.wraps(funcion)
+    def envoltura(*args, **kwargs):
+        for viejo in viejos.keys() & kwargs.keys():
+            nuevo = viejos[viejo]
+            if nuevo in kwargs or nuevo in parametros[:len(args)]:
+                raise TypeError(f"{funcion.__name__}() recibió `{viejo}` y `{nuevo}`, que son lo mismo: use solo `{nuevo}`.")
+            _avisar(f"`{viejo}` está obsoleto: use `{nuevo}`.", FutureWarning)
+            kwargs[nuevo] = kwargs.pop(viejo)
+        return funcion(*args, **kwargs)
+    return envoltura
 
 
 def _as_list(x) -> list:
@@ -166,7 +198,8 @@ def _meses_anotados(df: pd.DataFrame) -> dict | None:
     return meses if meses and (filas is None or filas == len(df)) else None
 
 
-def weighted_quantile(values, weights, q: float) -> float:
+@_con_nombres_viejos
+def weighted_quantile(valores, pesos, q: float) -> float:
     """
     Cuantil ponderado.
 
@@ -178,10 +211,10 @@ def weighted_quantile(values, weights, q: float) -> float:
 
     Parámetros
     ----------
-    values
+    valores
         Valores (cualquier secuencia numérica).
-    weights
-        Pesos, del mismo largo que ``values``. Se ignoran los pares con algún NaN y los pesos que no son
+    pesos
+        Pesos, del mismo largo que ``valores``. Se ignoran los pares con algún NaN y los pesos que no son
         positivos.
     q
         Fracción entre 0 y 1: 0.5 es la mediana.
@@ -206,8 +239,8 @@ def weighted_quantile(values, weights, q: float) -> float:
     >>> dd.weighted_quantile([10, 20, 30, 40], [1, 1, 1, 1], 0.5)  # Stata: 25
     20.0
     """
-    v = np.asarray(values, dtype=float)
-    w = np.asarray(weights, dtype=float)
+    v = np.asarray(valores, dtype=float)
+    w = np.asarray(pesos, dtype=float)
     mask = ~(np.isnan(v) | np.isnan(w)) & (w > 0)
     v, w = v[mask], w[mask]
     if v.size == 0:
@@ -219,16 +252,17 @@ def weighted_quantile(values, weights, q: float) -> float:
     return float(v[np.searchsorted(cum, q * cum[-1], side="left")])
 
 
-def weighted_mean(values, weights) -> float:
+@_con_nombres_viejos
+def weighted_mean(valores, pesos) -> float:
     """
     Media ponderada.
 
     Parámetros
     ----------
-    values
+    valores
         Valores (cualquier secuencia numérica).
-    weights
-        Pesos, del mismo largo que ``values``. Se ignoran los pares con algún NaN.
+    pesos
+        Pesos, del mismo largo que ``valores``. Se ignoran los pares con algún NaN.
 
     Devuelve
     --------
@@ -248,13 +282,14 @@ def weighted_mean(values, weights) -> float:
     >>> dd.weighted_mean([10, None, 30], [1, 1, 1])
     20.0
     """
-    v = np.asarray(values, dtype=float)
-    w = np.asarray(weights, dtype=float)
+    v = np.asarray(valores, dtype=float)
+    w = np.asarray(pesos, dtype=float)
     mask = ~(np.isnan(v) | np.isnan(w))
     return float(np.average(v[mask], weights=w[mask])) if mask.any() and w[mask].sum() > 0 else np.nan
 
 
-def weighted_gini(values, weights) -> float:
+@_con_nombres_viejos
+def weighted_gini(valores, pesos) -> float:
     """
     Coeficiente de Gini ponderado.
 
@@ -265,10 +300,10 @@ def weighted_gini(values, weights) -> float:
 
     Parámetros
     ----------
-    values
+    valores
         Valores (cualquier secuencia numérica), sin negativos.
-    weights
-        Pesos, del mismo largo que ``values``. Se ignoran los pares con algún NaN y los pesos que no son positivos.
+    pesos
+        Pesos, del mismo largo que ``valores``. Se ignoran los pares con algún NaN y los pesos que no son positivos.
 
     Devuelve
     --------
@@ -295,8 +330,8 @@ def weighted_gini(values, weights) -> float:
     >>> round(dd.weighted_gini([1, 2], [1, 3]), 4), round(dd.weighted_gini([1, 2, 2, 2], [1, 1, 1, 1]), 4)
     (0.1071, 0.1071)
     """
-    v = np.asarray(values, dtype=float)
-    w = np.asarray(weights, dtype=float)
+    v = np.asarray(valores, dtype=float)
+    w = np.asarray(pesos, dtype=float)
     mask = ~(np.isnan(v) | np.isnan(w)) & (w > 0)
     v, w = v[mask], w[mask]
     if (v < 0).any():
@@ -423,7 +458,7 @@ def tabla(
         raise ValueError("estadistico debe ser 'total', 'porcentaje', 'media' o 'mediana'.")
     por = _as_list(por)
     _exigir(df, [*por, *([variable] if variable else []), *([peso] if peso else [])])
-    # Solo las columnas que se usan: copiar todo df duplica la memoria (con columns="all", varios GB)
+    # Solo las columnas que se usan: copiar todo df duplica la memoria (con columnas="all", varios GB)
     usadas = [*por, *([variable] if variable else []), *(c for c in ("anio", "mes") if c in df.columns),
               *([peso] if peso else [])]
     d = df[list(dict.fromkeys(usadas))].copy()

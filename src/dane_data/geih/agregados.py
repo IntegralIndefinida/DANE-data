@@ -22,7 +22,8 @@ import pandas as pd
 
 from .. import config
 from ..referencias import MESES
-from ..stats import _as_list, _con_categorias, _enteros, _meses_anotados, peso_mensual_promedio, weighted_quantile
+from ..stats import (_as_list, _con_categorias, _con_nombres_viejos, _enteros, _meses_anotados, peso_mensual_promedio,
+                     weighted_quantile)
 from .indicadores import _COLUMNAS, indicadores
 from .loader import (CATEGORIAS, MesGEIH, _desde_cache, _firma_archivos, _meses, _root,
                      find_months, load)
@@ -138,16 +139,16 @@ def _firma_codigo(archivos: tuple[str, ...] = _CODIGO) -> str:
     return h.hexdigest()[:16]
 
 
-def _meses_por_anio(anios, meses, empalme: bool, root) -> dict[int, list[MesGEIH]]:
+def _meses_por_anio(anios, meses, empalme: bool, raiz) -> dict[int, list[MesGEIH]]:
     """Meses completos en disco (los que usa ``load``), agrupados por año."""
     meses = _meses(meses)
     por_anio: dict[int, list[MesGEIH]] = {}
-    for m in find_months(anios, empalme=empalme, root=root):
+    for m in find_months(anios, empalme=empalme, raiz=raiz):
         if m.completo and (meses is None or m.mes in meses):
             por_anio.setdefault(m.anio, []).append(m)
     if not por_anio:
         raise FileNotFoundError(
-            f"No hay datos GEIH para años={anios}, meses={meses} en {_root(empalme, root)}. "
+            f"No hay datos GEIH para años={anios}, meses={meses} en {_root(empalme, raiz)}. "
             "Descárguelos con dane_data.geih.download(...) o revise dane_data.set_paths(...)."
         )
     return por_anio
@@ -178,9 +179,9 @@ def _clave_json(obj):
 
 
 def _por_anio(tipo: str, anios, solicitud: dict, calcular: Callable[[int], pd.DataFrame], *, meses=None,
-              empalme: bool = False, root=None, progress=None) -> list[pd.DataFrame]:
+              empalme: bool = False, raiz=None, progreso=None) -> list[pd.DataFrame]:
     """``calcular(anio)`` para cada año, leído de la caché si ya se hizo con los mismos archivos y solicitud."""
-    por_anio = _meses_por_anio(anios, meses, empalme, root)
+    por_anio = _meses_por_anio(anios, meses, empalme, raiz)
     texto = json.dumps(_clave_json(solicitud), sort_keys=True, default=str, ensure_ascii=False)
     serie = "empalme" if empalme else "principal"
     partes = []
@@ -190,26 +191,27 @@ def _por_anio(tipo: str, anios, solicitud: dict, calcular: Callable[[int], pd.Da
         ruta = config.CACHE_DIR / "geih" / tipo / f"{serie}_{anio}_{digest}.parquet"
 
         def calcular_anio(a=anio, i=i) -> pd.DataFrame:
-            if progress:
-                progress(i / len(por_anio), f"Calculando {a} (solo la primera vez)")
+            if progreso:
+                progreso(i / len(por_anio), f"Calculando {a} (solo la primera vez)")
             return calcular(a)
 
         partes.append(_desde_cache(ruta, calcular_anio))
-    if progress:
-        progress(1.0, "Listo")
+    if progreso:
+        progreso(1.0, "Listo")
     return partes
 
 
 # --------------------------------------------------------------------------- #
 # Indicadores laborales
 # --------------------------------------------------------------------------- #
+@_con_nombres_viejos
 def serie_indicadores(
     anios: Iterable[int] | int,
     por: str | None = None,
     anual: bool = True,
     empalme: bool = False,
-    root=None,
-    progress=None,
+    raiz=None,
+    progreso=None,
     filtros: dict | None = None,
     meses: Iterable[int] | int | None = None,
     dropna: bool = True,
@@ -218,7 +220,7 @@ def serie_indicadores(
     Indicadores del mercado laboral de muchos años, sin cargar los microdatos en memoria.
 
     Da exactamente lo mismo que
-    ``indicadores(filtrar(load(anios, months=meses), filtros), por=por, anual=anual, dropna=dropna)``,
+    ``indicadores(filtrar(load(anios, meses=meses), filtros), por=por, anual=anual, dropna=dropna)``,
     pero carga un año a la vez y guarda el resultado de cada año en disco.
 
     Parámetros
@@ -232,10 +234,10 @@ def serie_indicadores(
         Si True, un resultado por año (promedio de los meses); si False, uno por mes.
     empalme
         Usar la serie de empalme (2010–2020).
-    root
+    raiz
         Carpeta raíz. Por defecto, la configurada.
-    progress
-        Función ``progress(fraccion, mensaje)`` que recibe el avance.
+    progreso
+        Función ``progreso(fraccion, mensaje)`` que recibe el avance.
     filtros
         Filtros con el formato de ``filtrar``, por ejemplo ``{"edad": (15, 28)}``.
     meses
@@ -298,7 +300,7 @@ def serie_indicadores(
     variables = list(dict.fromkeys([*VARIABLES_INDICADORES, *(filtros or {})]))
 
     def calcular(anio):
-        df = filtrar(load(anio, months=meses, empalme=empalme, root=root, variables=variables), filtros)
+        df = filtrar(load(anio, meses=meses, empalme=empalme, raiz=raiz, variables=variables), filtros)
         partes = []
         for p in POR_PRECALCULADOS:
             for a in (True, False):
@@ -309,7 +311,7 @@ def serie_indicadores(
         return pd.concat(partes, ignore_index=True)
 
     tablas = _por_anio("indicadores", anios, {"filtros": filtros or {}, "meses": _enteros(meses)}, calcular,
-                       meses=meses, empalme=empalme, root=root, progress=progress)
+                       meses=meses, empalme=empalme, raiz=raiz, progreso=progreso)
     res = pd.concat([t[(t["desagregacion"] == (por or "total")) & (t["anual"] == anual)] for t in tablas],
                     ignore_index=True)
     keys = ["anio"] + ([] if anual else ["mes"])
@@ -326,6 +328,7 @@ def serie_indicadores(
 # --------------------------------------------------------------------------- #
 # Tablas ponderadas
 # --------------------------------------------------------------------------- #
+@_con_nombres_viejos
 def serie_frecuencias(
     anios: Iterable[int] | int,
     variable: str | None = None,
@@ -333,10 +336,10 @@ def serie_frecuencias(
     poblacion: str | None = None,
     filtros: dict | None = None,
     meses: Iterable[int] | int | None = None,
-    columns="core",
+    columnas="core",
     empalme: bool = False,
-    root=None,
-    progress=None,
+    raiz=None,
+    progreso=None,
 ) -> pd.DataFrame:
     """
     Distribución ponderada de una variable en muchos años, calculada año por año.
@@ -360,14 +363,14 @@ def serie_frecuencias(
         Filtros con el formato de ``filtrar``.
     meses
         Mes o lista de meses de cada año.
-    columns
+    columnas
         Variables del DANE que no están en ``CORE_RAW`` y hay que leer, como en ``load``.
     empalme
         Usar la serie de empalme.
-    root
+    raiz
         Carpeta raíz. Por defecto, la configurada.
-    progress
-        Función ``progress(fraccion, mensaje)`` que recibe el avance.
+    progreso
+        Función ``progreso(fraccion, mensaje)`` que recibe el avance.
 
     Devuelve
     --------
@@ -394,7 +397,7 @@ def serie_frecuencias(
     necesarias = list(dict.fromkeys(["fex", *claves, *(filtros or {}), *([poblacion] if poblacion else [])]))
 
     def calcular(anio):
-        df = load(anio, months=meses, columns=columns, empalme=empalme, root=root, variables=necesarias)
+        df = load(anio, meses=meses, columnas=columnas, empalme=empalme, raiz=raiz, variables=necesarias)
         for c in claves:  # una variable DANE que ese año no existe
             if c not in df.columns:
                 df[c] = np.nan
@@ -409,12 +412,13 @@ def serie_frecuencias(
         return _con_categorias(res, x, claves)
 
     solicitud = {"variable": variable, "por": sorted(por), "poblacion": poblacion, "filtros": filtros or {},
-                 "meses": _enteros(meses), "columns": columns}
-    tablas = _por_anio("frecuencias", anios, solicitud, calcular, meses=meses, empalme=empalme, root=root,
-                       progress=progress)
+                 "meses": _enteros(meses), "columnas": columnas}
+    tablas = _por_anio("frecuencias", anios, solicitud, calcular, meses=meses, empalme=empalme, raiz=raiz,
+                       progreso=progreso)
     return pd.concat(tablas, ignore_index=True)
 
 
+@_con_nombres_viejos
 def serie_tabla(
     anios: Iterable[int] | int,
     por: str | Iterable[str] | None = None,
@@ -424,16 +428,16 @@ def serie_tabla(
     filtros: dict | None = None,
     meses: Iterable[int] | int | None = None,
     dropna: bool = False,
-    columns="core",
+    columnas="core",
     empalme: bool = False,
-    root=None,
-    progress=None,
+    raiz=None,
+    progreso=None,
 ) -> pd.DataFrame:
     """
     Tabla ponderada de muchos años, sin cargar los microdatos en memoria.
 
     Da exactamente lo mismo que
-    ``dd.tabla(filtrar(load(anios, months=meses), filtros, poblacion), por, variable, estadistico)``,
+    ``dd.tabla(filtrar(load(anios, meses=meses), filtros, poblacion), por, variable, estadistico)``,
     pero calcula las frecuencias de un año a la vez y las guarda en disco.
 
     Parámetros
@@ -456,14 +460,14 @@ def serie_tabla(
     dropna
         Dejar fuera a las personas con valor vacío en alguna variable de ``por`` (por ejemplo, la rama de
         actividad de quien no trabaja).
-    columns
+    columnas
         Variables del DANE que no están en ``CORE_RAW`` y hay que leer, como en ``load``.
     empalme
         Usar la serie de empalme.
-    root
+    raiz
         Carpeta raíz. Por defecto, la configurada.
-    progress
-        Función ``progress(fraccion, mensaje)`` que recibe el avance.
+    progreso
+        Función ``progreso(fraccion, mensaje)`` que recibe el avance.
 
     Devuelve
     --------
@@ -505,7 +509,7 @@ def serie_tabla(
         raise ValueError("estadistico debe ser 'total', 'porcentaje', 'media' o 'mediana'.")
     if estadistico in ("media", "mediana") and variable is None:
         raise ValueError("Indique `variable` para media/mediana.")
-    f = serie_frecuencias(anios, variable, por, poblacion, filtros, meses, columns, empalme, root, progress)
+    f = serie_frecuencias(anios, variable, por, poblacion, filtros, meses, columnas, empalme, raiz, progreso)
     if dropna and por:
         f = f.dropna(subset=por)
     return tabla_de_frecuencias(f, por, variable, estadistico)
@@ -595,6 +599,7 @@ def tabla_de_frecuencias(f: pd.DataFrame, por: str | Iterable[str] | None = None
 # --------------------------------------------------------------------------- #
 # Exportar microdatos
 # --------------------------------------------------------------------------- #
+@_con_nombres_viejos
 def exportar(
     anios: Iterable[int] | int,
     ruta,
@@ -602,10 +607,10 @@ def exportar(
     poblacion: str | None = None,
     filtros: dict | None = None,
     meses: Iterable[int] | int | None = None,
-    columns="core",
+    columnas="core",
     empalme: bool = False,
-    root=None,
-    progress=None,
+    raiz=None,
+    progreso=None,
     sep: str = ",",
     decimal: str = ".",
 ) -> int:
@@ -630,15 +635,15 @@ def exportar(
         Filtros con el formato de ``filtrar``.
     meses
         Mes o lista de meses de cada año.
-    columns
+    columnas
         Variables del DANE que no están en ``CORE_RAW``: hay que pedirlas aquí además de en
         ``variables``.
     empalme
         Usar la serie de empalme.
-    root
+    raiz
         Carpeta raíz. Por defecto, la configurada.
-    progress
-        Función ``progress(fraccion, mensaje)`` que recibe el avance.
+    progreso
+        Función ``progreso(fraccion, mensaje)`` que recibe el avance.
     sep
         Separador de columnas. Un Excel con la configuración regional de Colombia (coma decimal) abre todo
         en una sola columna un CSV separado por comas: para abrirlo con doble clic use ``sep=";"`` y
@@ -661,11 +666,11 @@ def exportar(
     >>> import dane_data as dd
     >>> dd.geih.exportar(range(2015, 2026), "ocupados.csv", poblacion="ocupado")  # doctest: +SKIP
     >>> dd.geih.exportar(2024, "salarios.csv", variables=["fex", "sexo", "ingreso_laboral", "P6500"],
-    ...                  columns=["P6500"], poblacion="ocupado")  # doctest: +SKIP
+    ...                  columnas=["P6500"], poblacion="ocupado")  # doctest: +SKIP
     >>> dd.geih.exportar(2024, "para_excel.csv", sep=";", decimal=",")  # doctest: +SKIP
     """
     ruta = Path(ruta)
-    por_anio = _meses_por_anio(anios, meses, empalme, root)
+    por_anio = _meses_por_anio(anios, meses, empalme, raiz)
     lista = [m for _, ms in sorted(por_anio.items()) for m in ms]
     necesarias = leer = None  # sin variables: se leen y escriben todas las armonizadas
     if variables is not None:
@@ -676,9 +681,9 @@ def exportar(
     filas = 0
     try:
         for i, m in enumerate(lista):
-            if progress:
-                progress(i / len(lista), f"Exportando {MESES[m.mes]} {m.anio}")
-            df = filtrar(load(m.anio, months=m.mes, columns=columns, empalme=empalme, root=root, variables=leer),
+            if progreso:
+                progreso(i / len(lista), f"Exportando {MESES[m.mes]} {m.anio}")
+            df = filtrar(load(m.anio, meses=m.mes, columnas=columnas, empalme=empalme, raiz=raiz, variables=leer),
                          filtros, poblacion)
             if necesarias is None:  # las armonizadas (minúscula), iguales en todos los meses
                 necesarias = [c for c in df.columns if c == c.lower()]
@@ -689,6 +694,6 @@ def exportar(
         tmp.replace(ruta)
     finally:
         tmp.unlink(missing_ok=True)
-    if progress:
-        progress(1.0, "Listo")
+    if progreso:
+        progreso(1.0, "Listo")
     return filas

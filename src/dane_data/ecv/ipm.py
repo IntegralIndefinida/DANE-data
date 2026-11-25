@@ -91,7 +91,7 @@ def privaciones(df: pd.DataFrame) -> pd.DataFrame:
     ----------
     df
         Personas de :func:`load` con los capítulos del IPM: ``load(años, modulos=dd.ecv.MODULOS_IPM)`` (con
-        ``columns=dd.ecv.COLUMNAS_IPM`` basta).
+        ``columnas=dd.ecv.COLUMNAS_IPM`` basta).
 
     Devuelve
     --------
@@ -130,7 +130,7 @@ def privaciones(df: pd.DataFrame) -> pd.DataFrame:
     Ejemplos
     --------
     >>> import dane_data as dd
-    >>> personas = dd.ecv.load(2025, modulos=dd.ecv.MODULOS_IPM, columns=dd.ecv.COLUMNAS_IPM)  # doctest: +SKIP
+    >>> personas = dd.ecv.load(2025, modulos=dd.ecv.MODULOS_IPM, columnas=dd.ecv.COLUMNAS_IPM)  # doctest: +SKIP
     >>> hogares = dd.ecv.privaciones(personas)  # doctest: +SKIP
     """
     faltan = [c for c in ("anio", "fex", "edad", "area", "parentesco", *KEYS_HOGAR, *_NECESARIAS) if c not in df.columns]
@@ -277,7 +277,7 @@ def ipm(df: pd.DataFrame, por: str | Iterable[str] | None = None, muestra: str |
     Ejemplos
     --------
     >>> import dane_data as dd
-    >>> personas = dd.ecv.load(2025, modulos=dd.ecv.MODULOS_IPM, columns=dd.ecv.COLUMNAS_IPM)  # doctest: +SKIP
+    >>> personas = dd.ecv.load(2025, modulos=dd.ecv.MODULOS_IPM, columnas=dd.ecv.COLUMNAS_IPM)  # doctest: +SKIP
     >>> dd.ecv.ipm(personas)[["incidencia", "intensidad", "ipm"]].round(3)  # doctest: +SKIP
        incidencia  intensidad    ipm
     0       9.912      40.379  0.040

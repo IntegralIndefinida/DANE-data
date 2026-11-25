@@ -18,7 +18,7 @@ import pandas as pd
 from .. import config
 from ..eevv.loader import _unir
 from ..geih.agregados import _clave_json, _firma_codigo, _mascara
-from ..stats import _avisar, _enteros
+from ..stats import _avisar, _con_nombres_viejos, _enteros
 from ..geih.loader import _borrar_cache, _desde_cache
 from .indicadores import _lista, indicadores
 from .ipm import COLUMNAS_IPM, MODULOS_IPM, ipm, privaciones
@@ -60,35 +60,36 @@ def clear_cache(dias: float | None = None) -> int:
     return _borrar_cache("ecv", dias)
 
 
-def _firma_anio(anio: int, root) -> str:
+def _firma_anio(anio: int, raiz) -> str:
     """Nombre, tamaño y fecha de cada archivo del año: si el DANE corrige uno, el resultado se recalcula."""
     partes = []
     for modulo in (*MODULOS, *_INTERNOS):
-        if (ruta := find_files(anio, modulo=modulo, root=root).get(anio)) is not None:
+        if (ruta := find_files(anio, modulo=modulo, raiz=raiz).get(anio)) is not None:
             estado = ruta.stat()
             partes.append(f"{modulo}|{ruta.name}|{estado.st_size}|{estado.st_mtime_ns}")
     return ";".join(partes)
 
 
-def _faltan_internos(anios, root, ipm: bool) -> None:
+def _faltan_internos(anios, raiz, ipm: bool) -> None:
     """
     Error si faltan los factores de 2018 o, para el IPM, la base complementaria de 2020: sin ellos las cifras no son las
     oficiales, y un aviso se perdería en la caché (que no avisa de nuevo) y en la aplicación.
     """
     pedidos = [(2018, _FACTORES)] + ([(2020, _COMPLEMENTARIA)] if ipm else [])
-    faltan = [f"{m} de {a}" for a, m in pedidos if a in anios and a not in find_files(a, modulo=m, root=root)]
+    faltan = [f"{m} de {a}" for a, m in pedidos if a in anios and a not in find_files(a, modulo=m, raiz=raiz)]
     if faltan:
         raise ValueError(f"Faltan {' y '.join(faltan)}, que el DANE publica aparte: sin ellos las cifras no son las "
                          f"oficiales. Bájelos con dd.ecv.download({sorted({a for a, _ in pedidos if a in anios})}).")
 
 
+@_con_nombres_viejos
 def serie_indicadores(
     anios: Iterable[int] | int | None = None,
     por: str | Iterable[str] | None = None,
     filtros: dict | None = None,
     dropna: bool = True,
-    root=None,
-    progress=None,
+    raiz=None,
+    progreso=None,
 ) -> pd.DataFrame:
     """
     Indicadores de la serie de la ECV por año, sin tener toda la serie en memoria.
@@ -107,10 +108,10 @@ def serie_indicadores(
         ejemplo ``{"sexo": ["Mujer"]}``) los indicadores de hogares quedan sobre los hogares con jefa.
     dropna
         Quitar las filas sin dato en ``por``.
-    root
+    raiz
         Carpeta raíz. Por defecto, la configurada.
-    progress
-        Función ``progress(fraccion, mensaje)`` que recibe el avance.
+    progreso
+        Función ``progreso(fraccion, mensaje)`` que recibe el avance.
 
     Devuelve
     --------
@@ -139,14 +140,14 @@ def serie_indicadores(
     """
     anios = _enteros(anios)
     llaves = ["anio", *_lista(por)]
-    archivos = find_files(anios, modulo="caracteristicas", root=root)
+    archivos = find_files(anios, modulo="caracteristicas", raiz=raiz)
     if not archivos:
-        raise FileNotFoundError(f"No hay datos de la ECV para años={anios} en {_root(root)}. "
+        raise FileNotFoundError(f"No hay datos de la ECV para años={anios} en {_root(raiz)}. "
                                 "Descárguelos con dane_data.ecv.download(...) o revise dane_data.set_paths(...).")
-    _faltan_internos(archivos, root, ipm=False)
+    _faltan_internos(archivos, raiz, ipm=False)
     # Aquí y no en calcular: un año que sale de la caché no vuelve a leer los datos, y el aviso se perdía
     faltan = {m: a for m in _MODULOS_INDICADORES
-              if (a := [x for x in sorted(archivos) if x not in find_files(x, modulo=m, root=root)])}
+              if (a := [x for x in sorted(archivos) if x not in find_files(x, modulo=m, raiz=raiz)])}
     if faltan:
         _avisar(_aviso_faltan(faltan), UserWarning)
     solicitud = json.dumps(_clave_json({"por": llaves, "filtros": filtros, "dropna": dropna}), sort_keys=True,
@@ -154,30 +155,31 @@ def serie_indicadores(
     codigo = _firma_codigo(_CODIGO)
     partes = []
     for i, anio in enumerate(sorted(archivos)):
-        if progress:
-            progress(i / len(archivos), f"Calculando la ECV {anio} (solo la primera vez)")
-        digest = hashlib.sha1("|".join([codigo, _firma_anio(anio, root), solicitud]).encode()).hexdigest()[:16]
+        if progreso:
+            progreso(i / len(archivos), f"Calculando la ECV {anio} (solo la primera vez)")
+        digest = hashlib.sha1("|".join([codigo, _firma_anio(anio, raiz), solicitud]).encode()).hexdigest()[:16]
 
         def calcular(a=anio) -> pd.DataFrame:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", UserWarning)  # los capítulos que faltan ya se avisaron arriba
-                d = load(a, modulos=_MODULOS_INDICADORES, columns=_COLUMNAS_INDICADORES, root=root)
+                d = load(a, modulos=_MODULOS_INDICADORES, columnas=_COLUMNAS_INDICADORES, raiz=raiz)
             return indicadores(d[_mascara(d, filtros)] if filtros else d, por=llaves, dropna=dropna)
 
         partes.append(_desde_cache(config.CACHE_DIR / "ecv" / "indicadores" / f"{anio}_{digest}.parquet", calcular,
                                    "ecv"))
-    if progress:
-        progress(1.0, "Listo")
+    if progreso:
+        progreso(1.0, "Listo")
     return _unir(partes).sort_values(llaves, ignore_index=True)
 
 
+@_con_nombres_viejos
 def serie_ipm(
     anios: Iterable[int] | int | None = None,
     por: str | Iterable[str] | None = None,
     muestra: str | None = None,
     dropna: bool = True,
-    root=None,
-    progress=None,
+    raiz=None,
+    progreso=None,
 ) -> pd.DataFrame:
     """
     El IPM por año, sin tener toda la serie en memoria.
@@ -197,10 +199,10 @@ def serie_ipm(
         ``"nacional"`` o ``"completa"``; por defecto, como el DANE (vea :func:`ipm`).
     dropna
         Quitar los hogares sin dato en ``por``.
-    root
+    raiz
         Carpeta raíz. Por defecto, la configurada.
-    progress
-        Función ``progress(fraccion, mensaje)`` que recibe el avance.
+    progreso
+        Función ``progreso(fraccion, mensaje)`` que recibe el avance.
 
     Devuelve
     --------
@@ -229,28 +231,28 @@ def serie_ipm(
     >>> dd.ecv.serie_ipm(2025, por="departamento")  # doctest: +SKIP
     """
     anios = _enteros(anios)
-    archivos = find_files(anios, modulo="caracteristicas", root=root)
+    archivos = find_files(anios, modulo="caracteristicas", raiz=raiz)
     if not archivos:
-        raise FileNotFoundError(f"No hay datos de la ECV para años={anios} en {_root(root)}. "
+        raise FileNotFoundError(f"No hay datos de la ECV para años={anios} en {_root(raiz)}. "
                                 "Descárguelos con dane_data.ecv.download(...) o revise dane_data.set_paths(...).")
     codigo = _firma_codigo(_CODIGO)
     partes = []
     for i, anio in enumerate(sorted(archivos)):
-        if progress:
-            progress(i / len(archivos), f"Calculando el IPM {anio} (solo la primera vez)")
-        _faltan_internos([anio], root, ipm=True)
-        faltan = [m for m in MODULOS_IPM if anio not in find_files(anio, modulo=m, root=root)]
+        if progreso:
+            progreso(i / len(archivos), f"Calculando el IPM {anio} (solo la primera vez)")
+        _faltan_internos([anio], raiz, ipm=True)
+        faltan = [m for m in MODULOS_IPM if anio not in find_files(anio, modulo=m, raiz=raiz)]
         if faltan:
             raise ValueError(f"Al IPM de {anio} le faltan los capítulos {faltan}: bájelos con "
                              f"dd.ecv.download({anio}, modulos={faltan}).")
-        digest = hashlib.sha1("|".join([codigo, _firma_anio(anio, root)]).encode()).hexdigest()[:16]
+        digest = hashlib.sha1("|".join([codigo, _firma_anio(anio, raiz)]).encode()).hexdigest()[:16]
 
         def calcular(a=anio) -> pd.DataFrame:
-            return privaciones(load(a, modulos=MODULOS_IPM, columns=COLUMNAS_IPM, root=root))
+            return privaciones(load(a, modulos=MODULOS_IPM, columnas=COLUMNAS_IPM, raiz=raiz))
 
         partes.append(_desde_cache(config.CACHE_DIR / "ecv" / "privaciones" / f"{anio}_{digest}.parquet", calcular,
                                    "ecv"))
-    if progress:
-        progress(1.0, "Listo")
+    if progreso:
+        progreso(1.0, "Listo")
     llaves = ["anio", *_lista(por)]
     return ipm(_unir(partes), por=llaves, muestra=muestra, dropna=dropna).sort_values(llaves, ignore_index=True)

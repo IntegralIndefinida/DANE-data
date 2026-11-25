@@ -30,7 +30,7 @@ import pandas as pd
 from .. import config
 from .._hooks import archivos_datos
 from .._io import read_table
-from ..stats import _avisar, _enteros
+from ..stats import _avisar, _con_nombres_viejos, _enteros
 from ..referencias import DEPARTAMENTOS
 
 log = logging.getLogger("dane_data.eevv")
@@ -252,8 +252,8 @@ def causas() -> dict[str, dict[str, str]]:
         return json.load(f)
 
 
-def _root(root) -> Path:
-    return Path(root).expanduser() if root is not None else config.get_path("eevv")
+def _root(raiz) -> Path:
+    return Path(raiz).expanduser() if raiz is not None else config.get_path("eevv")
 
 
 def _tipo_valido(tipo: str) -> str:
@@ -262,17 +262,18 @@ def _tipo_valido(tipo: str) -> str:
     return tipo
 
 
-def find_files(years: Iterable[int] | int | None = None, tipo: str = "defunciones", root=None) -> dict[int, Path]:
+@_con_nombres_viejos
+def find_files(anios: Iterable[int] | int | None = None, tipo: str = "defunciones", raiz=None) -> dict[int, Path]:
     """
     Archivo de datos de cada año descargado de un tipo de certificado.
 
     Parámetros
     ----------
-    years
+    anios
         Año o lista de años. ``None`` para todos.
     tipo
         ``"defunciones"``, ``"nacimientos"`` o ``"fetales"``.
-    root
+    raiz
         Carpeta raíz. Por defecto, la configurada (``dd.get_path("eevv")``).
 
     Devuelve
@@ -291,25 +292,26 @@ def find_files(years: Iterable[int] | int | None = None, tipo: str = "defuncione
     >>> dd.eevv.find_files(2025, tipo="nacimientos")  # doctest: +SKIP
     {2025: PosixPath('/home/ana/dane_data_datos/eevv/datos/nacimientos/2025/BD-EEVV-Nacimientos-2025.csv')}
     """
-    base = _root(root) / "datos" / _tipo_valido(tipo)
+    base = _root(raiz) / "datos" / _tipo_valido(tipo)
     if not base.is_dir():
         return {}
-    years = _enteros(years)  # también un año de numpy (df.anio.max())
+    anios = _enteros(anios)  # también un año de numpy (df.anio.max())
     out = {}
     for carpeta in sorted(p for p in base.iterdir() if p.is_dir() and p.name.isdigit()):
         anio = int(carpeta.name)
-        if (years is None or anio in years) and (archivos := archivos_datos(carpeta, EXTENSIONES)):
+        if (anios is None or anio in anios) and (archivos := archivos_datos(carpeta, EXTENSIONES)):
             out[anio] = max(archivos, key=lambda f: (f.suffix.lower() != ".dta", f.stat().st_size))
     return out
 
 
-def available(root=None) -> pd.DataFrame:
+@_con_nombres_viejos
+def available(raiz=None) -> pd.DataFrame:
     """
     Tabla de los años descargados de las Estadísticas Vitales.
 
     Parámetros
     ----------
-    root
+    raiz
         Carpeta raíz. Por defecto, la configurada.
 
     Devuelve
@@ -331,7 +333,7 @@ def available(root=None) -> pd.DataFrame:
     102  fetales  2025  BD-EEVV-Defuncionesfetales-2025.csv        3.8
     """
     filas = [{"tipo": tipo, "anio": anio, "archivo": f.name, "tamano_mb": round(f.stat().st_size / 1e6, 1)}
-             for tipo in TIPOS for anio, f in find_files(tipo=tipo, root=root).items()]
+             for tipo in TIPOS for anio, f in find_files(tipo=tipo, raiz=raiz).items()]
     return pd.DataFrame(filas, columns=["tipo", "anio", "archivo", "tamano_mb"])
 
 
@@ -623,32 +625,33 @@ def _avisar_cobertura(tipo: str, anios: Iterable[int]) -> None:
         _avisar("Defunciones: " + "; ".join(avisos) + ". Vea la tabla de diferencias del README.", UserWarning)
 
 
+@_con_nombres_viejos
 def load(
-    years: Iterable[int] | int | None = None,
+    anios: Iterable[int] | int | None = None,
     tipo: str = "defunciones",
-    columns="core",
-    harmonize_vars: bool = True,
-    root=None,
-    progress=None,
+    columnas="core",
+    armonizar: bool = True,
+    raiz=None,
+    progreso=None,
 ) -> pd.DataFrame:
     """
     Carga las Estadísticas Vitales: un certificado por fila, con las variables armonizadas.
 
     Parámetros
     ----------
-    years
+    anios
         Año, lista o rango de años. ``None`` para todos los descargados.
     tipo
         ``"defunciones"`` (1979–2025), ``"nacimientos"`` o ``"fetales"`` (ambos 1998–2025).
-    columns
+    columnas
         ``"core"`` (solo las variables armonizadas; por defecto), ``"all"`` (también todas las del DANE) o una lista
         de variables del DANE para agregar, por ejemplo ``["GRU_ED1", "HORA"]``.
-    harmonize_vars
+    armonizar
         Agregar las variables armonizadas. Si False, solo las del DANE y ``anio``.
-    root
+    raiz
         Carpeta raíz. Por defecto, la configurada.
-    progress
-        Función ``progress(fraccion, mensaje)`` que recibe el avance.
+    progreso
+        Función ``progreso(fraccion, mensaje)`` que recibe el avance.
 
     Devuelve
     --------
@@ -692,17 +695,17 @@ def load(
     >>> round(float(nac["cesarea"].mean()), 4)  # doctest: +SKIP
     0.5384
     """
-    archivos = find_files(years, tipo=_tipo_valido(tipo), root=root)
+    archivos = find_files(anios, tipo=_tipo_valido(tipo), raiz=raiz)
     if not archivos:
         raise FileNotFoundError(
-            f"No hay datos de {tipo} para años={years} en {_root(root)}. "
+            f"No hay datos de {tipo} para años={anios} en {_root(raiz)}. "
             "Descárguelos con dane_data.eevv.download(...) o revise dane_data.set_paths(...)."
         )
     _avisar_cobertura(tipo, archivos)
-    if isinstance(columns, str) and columns not in ("core", "all"):
-        columns = [columns]  # un solo nombre: list("HORA") lo partiría en letras
-    extras = [] if isinstance(columns, str) else [c.upper() for c in columns]
-    if columns == "all":
+    if isinstance(columnas, str) and columnas not in ("core", "all"):
+        columnas = [columnas]  # un solo nombre: list("HORA") lo partiría en letras
+    extras = [] if isinstance(columnas, str) else [c.upper() for c in columnas]
+    if columnas == "all":
         selector = None
     else:
         leer = set(CORE[tipo]) | set(extras)
@@ -710,16 +713,16 @@ def load(
 
     partes = []
     for i, (anio, ruta) in enumerate(sorted(archivos.items())):
-        if progress:
-            progress(i / len(archivos), f"Leyendo {tipo} {anio}")
+        if progreso:
+            progreso(i / len(archivos), f"Leyendo {tipo} {anio}")
         crudo = read_table(ruta, columns=selector)
-        if harmonize_vars:
+        if armonizar:
             d = harmonize(crudo, tipo, anio)
-            if columns != "all":  # Lo crudo ocupa más que lo armonizado; en toda la serie, varios GB
+            if columnas != "all":  # Lo crudo ocupa más que lo armonizado; en toda la serie, varios GB
                 d = d.drop(columns=[c for c in crudo.columns if c not in extras])
         else:
             d = crudo.assign(anio=anio)
         partes.append(d)
-    if progress:
-        progress(1.0, "Listo")
+    if progreso:
+        progreso(1.0, "Listo")
     return _unir(partes)

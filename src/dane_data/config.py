@@ -15,7 +15,7 @@ Prioridad para resolver cada ruta:
   1. ``set_paths(...)`` en la sesión actual.
   2. Variables de entorno ``DANE_DATA_GEIH``, ``DANE_DATA_GEIH_EMPALME``, ``DANE_DATA_EAM``, ``DANE_DATA_EEVV``,
      ``DANE_DATA_EMICRON``, ``DANE_DATA_ECV``, ``DANE_DATA_POBREZA``.
-  3. Archivo ``~/.config/dane_data/config.json`` (lo escribe ``save()`` y la app).
+  3. Archivo ``~/.config/dane_data/config.json`` (lo escribe ``set_paths(..., guardar=True)`` y la app).
   4. Valor por defecto bajo ``~/dane_data_datos/``.
 """
 
@@ -24,6 +24,7 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+from .stats import _con_nombres_viejos
 
 
 def _carpeta_xdg(variable: str, defecto: str) -> Path:
@@ -60,7 +61,8 @@ def _read_file() -> dict:
     return data if isinstance(data, dict) else {}  # un JSON que no es un objeto: como si no existiera
 
 
-def get_path(key: str) -> Path:
+@_con_nombres_viejos
+def get_path(clave: str) -> Path:
     """
     Carpeta raíz de una encuesta o registro.
 
@@ -71,7 +73,7 @@ def get_path(key: str) -> Path:
 
     Parámetros
     ----------
-    key
+    clave
         ``"geih"``, ``"geih_empalme"``, ``"eam"``, ``"eevv"``, ``"emicron"``, ``"ecv"`` o ``"pobreza"``. El factor de
         empalme de pobreza no tiene clave propia: queda en ``<carpeta de pobreza>/datos/empalme/``.
 
@@ -83,7 +85,7 @@ def get_path(key: str) -> Path:
     Lanza
     -----
     KeyError
-        Si ``key`` no es una de esas claves.
+        Si ``clave`` no es una de esas claves.
 
     Véase también
     -------------
@@ -96,20 +98,21 @@ def get_path(key: str) -> Path:
     >>> dd.get_path("geih")  # doctest: +SKIP
     PosixPath('/home/ana/dane_data_datos/geih')
     """
-    if key not in _KEYS:
-        raise KeyError(f"Clave desconocida {key!r}. Opciones: {list(_KEYS)}")
-    if key in _session:
-        return _session[key]
-    env, default = _KEYS[key]
+    if clave not in _KEYS:
+        raise KeyError(f"Clave desconocida {clave!r}. Opciones: {list(_KEYS)}")
+    if clave in _session:
+        return _session[clave]
+    env, default = _KEYS[clave]
     if os.environ.get(env):
         return Path(os.environ[env]).expanduser()
-    stored = _read_file().get(key)
+    stored = _read_file().get(clave)
     if stored:
         return Path(stored).expanduser()
     return default
 
 
-def set_paths(geih=None, geih_empalme=None, eam=None, save: bool = False, eevv=None, emicron=None, ecv=None,
+@_con_nombres_viejos
+def set_paths(geih=None, geih_empalme=None, eam=None, guardar: bool = False, eevv=None, emicron=None, ecv=None,
               pobreza=None) -> None:
     """
     Fija las carpetas raíz de los datos.
@@ -128,7 +131,7 @@ def set_paths(geih=None, geih_empalme=None, eam=None, save: bool = False, eevv=N
         Carpeta de la serie de empalme de la GEIH (2010–2020).
     eam
         Carpeta de la EAM.
-    save
+    guardar
         Si True, guarda las carpetas indicadas en esta llamada en ``~/.config/dane_data/config.json``:
         valen para las próximas sesiones, para la línea de comandos y para la aplicación. Si False, solo
         para esta sesión.
@@ -159,7 +162,7 @@ def set_paths(geih=None, geih_empalme=None, eam=None, save: bool = False, eevv=N
     Ejemplos
     --------
     >>> import dane_data as dd
-    >>> dd.set_paths(geih="~/datos/GEIH", eam="~/datos/EAM", save=True)  # doctest: +SKIP
+    >>> dd.set_paths(geih="~/datos/GEIH", eam="~/datos/EAM", guardar=True)  # doctest: +SKIP
     """
     nuevas = {k: v for k, v in (("geih", geih), ("geih_empalme", geih_empalme), ("eam", eam), ("eevv", eevv),
                                 ("emicron", emicron), ("ecv", ecv), ("pobreza", pobreza))
@@ -170,7 +173,7 @@ def set_paths(geih=None, geih_empalme=None, eam=None, save: bool = False, eevv=N
         # Completa: guardada como "datos", cada proceso la buscaría en su propia carpeta (la app corre
         # dentro del paquete instalado)
         _session[key] = Path(os.path.abspath(Path(val).expanduser()))
-    if save:
+    if guardar:
         # Solo las de esta llamada: las fijadas antes solo para la sesión no se vuelven permanentes
         data = _read_file()
         data.update({k: str(_session[k]) for k in nuevas})

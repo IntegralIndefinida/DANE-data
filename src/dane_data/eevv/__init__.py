@@ -9,18 +9,19 @@ from .downloader import EEVV_KNOWN_FILES, EEVVDownloader
 from .indicadores import GLOSARIO, indicadores
 from .loader import (CATEGORIAS, CORE, ETIQUETAS, GRANDES_CAUSAS, GRUPOS_EDAD, GRUPOS_EDAD_AMPLIOS, TIPOS,
                      _root, available, causas, find_files, harmonize, load)
-from ..stats import _enteros, _opciones
+from ..stats import _con_nombres_viejos, _enteros, _opciones
 
 ANIOS_DISPONIBLES = {tipo: sorted(a for a, t in EEVV_KNOWN_FILES if t == tipo) for tipo in TIPOS}
 
 
+@_con_nombres_viejos
 def download(
-    years: Iterable[int] | int | None = None,
+    anios: Iterable[int] | int | None = None,
     tipos: Iterable[str] | str | None = None,
-    root=None,
-    delete_zips: bool = False,
-    progress=None,
-    should_stop=None,
+    raiz=None,
+    borrar_zips: bool = False,
+    progreso=None,
+    detener=None,
     forzar: bool = False,
 ) -> list[str]:
     """
@@ -30,19 +31,19 @@ def download(
 
     Parámetros
     ----------
-    years
+    anios
         Año o lista de años. ``None`` descarga toda la serie (unos 1,6 GB de ZIP); una lista vacía, ninguno. Los
         años que no están en el ANDA se saltan y quedan en la lista que se devuelve.
     tipos
         ``"defunciones"`` (1979–2025), ``"nacimientos"`` o ``"fetales"`` (ambos 1998–2025), o una lista. ``None``
         para los tres.
-    root
+    raiz
         Carpeta de destino. Por defecto, la de ``dd.get_path("eevv")``.
-    delete_zips
+    borrar_zips
         Borrar cada ZIP después de extraerlo.
-    progress
-        Función ``progress(fraccion, mensaje)`` que recibe el avance.
-    should_stop
+    progreso
+        Función ``progreso(fraccion, mensaje)`` que recibe el avance.
+    detener
         Función sin argumentos; si devuelve True, la descarga se detiene con ``DownloadCancelled``.
     forzar
         Volver a bajar y extraer aunque ya esté en disco, por ejemplo si el DANE corrigió los archivos. Lo
@@ -58,7 +59,7 @@ def download(
     ValueError
         Si algún tipo no es uno de los tres.
     DownloadCancelled
-        Si ``should_stop()`` devolvió True.
+        Si ``detener()`` devolvió True.
 
     Véase también
     -------------
@@ -68,7 +69,7 @@ def download(
     -----
     Algunos ZIP del ANDA traen varios años (2008–2011, 2012–2013, 2017–2018), así que pedir un solo año baja el
     paquete entero: los nacimientos de 2008–2011 pesan 192 MB. Se extrae solo el año pedido y el ZIP queda para
-    los demás, salvo con ``delete_zips``.
+    los demás, salvo con ``borrar_zips``.
 
     Ejemplos
     --------
@@ -76,16 +77,16 @@ def download(
     >>> dd.eevv.download(2025)  # doctest: +SKIP
     >>> dd.eevv.download(range(2015, 2026), tipos="nacimientos")  # doctest: +SKIP
     """
-    years = _enteros(years)
+    anios = _enteros(anios)
     tipos = _opciones(tipos, TIPOS, "Tipo")
     dl = EEVVDownloader(
-        base_dir=_root(root),
-        keep_zips=not delete_zips,
-        progress=progress,
-        should_stop=should_stop,
+        base_dir=_root(raiz),
+        keep_zips=not borrar_zips,
+        progress=progreso,
+        should_stop=detener,
         forzar=forzar,
     )
-    return dl.run_pipeline(target_years=years, tipos=tipos)
+    return dl.run_pipeline(target_years=anios, tipos=tipos)
 
 
 __all__ = [

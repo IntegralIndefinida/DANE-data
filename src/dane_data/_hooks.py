@@ -22,9 +22,9 @@ ProgressFn = Callable[[Optional[float], str], None]
 
 class DownloadCancelled(Exception):
     """
-    La descarga se detuvo porque ``should_stop()`` devolvió True.
+    La descarga se detuvo porque ``detener()`` devolvió True.
 
-    La lanzan ``dd.geih.download``, ``dd.eam.download`` y ``dd.eevv.download`` cuando se les pasa ``should_stop`` (la aplicación
+    La lanzan ``dd.geih.download``, ``dd.eam.download`` y ``dd.eevv.download`` cuando se les pasa ``detener`` (la aplicación
     lo usa para su botón de cancelar). Los meses o años que ya terminaron quedan en disco y la próxima
     descarga los salta.
 
@@ -34,7 +34,7 @@ class DownloadCancelled(Exception):
     >>> import dane_data as dd
     >>> limite = time.time() + 60
     >>> try:  # doctest: +SKIP
-    ...     dd.geih.download(2025, should_stop=lambda: time.time() > limite)
+    ...     dd.geih.download(2025, detener=lambda: time.time() > limite)
     ... except dd.DownloadCancelled:
     ...     print("Se detuvo al minuto; lo descargado se conserva.")
     """

@@ -320,7 +320,7 @@ def test_csv_danados_se_bajan_en_otro_formato(tmp_path):
     assert dl.paginas == 1                               # la página del catálogo se pide una sola vez
     assert sorted(f.name for f in (tmp_path / "datos_csv" / "2011" / "Marzo_txt").glob("*.txt")) == [
         "Cabecera - Caracteristicas generales (Personas).txt", "Resto - Caracteristicas generales (Personas).txt"]
-    assert dd.geih.load(2011, root=tmp_path, cache=False)["fex"].tolist() == [84.9491032387525]
+    assert dd.geih.load(2011, raiz=tmp_path, cache=False)["fex"].tolist() == [84.9491032387525]
 
     car = _dta(DIRECTORIO=[1], SECUENCIA_P=[1], ORDEN=[1], OCI=[1], DSI=[0], PETI=[1], fex_c_2011=[250.5])
     dl = FakeANDA({"Agosto.csv.zip": _zip({"Características generales (personas).CSV": CAR}),
@@ -661,13 +661,13 @@ def test_eam_stata_se_usa_tal_cual_con_sus_codigos(tmp_path):
     assert [f.name for f in archivos] == ["EAM_2024.dta"]
     assert sorted(f.name for f in destino.iterdir()) == ["EAM_2024.dta"]
 
-    eam = dd.eam.load(2024, root=tmp_path)
+    eam = dd.eam.load(2024, raiz=tmp_path)
     assert eam["departamento"].tolist() == ["Antioquia"]     # del código 5, no de la etiqueta
     assert eam["valagri"].tolist() == [80.0]
 
     # Un TXT convertido por una versión anterior, junto al .dta, se sigue usando
     (destino / "EAM_2024.txt").write_text("nordest\tdpto\tciiu4\tvalagri\n10\t11\t1011\t80\n", encoding="utf-8")
-    assert dd.eam.find_files(2024, root=tmp_path)[2024].suffix == ".txt"
+    assert dd.eam.find_files(2024, raiz=tmp_path)[2024].suffix == ".txt"
 
 
 def test_eam_tic_en_anio_ya_descargado(tmp_path):
@@ -860,19 +860,19 @@ def test_mes_sin_resto_queda_incompleto(geih_root):
     """2007–2021: sin «Resto - Ocupados», los ocupados rurales serían no ocupados y la TD saldría mal."""
     mes = geih_root / "datos_csv" / "2016" / "Enero"
     (mes / "Resto - Ocupados.csv").unlink()
-    (m,) = dd.geih.find_months(2016, root=geih_root)
+    (m,) = dd.geih.find_months(2016, raiz=geih_root)
     assert m.faltantes == ["Resto - Ocupados"] and not m.completo
     assert faltantes_mes(mes, ["ocupados"]) == ["Resto - Ocupados"]      # el descargador lo vuelve a extraer
     assert faltantes_mes(mes, ["caracteristicas"]) == []
     # Inactivos no hace falta: la PET sale de Fuerza de trabajo
     (mes / "Cabecera - Inactivos.csv").unlink()
-    (m,) = dd.geih.find_months(2016, root=geih_root)
+    (m,) = dd.geih.find_months(2016, raiz=geih_root)
     assert m.faltantes == ["Resto - Ocupados"]
     # Solo el archivo de Área (subconjunto de Cabecera) tampoco basta
     for f in mes.glob("*Fuerza de trabajo.csv"):
         f.unlink()
     (mes / "Area - Fuerza de trabajo.csv").write_text("Directorio;Secuencia_p;Orden;Fex_c_2011\n", encoding="utf-8")
-    (m,) = dd.geih.find_months(2016, root=geih_root)
+    (m,) = dd.geih.find_months(2016, raiz=geih_root)
     assert m.faltantes == ["Cabecera - Fuerza de trabajo", "Resto - Fuerza de trabajo", "Resto - Ocupados"]
 
 
@@ -1015,16 +1015,16 @@ def test_eevv_cancelar(tmp_path):
 
 def test_eevv_download_valida_tipos(tmp_path):
     with pytest.raises(ValueError, match="Tipo desconocido"):
-        dd.eevv.download(2020, tipos="bautizos", root=tmp_path)
+        dd.eevv.download(2020, tipos="bautizos", raiz=tmp_path)
 
 
 def test_eevv_available(tmp_path):
     url = _url_eevv(2020, "fetales")
     _baja_eevv(tmp_path, {url: _zip_eevv({"fetal2020.csv": "ANO\n2020\n"})}, [2020], tipos=("fetales",))
-    tabla = dd.eevv.available(root=tmp_path)
+    tabla = dd.eevv.available(raiz=tmp_path)
     assert tabla[["tipo", "anio", "archivo"]].values.tolist() == [["fetales", 2020, "fetal2020.csv"]]
-    assert list(dd.eevv.find_files(2020, tipo="fetales", root=tmp_path)) == [2020]
-    assert dd.eevv.find_files(2020, tipo="nacimientos", root=tmp_path) == {}
+    assert list(dd.eevv.find_files(2020, tipo="fetales", raiz=tmp_path)) == [2020]
+    assert dd.eevv.find_files(2020, tipo="nacimientos", raiz=tmp_path) == {}
 
 
 # ---------------------------------------------------------------------------------------------------- #
@@ -1089,7 +1089,7 @@ def test_ecv_2018_baja_tambien_los_factores(tmp_path):
     dl, fallidos = _baja_ecv(tmp_path, paquetes, [2018])
     assert fallidos == []
     assert sorted(dl.descargas) == sorted(paquetes)
-    assert dd.ecv.available(root=tmp_path)[["anio", "modulo"]].values.tolist() == [[2018, "salud"], [2018, "factores"]]
+    assert dd.ecv.available(raiz=tmp_path)[["anio", "modulo"]].values.tolist() == [[2018, "salud"], [2018, "factores"]]
     _, fallidos = _baja_ecv(tmp_path, paquetes, [2019])  # en los demás años no hay factores aparte
     assert len(fallidos) == 1 and "salud 2019" in fallidos[0]
 
@@ -1145,20 +1145,20 @@ def test_ecv_cancelar(tmp_path):
 
 def test_ecv_download_valida_modulos(tmp_path):
     with pytest.raises(ValueError, match="Módulo desconocido 'gastos'"):
-        dd.ecv.download(2020, modulos=["salud", "gastos"], root=tmp_path)
+        dd.ecv.download(2020, modulos=["salud", "gastos"], raiz=tmp_path)
     with pytest.raises(ValueError, match="Módulo desconocido 'factores'"):  # interno: va solo con 2018
-        dd.ecv.download(2018, modulos="factores", root=tmp_path)
+        dd.ecv.download(2018, modulos="factores", raiz=tmp_path)
     with pytest.raises(ValueError, match="Módulo desconocido"):
-        dd.ecv.find_files(2020, modulo="gastos", root=tmp_path)
+        dd.ecv.find_files(2020, modulo="gastos", raiz=tmp_path)
 
 
 def test_ecv_available_y_find_files(tmp_path):
     _baja_ecv(tmp_path, {_url_ecv(2020, "salud"): _zip_eevv({"Salud.csv": "DIRECTORIO\n1\n"})}, [2020])
-    tabla = dd.ecv.available(root=tmp_path)
+    tabla = dd.ecv.available(raiz=tmp_path)
     assert tabla[["anio", "modulo", "archivo"]].values.tolist() == [[2020, "salud", "Salud.csv"]]
-    assert list(dd.ecv.find_files(2020, modulo="salud", root=tmp_path)) == [2020]
-    assert dd.ecv.find_files(2020, modulo="tic", root=tmp_path) == {}
-    assert dd.ecv.available(root=tmp_path / "no_existe").empty
+    assert list(dd.ecv.find_files(2020, modulo="salud", raiz=tmp_path)) == [2020]
+    assert dd.ecv.find_files(2020, modulo="tic", raiz=tmp_path) == {}
+    assert dd.ecv.available(raiz=tmp_path / "no_existe").empty
 
 
 def _zip_deflate64(nombre: str, datos: bytes, crc: int | None = None) -> bytes:
@@ -1346,18 +1346,18 @@ def test_emicron_cancelar(tmp_path):
 
 def test_emicron_download_valida_modulos(tmp_path):
     with pytest.raises(ValueError, match="Módulo desconocido"):
-        dd.emicron.download(2024, modulos="nomina", root=tmp_path)
+        dd.emicron.download(2024, modulos="nomina", raiz=tmp_path)
 
 
 def test_emicron_available(tmp_path):
     _baja_emicron(tmp_path, _paquetes_emicron(2025, ["identificacion", "ventas"]), [2025], modulos=["ventas"])
     (tmp_path / "datos" / "2019").mkdir()
     (tmp_path / "datos" / "2019" / "ventas.csv").write_text("x")  # sin identificación: no cuenta
-    tabla = dd.emicron.available(root=tmp_path)
+    tabla = dd.emicron.available(raiz=tmp_path)
     assert tabla[["anio", "modulo", "archivo"]].values.tolist() == [[2025, "identificacion", "identificacion.csv"],
                                                                   [2025, "ventas", "ventas.csv"]]
-    assert list(dd.emicron.find_files(2025, root=tmp_path)[2025]) == ["identificacion", "ventas"]
-    assert dd.emicron.find_files(2019, root=tmp_path) == {}
+    assert list(dd.emicron.find_files(2025, raiz=tmp_path)[2025]) == ["identificacion", "ventas"]
+    assert dd.emicron.find_files(2019, raiz=tmp_path) == {}
 
 
 # ---------------------------------------------------------------------------------------------------- #
@@ -1487,7 +1487,7 @@ def test_pobreza_empalme_en_su_carpeta(tmp_path):
 
 def test_pobreza_download_valida_archivos(tmp_path):
     with pytest.raises(ValueError, match="viviendas"):
-        dd.pobreza.download(2024, archivos="viviendas", root=tmp_path)
+        dd.pobreza.download(2024, archivos="viviendas", raiz=tmp_path)
 
 
 def test_pobreza_conserva_el_zip_si_falla(tmp_path):

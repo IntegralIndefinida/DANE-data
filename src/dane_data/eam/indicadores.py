@@ -7,7 +7,7 @@ from typing import Iterable
 import numpy as np
 import pandas as pd
 
-from ..stats import _avisar, _as_list
+from ..stats import _as_list, _avisar, _con_nombres_viejos
 
 GLOSARIO = {
     "Producción bruta": "Valor total de lo producido por el establecimiento en el año (prodbr2).",
@@ -232,8 +232,9 @@ def crecimiento(df: pd.DataFrame, valor: str, por: str | Iterable[str] | None = 
     return d
 
 
+@_con_nombres_viejos
 def deflactar(df: pd.DataFrame, columnas: Iterable[str], deflactor: pd.DataFrame | pd.Series,
-              on: str | list[str] = "anio", base: float = 100.0, sufijo: str = "_real") -> pd.DataFrame:
+              llaves: str | list[str] = "anio", base: float = 100.0, sufijo: str = "_real") -> pd.DataFrame:
     """
     Convierte valores corrientes a precios constantes.
 
@@ -246,9 +247,9 @@ def deflactar(df: pd.DataFrame, columnas: Iterable[str], deflactor: pd.DataFrame
     columnas
         Columnas a deflactar.
     deflactor
-        Una Serie indexada por año, o un DataFrame con las columnas de ``on`` (por ejemplo
+        Una Serie indexada por año, o un DataFrame con las columnas de ``llaves`` (por ejemplo
         ``["anio", "division"]``, para un deflactor por sector) y una columna ``deflactor``.
-    on
+    llaves
         Columna o columnas con que se une el deflactor.
     base
         Valor del índice en el año base (100 si el deflactor es un índice base 100).
@@ -264,7 +265,7 @@ def deflactar(df: pd.DataFrame, columnas: Iterable[str], deflactor: pd.DataFrame
     Lanza
     -----
     ValueError
-        Si el deflactor repite un año (o una combinación de ``on``): duplicaría filas de ``df``.
+        Si el deflactor repite un año (o una combinación de ``llaves``): duplicaría filas de ``df``.
 
     Avisos
     ------
@@ -294,15 +295,15 @@ def deflactar(df: pd.DataFrame, columnas: Iterable[str], deflactor: pd.DataFrame
     1  2023    300.0         300.0
     2  2024    230.0         209.1
     """
-    on = _as_list(on)
+    llaves = _as_list(llaves)
     d = df.drop(columns="deflactor", errors="ignore")      # de una llamada anterior: se reemplaza
     if isinstance(deflactor, pd.Series):
-        deflactor = deflactor.rename("deflactor").rename_axis(on[0]).reset_index()
-    if deflactor.duplicated(subset=on).any():
-        repetidos = deflactor.loc[deflactor.duplicated(subset=on, keep=False), on].drop_duplicates()
-        raise ValueError(f"El deflactor repite {', '.join(on)}: {repetidos.to_dict('records')}. Cada fila de "
+        deflactor = deflactor.rename("deflactor").rename_axis(llaves[0]).reset_index()
+    if deflactor.duplicated(subset=llaves).any():
+        repetidos = deflactor.loc[deflactor.duplicated(subset=llaves, keep=False), llaves].drop_duplicates()
+        raise ValueError(f"El deflactor repite {', '.join(llaves)}: {repetidos.to_dict('records')}. Cada fila de "
                          "df se uniría con varios valores y quedaría duplicada.")
-    d = d.merge(deflactor[on + ["deflactor"]], on=on, how="left")
+    d = d.merge(deflactor[llaves + ["deflactor"]], on=llaves, how="left")
     for c in _as_list(columnas):  # una sola columna ("valagri") no se parte en letras
         d[f"{c}{sufijo}"] = pd.to_numeric(d[c], errors="coerce") / d["deflactor"] * base
     faltan = d["deflactor"].isna().mean()
@@ -340,7 +341,7 @@ def panel(df: pd.DataFrame, balanceado: bool = False, anios: Iterable[int] | Non
     -----
     ValueError
         Si ``excluir_microagregados=True`` y ``df`` no tiene la columna ``microagregado`` (la agrega
-        ``load`` con ``harmonize_vars=True``).
+        ``load`` con ``armonizar=True``).
 
     Avisos
     ------
@@ -381,7 +382,7 @@ def panel(df: pd.DataFrame, balanceado: bool = False, anios: Iterable[int] | Non
     if excluir_microagregados:
         if "microagregado" not in d.columns:
             raise ValueError("excluir_microagregados=True necesita la columna microagregado: cargue con "
-                             "dd.eam.load(..., harmonize_vars=True).")
+                             "dd.eam.load(..., armonizar=True).")
         d = d[~d["microagregado"].astype(bool)]
     d = d.drop_duplicates(subset=["nordest", "anio"])
     if balanceado:

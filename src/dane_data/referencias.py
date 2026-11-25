@@ -150,7 +150,7 @@ def buscar_variable(texto: str, encuesta: str = "geih"):
     Véase también
     -------------
     diccionario : El diccionario completo.
-    dane_data.geih.load : Cargar variables del DANE extra con ``columns=[...]``.
+    dane_data.geih.load : Cargar variables del DANE extra con ``columnas=[...]``.
 
     Ejemplos
     --------

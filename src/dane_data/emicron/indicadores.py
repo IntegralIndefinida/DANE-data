@@ -7,7 +7,7 @@ from typing import Iterable
 import numpy as np
 import pandas as pd
 
-from ..stats import _avisar, _as_list as _lista, _con_categorias, _motivo_sin_peso
+from ..stats import _as_list as _lista, _avisar, _con_categorias, _motivo_sin_peso
 
 GLOSARIO = {
     "Micronegocio": "Unidad económica con hasta 9 personas ocupadas que desarrolla una actividad productiva de bienes o "

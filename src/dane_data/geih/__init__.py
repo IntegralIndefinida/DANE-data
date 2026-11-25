@@ -10,21 +10,22 @@ from .agregados import (POBLACIONES, POR_PRECALCULADOS, VARIABLES_INDICADORES, e
 from .indicadores import GLOSARIO, indicadores, trimestre_movil
 from .loader import (CATEGORIAS, CONDICIONES, CORE_RAW, GRUPOS_EDAD, MARCOS, MODULOS, NIVELES_EDUC, available,
                      _root, clear_cache, find_months, harmonize, load, load_month, marco_muestral)
-from ..stats import _enteros
+from ..stats import _con_nombres_viejos, _enteros
 
 ANIOS_DISPONIBLES = sorted(int(y) for y in KNOWN_CATALOGS)
 ANIOS_EMPALME = sorted(int(y) for y in EMPALME_CATALOGS)
 
 
+@_con_nombres_viejos
 def download(
-    years: Iterable[int] | int | None = None,
-    modules: Iterable[str] | None = None,
+    anios: Iterable[int] | int | None = None,
+    modulos: Iterable[str] | None = None,
     empalme: bool = False,
-    root=None,
-    delete_zips: bool = False,
-    limit_files: int | None = None,
-    progress=None,
-    should_stop=None,
+    raiz=None,
+    borrar_zips: bool = False,
+    limite_archivos: int | None = None,
+    progreso=None,
+    detener=None,
     forzar: bool = False,
 ) -> list[str]:
     """
@@ -36,30 +37,30 @@ def download(
 
     Parámetros
     ----------
-    years
+    anios
         Año o lista de años. ``None`` descarga todos los de la serie (``ANIOS_DISPONIBLES``, o
         ``ANIOS_EMPALME`` con ``empalme=True``); una lista vacía, ninguno. Los años que no están en el
         ANDA se saltan y quedan en la lista que se devuelve.
-    modules
+    modulos
         Módulo o lista de módulos a extraer, con los nombres de ``DEFAULT_MODULES``: ``vivienda``,
         ``caracteristicas``, ``fuerza_trabajo``, ``ocupados``, ``desocupados``, ``inactivos``,
         ``otras_formas_trabajo``, ``otros_ingresos``, ``migracion``. Por defecto, todos. Los dos últimos no
         se exigen: de marzo a julio de 2020 no viene Otros ingresos, y Migración empieza en 2022.
     empalme
         Descargar la serie de empalme (2010–2020, con proyecciones del CNPV 2018) en vez de la principal.
-    root
+    raiz
         Carpeta de destino. Por defecto, la de ``dd.get_path("geih")`` o ``dd.get_path("geih_empalme")``.
-    delete_zips
+    borrar_zips
         Borrar cada ZIP después de extraerlo. Por defecto se conservan.
-    limit_files
+    limite_archivos
         Máximo de meses por año; útil para probar con uno solo.
-    progress
-        Función ``progress(fraccion, mensaje)`` que recibe el avance (``fraccion`` entre 0 y 1, o None).
-    should_stop
+    progreso
+        Función ``progreso(fraccion, mensaje)`` que recibe el avance (``fraccion`` entre 0 y 1, o None).
+    detener
         Función sin argumentos; si devuelve True, la descarga se detiene con ``DownloadCancelled``.
     forzar
         Volver a bajar y extraer aunque ya esté en disco, por ejemplo si el DANE corrigió los archivos. Lo
-        nuevo se extrae aparte y reemplaza los archivos de los ``modules`` pedidos solo si salió completo;
+        nuevo se extrae aparte y reemplaza los archivos de los ``modulos`` pedidos solo si salió completo;
         los de otros módulos, y todo si algo falló, quedan como estaban.
 
     Devuelve
@@ -71,9 +72,9 @@ def download(
     Lanza
     -----
     DownloadCancelled
-        Si ``should_stop()`` devolvió True.
+        Si ``detener()`` devolvió True.
     ValueError
-        Si ``modules`` está vacío o tiene un nombre que no es de ``DEFAULT_MODULES``.
+        Si ``modulos`` está vacío o tiene un nombre que no es de ``DEFAULT_MODULES``.
 
     Véase también
     -------------
@@ -95,20 +96,20 @@ def download(
     >>> fallidos  # doctest: +SKIP
     []
     >>> dd.geih.download(2016, empalme=True)  # doctest: +SKIP
-    >>> dd.geih.download(2025, limit_files=1)  # solo enero, para probar  # doctest: +SKIP
+    >>> dd.geih.download(2025, limite_archivos=1)  # solo enero, para probar  # doctest: +SKIP
     >>> dd.geih.download(2024, forzar=True)  # el DANE volvió a publicar 2024  # doctest: +SKIP
     """
-    years = _enteros(years)
+    anios = _enteros(anios)
     dl = GEIHDownloader(
-        base_dir=_root(empalme, root),
-        keep_zips=not delete_zips,
+        base_dir=_root(empalme, raiz),
+        keep_zips=not borrar_zips,
         is_empalme=empalme,
-        modules=modules,
-        progress=progress,
-        should_stop=should_stop,
+        modules=modulos,
+        progress=progreso,
+        should_stop=detener,
         forzar=forzar,
     )
-    return dl.run_pipeline(target_years=years, limit_files=limit_files)
+    return dl.run_pipeline(target_years=anios, limit_files=limite_archivos)
 
 
 __all__ = [

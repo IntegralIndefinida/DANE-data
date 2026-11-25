@@ -8,18 +8,19 @@ from .downloader import EMICRON_KNOWN_FILES, EMICRONDownloader
 from .indicadores import GLOSARIO, a_miles_anuales, indicadores
 from .loader import (CATEGORIAS, CIUDADES, CLAVE, CORE, ETIQUETAS, FACTORES, MODULOS, MONTOS, _root,
                      available, find_files, harmonize, load, load_personal)
-from ..stats import _enteros, _opciones
+from ..stats import _con_nombres_viejos, _enteros, _opciones
 
 ANIOS_DISPONIBLES = sorted({a for a, _ in EMICRON_KNOWN_FILES})
 
 
+@_con_nombres_viejos
 def download(
-    years: Iterable[int] | int | None = None,
+    anios: Iterable[int] | int | None = None,
     modulos: Iterable[str] | str | None = None,
-    root=None,
-    delete_zips: bool = False,
-    progress=None,
-    should_stop=None,
+    raiz=None,
+    borrar_zips: bool = False,
+    progreso=None,
+    detener=None,
     forzar: bool = False,
 ) -> list[str]:
     """
@@ -29,19 +30,19 @@ def download(
 
     Parámetros
     ----------
-    years
+    anios
         Año o lista de años entre 2019 y 2025. ``None`` descarga toda la serie (unos 300 MB de ZIP); una lista vacía,
         ninguno. Los años que no están en el ANDA se saltan y quedan en la lista que se devuelve.
     modulos
         Módulo o lista de módulos (claves de ``MODULOS``). ``None`` para todos. La identificación y los factores de
         expansión se bajan siempre: sin ellos no se puede cargar.
-    root
+    raiz
         Carpeta de destino. Por defecto, la de ``dd.get_path("emicron")``.
-    delete_zips
+    borrar_zips
         Borrar cada ZIP después de extraerlo.
-    progress
-        Función ``progress(fraccion, mensaje)`` que recibe el avance.
-    should_stop
+    progreso
+        Función ``progreso(fraccion, mensaje)`` que recibe el avance.
+    detener
         Función sin argumentos; si devuelve True, la descarga se detiene con ``DownloadCancelled``.
     forzar
         Volver a bajar y extraer aunque ya esté en disco, por ejemplo si el DANE corrigió los archivos. Un CSV se
@@ -57,7 +58,7 @@ def download(
     ValueError
         Si algún módulo no es una clave de ``MODULOS``.
     DownloadCancelled
-        Si ``should_stop()`` devolvió True.
+        Si ``detener()`` devolvió True.
 
     Véase también
     -------------
@@ -75,17 +76,17 @@ def download(
     >>> dd.emicron.download(2024)  # doctest: +SKIP
     >>> dd.emicron.download(range(2019, 2025), modulos=["ventas", "costos"])  # doctest: +SKIP
     """
-    years = _enteros(years)
+    anios = _enteros(anios)
     if modulos is not None:  # None: el descargador decide (todos)
         modulos = list(_opciones(modulos, MODULOS, "Módulo"))
     dl = EMICRONDownloader(
-        base_dir=_root(root),
-        keep_zips=not delete_zips,
-        progress=progress,
-        should_stop=should_stop,
+        base_dir=_root(raiz),
+        keep_zips=not borrar_zips,
+        progress=progreso,
+        should_stop=detener,
         forzar=forzar,
     )
-    return dl.run_pipeline(target_years=years, modulos=modulos)
+    return dl.run_pipeline(target_years=anios, modulos=modulos)
 
 
 __all__ = [

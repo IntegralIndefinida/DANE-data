@@ -43,7 +43,7 @@ def test_month_from_folder(folder, mes):
 
 
 def test_available_marks_incomplete(geih_root):
-    av = dd.geih.available(root=geih_root)
+    av = dd.geih.available(raiz=geih_root)
     assert list(zip(av.anio, av.mes)) == [(2011, 3), (2016, 1), (2021, 9), (2025, 1), (2025, 2)]
     assert av.set_index(["anio", "mes"]).loc[(2025, 2), "faltantes"] == "desocupados"
     assert av.completo.tolist() == [True, True, True, True, False]
@@ -51,9 +51,9 @@ def test_available_marks_incomplete(geih_root):
 
 def test_csv_danado_usa_formato_alterno(geih_root):
     """2011: el CSV del ANDA perdió el punto decimal del factor; se usa la carpeta del TXT."""
-    av = dd.geih.available(root=geih_root)
+    av = dd.geih.available(raiz=geih_root)
     assert av.set_index(["anio", "mes"]).loc[(2011, 3), "carpeta"] == "Marzo_txt"
-    df = dd.geih.load(2011, root=geih_root, cache=False)
+    df = dd.geih.load(2011, raiz=geih_root, cache=False)
     assert df["fex"].tolist() == pytest.approx([84.9491032387525, 84.9491032387525, 1078.45157267357])
     assert df["condicion"].tolist() == ["Ocupado", "Desocupado", "Ocupado"]
     assert "FEX_C" not in df.columns  # el factor de "Otras actividades" no reemplaza al de características
@@ -63,11 +63,11 @@ def test_mes_completo_en_dos_carpetas_no_se_duplica(geih_root, caplog):
     """Una copia del mes (p. ej. descomprimida dos veces) no suma sus filas dos veces."""
     import shutil
 
-    antes = len(dd.geih.load(2016, root=geih_root, cache=False))
+    antes = len(dd.geih.load(2016, raiz=geih_root, cache=False))
     shutil.copytree(geih_root / "datos_csv" / "2016" / "Enero", geih_root / "datos_csv" / "2016" / "Enero_copia")
     with caplog.at_level("WARNING", logger="dane_data.geih"):
-        assert len(dd.geih.find_months(2016, root=geih_root)) == 1
-        assert len(dd.geih.load(2016, root=geih_root, cache=False)) == antes
+        assert len(dd.geih.find_months(2016, raiz=geih_root)) == 1
+        assert len(dd.geih.load(2016, raiz=geih_root, cache=False)) == antes
     assert "varias carpetas" in caplog.text
 
 
@@ -79,7 +79,7 @@ def test_cada_anio_del_anda_tiene_salario_minimo():
 def test_anio_sin_salario_minimo_avisa(geih_root, caplog, monkeypatch):
     monkeypatch.delitem(dd.SMLV, 2016)
     with caplog.at_level("WARNING", logger="dane_data.geih"):
-        df = dd.geih.load(2016, root=geih_root, cache=False)
+        df = dd.geih.load(2016, raiz=geih_root, cache=False)
     assert "salario mínimo de 2016" in caplog.text
     assert df["ratio_smlv"].isna().all()
 
@@ -89,7 +89,7 @@ def test_carpeta_del_mes_sin_archivos_reconocidos(geih_root):
     otra = geih_root / "datos_csv" / "2016" / "Enero_documentacion"
     otra.mkdir()
     (otra / "diccionario.csv").write_text("variable;descripcion\nP6020;Sexo\n", encoding="utf-8")
-    meses = dd.geih.find_months(2016, root=geih_root)
+    meses = dd.geih.find_months(2016, raiz=geih_root)
     assert len(meses) == 1 and meses[0].carpeta.name == "Enero"
 
 
@@ -97,18 +97,18 @@ def test_archivo_reemplazado_se_vuelve_a_revisar(geih_root):
     """Con la app abierta, un CSV dañado que se reemplaza por uno bueno en la misma ruta deja de omitirse."""
     car = next((geih_root / "datos_csv" / "2016" / "Enero").glob("Cabecera - Car*"))
     bueno = car.read_bytes()
-    assert dd.geih.find_months(2016, root=geih_root)[0].completo
+    assert dd.geih.find_months(2016, raiz=geih_root)[0].completo
     car.write_text(car.read_text(encoding="utf-8").replace(";", " "), encoding="utf-8")  # separado por espacios
     os.utime(car, ns=(car.stat().st_atime_ns, car.stat().st_mtime_ns + 10**9))
-    assert not dd.geih.find_months(2016, root=geih_root)[0].completo
+    assert not dd.geih.find_months(2016, raiz=geih_root)[0].completo
     car.write_bytes(bueno)
     os.utime(car, ns=(car.stat().st_atime_ns, car.stat().st_mtime_ns + 2 * 10**9))
-    assert dd.geih.find_months(2016, root=geih_root)[0].completo
+    assert dd.geih.find_months(2016, raiz=geih_root)[0].completo
 
 
 def test_csv_ilegible_usa_stata(geih_root):
     """Septiembre de 2021: el CSV viene separado por espacios; se usa el Stata del ANDA."""
-    df = dd.geih.load(2021, root=geih_root, cache=False)
+    df = dd.geih.load(2021, raiz=geih_root, cache=False)
     assert df["fex"].tolist() == [250.5, 250.5]
     assert df["condicion"].tolist() == ["Ocupado", "Desocupado"]
     assert df["ingreso_laboral"].tolist()[0] == 3000000
@@ -136,15 +136,15 @@ def test_stata_110(geih_root):
 def test_csv_danado_sin_alterno_se_omite(geih_root, caplog, anio, carpeta, defecto):
     import shutil
     shutil.rmtree(geih_root / "datos_csv" / str(anio) / carpeta)
-    av = dd.geih.available(root=geih_root).set_index("anio")
+    av = dd.geih.available(raiz=geih_root).set_index("anio")
     assert not av.loc[anio, "completo"] and defecto in av.loc[anio, "faltantes"]
     with pytest.raises(FileNotFoundError):
-        dd.geih.load(anio, root=geih_root, cache=False)
+        dd.geih.load(anio, raiz=geih_root, cache=False)
     assert "Vuelva a descargar" in caplog.text
 
 
 def test_old_era_cabecera_plus_resto(geih_root):
-    df = dd.geih.load(2016, root=geih_root, cache=False)
+    df = dd.geih.load(2016, raiz=geih_root, cache=False)
     assert len(df) == 5  # Cabecera (4) + Resto (1); Area no se duplica
     assert df["fex"].tolist() == pytest.approx([100.5, 100.5, 100.5, 200.0, 300.25])  # coma decimal
     cond = df.set_index(["DIRECTORIO", "ORDEN"])["condicion"]
@@ -162,7 +162,7 @@ def test_old_era_cabecera_plus_resto(geih_root):
 
 
 def test_new_era_and_nested_folder(geih_root):
-    df = dd.geih.load(2025, root=geih_root, cache=False, columns=["P5000"])
+    df = dd.geih.load(2025, raiz=geih_root, cache=False, columnas=["P5000"])
     assert df.attrs["meses_omitidos"] == [(2025, 2, ["desocupados"])]
     assert (df["mes"] == 1).all()
     cond = df.set_index(["DIRECTORIO", "ORDEN"])["condicion"]
@@ -174,7 +174,7 @@ def test_new_era_and_nested_folder(geih_root):
 
 def test_otros_ingresos_y_migracion(geih_root):
     """Los dos módulos se unen por persona (hasta 2021, Cabecera + Resto) y de ellos salen las variables nuevas."""
-    df = dd.geih.load([2016, 2025], root=geih_root, cache=False)
+    df = dd.geih.load([2016, 2025], raiz=geih_root, cache=False)
     p = df.set_index(["anio", "DIRECTORIO", "ORDEN"])
     assert p["ingreso_no_laboral"].dropna().to_dict() == {
         (2016, 1, 1): 800000, (2016, 2, 1): 0, (2016, 3, 1): 150000, (2025, 10, 1): 0, (2025, 11, 1): 100000}
@@ -183,31 +183,31 @@ def test_otros_ingresos_y_migracion(geih_root):
 
 
 def test_aviso_de_modulos_que_faltan_en_un_mes(geih_root, caplog):
-    """Un mes sin módulos que sí traen otros meses de su año se avisa, aunque se cargue solo; con modules, solo esos."""
+    """Un mes sin módulos que sí traen otros meses de su año se avisa, aunque se cargue solo; con modulos, solo esos."""
     with caplog.at_level("WARNING", logger="dane_data.geih"):
-        dd.geih.load(2025, months=2, root=geih_root, cache=False, incluir_incompletos=True)
+        dd.geih.load(2025, meses=2, raiz=geih_root, cache=False, incluir_incompletos=True)
     assert "migracion, no_ocupados, otros_ingresos, vivienda en Febrero 2025" in caplog.text
     caplog.clear()
     with caplog.at_level("WARNING", logger="dane_data.geih"):
-        dd.geih.load(2025, root=geih_root, cache=False)                              # enero los trae todos
-        dd.geih.load(2025, months=2, root=geih_root, cache=False, incluir_incompletos=True,
-                      modules=["caracteristicas", "fuerza", "ocupados"])
+        dd.geih.load(2025, raiz=geih_root, cache=False)                              # enero los trae todos
+        dd.geih.load(2025, meses=2, raiz=geih_root, cache=False, incluir_incompletos=True,
+                      modulos=["caracteristicas", "fuerza", "ocupados"])
     assert "Meses sin módulos" not in caplog.text
 
 
-def test_modules_valida_y_acepta_los_nombres_de_download(geih_root, caplog):
+def test_modulos_valida_y_acepta_los_nombres_de_download(geih_root, caplog):
     """Un nombre desconocido se ignoraba y la TD salía 0 % sin aviso: ahora falla, y los nombres de download valen."""
     with pytest.raises(ValueError, match="Módulo desconocido 'ocupado'"):
-        dd.geih.load(2016, root=geih_root, cache=False, modules=["caracteristicas", "ocupado"])
+        dd.geih.load(2016, raiz=geih_root, cache=False, modulos=["caracteristicas", "ocupado"])
     with caplog.at_level("WARNING", logger="dane_data.geih"):
-        de_descarga = dd.geih.load(2016, root=geih_root, cache=False,
-                                   modules=["caracteristicas", "fuerza_trabajo", "ocupados", "desocupados", "inactivos"])
-        de_carga = dd.geih.load(2016, root=geih_root, cache=False,
-                                modules=["caracteristicas", "fuerza", "ocupados", "no_ocupados"])
+        de_descarga = dd.geih.load(2016, raiz=geih_root, cache=False,
+                                   modulos=["caracteristicas", "fuerza_trabajo", "ocupados", "desocupados", "inactivos"])
+        de_carga = dd.geih.load(2016, raiz=geih_root, cache=False,
+                                modulos=["caracteristicas", "fuerza", "ocupados", "no_ocupados"])
     pd.testing.assert_frame_equal(de_descarga, de_carga)
     assert "condición de actividad" not in caplog.text
     with caplog.at_level("WARNING", logger="dane_data.geih"):
-        dd.geih.load(2016, root=geih_root, cache=False, modules=["caracteristicas", "fuerza", "ocupados"])
+        dd.geih.load(2016, raiz=geih_root, cache=False, modulos=["caracteristicas", "fuerza", "ocupados"])
     assert "falta desocupados: la condición de actividad" in caplog.text
 
 
@@ -219,7 +219,7 @@ def test_aviso_de_partes_y_de_modulos_sin_extraer(geih_root, caplog):
     enero = geih_root / "datos_csv" / "2016" / "Enero"
     (enero / "Resto - Otros ingresos.csv").unlink()
     with caplog.at_level("WARNING", logger="dane_data.geih"):
-        dd.geih.load(2016, root=geih_root, cache=False)
+        dd.geih.load(2016, raiz=geih_root, cache=False)
     assert "Resto - Otros ingresos en Enero 2016" in caplog.text
     assert "Ningún mes" not in caplog.text
 
@@ -227,9 +227,9 @@ def test_aviso_de_partes_y_de_modulos_sin_extraer(geih_root, caplog):
     shutil.copytree(enero, geih_root / "datos_csv" / "2020" / "Abril")
     caplog.clear()
     with caplog.at_level("WARNING", logger="dane_data.geih"):
-        dd.geih.load([2016, 2020], root=geih_root, cache=False)
+        dd.geih.load([2016, 2020], raiz=geih_root, cache=False)
     assert "Ningún mes de 2016 en disco trae el módulo otros_ingresos" in caplog.text
-    assert "dane_data.geih.download([2016], forzar=True, modules=['otros_ingresos'])" in caplog.text
+    assert "dane_data.geih.download([2016], forzar=True, modulos=['otros_ingresos'])" in caplog.text
     assert "Resto - Otros ingresos" not in caplog.text
 
 
@@ -256,8 +256,8 @@ def test_posicion_ocupacional_cambia_en_2022():
 
 
 def test_load_variables(geih_root):
-    completo = dd.geih.load([2016, 2025], root=geih_root, cache=False)
-    df = dd.geih.load([2016, 2025], root=geih_root, cache=False, variables=["fex", "departamento", "P6040"])
+    completo = dd.geih.load([2016, 2025], raiz=geih_root, cache=False)
+    df = dd.geih.load([2016, 2025], raiz=geih_root, cache=False, variables=["fex", "departamento", "P6040"])
     assert list(df.columns) == ["anio", "mes", "fex", "departamento", "P6040"]
     pd.testing.assert_frame_equal(df, completo[df.columns])
     assert isinstance(df["departamento"].dtype, pd.CategoricalDtype)  # se conserva al concatenar meses
@@ -270,10 +270,10 @@ def test_empalme_pet_15_anios(tmp_path):
     (m / "Características generales (personas).CSV").write_text(
         "DIRECTORIO;SECUENCIA_P;ORDEN;P6040;CLASE;OCI;DSI;PETI;INGLABO;FEX_C\n"
         "1;1;1;40;1;1;;1;900000;100\n1;1;2;12;1;1;;1;200000;100\n1;1;3;13;2;;;1;;100\n", encoding="utf-8")
-    empalme = dd.geih.load(2012, empalme=True, root=tmp_path, cache=False)
+    empalme = dd.geih.load(2012, empalme=True, raiz=tmp_path, cache=False)
     assert empalme["condicion"].tolist() == ["Ocupado", "Fuera de la PET", "Fuera de la PET"]
     assert empalme["ingreso_laboral"].notna().tolist() == [True, False, False]
-    principal = dd.geih.load(2012, root=tmp_path, cache=False)
+    principal = dd.geih.load(2012, raiz=tmp_path, cache=False)
     assert principal["condicion"].tolist() == ["Ocupado", "Ocupado", "Inactivo"]
 
 
@@ -285,14 +285,14 @@ def test_marco_muestral():
 
 
 def test_include_incomplete(geih_root):
-    df = dd.geih.load(2025, root=geih_root, cache=False, incluir_incompletos=True)
+    df = dd.geih.load(2025, raiz=geih_root, cache=False, incluir_incompletos=True)
     assert set(df["mes"]) == {1, 2}
     enero = df[df.mes.eq(1)].set_index(["DIRECTORIO", "ORDEN"])["formal"]
     assert enero[(10, 1)] == 1 and enero.drop((10, 1)).isna().all()     # solo los ocupados
 
 
 def test_indicadores_weighted(geih_root):
-    df = dd.geih.load(2016, root=geih_root, cache=False)
+    df = dd.geih.load(2016, raiz=geih_root, cache=False)
     ind = dd.geih.indicadores(df).iloc[0]
     # FT = ocupados (100.5 + 200) + desocupados (100.5)
     assert ind["fuerza_trabajo"] == pytest.approx(401.0)
@@ -302,14 +302,14 @@ def test_indicadores_weighted(geih_root):
     assert ind["tasa_informalidad_marco2005"] == pytest.approx(100 * 200 / 300.5)
     sin = dd.geih.indicadores(df.drop(columns=["formal", "formal_marco2005"])).iloc[0]   # vacías, sin KeyError
     assert pd.isna(sin["tasa_informalidad"]) and pd.isna(sin["tasa_informalidad_marco2005"])
-    assert dd.geih.indicadores(dd.geih.load(2025, months=1, root=geih_root, cache=False))["tasa_informalidad"].item() == 0
+    assert dd.geih.indicadores(dd.geih.load(2025, meses=1, raiz=geih_root, cache=False))["tasa_informalidad"].item() == 0
 
 
 def test_preguntas_de_informalidad_en_float32(geih_root):
     """Son códigos pequeños que solo existen en unos años: en float32 ocupan la mitad de memoria."""
     from dane_data.geih.loader import _COMPACTAS
 
-    df = dd.geih.load(2025, months=1, root=geih_root, cache=False)
+    df = dd.geih.load(2025, meses=1, raiz=geih_root, cache=False)
     presentes = [c for c in _COMPACTAS if c in df.columns]
     assert presentes and all(df[c].dtype == "float32" for c in presentes)
 
@@ -327,7 +327,7 @@ def test_informalidad_vacia_si_falta_la_medicion():
 
 
 def test_tabla_averages_months(geih_root):
-    df = dd.geih.load(2025, root=geih_root, cache=False, incluir_incompletos=True)
+    df = dd.geih.load(2025, raiz=geih_root, cache=False, incluir_incompletos=True)
     t = dd.tabla(df, por="anio")
     # Enero: 2501 personas expandidas; Febrero: 1000 → promedio mensual 1750.5
     assert t["total"].item() == pytest.approx((1000.5 * 2 + 500 + 1000) / 2)
@@ -335,8 +335,8 @@ def test_tabla_averages_months(geih_root):
 
 def test_cache_roundtrip(geih_root, tmp_path, monkeypatch):
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
-    a = dd.geih.load(2016, root=geih_root)
-    b = dd.geih.load(2016, root=geih_root)
+    a = dd.geih.load(2016, raiz=geih_root)
+    b = dd.geih.load(2016, raiz=geih_root)
     assert list((tmp_path / "cache" / "geih").glob("*.parquet"))
     pd.testing.assert_frame_equal(a, b, check_dtype=False, check_categorical=False)
 
@@ -347,7 +347,7 @@ def test_cache_del_mes_cambia_con_el_codigo_que_lee(geih_root, monkeypatch, requ
     from dane_data.geih import loader
 
     request.addfinalizer(loader._firma_lectura.cache_clear)   # no dejar la firma alterada para otras pruebas
-    mes = dd.geih.find_months(2016, root=geih_root)[0]
+    mes = dd.geih.find_months(2016, raiz=geih_root)[0]
     loader._firma_lectura.cache_clear()
     antes = loader._cache_path(mes, "core", None)
 
@@ -363,10 +363,10 @@ def test_cache_del_mes_cambia_con_el_codigo_que_lee(geih_root, monkeypatch, requ
 
 
 def test_cache_del_mes_ignora_columnas_que_no_cambian_la_lectura(geih_root):
-    """Pedir en ``columns`` una variable de CORE_RAW o una que no está en los archivos no crea otra caché del mes."""
+    """Pedir en ``columnas`` una variable de CORE_RAW o una que no está en los archivos no crea otra caché del mes."""
     from dane_data.geih import loader
 
-    mes = dd.geih.find_months(2025, root=geih_root)[0]
+    mes = dd.geih.find_months(2025, raiz=geih_root)[0]
     core = loader._cache_path(mes, "core", None)
     assert loader._cache_path(mes, ["smlv", "ingreso laboral", "OCI"], None) == core
     assert loader._cache_path(mes, ["p5000"], None) == loader._cache_path(mes, ["P5000", "smlv"], None) != core
@@ -374,28 +374,28 @@ def test_cache_del_mes_ignora_columnas_que_no_cambian_la_lectura(geih_root):
 
 def test_un_solo_nombre_sin_lista(geih_root, eam_root):
     """Un solo valor o nombre en vez de una lista no se parte en letras."""
-    df = dd.geih.load(2016, root=geih_root, cache=False)
+    df = dd.geih.load(2016, raiz=geih_root, cache=False)
     assert dd.geih.filtrar(df, {"sexo": "Mujer"}).equals(dd.geih.filtrar(df, {"sexo": ["Mujer"]}))
     assert len(dd.geih.filtrar(df, {"sexo": "Mujer"})) > 0
     assert len(dd.geih.filtrar(df, {"anio": 2016})) == len(df)
-    uno = dd.geih.load(2016, root=geih_root, cache=False, columns="P6050", modules="caracteristicas",
-                       harmonize_vars=False)
-    lista = dd.geih.load(2016, root=geih_root, cache=False, columns=["P6050"], modules=["caracteristicas"],
-                         harmonize_vars=False)
+    uno = dd.geih.load(2016, raiz=geih_root, cache=False, columnas="P6050", modulos="caracteristicas",
+                       armonizar=False)
+    lista = dd.geih.load(2016, raiz=geih_root, cache=False, columnas=["P6050"], modulos=["caracteristicas"],
+                         armonizar=False)
     assert "P6050" in uno.columns
     pd.testing.assert_frame_equal(uno, lista)
-    assert "prodbr2" in dd.eam.load(2016, root=eam_root, columns="prodbr2", harmonize_vars=False).columns
-    eam = dd.eam.load(2016, root=eam_root)
+    assert "prodbr2" in dd.eam.load(2016, raiz=eam_root, columnas="prodbr2", armonizar=False).columns
+    eam = dd.eam.load(2016, raiz=eam_root)
     assert "valagri_real" in dd.eam.deflactar(eam, "valagri", pd.Series({2016: 100.0})).columns
 
 
 def test_exportar_una_sola_variable(geih_root, tmp_path, monkeypatch):
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
     ruta = tmp_path / "fex.csv"
-    dd.geih.exportar(2016, ruta, variables="fex", root=geih_root)
+    dd.geih.exportar(2016, ruta, variables="fex", raiz=geih_root)
     assert list(pd.read_csv(ruta, encoding="utf-8-sig").columns) == ["anio", "mes", "fex"]
     # Para un Excel con coma decimal (configuración regional de Colombia)
-    dd.geih.exportar(2016, ruta, variables="fex", root=geih_root, sep=";", decimal=",")
+    dd.geih.exportar(2016, ruta, variables="fex", raiz=geih_root, sep=";", decimal=",")
     assert ruta.read_text(encoding="utf-8-sig").splitlines()[:2] == ["anio;mes;fex", "2016;1;100,5"]
 
 
@@ -411,15 +411,15 @@ def test_cache_interrumpida_no_deja_parquet_a_medias(geih_root, tmp_path, monkey
         raise OSError("disco lleno")
 
     monkeypatch.setattr(pd.DataFrame, "to_parquet", falla)
-    esperado = dd.geih.load(2016, root=geih_root, cache=False)
-    pd.testing.assert_frame_equal(dd.geih.load(2016, root=geih_root), esperado)
-    dd.geih.serie_indicadores(2016, root=geih_root)
+    esperado = dd.geih.load(2016, raiz=geih_root, cache=False)
+    pd.testing.assert_frame_equal(dd.geih.load(2016, raiz=geih_root), esperado)
+    dd.geih.serie_indicadores(2016, raiz=geih_root)
     assert len(temporales) >= 2 and all(t.endswith(".tmp") for t in temporales)
     assert not [f for f in (tmp_path / "cache").rglob("*") if f.is_file()]
 
     monkeypatch.setattr(pd.DataFrame, "to_parquet", original)
-    dd.geih.serie_indicadores(2016, root=geih_root)
-    dd.geih.serie_indicadores(2016, root=geih_root, filtros={"sexo": ["Mujer"]})
+    dd.geih.serie_indicadores(2016, raiz=geih_root)
+    dd.geih.serie_indicadores(2016, raiz=geih_root, filtros={"sexo": ["Mujer"]})
     (tmp_path / "cache" / "geih" / "huerfano.parquet.ab12.tmp").write_bytes(b"x")  # de una versión anterior
     # (sin contar el marcador de la limpieza automática)
     archivos = [f for f in (tmp_path / "cache").rglob("*") if f.is_file() and f.name != ".ultima_limpieza"]
@@ -430,13 +430,13 @@ def test_cache_interrumpida_no_deja_parquet_a_medias(geih_root, tmp_path, monkey
 
 def test_cache_corrupta_se_regenera(geih_root, tmp_path, monkeypatch):
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
-    a = dd.geih.load(2016, root=geih_root)
-    dd.geih.serie_indicadores(2016, root=geih_root)
+    a = dd.geih.load(2016, raiz=geih_root)
+    dd.geih.serie_indicadores(2016, raiz=geih_root)
     for f in (tmp_path / "cache").rglob("*.parquet"):
         f.write_bytes(b"no es parquet")
-    pd.testing.assert_frame_equal(dd.geih.load(2016, root=geih_root), a)
-    pd.testing.assert_frame_equal(dd.geih.serie_indicadores(2016, root=geih_root),
-                                  dd.geih.indicadores(dd.geih.load(2016, root=geih_root, cache=False)))
+    pd.testing.assert_frame_equal(dd.geih.load(2016, raiz=geih_root), a)
+    pd.testing.assert_frame_equal(dd.geih.serie_indicadores(2016, raiz=geih_root),
+                                  dd.geih.indicadores(dd.geih.load(2016, raiz=geih_root, cache=False)))
     assert all(pd.read_parquet(f) is not None for f in (tmp_path / "cache").rglob("*.parquet"))
 
 
@@ -459,16 +459,16 @@ def test_cache_temporales_con_nombre_unico(tmp_path, monkeypatch):
 @pytest.mark.parametrize("por", dd.geih.POR_PRECALCULADOS)
 def test_serie_indicadores_igual_a_indicadores(geih_root, tmp_path, monkeypatch, por, anual, dropna):
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
-    df = dd.geih.load([2016, 2025], root=geih_root, cache=False)
+    df = dd.geih.load([2016, 2025], raiz=geih_root, cache=False)
     esperado = dd.geih.indicadores(df, por=por, anual=anual, dropna=dropna)
-    serie = dd.geih.serie_indicadores([2016, 2025], por=por, anual=anual, root=geih_root, dropna=dropna)
+    serie = dd.geih.serie_indicadores([2016, 2025], por=por, anual=anual, raiz=geih_root, dropna=dropna)
     pd.testing.assert_frame_equal(serie, esperado)
 
 
 @pytest.mark.parametrize("por", [None, "sexo"])
 def test_trimestre_movil_igual_a_juntar_los_tres_meses(geih_root, por):
     """Lo que hace el DANE: los microdatos de los tres meses juntos, con el factor de expansión dividido por 3."""
-    enero = dd.geih.load(2025, months=1, root=geih_root, cache=False)
+    enero = dd.geih.load(2025, meses=1, raiz=geih_root, cache=False)
     paso = np.linspace(0.5, 1.5, len(enero))  # otro peso por persona: las tasas cambian de un mes a otro
     tres = pd.concat([enero, enero.assign(mes=2, fex=enero["fex"] * paso), enero.assign(mes=3, fex=enero["fex"] * paso[::-1])],
                      ignore_index=True)
@@ -494,7 +494,7 @@ def test_serie_frecuencias_conserva_las_categorias(geih_root, tmp_path, monkeypa
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
     with warnings.catch_warnings():
         warnings.simplefilter("error", FutureWarning)
-        f = dd.geih.serie_frecuencias([2021, 2025], por=["sexo", "nivel_educativo"], root=geih_root)
+        f = dd.geih.serie_frecuencias([2021, 2025], por=["sexo", "nivel_educativo"], raiz=geih_root)
     assert f["nivel_educativo"].dtype == dd.geih.CATEGORIAS["nivel_educativo"]
 
 
@@ -537,47 +537,47 @@ def test_serie_indicadores_sin_grupo_vacio(geih_root, tmp_path, monkeypatch):
         return df
 
     monkeypatch.setattr(mod, "load", sin_educacion)
-    df = sin_educacion(2016, root=geih_root, cache=False)
+    df = sin_educacion(2016, raiz=geih_root, cache=False)
     con_vacio = dd.geih.indicadores(df, por="nivel_educativo", dropna=False)
     assert con_vacio["nivel_educativo"].isna().sum() == 1
     assert con_vacio["n_muestra"].sum() == len(df)                  # los grupos suman el total
-    serie = dd.geih.serie_indicadores(2016, por="nivel_educativo", root=geih_root)
+    serie = dd.geih.serie_indicadores(2016, por="nivel_educativo", raiz=geih_root)
     assert serie["nivel_educativo"].notna().all() and len(serie) == len(con_vacio) - 1
     pd.testing.assert_frame_equal(serie, dd.geih.indicadores(df, por="nivel_educativo"))  # el mismo valor por defecto
     pd.testing.assert_frame_equal(
-        dd.geih.serie_indicadores(2016, por="nivel_educativo", root=geih_root, dropna=False), con_vacio)
+        dd.geih.serie_indicadores(2016, por="nivel_educativo", raiz=geih_root, dropna=False), con_vacio)
 
 
 def test_serie_indicadores_usa_cache_y_se_invalida(geih_root, tmp_path, monkeypatch):
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
-    a = dd.geih.serie_indicadores(2016, root=geih_root)
+    a = dd.geih.serie_indicadores(2016, raiz=geih_root)
     assert len(list((tmp_path / "cache" / "geih" / "indicadores").glob("principal_2016_*.parquet"))) == 1
 
     mod = sys.modules["dane_data.geih.agregados"]
     llamadas = []
     original = mod.load
     monkeypatch.setattr(mod, "load", lambda *a, **k: llamadas.append(1) or original(*a, **k))
-    pd.testing.assert_frame_equal(dd.geih.serie_indicadores(2016, root=geih_root), a)
+    pd.testing.assert_frame_equal(dd.geih.serie_indicadores(2016, raiz=geih_root), a)
     assert not llamadas
 
     csv = next((geih_root / "datos_csv" / "2016").rglob("Cabecera - Ocupados.csv"))
     os.utime(csv, (csv.stat().st_atime, csv.stat().st_mtime + 10))
-    dd.geih.serie_indicadores(2016, root=geih_root)
+    dd.geih.serie_indicadores(2016, raiz=geih_root)
     assert llamadas
 
 
 def test_serie_indicadores_por_no_precalculado(geih_root):
     with pytest.raises(ValueError, match="no está precalculado"):
-        dd.geih.serie_indicadores(2016, por="rama2d", root=geih_root)
+        dd.geih.serie_indicadores(2016, por="rama2d", raiz=geih_root)
 
 
 def test_serie_indicadores_con_filtros_y_meses(geih_root, tmp_path, monkeypatch):
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
     filtros = {"sexo": ["Mujer"], "edad": (20, 60)}
-    df = dd.geih.filtrar(dd.geih.load([2016, 2025], months=[1], root=geih_root, cache=False), filtros)
+    df = dd.geih.filtrar(dd.geih.load([2016, 2025], meses=[1], raiz=geih_root, cache=False), filtros)
     for por, anual in (("zona", True), (None, False)):
         esperado = dd.geih.indicadores(df, por=por, anual=anual, dropna=True)
-        serie = dd.geih.serie_indicadores([2016, 2025], por=por, anual=anual, root=geih_root, filtros=filtros,
+        serie = dd.geih.serie_indicadores([2016, 2025], por=por, anual=anual, raiz=geih_root, filtros=filtros,
                                           meses=[1])
         pd.testing.assert_frame_equal(serie, esperado)
 
@@ -585,40 +585,40 @@ def test_serie_indicadores_con_filtros_y_meses(geih_root, tmp_path, monkeypatch)
 def test_filtro_con_un_valor_que_no_es_categoria_falla(geih_root, tmp_path, monkeypatch):
     """«mujer» por «Mujer» daba una tabla vacía sin explicación, también en las serie_* (y la guardaba en la caché)."""
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
-    df = dd.geih.load(2016, root=geih_root, cache=False)
+    df = dd.geih.load(2016, raiz=geih_root, cache=False)
     with pytest.raises(ValueError, match="sexo no tiene 'mujer'. Opciones: Hombre, Mujer"):
         dd.geih.filtrar(df, {"sexo": ["mujer"]})
     for _ in range(2):  # la segunda vez tampoco sale de la caché
         with pytest.raises(ValueError, match="sexo no tiene 'mujer'"):
-            dd.geih.serie_indicadores(2016, root=geih_root, filtros={"sexo": "mujer"})
+            dd.geih.serie_indicadores(2016, raiz=geih_root, filtros={"sexo": "mujer"})
     assert len(dd.geih.filtrar(df, {"sexo": ["Mujer", np.nan]}))  # un vacío no es un error de escritura
 
 
 def test_errores_en_espanol_con_lo_que_falta(geih_root, tmp_path, monkeypatch):
     """Antes eran KeyError de pandas ('pet') o un «descárguelo» para el mes 13."""
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
-    df = dd.geih.load(2016, root=geih_root, cache=False, variables=["fex", "sexo", "ocupado"])
+    df = dd.geih.load(2016, raiz=geih_root, cache=False, variables=["fex", "sexo", "ocupado"])
     with pytest.raises(ValueError, match=r"Faltan columnas: 'pet', 'fuerza_trabajo'.*VARIABLES_INDICADORES"):
         dd.geih.indicadores(df)
     with pytest.raises(ValueError, match=r"'Sexo' \(¿quiso decir 'sexo'\?\)"):
         dd.tabla(df, por="Sexo")
     with pytest.raises(ValueError, match="Mes fuera de 1–12: 13"):
-        dd.geih.load(2016, months=13, root=geih_root)
+        dd.geih.load(2016, meses=13, raiz=geih_root)
     with pytest.raises(ValueError, match="Mes fuera de 1–12: 0"):
-        dd.geih.serie_indicadores(2016, meses=[0, 1], root=geih_root)
+        dd.geih.serie_indicadores(2016, meses=[0, 1], raiz=geih_root)
 
 
 def test_porcentaje_con_grupo_exterior_vacio(geih_root, tmp_path, monkeypatch):
     """Las personas sin posición ocupacional (NaN: no ocupadas) también suman 100 % dentro de su grupo."""
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
-    df = dd.geih.load(2016, root=geih_root, cache=False)
+    df = dd.geih.load(2016, raiz=geih_root, cache=False)
     assert df["posicion_ocupacional"].isna().any()
     por = ["posicion_ocupacional", "sexo"]
     t = dd.tabla(df, por=por, estadistico="porcentaje")
     assert t["porcentaje"].notna().all()
     assert t.groupby("posicion_ocupacional", dropna=False, observed=True)["porcentaje"].sum().tolist() == \
         pytest.approx([100.0] * t["posicion_ocupacional"].nunique(dropna=False))
-    s = dd.geih.serie_tabla(2016, por=por, estadistico="porcentaje", root=geih_root)
+    s = dd.geih.serie_tabla(2016, por=por, estadistico="porcentaje", raiz=geih_root)
     pd.testing.assert_frame_equal(s, t, check_dtype=False, rtol=1e-9)
 
 
@@ -633,15 +633,15 @@ def test_serie_promedia_sobre_los_meses_cargados(geih_root, tmp_path, monkeypatc
         f.write_text(f.read_text(encoding="utf-8").splitlines()[0] + "\n", encoding="utf-8")
     filtros = {"zona": ["Rural (centros poblados y disperso)"]}
 
-    t = dd.geih.serie_tabla(2016, filtros=filtros, root=geih_root)
+    t = dd.geih.serie_tabla(2016, filtros=filtros, raiz=geih_root)
     assert t["total"].item() == pytest.approx(300.25 / 2)          # enero 300,25 y febrero 0
-    ind = dd.geih.serie_indicadores(2016, filtros=filtros, root=geih_root)
+    ind = dd.geih.serie_indicadores(2016, filtros=filtros, raiz=geih_root)
     assert ind["pet"].item() == pytest.approx(300.25 / 2)
     # Filtrar por mes sí cambia los meses del promedio
-    t = dd.geih.serie_tabla(2016, filtros={**filtros, "mes": [1]}, root=geih_root)
+    t = dd.geih.serie_tabla(2016, filtros={**filtros, "mes": [1]}, raiz=geih_root)
     assert t["total"].item() == pytest.approx(300.25)
     # Con microdatos, filtrar anota los meses cargados: lo mismo que serie_* (también dos filtrar seguidos)
-    micro = dd.geih.load(2016, root=geih_root, cache=False)
+    micro = dd.geih.load(2016, raiz=geih_root, cache=False)
     df = dd.geih.filtrar(micro, filtros)
     assert dd.tabla(df)["total"].item() == pytest.approx(300.25 / 2)
     assert dd.geih.indicadores(df)["pet"].item() == pytest.approx(300.25 / 2)
@@ -665,10 +665,10 @@ def test_serie_cache_distingue_rango_de_lista(geih_root, tmp_path, monkeypatch):
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
     for filtro in ((10, 60), [10, 60]):
         filtros = {"edad": filtro}
-        esperado = dd.geih.indicadores(dd.geih.filtrar(dd.geih.load(2016, root=geih_root, cache=False), filtros))
-        pd.testing.assert_frame_equal(dd.geih.serie_indicadores(2016, root=geih_root, filtros=filtros), esperado)
-        esperado = dd.tabla(dd.geih.filtrar(dd.geih.load(2016, root=geih_root, cache=False), filtros), por="sexo")
-        pd.testing.assert_frame_equal(dd.geih.serie_tabla(2016, por="sexo", root=geih_root, filtros=filtros),
+        esperado = dd.geih.indicadores(dd.geih.filtrar(dd.geih.load(2016, raiz=geih_root, cache=False), filtros))
+        pd.testing.assert_frame_equal(dd.geih.serie_indicadores(2016, raiz=geih_root, filtros=filtros), esperado)
+        esperado = dd.tabla(dd.geih.filtrar(dd.geih.load(2016, raiz=geih_root, cache=False), filtros), por="sexo")
+        pd.testing.assert_frame_equal(dd.geih.serie_tabla(2016, por="sexo", raiz=geih_root, filtros=filtros),
                                       esperado, check_dtype=False, rtol=1e-9)
 
 
@@ -684,20 +684,20 @@ def test_serie_cache_distingue_rango_de_lista(geih_root, tmp_path, monkeypatch):
 ])
 def test_serie_tabla_igual_a_tabla(geih_root, tmp_path, monkeypatch, pedido):
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
-    df = dd.geih.load([2016, 2025], months=pedido.get("meses"), root=geih_root, cache=False)
+    df = dd.geih.load([2016, 2025], meses=pedido.get("meses"), raiz=geih_root, cache=False)
     df = dd.geih.filtrar(df, pedido.get("filtros"), pedido.get("poblacion"))
     if pedido.get("dropna"):
         df = df.dropna(subset=pedido["por"])
     esperado = dd.tabla(df, por=pedido.get("por"), variable=pedido.get("variable"),
                         estadistico=pedido.get("estadistico", "total"))
-    serie = dd.geih.serie_tabla([2016, 2025], root=geih_root, **pedido)
+    serie = dd.geih.serie_tabla([2016, 2025], raiz=geih_root, **pedido)
     pd.testing.assert_frame_equal(serie, esperado, check_dtype=False, rtol=1e-9)
 
 
 def test_serie_frecuencias_variable_que_no_existe_algunos_anios(geih_root, tmp_path, monkeypatch):
     """P5000 solo está en 2025: en 2016 queda vacía en vez de fallar."""
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
-    f = dd.geih.serie_frecuencias([2016, 2025], por="P5000", columns=["P5000"], root=geih_root)
+    f = dd.geih.serie_frecuencias([2016, 2025], por="P5000", columnas=["P5000"], raiz=geih_root)
     assert f.loc[f["anio"] == 2016, "P5000"].isna().all()
     assert set(f.loc[f["anio"] == 2025, "P5000"]) == {2, 4}
 
@@ -705,8 +705,8 @@ def test_serie_frecuencias_variable_que_no_existe_algunos_anios(geih_root, tmp_p
 def test_exportar_mes_a_mes(geih_root, tmp_path):
     ruta = tmp_path / "salida" / "ocupados.csv"
     filas = dd.geih.exportar([2016, 2025], ruta, variables=["fex", "sexo", "ingreso_laboral"], poblacion="ocupado",
-                             root=geih_root)
-    esperado = dd.geih.filtrar(dd.geih.load([2016, 2025], root=geih_root, cache=False), poblacion="ocupado")
+                             raiz=geih_root)
+    esperado = dd.geih.filtrar(dd.geih.load([2016, 2025], raiz=geih_root, cache=False), poblacion="ocupado")
     leido = pd.read_csv(ruta, encoding="utf-8-sig")
     assert filas == len(esperado) == len(leido)
     assert list(leido.columns) == ["anio", "mes", "fex", "sexo", "ingreso_laboral"]
@@ -719,8 +719,8 @@ def test_exportar_sin_variables_escribe_todas_las_armonizadas(geih_root, tmp_pat
     """Sin ``variables`` no se recorta a las columnas de los filtros."""
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
     ruta = tmp_path / "ocupados.csv"
-    filas = dd.geih.exportar([2016, 2025], ruta, poblacion="ocupado", filtros={"sexo": ["Mujer"]}, root=geih_root)
-    esperado = dd.geih.filtrar(dd.geih.load([2016, 2025], root=geih_root, cache=False), {"sexo": ["Mujer"]},
+    filas = dd.geih.exportar([2016, 2025], ruta, poblacion="ocupado", filtros={"sexo": ["Mujer"]}, raiz=geih_root)
+    esperado = dd.geih.filtrar(dd.geih.load([2016, 2025], raiz=geih_root, cache=False), {"sexo": ["Mujer"]},
                                "ocupado")
     leido = pd.read_csv(ruta, encoding="utf-8-sig")
     assert filas == len(esperado) == len(leido)
@@ -730,7 +730,7 @@ def test_exportar_sin_variables_escribe_todas_las_armonizadas(geih_root, tmp_pat
 
 def test_missing_data_message(tmp_path):
     with pytest.raises(FileNotFoundError, match="download"):
-        dd.geih.load(2020, root=tmp_path)
+        dd.geih.load(2020, raiz=tmp_path)
 
 
 # --------------------------------------------------------------------------- #
@@ -742,7 +742,7 @@ REAL = Path(os.environ.get("DANE_DATA_TEST_GEIH", dd.get_path("geih")))
 @pytest.mark.skipif(not (REAL / "datos_csv" / "2025").is_dir(), reason="sin datos GEIH reales")
 @pytest.mark.parametrize("anio,mes,td", [(2016, 1, 11.9), (2019, 1, 12.8), (2021, 1, 17.3), (2025, 1, 11.6)])
 def test_real_td_matches_dane(anio, mes, td):
-    df = dd.geih.load(anio, months=mes, root=REAL)
+    df = dd.geih.load(anio, meses=mes, raiz=REAL)
     assert dd.geih.indicadores(df)["td"].item() == pytest.approx(td, abs=0.15)
 
 
@@ -752,7 +752,7 @@ PUBLICADO = pd.read_csv(Path(__file__).parent / "datos" / "dane_publicado.csv", 
 
 def _disponibles_reales(empalme: bool) -> tuple[Path, pd.DataFrame]:
     root = REAL_EMPALME if empalme else REAL
-    av = dd.geih.available(empalme=empalme, root=root) if (root / "datos_csv").is_dir() else pd.DataFrame()
+    av = dd.geih.available(empalme=empalme, raiz=root) if (root / "datos_csv").is_dir() else pd.DataFrame()
     if av.empty:
         pytest.skip(f"sin datos GEIH reales en {root}")
     return root, av
@@ -771,7 +771,7 @@ SIN_COMPARAR = {
 
 def _serie_grupo(anios, grupo, anual, empalme, root) -> pd.DataFrame:
     por, valor = GRUPOS_PUBLICADOS[grupo]
-    s = dd.geih.serie_indicadores(anios, por=por, anual=anual, empalme=empalme, root=root)
+    s = dd.geih.serie_indicadores(anios, por=por, anual=anual, empalme=empalme, raiz=root)
     return s if por is None else s[s[por] == valor].drop(columns=por)
 
 
@@ -845,7 +845,7 @@ def test_real_serie_mensual_sin_saltos(empalme):
     cambio de más de 1 % delata un factor de expansión dañado o una PET con otra definición.
     """
     root, av = _disponibles_reales(empalme)
-    m = dd.geih.serie_indicadores(sorted(av.anio.unique()), anual=False, empalme=empalme, root=root)
+    m = dd.geih.serie_indicadores(sorted(av.anio.unique()), anual=False, empalme=empalme, raiz=root)
 
     problemas = []
     faltan = set(zip(av.loc[av.completo, "anio"], av.loc[av.completo, "mes"])) - set(zip(m.anio, m.mes))
@@ -875,14 +875,14 @@ def test_anios_y_meses_de_numpy(geih_root, tmp_path, monkeypatch):
     import numpy as np
 
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
-    df = dd.geih.load(np.int64(2016), months=np.int64(1), root=geih_root, cache=False)
+    df = dd.geih.load(np.int64(2016), meses=np.int64(1), raiz=geih_root, cache=False)
     assert df["anio"].unique().tolist() == [2016] and df["mes"].unique().tolist() == [1]
-    t = dd.geih.serie_tabla(np.int64(2016), meses=np.int64(1), root=geih_root)
+    t = dd.geih.serie_tabla(np.int64(2016), meses=np.int64(1), raiz=geih_root)
     assert t["total"].item() == pytest.approx(dd.tabla(df)["total"].item())
     # Un mes como texto es ese mes: "12" no es enero y febrero
-    assert dd.geih.load(2016, months="1", root=geih_root, cache=False)["mes"].unique().tolist() == [1]
+    assert dd.geih.load(2016, meses="1", raiz=geih_root, cache=False)["mes"].unique().tolist() == [1]
     with pytest.raises(FileNotFoundError):
-        dd.geih.load(2025, months="12", root=geih_root, cache=False, incluir_incompletos=True)
+        dd.geih.load(2025, meses="12", raiz=geih_root, cache=False, incluir_incompletos=True)
 
 
 def test_cache_sin_usar_se_borra_sola(geih_root, tmp_path, monkeypatch):
@@ -898,18 +898,18 @@ def test_cache_sin_usar_se_borra_sola(geih_root, tmp_path, monkeypatch):
         f.write_bytes(b"x")
         os.utime(f, (time.time() - dias * 86400,) * 2)
 
-    dd.geih.load(2016, root=geih_root)                       # escribe la caché del mes: limpia
+    dd.geih.load(2016, raiz=geih_root)                       # escribe la caché del mes: limpia
     assert not viejo.exists() and reciente.exists()
     (mes,) = (tmp_path / "cache" / "geih").glob("2016_01_*.parquet")
 
     otro = carpeta / "principal_2016_otro.parquet"           # la limpieza se hace como mucho una vez al día
     otro.write_bytes(b"x")
     os.utime(otro, (time.time() - 100 * 86400,) * 2)
-    dd.geih.load(2016, root=geih_root, variables=["fex", "sexo"])
+    dd.geih.load(2016, raiz=geih_root, variables=["fex", "sexo"])
     assert otro.exists()
 
     os.utime(mes, (time.time() - 100 * 86400,) * 2)          # leerla la marca como usada
-    dd.geih.load(2016, root=geih_root)
+    dd.geih.load(2016, raiz=geih_root)
     assert time.time() - mes.stat().st_mtime < 60
     assert dd.geih.clear_cache(dias=30) == 1 and not otro.exists() and mes.exists()
 
@@ -978,7 +978,7 @@ def test_real_informalidad_coincide_con_lo_publicado():
     anios = sorted(set(av["anio"]) & set(INFORMALIDAD_PUBLICADA["anio"]))
     if not anios:
         pytest.skip("ningún año descargado tiene cifras de informalidad publicadas")
-    res = dd.geih.serie_indicadores(anios, anual=False, root=root).merge(
+    res = dd.geih.serie_indicadores(anios, anual=False, raiz=root).merge(
         INFORMALIDAD_PUBLICADA, on=["anio", "mes"], suffixes=("", "_dane"))
     assert len(res)
     informales = res["tasa_informalidad"] * res["ocupados"] / 100
@@ -1035,7 +1035,7 @@ def test_real_informalidad_marco2005_coincide_con_lo_publicado():
         pytest.skip("ningún año de 2007–2021 descargado")
     malos = []
     for dominio, areas in CIUDADES_2005.items():
-        m = dd.geih.serie_indicadores(anios, anual=False, filtros={"AREA": areas}, root=root)
+        m = dd.geih.serie_indicadores(anios, anual=False, filtros={"AREA": areas}, raiz=root)
         m = m.set_index(["anio", "mes"]).reindex(pd.MultiIndex.from_product([range(2007, 2022), range(1, 13)],
                                                                            names=["anio", "mes"]))
         informales = (m["tasa_informalidad_marco2005"] * m["ocupados"] / 100).rolling(3).mean() / 1e3

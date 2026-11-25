@@ -157,7 +157,7 @@ def test_eam_anios_no_consecutivos(eam_root, monkeypatch, pagina):
 def test_eam_filtros_sin_establecimientos(eam_root, monkeypatch, pagina, clave):
     """Un sector que no está en el departamento elegido: aviso, no un IndexError."""
     monkeypatch.setitem(dd.config._session, "eam", eam_root)
-    eam = dd.eam.load(2016, root=eam_root)
+    eam = dd.eam.load(2016, raiz=eam_root)
     sector = eam.loc[eam["departamento"] == "Antioquia", "sector"].iloc[0]
 
     at = AppTest.from_file(str(PAGINAS / pagina), default_timeout=60).run()
@@ -400,7 +400,7 @@ def _solo_un_mes(load):
     """La app nunca debe pedir más de un mes de microdatos a la vez."""
     def envoltura(years, months=None, **kw):
         assert months is not None and len([months] if isinstance(months, int) else months) == 1
-        return load(years, months=months, **kw)
+        return load(years, meses=months, **kw)
     return envoltura
 
 
@@ -874,7 +874,7 @@ def _indicadores_emicron(root, anios, ciudades=False):
     from dane_data.app._ui import fmt_num, fmt_pct
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        e = dd.emicron.load(anios, root=root)
+        e = dd.emicron.load(anios, raiz=root)
         e = e[e["ciudad"].notna()] if ciudades else e
         r = dd.emicron.indicadores(e).iloc[-1]
     return fmt_num(r["micronegocios"]), fmt_num(r["valor_agregado"] / 1e9, 1), fmt_pct(r["pct_rut"])

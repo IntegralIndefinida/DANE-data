@@ -18,7 +18,7 @@ def test_carpeta_emicron(tmp_path, monkeypatch):
     monkeypatch.setattr(dd.config, "_session", {})
     monkeypatch.delenv("DANE_DATA_EMICRON", raising=False)
     assert dd.get_path("emicron") == dd.config.DEFAULT_HOME / "emicron"
-    dd.set_paths(emicron=tmp_path / "x", save=True)
+    dd.set_paths(emicron=tmp_path / "x", guardar=True)
     assert json.loads((tmp_path / "c.json").read_text())["emicron"] == str(tmp_path / "x")
     assert dd.show_paths()["emicron"] == str(tmp_path / "x")
     monkeypatch.setattr(dd.config, "_session", {})
@@ -30,10 +30,10 @@ def test_carpeta_emicron(tmp_path, monkeypatch):
 # ---------------------------------------------------------------------------------------------------- #
 # Carga y armonización (datos sintéticos de tests/conftest.py)
 # ---------------------------------------------------------------------------------------------------- #
-def _load(root, years, **kw):
+def _load(raiz, anios, **kw):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", UserWarning)  # módulos que el sintético no trae
-        return dd.emicron.load(years, root=root, **kw)
+        return dd.emicron.load(anios, raiz=raiz, **kw)
 
 
 def test_load_mismo_esquema_todos_los_anios(emicron_root):
@@ -93,7 +93,7 @@ def test_montos_coma_decimal_y_2019_sin_derivadas(emicron_root):
 def test_sin_factor_ajustado_avisa_y_usa_el_anterior(emicron_root):
     (emicron_root / "datos" / "2021" / "fex_ajustado.csv").unlink()
     with pytest.warns(UserWarning, match="2021: falta el factor ajustado") as avisos:
-        e = dd.emicron.load(2021, modulos=[], root=emicron_root)
+        e = dd.emicron.load(2021, modulos=[], raiz=emicron_root)
     assert e["fex"].tolist() == [300.0, 200.0, 100.0]
     assert {a.filename for a in avisos} == {__file__}  # sale de varias funciones adentro: apunta igual a esta línea
 
@@ -102,50 +102,50 @@ def test_factor_departamental_contradictorio_es_error(emicron_root):
     f = emicron_root / "datos" / "2024" / "fex_dpto.csv"
     f.write_text(f.read_text() + "20,1,1,5\n")
     with pytest.raises(ValueError, match="dos factores distintos"):
-        dd.emicron.load(2024, modulos=[], root=emicron_root)
+        dd.emicron.load(2024, modulos=[], raiz=emicron_root)
 
 
 def test_modulos_ausentes_avisan(emicron_root):
     with pytest.warns(UserWarning, match="2021: sin el módulo capital_social \\(el DANE no lo aplicó"):
-        dd.emicron.load(2021, modulos=["capital_social"], root=emicron_root)
+        dd.emicron.load(2021, modulos=["capital_social"], raiz=emicron_root)
     with pytest.warns(UserWarning, match="2024: sin el módulo tic \\(no está descargado"):
-        dd.emicron.load(2024, modulos=["tic"], root=emicron_root)
+        dd.emicron.load(2024, modulos=["tic"], raiz=emicron_root)
     # Inclusión financiera de 2021 no cubre a todos: la fila queda vacía, no se pierde
-    e = dd.emicron.load(2021, modulos=["inclusion_financiera"], columns=["p1765"], root=emicron_root)
+    e = dd.emicron.load(2021, modulos=["inclusion_financiera"], columnas=["p1765"], raiz=emicron_root)
     assert e["p1765"].tolist()[:2] == [1, 2] and pd.isna(e["p1765"].iloc[2])
 
 
-def test_columns_all_y_extras(emicron_root):
-    e = _load(emicron_root, 2024, columns="all")
+def test_columnas_all_y_extras(emicron_root):
+    e = _load(emicron_root, 2024, columnas="all")
     assert {"p35", "p3053", "f_exp", "fex"} <= set(e.columns)
     assert not [c for c in e.columns if c.endswith(("_x", "_y"))] and not e.columns.duplicated().any()
-    e = _load(emicron_root, 2019, columns="P3089")
+    e = _load(emicron_root, 2019, columnas="P3089")
     assert list(e.columns) == [*dd.emicron.CORE, "p3089"]
     with pytest.raises(ValueError, match="p9999"):
-        _load(emicron_root, 2019, columns=["p9999"])
+        _load(emicron_root, 2019, columnas=["p9999"])
 
 
 def test_factores_pedidos_como_modulo_no_se_unen(emicron_root):
     """Los factores se leen siempre aparte: pedirlos en modulos no los une como un módulo (2021 trae una clave repetida)."""
-    e = dd.emicron.load(2021, modulos=["fex_dpto", "fex_ajustado"], root=emicron_root)
+    e = dd.emicron.load(2021, modulos=["fex_dpto", "fex_ajustado"], raiz=emicron_root)
     assert e["fex_dpto"].tolist() == [270.0, 170.0, 95.0] and e["fex"].tolist() == [260.0, 180.0, 90.0]
     assert list(e.columns) == dd.emicron.CORE
-    todo = dd.emicron.load(2021, modulos="fex_dpto", columns="all", root=emicron_root)
+    todo = dd.emicron.load(2021, modulos="fex_dpto", columnas="all", raiz=emicron_root)
     assert "fex_micro_dpto" not in todo.columns
 
 
 def test_load_errores(emicron_root, tmp_path):
     with pytest.raises(FileNotFoundError, match="dane_data.emicron.download"):
-        dd.emicron.load(2020, root=emicron_root)
+        dd.emicron.load(2020, raiz=emicron_root)
     with pytest.raises(ValueError, match="load_personal"):
-        dd.emicron.load(2024, modulos="personal_ocupado", root=emicron_root)
+        dd.emicron.load(2024, modulos="personal_ocupado", raiz=emicron_root)
     with pytest.raises(ValueError, match="Módulo desconocido"):
-        dd.emicron.load(2024, modulos="nomina", root=emicron_root)
+        dd.emicron.load(2024, modulos="nomina", raiz=emicron_root)
 
 
 def test_aviso_de_cobertura_2025(emicron_root):
     with pytest.warns(UserWarning, match="2025 solo cubren las 24 ciudades"):
-        dd.emicron.load(2025, root=emicron_root)
+        dd.emicron.load(2025, raiz=emicron_root)
 
 
 def test_codigo_sin_categoria_se_avisa(emicron_root, caplog):
@@ -157,7 +157,7 @@ def test_codigo_sin_categoria_se_avisa(emicron_root, caplog):
 
 
 def test_load_personal_con_la_clave_corrida(emicron_root):
-    p = dd.emicron.load_personal(2024, root=emicron_root)
+    p = dd.emicron.load_personal(2024, raiz=emicron_root)
     assert p[["directorio", "secuencia_p", "secuencia_encuesta", "orden"]].values.tolist() == [
         [20, 1, 1, 1], [20, 1, 1, 2], [22, 1, 1, 1], [22, 1, 1, 2]]
     assert p["tipo"].tolist() == ["Trabajador remunerado", "Socio", "Trabajador o familiar sin remuneración",
@@ -165,7 +165,7 @@ def test_load_personal_con_la_clave_corrida(emicron_root):
     assert p["fex"].tolist() == [1000.5, 1000.5, 250.0, 250.0]  # el del micronegocio
     assert p["actividad"].iloc[0] == "Servicios"
     with pytest.raises(FileNotFoundError):
-        dd.emicron.load_personal(2019, root=emicron_root)
+        dd.emicron.load_personal(2019, raiz=emicron_root)
 
 
 # ---------------------------------------------------------------------------------------------------- #
@@ -215,7 +215,7 @@ def test_sin_factor_departamental_en_otro_anio_pide_descargarlo(emicron_root):
     """En 2019–2024 el factor departamental existe: si falta es el archivo, no la EMICRON 2025."""
     (emicron_root / "datos" / "2024" / "fex_dpto.csv").unlink()
     with pytest.warns(UserWarning) as avisos:  # también el de cobertura de 2025
-        e = dd.emicron.load([2024, 2025], root=emicron_root)
+        e = dd.emicron.load([2024, 2025], raiz=emicron_root)
     assert any("2024: falta el factor departamental" in str(a.message) for a in avisos)
     with pytest.raises(ValueError, match="Falta el factor departamental de 2024: vuelva a descargar") as error:
         dd.emicron.indicadores(e[e["anio"] == 2024], peso="fex_dpto")
@@ -319,13 +319,13 @@ def test_cli_config(tmp_path, monkeypatch):
 # Datos reales (se saltan sin la EMICRON descargada)
 # ---------------------------------------------------------------------------------------------------- #
 REAL = Path(os.environ.get("DANE_DATA_TEST_EMICRON", dd.get_path("emicron")))
-# Los módulos que usan load(columns="core") e indicadores
+# Los módulos que usan load(columnas="core") e indicadores
 _PARA_INDICADORES = ("identificacion", "caracteristicas", "propietario", "sitio", "costos", "ventas")
 
 
 def _reales(anio: int, *modulos: str) -> None:
     """Salta la prueba si en los datos reales falta el año o alguno de los módulos que usa."""
-    tiene = dd.emicron.find_files(anio, root=REAL).get(anio, {})
+    tiene = dd.emicron.find_files(anio, raiz=REAL).get(anio, {})
     if faltan := [m for m in modulos if m not in tiene]:
         pytest.skip(f"sin la EMICRON {anio} real ({', '.join(faltan)})")
 
@@ -333,7 +333,7 @@ def _reales(anio: int, *modulos: str) -> None:
 def test_real_2025_sin_factor_departamental():
     _reales(2025, "identificacion")
     with pytest.warns(UserWarning, match="24 ciudades"):
-        e = dd.emicron.load(2025, modulos=[], root=REAL)
+        e = dd.emicron.load(2025, modulos=[], raiz=REAL)
     assert e["fex_dpto"].isna().all() and e["fex"].notna().all()
     with pytest.raises(ValueError, match="fex_dpto"):
         dd.emicron.indicadores(e, peso="fex_dpto")
@@ -341,7 +341,7 @@ def test_real_2025_sin_factor_departamental():
 
 def test_real_load_2024():
     _reales(2024, "identificacion", "caracteristicas", "propietario", "sitio")
-    e = dd.emicron.load(2024, root=REAL)
+    e = dd.emicron.load(2024, raiz=REAL)
     assert len(e) == 78_501
     assert e["fex"].sum() == pytest.approx(5_297_251.5562481, abs=1e-3)
     for c in ("clase", "sexo", "situacion_empleo", "actividad", "actividad12", "sitio", "salud_pension", "departamento"):
@@ -422,7 +422,7 @@ def test_real_coincide_con_los_anexos(anio):
     pub = _publicado().query("anio == @anio")
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", UserWarning)
-        e = dd.emicron.load(anio, root=REAL)
+        e = dd.emicron.load(anio, raiz=REAL)
         calc = _calculado(e, pub.loc[pub["cuadro"] == "I.1", "variable"].unique())
     m = pub.merge(calc, on=["dominio", "variable", "categoria"], how="left")
     # Una categoría que nadie tiene en una ciudad: el anexo publica 0, la tabla no tiene la fila
@@ -457,7 +457,7 @@ def test_real_coincide_con_los_anexos_departamentales(anio):
     assert pub["dominio"].nunique() == 26
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", UserWarning)
-        e = dd.emicron.load(anio, root=REAL)
+        e = dd.emicron.load(anio, raiz=REAL)
         calc = _calculado(e, pub.loc[pub["cuadro"] == "I.1", "variable"].unique(), peso="fex_dpto")
     m = pub.merge(calc, on=["dominio", "variable", "categoria"], how="left")
     m["calculado"] = pd.to_numeric(m["calculado"], errors="coerce").astype("float64").fillna(0.0)
