@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-import warnings
 from typing import Iterable
 
 import pandas as pd
 
+from ..stats import _avisar
 from .loader import LLAVES, load
 
 _LLAVES = ["anio", "mes", *LLAVES]
@@ -130,10 +130,10 @@ def unir_geih(
                          "meses, y que la GEIH sea la serie principal.")
     if cobertura["personas"] < minimo:
         sin = f"; años sin datos de pobreza: {cobertura['anios_sin_pobreza']}" if cobertura["anios_sin_pobreza"] else ""
-        warnings.warn(
+        _avisar(
             f"Solo {cobertura['personas']:.1%} de las personas de la GEIH encontró su hogar en la pobreza{sin}. Revise "
             "los años y meses, que la GEIH sea la serie principal y que no se haya filtrado una parte de los hogares. "
-            "El detalle por mes está en attrs['union_pobreza'].", UserWarning, stacklevel=2,
+            "El detalle por mes está en attrs['union_pobreza'].", UserWarning,
         )
     out = pd.concat([geih, unido[[*variables, "fex_pobreza"]]], axis=1)
     out.attrs = {**geih.attrs, "union_pobreza": cobertura}  # merge y concat pierden los attrs de la GEIH

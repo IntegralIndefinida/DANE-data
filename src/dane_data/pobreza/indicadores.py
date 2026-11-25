@@ -2,13 +2,12 @@
 
 from __future__ import annotations
 
-import warnings
 from typing import Iterable
 
 import numpy as np
 import pandas as pd
 
-from ..stats import _as_list, _con_categorias, weighted_gini
+from ..stats import _avisar, _as_list, _con_categorias, weighted_gini
 
 GLOSARIO = {
     "Unidad de gasto": "Las personas del hogar que comparten el gasto: todas menos el servicio doméstico, sus hijos y los "
@@ -136,8 +135,8 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = None, dropna
         raise ValueError(f"Faltan {faltan}: use dd.pobreza.load(...) con harmonize_vars=True.")
     llaves = _as_list(por)
     if "departamento" in llaves and not departamental:
-        warnings.warn("Las cifras departamentales del DANE usan el factor departamental (fex_dpto): para compararlas use "
-                      "departamental=True. Aquí se usa el factor nacional (fex).", UserWarning, stacklevel=2)
+        _avisar("Las cifras departamentales del DANE usan el factor departamental (fex_dpto): para compararlas use "
+                "departamental=True. Aquí se usa el factor nacional (fex).", UserWarning)
     base = df.dropna(subset=llaves) if (llaves and dropna) else df
     if departamental and base[factor].isna().any():
         anios = sorted(base.loc[base[factor].isna(), "anio"].unique().tolist()) if "anio" in base else []

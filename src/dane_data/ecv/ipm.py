@@ -11,13 +11,12 @@ dice todo, el comentario lo indica.
 
 from __future__ import annotations
 
-import warnings
 from typing import Iterable
 
 import numpy as np
 import pandas as pd
 
-from ..stats import _con_categorias
+from ..stats import _avisar, _con_categorias
 from .indicadores import _lista
 from .loader import KEYS_HOGAR
 
@@ -139,9 +138,8 @@ def privaciones(df: pd.DataFrame) -> pd.DataFrame:
         raise ValueError(f"Faltan variables para el IPM: {faltan}. Cargue los datos con dd.ecv.load(años, "
                          "modulos=dd.ecv.MODULOS_IPM).")
     if df["anio"].eq(2020).any() and ("ESTRATEGIAS" not in df or df.loc[df["anio"].eq(2020), "ESTRATEGIAS"].isna().all()):
-        warnings.warn("IPM 2020 sin la base complementaria del DANE (estrategias de estudio en casa): la inasistencia escolar "
-                      "y la incidencia salen más bajas que las publicadas. Bájela con dd.ecv.download(2020).", UserWarning,
-                      stacklevel=2)
+        _avisar("IPM 2020 sin la base complementaria del DANE (estrategias de estudio en casa): la inasistencia escolar "
+                "y la incidencia salen más bajas que las publicadas. Bájela con dd.ecv.download(2020).", UserWarning)
 
     def num(columna: str) -> pd.Series:
         if columna not in df.columns:
@@ -294,9 +292,9 @@ def ipm(df: pd.DataFrame, por: str | Iterable[str] | None = None, muestra: str |
     if muestra == "nacional":
         nacional = _muestra_nacional(hogares)
         if automatica and len(hogares) and (~nacional).mean() > 0.5:  # p. ej. solo hogares de Arauca: casi todo es rural
-            warnings.warn(f"La muestra nacional deja fuera {(~nacional).sum()} de {len(hogares)} hogares (la parte rural de "
-                          "los departamentos de la Orinoquía-Amazonía). Para un solo departamento use por=\"departamento\" "
-                          "o muestra=\"completa\".", UserWarning, stacklevel=2)
+            _avisar(f"La muestra nacional deja fuera {(~nacional).sum()} de {len(hogares)} hogares (la parte rural de "
+                    "los departamentos de la Orinoquía-Amazonía). Para un solo departamento use por=\"departamento\" "
+                    "o muestra=\"completa\".", UserWarning)
         hogares = hogares[nacional]
     if llaves and dropna:
         hogares = hogares.dropna(subset=llaves)

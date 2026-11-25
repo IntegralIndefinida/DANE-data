@@ -7,7 +7,7 @@ from typing import Iterable
 import numpy as np
 import pandas as pd
 
-from ..stats import _as_list
+from ..stats import _avisar, _as_list
 
 GLOSARIO = {
     "Producción bruta": "Valor total de lo producido por el establecimiento en el año (prodbr2).",
@@ -307,8 +307,7 @@ def deflactar(df: pd.DataFrame, columnas: Iterable[str], deflactor: pd.DataFrame
         d[f"{c}{sufijo}"] = pd.to_numeric(d[c], errors="coerce") / d["deflactor"] * base
     faltan = d["deflactor"].isna().mean()
     if faltan > 0:
-        import warnings
-        warnings.warn(f"{faltan:.1%} de las filas no encontraron deflactor.", stacklevel=2)
+        _avisar(f"{faltan:.1%} de las filas no encontraron deflactor.")
     return d
 
 
@@ -389,11 +388,10 @@ def panel(df: pd.DataFrame, balanceado: bool = False, anios: Iterable[int] | Non
         n = d.groupby("nordest")["anio"].nunique()
         d = d[d["nordest"].isin(n[n == len(anios)].index)]
     if "microagregado" in d.columns and d["microagregado"].any():
-        import warnings
         micro = d.loc[d["microagregado"].astype(bool), "nordest"].nunique()
-        warnings.warn(f"{micro} de {d['nordest'].nunique()} establecimientos del panel tienen algún año con valores "
-                      "microagregados (el promedio de su grupo, no los propios). Para análisis por establecimiento "
-                      "use excluir_microagregados=True o controle con la columna microagregado.", stacklevel=2)
+        _avisar(f"{micro} de {d['nordest'].nunique()} establecimientos del panel tienen algún año con valores "
+                "microagregados (el promedio de su grupo, no los propios). Para análisis por establecimiento "
+                "use excluir_microagregados=True o controle con la columna microagregado.")
     return d.set_index(["nordest", "anio"]).sort_index()
 
 

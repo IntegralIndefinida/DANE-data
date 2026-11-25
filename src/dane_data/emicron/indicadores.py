@@ -2,13 +2,12 @@
 
 from __future__ import annotations
 
-import warnings
 from typing import Iterable
 
 import numpy as np
 import pandas as pd
 
-from ..stats import _as_list as _lista, _con_categorias, _motivo_sin_peso
+from ..stats import _avisar, _as_list as _lista, _con_categorias, _motivo_sin_peso
 
 GLOSARIO = {
     "Micronegocio": "Unidad económica con hasta 9 personas ocupadas que desarrolla una actividad productiva de bienes o "
@@ -116,8 +115,8 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = "anio", peso
     if faltan := [c for c in [peso, *por] if c not in df.columns]:
         raise KeyError(f"Faltan columnas en los datos: {', '.join(faltan)}.")
     if "anio" not in por and "anio" in df.columns and df["anio"].nunique() > 1:
-        warnings.warn("Los datos tienen varios años y `por` no incluye 'anio': cada micronegocio se cuenta en cada año, "
-                      "así que la suma no es un total.", UserWarning, stacklevel=2)
+        _avisar("Los datos tienen varios años y `por` no incluye 'anio': cada micronegocio se cuenta en cada año, "
+                "así que la suma no es un total.", UserWarning)
     w = pd.to_numeric(df[peso], errors="coerce")
     # Un factor ausente no es un peso cero: esas filas no se pueden expandir (fex_dpto no existe en 2025)
     if (sin_peso := w.isna()).any():
@@ -126,7 +125,7 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = "anio", peso
         motivo = _motivo_sin_peso(peso, [] if anios is None else anios.index.tolist())
         if sin_peso.all():
             raise ValueError(f"Ningún micronegocio tiene {peso} ({detalle})." + motivo)
-        warnings.warn(f"Sin {peso}: se dejan fuera {detalle} micronegocios." + motivo, UserWarning, stacklevel=2)
+        _avisar(f"Sin {peso}: se dejan fuera {detalle} micronegocios." + motivo, UserWarning)
         df, w = df[~sin_peso], w[~sin_peso]
     d = pd.DataFrame({"micronegocios": w, "n_muestra": 1.0}, index=df.index)
     for c in _CONTEOS:
@@ -157,8 +156,8 @@ def indicadores(df: pd.DataFrame, por: str | Iterable[str] | None = "anio", peso
     if "anio" in df.columns and "valor_agregado" in df.columns:
         vacio = pd.to_numeric(df["valor_agregado"], errors="coerce").isna().groupby(df["anio"]).all()
         if sin := vacio[vacio].index.tolist():
-            warnings.warn(f"EMICRON {', '.join(map(str, sin))}: sin consumo intermedio, valor agregado ni remuneraciones "
-                          "en los microdatos; quedan vacíos.", UserWarning, stacklevel=2)
+            _avisar(f"EMICRON {', '.join(map(str, sin))}: sin consumo intermedio, valor agregado ni remuneraciones "
+                    "en los microdatos; quedan vacíos.", UserWarning)
     columnas = [*por, "micronegocios", *_CONTEOS, *_MONTOS.values(), "coeficiente_tecnico", "pct_rut",
                 "pct_camara_comercio", "pct_salud_pension", "n_muestra"]
     res = res[columnas]

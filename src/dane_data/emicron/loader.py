@@ -9,7 +9,6 @@ en la GEIH), salvo ``personal_ocupado``, que tiene una fila por trabajador.
 from __future__ import annotations
 
 import logging
-import warnings
 from pathlib import Path
 from typing import Iterable
 
@@ -18,7 +17,7 @@ import pandas as pd
 
 from .. import config
 from .._io import read_table
-from ..stats import _enteros, _opciones
+from ..stats import _avisar, _enteros, _opciones
 from ..referencias import DEPARTAMENTOS, MESES, strip_accents
 
 log = logging.getLogger("dane_data.emicron")
@@ -290,8 +289,7 @@ def _leer_anio(anio: int, archivos: dict[str, Path], modulos: list[str], columns
             from .downloader import EMICRON_KNOWN_FILES  # aquí: el descargador importa este módulo
             motivo = (f"no está descargado: use dane_data.emicron.download({anio})" if (anio, m) in EMICRON_KNOWN_FILES
                       else "el DANE no lo aplicó ese año")
-            warnings.warn(f"EMICRON {anio}: sin el módulo {m} ({motivo}); sus variables quedan vacías.", UserWarning,
-                          stacklevel=3)
+            _avisar(f"EMICRON {anio}: sin el módulo {m} ({motivo}); sus variables quedan vacías.", UserWarning)
             continue
         mod = _con_clave(read_table(archivos[m], columns=_selector(m, columns, extras), case="lower"), archivos[m])
         mod = mod.drop(columns=[c for c in mod.columns if c in _REPETIDAS or (c in df.columns and c not in CLAVE)])
@@ -301,16 +299,16 @@ def _leer_anio(anio: int, archivos: dict[str, Path], modulos: list[str], columns
         df["fex"] = _factor(archivos["fex_ajustado"], anio).reindex(clave).to_numpy()
     else:
         if anio <= 2021:
-            warnings.warn(f"EMICRON {anio}: falta el factor ajustado; fex es el F_EXP de la serie anterior y los totales "
-                          f"no coinciden con los anexos vigentes. Descárguelo con dane_data.emicron.download({anio}).",
-                          UserWarning, stacklevel=3)
+            _avisar(f"EMICRON {anio}: falta el factor ajustado; fex es el F_EXP de la serie anterior y los totales "
+                    f"no coinciden con los anexos vigentes. Descárguelo con dane_data.emicron.download({anio}).",
+                    UserWarning)
         df["fex"] = pd.to_numeric(df["f_exp"], errors="coerce")
     df["fex_dpto"] = (_factor(archivos["fex_dpto"], anio).reindex(clave).to_numpy() if "fex_dpto" in archivos
                       else np.nan)
     from .downloader import EMICRON_KNOWN_FILES  # aquí: el descargador importa este módulo
     if "fex_dpto" not in archivos and (anio, "fex_dpto") in EMICRON_KNOWN_FILES:  # 2025 no lo tiene en el ANDA
-        warnings.warn(f"EMICRON {anio}: falta el factor departamental; fex_dpto queda vacío. Descárguelo con "
-                      f"dane_data.emicron.download({anio}).", UserWarning, stacklevel=3)
+        _avisar(f"EMICRON {anio}: falta el factor departamental; fex_dpto queda vacío. Descárguelo con "
+                f"dane_data.emicron.download({anio}).", UserWarning)
     return harmonize(df, anio)
 
 
@@ -452,8 +450,8 @@ def load(
         raise ValueError(f"Variables que no están en los módulos cargados: {', '.join(faltan)}. "
                          "Búsquelas con dane_data.diccionario('emicron').")
     if 2025 in files:
-        warnings.warn("Los microdatos de la EMICRON 2025 solo cubren las 24 ciudades principales: sus totales no son "
-                      "nacionales, y no traen factor departamental (fex_dpto queda vacío).", UserWarning, stacklevel=2)
+        _avisar("Los microdatos de la EMICRON 2025 solo cubren las 24 ciudades principales: sus totales no son "
+                "nacionales, y no traen factor departamental (fex_dpto queda vacío).", UserWarning)
     if columns == "all":
         return out
     return out[[*CORE, *[c for c in out.columns if c in extras and c not in CORE]]]

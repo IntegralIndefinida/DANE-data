@@ -3,11 +3,29 @@
 from __future__ import annotations
 
 import numbers
+import os
+import sys
 import warnings
 from typing import Iterable
 
 import numpy as np
 import pandas as pd
+
+_PAQUETE = os.path.dirname(os.path.abspath(__file__)) + os.sep
+_APP = os.path.join(_PAQUETE, "app") + os.sep
+
+
+def _avisar(mensaje: str, categoria: type[Warning] = UserWarning) -> None:
+    """
+    ``warnings.warn`` que apunta a la línea del usuario: al primer marco de la pila que no es de dane-data, sin
+    importar cuántas funciones o decoradores de la librería haya en medio. La app (``dane_data/app``) cuenta como
+    usuario. Todo aviso de la librería pasa por aquí.
+    """
+    marco, nivel = sys._getframe(1), 2
+    while marco.f_back is not None and (archivo := marco.f_code.co_filename).startswith(_PAQUETE) \
+            and not archivo.startswith(_APP):
+        marco, nivel = marco.f_back, nivel + 1
+    warnings.warn(mensaje, categoria, stacklevel=nivel)
 
 
 def _as_list(x) -> list:
@@ -422,8 +440,8 @@ def tabla(
             if sin_peso.all():
                 raise ValueError(f"Ninguna fila tiene {peso}." + motivo)
             detalle = ", ".join(f"{n} de {a}" for a, n in anios.items()) if anios is not None else str(sin_peso.sum())
-            warnings.warn(f"Sin {peso}: se dejan fuera {detalle} fila(s), que no se pueden expandir; los grupos que se "
-                          f"quedan sin filas no aparecen." + motivo, UserWarning, stacklevel=2)
+            _avisar(f"Sin {peso}: se dejan fuera {detalle} fila(s), que no se pueden expandir; los grupos que se "
+                    f"quedan sin filas no aparecen." + motivo)
             d = d[~sin_peso]
     if variable is not None:
         d = d[d[variable].notna()]

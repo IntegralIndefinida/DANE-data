@@ -18,7 +18,6 @@ reemplaza por el del CNPV 2018, que el DANE publicó aparte y que usa la serie o
 
 from __future__ import annotations
 
-import warnings
 from pathlib import Path
 from typing import Iterable
 
@@ -28,7 +27,7 @@ import pandas as pd
 from .. import config
 from .._hooks import archivos_datos
 from .._io import read_table
-from ..stats import _enteros
+from ..stats import _avisar, _enteros
 from ..eevv.loader import _categoria, _unir
 from ..referencias import DEPARTAMENTOS
 
@@ -263,9 +262,9 @@ def _factores_2018(df: pd.DataFrame, root) -> pd.DataFrame:
     """En 2018, el FEX_C del CNPV 2018 (por vivienda) en lugar del de los capítulos, que queda en FEX_C_ORIGINAL."""
     archivo = find_files(2018, modulo=_FACTORES, root=root).get(2018)
     if archivo is None:
-        warnings.warn("ECV 2018: faltan los factores de expansión basados en el CNPV 2018, así que se usa el FEX_C de "
-                      "los capítulos y los totales no son los de la serie oficial. Bájelos con dd.ecv.download(2018).",
-                      UserWarning, stacklevel=3)
+        _avisar("ECV 2018: faltan los factores de expansión basados en el CNPV 2018, así que se usa el FEX_C de "
+                "los capítulos y los totales no son los de la serie oficial. Bájelos con dd.ecv.download(2018).",
+                UserWarning)
         return df
     factores = read_table(archivo, columns=["DIRECTORIO", "FEX_C"]).rename(columns={"FEX_C": "_FEX_CNPV"})
     df = df.rename(columns={"FEX_C": "FEX_C_ORIGINAL"}).merge(factores, on="DIRECTORIO", how="left", validate="many_to_one")
@@ -491,7 +490,7 @@ def load(
         # concat y no assign: tras unir varios capítulos, insertar una columna fragmenta la tabla
         partes.append(harmonize(pd.concat([df, pd.Series(np.int16(anio), index=df.index, name="anio")], axis=1)))
     if faltan:
-        warnings.warn(_aviso_faltan(faltan), UserWarning, stacklevel=2)
+        _avisar(_aviso_faltan(faltan), UserWarning)
     if progress:
         progress(1.0, "Listo")
     return _unir(partes)

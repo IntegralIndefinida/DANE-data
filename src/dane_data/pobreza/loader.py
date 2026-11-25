@@ -32,7 +32,6 @@ Convención, como en la GEIH: en minúscula las variables armonizadas, en MAYÚS
 from __future__ import annotations
 
 import logging
-import warnings
 from pathlib import Path
 from typing import Iterable
 
@@ -41,7 +40,7 @@ import pandas as pd
 
 from .. import config
 from .._io import read_table
-from ..stats import _enteros
+from ..stats import _avisar, _enteros
 from ..geih.loader import CATEGORIAS as _CATEGORIAS_GEIH
 from ..referencias import DEPARTAMENTOS, strip_accents
 from .downloader import ARCHIVOS_EMPALME, EXTENSIONES
@@ -368,15 +367,15 @@ def _empalmar(df: pd.DataFrame, anio: int, fuentes: dict) -> pd.DataFrame:
 def _avisar_metodologias(anios: Iterable[int], empalme: bool) -> None:
     anios = set(anios)
     if not empalme and min(anios) <= 2018 < max(anios):
-        warnings.warn(
+        _avisar(
             "Los años hasta 2018 usan las líneas de pobreza de la MESEP y los de 2019 en adelante las actualizadas: no "
             "son comparables. Para una serie comparable use empalme=True (la serie que publica el DANE).",
-            UserWarning, stacklevel=3,
+            UserWarning,
         )
     elif not empalme and min(anios) <= 2021 < max(anios):
-        warnings.warn(
+        _avisar(
             "Hasta 2021 la encuesta usa el marco del censo 2005 y desde 2022 el del CNPV 2018: los niveles cambian. Para "
-            "una serie comparable use empalme=True.", UserWarning, stacklevel=3,
+            "una serie comparable use empalme=True.", UserWarning,
         )
 
 

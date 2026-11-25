@@ -9,7 +9,6 @@ años o más). Se regeneran con ``tests/datos/actualizar_proyecciones.py``.
 from __future__ import annotations
 
 import numbers
-import warnings
 from functools import lru_cache
 from importlib import resources
 from typing import Iterable
@@ -17,7 +16,7 @@ from typing import Iterable
 import pandas as pd
 
 from .referencias import DEPARTAMENTOS, strip_accents
-from .stats import _enteros
+from .stats import _avisar, _enteros
 
 _POR = ("departamento", "dpto", "area", "sexo", "edad")
 _NACIONAL = 0  # Valor de dpto en los años que solo tienen total nacional
@@ -142,9 +141,9 @@ def poblacion(
 
     res = d[mascara]
     if pedidos and (sin_datos := sorted(set(pedidos) - set(res["anio"].unique()))):
-        warnings.warn(f"Sin proyecciones con esa desagregación para: {', '.join(map(str, sin_datos))}. "
-                      "Por departamento hay 1985–2050, por área hasta 2045 (y total nacional 1950–2070).",
-                      UserWarning, stacklevel=2)
+        _avisar(f"Sin proyecciones con esa desagregación para: {', '.join(map(str, sin_datos))}. "
+                "Por departamento hay 1985–2050, por área hasta 2045 (y total nacional 1950–2070).",
+                UserWarning)
     if "departamento" in por:
         res = res.assign(departamento=res["dpto"].map(DEPARTAMENTOS))
     llaves = ["anio", *por]

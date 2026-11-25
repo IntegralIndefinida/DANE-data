@@ -18,7 +18,7 @@ import pandas as pd
 
 from .. import config
 from ..geih.agregados import _clave_json, _firma_codigo, _mascara
-from ..stats import _enteros
+from ..stats import _avisar, _enteros
 from ..geih.loader import _borrar_cache, _desde_cache
 from ..proyecciones import poblacion
 from .indicadores import _lista, indicadores
@@ -317,8 +317,8 @@ def _por_valido(por) -> list[str]:
 
 def _avisar_sin_poblacion(res: pd.DataFrame, por: list[str]) -> None:
     if "departamento" in por and (viejos := sorted(a for a in res["anio"].unique() if a < 1985)):
-        warnings.warn(f"Sin población por departamento para {viejos[0]}–{viejos[-1]}: esos años quedan sin tasa. "
-                      "Las proyecciones por departamento empiezan en 1985.", UserWarning, stacklevel=3)
+        _avisar(f"Sin población por departamento para {viejos[0]}–{viejos[-1]}: esos años quedan sin tasa. "
+                "Las proyecciones por departamento empiezan en 1985.", UserWarning)
 
 
 def tasas(

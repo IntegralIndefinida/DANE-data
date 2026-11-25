@@ -19,7 +19,6 @@ from __future__ import annotations
 
 import json
 import logging
-import warnings
 from functools import lru_cache
 from importlib import resources
 from pathlib import Path
@@ -31,7 +30,7 @@ import pandas as pd
 from .. import config
 from .._hooks import archivos_datos
 from .._io import read_table
-from ..stats import _enteros
+from ..stats import _avisar, _enteros
 from ..referencias import DEPARTAMENTOS
 
 log = logging.getLogger("dane_data.eevv")
@@ -621,8 +620,7 @@ def _avisar_cobertura(tipo: str, anios: Iterable[int]) -> None:
         avisos.append("en enero–junio de 1991 no se pueden separar las edades de menores de 10 años, así que "
                       "'menor_un_anio' queda vacía en esas filas")
     if avisos:
-        warnings.warn("Defunciones: " + "; ".join(avisos) + ". Vea la tabla de diferencias del README.", UserWarning,
-                      stacklevel=3)
+        _avisar("Defunciones: " + "; ".join(avisos) + ". Vea la tabla de diferencias del README.", UserWarning)
 
 
 def load(

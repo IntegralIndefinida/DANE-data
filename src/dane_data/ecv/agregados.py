@@ -18,7 +18,7 @@ import pandas as pd
 from .. import config
 from ..eevv.loader import _unir
 from ..geih.agregados import _clave_json, _firma_codigo, _mascara
-from ..stats import _enteros
+from ..stats import _avisar, _enteros
 from ..geih.loader import _borrar_cache, _desde_cache
 from .indicadores import _lista, indicadores
 from .ipm import COLUMNAS_IPM, MODULOS_IPM, ipm, privaciones
@@ -148,7 +148,7 @@ def serie_indicadores(
     faltan = {m: a for m in _MODULOS_INDICADORES
               if (a := [x for x in sorted(archivos) if x not in find_files(x, modulo=m, root=root)])}
     if faltan:
-        warnings.warn(_aviso_faltan(faltan), UserWarning, stacklevel=2)
+        _avisar(_aviso_faltan(faltan), UserWarning)
     solicitud = json.dumps(_clave_json({"por": llaves, "filtros": filtros, "dropna": dropna}), sort_keys=True,
                            default=str, ensure_ascii=False)
     codigo = _firma_codigo(_CODIGO)

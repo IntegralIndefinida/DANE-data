@@ -92,9 +92,10 @@ def test_montos_coma_decimal_y_2019_sin_derivadas(emicron_root):
 
 def test_sin_factor_ajustado_avisa_y_usa_el_anterior(emicron_root):
     (emicron_root / "datos" / "2021" / "fex_ajustado.csv").unlink()
-    with pytest.warns(UserWarning, match="2021: falta el factor ajustado"):
+    with pytest.warns(UserWarning, match="2021: falta el factor ajustado") as avisos:
         e = dd.emicron.load(2021, modulos=[], root=emicron_root)
     assert e["fex"].tolist() == [300.0, 200.0, 100.0]
+    assert {a.filename for a in avisos} == {__file__}  # sale de varias funciones adentro: apunta igual a esta línea
 
 
 def test_factor_departamental_contradictorio_es_error(emicron_root):
