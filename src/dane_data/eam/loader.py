@@ -63,10 +63,12 @@ ETIQUETAS = {
     "valagri": "Valor agregado",
     "valorven": "Ventas totales",
     "valorcom": "Compras de materias primas, materiales y empaques",
-    "pertotal": "Personal total (permanente + propietarios + temporal directo + agencias)",
+    # Desde 2004 el total del archivo cuenta a los aprendices de la Ley 789 de 2002, que el DANE dejó fuera del total que
+    # publicó en 2004–2014 (README, «Diferencias con la documentación del DANE», EAM)
+    "pertotal": "Personal total (permanente + propietarios + temporal directo + agencias; desde 2004, también aprendices)",
     "persocu": "Empleados permanentes",
     "persoesc": "Empleados permanentes + propietarios",
-    "pertem3": "Empleados temporales directos",
+    "pertem3": "Empleados temporales directos (en 2003–2019, menos que el total del formulario: ver diferencias con el DANE)",
     "pperytem": "Empleados permanentes y temporales directos",
     "salarper": "Salarios de empleados permanentes",
     "pressper": "Prestaciones de empleados permanentes",

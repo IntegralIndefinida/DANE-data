@@ -520,23 +520,34 @@ def test_tabla_sin_peso_conserva_el_divisor_de_meses():
 
 
 REAL_EAM = Path(__import__("os").environ.get("DANE_DATA_TEST_EAM", dd.get_path("eam")))
-# Diferencias del archivo del ANDA con lo publicado (README, «Diferencias con la documentación del DANE», EAM): 2011 frente a
-# la serie 1956–2011 «con mezcla de combustibles», el personal de 2004–2011 y los 41 establecimientos que faltan en 1992
+# Diferencias del archivo del ANDA con lo publicado que no se explican (README, «Diferencias con la documentación del DANE»,
+# EAM): 2011 frente a la serie 1956–2011 «con mezcla de combustibles» (montos y personal permanente) y los 41 establecimientos
+# que faltan en 1992
 EAM_SIN_COMPARAR = {(2011, "produccion_bruta"), (2011, "consumo_intermedio"), (2011, "valor_agregado"),
-                    (1992, "establecimientos"), *((a, "personal_total") for a in range(2004, 2012))}
+                    (2011, "personal_total"), (1992, "establecimientos")}
+# Totales del capítulo 4 por categoría: propietarios, permanentes, temporales directos y por agencias (mujeres y hombres).
+# pertotal suma además a los aprendices de la Ley 789 de 2002, que el DANE dejó fuera del total publicado en 2004–2014
+EAM_CATEGORIAS_PERSONAL = [f"c4r4c{i}t" for i in range(1, 9)]
+EAM_SIN_APRENDICES = range(2004, 2015)
 
 
 @pytest.mark.skipif(not (REAL_EAM / "datos").is_dir(), reason="sin datos reales de la EAM")
 def test_real_eam_coincide_con_lo_publicado():
     """
     Los totales nacionales de dd.eam.resumen frente a la serie histórica 1992–2011 y los anexos 2015–2024 del DANE
-    (tests/datos/dane_eam_publicado.csv): montos y establecimientos a menos de 0,05 %, personal a menos de 0,15 %.
+    (tests/datos/dane_eam_publicado.csv): montos y establecimientos a menos de 0,05 %, personal a menos de 0,15 %. En
+    2004–2011 el personal publicado es la suma de las cuatro categorías, sin los aprendices que pertotal sí cuenta.
     """
     pub = pd.read_csv(Path(__file__).parent / "datos" / "dane_eam_publicado.csv")
     anios = sorted(set(pub["anio"]) & set(dd.eam.available(root=REAL_EAM)["anio"]))
     if not anios:
         pytest.skip("ningún año descargado tiene cifras publicadas")
-    res = dd.eam.resumen(dd.eam.load(anios, root=REAL_EAM), por="anio")
+    eam = dd.eam.load(anios, columns=EAM_CATEGORIAS_PERSONAL, root=REAL_EAM)
+    res = dd.eam.resumen(eam, por="anio").set_index("anio")
+    sin_aprendices = eam.groupby("anio")[EAM_CATEGORIAS_PERSONAL].sum().sum(axis=1)
+    años = res.index.isin(EAM_SIN_APRENDICES)
+    res.loc[años, "personal_total"] = sin_aprendices[res.index[años]]
+    res = res.reset_index()
     m = pub.merge(res.melt(id_vars="anio", value_vars=sorted(set(pub["variable"])), var_name="variable", value_name="micro"),
                   on=["anio", "variable"])
     m = m[[(a, v) not in EAM_SIN_COMPARAR for a, v in zip(m["anio"], m["variable"])]]

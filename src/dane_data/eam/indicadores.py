@@ -13,7 +13,9 @@ GLOSARIO = {
     "Producción bruta": "Valor total de lo producido por el establecimiento en el año (prodbr2).",
     "Consumo intermedio": "Insumos, materias primas, energía y servicios usados en la producción (consin2).",
     "Valor agregado": "Producción bruta − consumo intermedio (valagri). Es la contribución al PIB.",
-    "Personal ocupado": "pertotal: permanentes + propietarios + temporales directos + temporales por agencia.",
+    "Personal ocupado": "pertotal: permanentes + propietarios + temporales directos + temporales por agencia y, desde 2004, "
+                        "aprendices (Ley 789 de 2002). El DANE publicó el total sin aprendices en 2004–2014 y con ellos desde "
+                        "2015.",
     "Productividad laboral": "Valor agregado por persona ocupada (valagri / pertotal).",
     "Remuneración media": "(Salarios + prestaciones de permanentes y temporales) / empleados permanentes y temporales.",
     "Participación laboral": "Remuneraciones / valor agregado × 100: qué parte del valor agregado se paga al trabajo.",
