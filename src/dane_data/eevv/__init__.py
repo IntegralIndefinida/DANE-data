@@ -9,14 +9,13 @@ from .downloader import EEVV_KNOWN_FILES, EEVVDownloader
 from .indicadores import GLOSARIO, indicadores
 from .loader import (CATEGORIAS, CORE, ETIQUETAS, GRANDES_CAUSAS, GRUPOS_EDAD, GRUPOS_EDAD_AMPLIOS, TIPOS,
                      _root, available, causas, find_files, harmonize, load)
-from ..stats import _con_nombres_viejos, _enteros, _opciones
+from ..stats import _enteros, _opciones
 
 ANIOS_DISPONIBLES = {tipo: sorted(a for a, t in EEVV_KNOWN_FILES if t == tipo) for tipo in TIPOS}
 
 
-@_con_nombres_viejos
 def download(
-    anios: Iterable[int] | int | None = None,
+    years: Iterable[int] | int | None = None,
     tipos: Iterable[str] | str | None = None,
     raiz=None,
     borrar_zips: bool = False,
@@ -31,7 +30,7 @@ def download(
 
     Parámetros
     ----------
-    anios
+    years
         Año o lista de años. ``None`` descarga toda la serie (unos 1,6 GB de ZIP); una lista vacía, ninguno. Los
         años que no están en el ANDA se saltan y quedan en la lista que se devuelve.
     tipos
@@ -77,7 +76,7 @@ def download(
     >>> dd.eevv.download(2025)  # doctest: +SKIP
     >>> dd.eevv.download(range(2015, 2026), tipos="nacimientos")  # doctest: +SKIP
     """
-    anios = _enteros(anios)
+    years = _enteros(years)
     tipos = _opciones(tipos, TIPOS, "Tipo")
     dl = EEVVDownloader(
         base_dir=_root(raiz),
@@ -86,7 +85,7 @@ def download(
         should_stop=detener,
         forzar=forzar,
     )
-    return dl.run_pipeline(target_years=anios, tipos=tipos)
+    return dl.run_pipeline(target_years=years, tipos=tipos)
 
 
 __all__ = [

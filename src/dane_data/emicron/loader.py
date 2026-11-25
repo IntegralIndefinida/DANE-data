@@ -17,7 +17,7 @@ import pandas as pd
 
 from .. import config
 from .._io import read_table
-from ..stats import _avisar, _con_nombres_viejos, _enteros, _opciones
+from ..stats import _avisar, _enteros, _opciones
 from ..referencias import DEPARTAMENTOS, MESES, strip_accents
 
 log = logging.getLogger("dane_data.emicron")
@@ -46,14 +46,13 @@ def _root(raiz) -> Path:
     return Path(raiz).expanduser() if raiz is not None else config.get_path("emicron")
 
 
-@_con_nombres_viejos
-def find_files(anios: Iterable[int] | int | None = None, raiz=None) -> dict[int, dict[str, Path]]:
+def find_files(years: Iterable[int] | int | None = None, raiz=None) -> dict[int, dict[str, Path]]:
     """
     Archivos descargados de cada año de la EMICRON.
 
     Parámetros
     ----------
-    anios
+    years
         Año o lista de años. ``None`` para todos.
     raiz
         Carpeta raíz. Por defecto, la configurada (``dd.get_path("emicron")``).
@@ -72,11 +71,11 @@ def find_files(anios: Iterable[int] | int | None = None, raiz=None) -> dict[int,
     base = _root(raiz) / "datos"
     if not base.is_dir():
         return {}
-    anios = _enteros(anios)
+    years = _enteros(years)
     out = {}
     for carpeta in sorted(p for p in base.iterdir() if p.is_dir() and p.name.isdigit()):
         anio = int(carpeta.name)
-        if anios is not None and anio not in anios:
+        if years is not None and anio not in years:
             continue
         modulos = {m: carpeta / f"{m}.csv" for m in MODULOS if (carpeta / f"{m}.csv").is_file()}
         if "identificacion" in modulos:
@@ -84,7 +83,6 @@ def find_files(anios: Iterable[int] | int | None = None, raiz=None) -> dict[int,
     return out
 
 
-@_con_nombres_viejos
 def available(raiz=None) -> pd.DataFrame:
     """
     Tabla de los módulos de la EMICRON descargados.
@@ -358,9 +356,8 @@ def harmonize(df: pd.DataFrame, anio: int) -> pd.DataFrame:
     return pd.concat([df, pd.DataFrame(nuevas, index=df.index)], axis=1)
 
 
-@_con_nombres_viejos
 def load(
-    anios: Iterable[int] | int | None = None,
+    years: Iterable[int] | int | None = None,
     modulos: Iterable[str] | str | None = None,
     columnas="core",
     raiz=None,
@@ -371,7 +368,7 @@ def load(
 
     Parámetros
     ----------
-    anios
+    years
         Año, lista o rango de años. ``None`` para todos los descargados.
     modulos
         Módulo o lista de módulos que se unen a la identificación (claves de ``MODULOS``, salvo
@@ -426,10 +423,10 @@ def load(
     >>> emi = dd.emicron.load(2024)  # doctest: +SKIP
     >>> dd.tabla(emi, por="actividad", estadistico="porcentaje")  # doctest: +SKIP
     """
-    files = find_files(anios, raiz=raiz)
+    files = find_files(years, raiz=raiz)
     if not files:
         raise FileNotFoundError(
-            f"No hay datos de la EMICRON para años={anios} en {_root(raiz)}. "
+            f"No hay datos de la EMICRON para años={years} en {_root(raiz)}. "
             "Descárguelos con dane_data.emicron.download(...) o revise dane_data.set_paths(...)."
         )
     # Los factores se leen siempre y aparte (_factor quita sus filas vacías o repetidas): no se unen como un módulo
@@ -460,14 +457,13 @@ def load(
     return out[[*CORE, *[c for c in out.columns if c in extras and c not in CORE]]]
 
 
-@_con_nombres_viejos
-def load_personal(anios: Iterable[int] | int | None = None, raiz=None) -> pd.DataFrame:
+def load_personal(years: Iterable[int] | int | None = None, raiz=None) -> pd.DataFrame:
     """
     Carga el módulo de personal ocupado: una fila por trabajador, socio o familiar.
 
     Parámetros
     ----------
-    anios
+    years
         Año, lista o rango de años. ``None`` para todos los descargados.
     raiz
         Carpeta raíz. Por defecto, la configurada.
@@ -501,9 +497,9 @@ def load_personal(anios: Iterable[int] | int | None = None, raiz=None) -> pd.Dat
     >>> per = dd.emicron.load_personal(2024)  # doctest: +SKIP
     >>> dd.tabla(per, por=["tipo", "p3077"])  # doctest: +SKIP
     """
-    files = {a: f for a, f in find_files(anios, raiz=raiz).items() if "personal_ocupado" in f}
+    files = {a: f for a, f in find_files(years, raiz=raiz).items() if "personal_ocupado" in f}
     if not files:
-        raise FileNotFoundError(f"No hay datos del módulo de personal ocupado de la EMICRON para años={anios} en "
+        raise FileNotFoundError(f"No hay datos del módulo de personal ocupado de la EMICRON para años={years} en "
                                 f"{_root(raiz)}. Descárguelos con dane_data.emicron.download(...).")
     micro = ["anio", *CLAVE, "fex", "clase", "ciudad", "departamento", "actividad"]
     frames = []

@@ -24,7 +24,6 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
-from .stats import _con_nombres_viejos
 
 
 def _carpeta_xdg(variable: str, defecto: str) -> Path:
@@ -61,7 +60,6 @@ def _read_file() -> dict:
     return data if isinstance(data, dict) else {}  # un JSON que no es un objeto: como si no existiera
 
 
-@_con_nombres_viejos
 def get_path(clave: str) -> Path:
     """
     Carpeta raíz de una encuesta o registro.
@@ -111,7 +109,6 @@ def get_path(clave: str) -> Path:
     return default
 
 
-@_con_nombres_viejos
 def set_paths(geih=None, geih_empalme=None, eam=None, guardar: bool = False, eevv=None, emicron=None, ecv=None,
               pobreza=None) -> None:
     """

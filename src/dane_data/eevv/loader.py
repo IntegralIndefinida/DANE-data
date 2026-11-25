@@ -30,7 +30,7 @@ import pandas as pd
 from .. import config
 from .._hooks import archivos_datos
 from .._io import read_table
-from ..stats import _avisar, _con_nombres_viejos, _enteros
+from ..stats import _avisar, _enteros
 from ..referencias import DEPARTAMENTOS
 
 log = logging.getLogger("dane_data.eevv")
@@ -262,14 +262,13 @@ def _tipo_valido(tipo: str) -> str:
     return tipo
 
 
-@_con_nombres_viejos
-def find_files(anios: Iterable[int] | int | None = None, tipo: str = "defunciones", raiz=None) -> dict[int, Path]:
+def find_files(years: Iterable[int] | int | None = None, tipo: str = "defunciones", raiz=None) -> dict[int, Path]:
     """
     Archivo de datos de cada año descargado de un tipo de certificado.
 
     Parámetros
     ----------
-    anios
+    years
         Año o lista de años. ``None`` para todos.
     tipo
         ``"defunciones"``, ``"nacimientos"`` o ``"fetales"``.
@@ -295,16 +294,15 @@ def find_files(anios: Iterable[int] | int | None = None, tipo: str = "defuncione
     base = _root(raiz) / "datos" / _tipo_valido(tipo)
     if not base.is_dir():
         return {}
-    anios = _enteros(anios)  # también un año de numpy (df.anio.max())
+    years = _enteros(years)  # también un año de numpy (df.anio.max())
     out = {}
     for carpeta in sorted(p for p in base.iterdir() if p.is_dir() and p.name.isdigit()):
         anio = int(carpeta.name)
-        if (anios is None or anio in anios) and (archivos := archivos_datos(carpeta, EXTENSIONES)):
+        if (years is None or anio in years) and (archivos := archivos_datos(carpeta, EXTENSIONES)):
             out[anio] = max(archivos, key=lambda f: (f.suffix.lower() != ".dta", f.stat().st_size))
     return out
 
 
-@_con_nombres_viejos
 def available(raiz=None) -> pd.DataFrame:
     """
     Tabla de los años descargados de las Estadísticas Vitales.
@@ -625,9 +623,8 @@ def _avisar_cobertura(tipo: str, anios: Iterable[int]) -> None:
         _avisar("Defunciones: " + "; ".join(avisos) + ". Vea la tabla de diferencias del README.", UserWarning)
 
 
-@_con_nombres_viejos
 def load(
-    anios: Iterable[int] | int | None = None,
+    years: Iterable[int] | int | None = None,
     tipo: str = "defunciones",
     columnas="core",
     armonizar: bool = True,
@@ -639,7 +636,7 @@ def load(
 
     Parámetros
     ----------
-    anios
+    years
         Año, lista o rango de años. ``None`` para todos los descargados.
     tipo
         ``"defunciones"`` (1979–2025), ``"nacimientos"`` o ``"fetales"`` (ambos 1998–2025).
@@ -695,10 +692,10 @@ def load(
     >>> round(float(nac["cesarea"].mean()), 4)  # doctest: +SKIP
     0.5384
     """
-    archivos = find_files(anios, tipo=_tipo_valido(tipo), raiz=raiz)
+    archivos = find_files(years, tipo=_tipo_valido(tipo), raiz=raiz)
     if not archivos:
         raise FileNotFoundError(
-            f"No hay datos de {tipo} para años={anios} en {_root(raiz)}. "
+            f"No hay datos de {tipo} para años={years} en {_root(raiz)}. "
             "Descárguelos con dane_data.eevv.download(...) o revise dane_data.set_paths(...)."
         )
     _avisar_cobertura(tipo, archivos)

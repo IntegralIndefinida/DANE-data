@@ -35,8 +35,8 @@ src/dane_data/
 
 Todo lo que ve el usuario está en español: nombres, docstrings, mensajes y textos de la aplicación. Las
 variables armonizadas van en minúscula y las originales del DANE en mayúscula. Los parámetros de las funciones
-públicas se llaman igual en todas las encuestas (`anios`, `meses`, `columnas`, `modulos`, `raiz`, `progreso`…); los
-nombres en inglés que tenían hasta 0.6.0 los acepta `stats._con_nombres_viejos`, con un aviso. Los avisos se emiten con
+públicas se llaman igual en todas las encuestas y van en español (`meses`, `columnas`, `modulos`, `raiz`,
+`progreso`…), salvo `years`. Los avisos se emiten con
 `stats._avisar`, no con `warnings.warn`: así apuntan a la línea de quien llamó, sin ajustar `stacklevel` a mano.
 
 ## Pruebas

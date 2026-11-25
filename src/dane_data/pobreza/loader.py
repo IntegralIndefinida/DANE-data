@@ -40,7 +40,7 @@ import pandas as pd
 
 from .. import config
 from .._io import read_table
-from ..stats import _avisar, _con_nombres_viejos, _enteros
+from ..stats import _avisar, _enteros
 from ..geih.loader import CATEGORIAS as _CATEGORIAS_GEIH
 from ..referencias import DEPARTAMENTOS, strip_accents
 from .downloader import ARCHIVOS_EMPALME, EXTENSIONES
@@ -116,14 +116,13 @@ def _archivo(carpeta: Path, nombre: str) -> Path | None:
     return None
 
 
-@_con_nombres_viejos
-def find_files(anios: Iterable[int] | int | None = None, raiz=None) -> dict[int, Path]:
+def find_files(years: Iterable[int] | int | None = None, raiz=None) -> dict[int, Path]:
     """
     Archivo de hogares de cada año descargado.
 
     Parámetros
     ----------
-    anios
+    years
         Año o lista de años. ``None`` para todos.
     raiz
         Carpeta raíz. Por defecto, la configurada (``dd.get_path("pobreza")``).
@@ -142,7 +141,7 @@ def find_files(anios: Iterable[int] | int | None = None, raiz=None) -> dict[int,
     base = _root(raiz) / "datos"
     if not base.is_dir():
         return {}
-    pedidos = _enteros(anios)
+    pedidos = _enteros(years)
     out = {}
     # Solo carpetas de año: datos/empalme/ no es un año
     for carpeta in sorted(p for p in base.iterdir() if p.is_dir() and len(p.name) == 4 and p.name.isdigit()):
@@ -152,7 +151,6 @@ def find_files(anios: Iterable[int] | int | None = None, raiz=None) -> dict[int,
     return out
 
 
-@_con_nombres_viejos
 def available(raiz=None) -> pd.DataFrame:
     """
     Tabla de lo descargado de la pobreza monetaria.
@@ -381,9 +379,8 @@ def _avisar_metodologias(anios: Iterable[int], empalme: bool) -> None:
         )
 
 
-@_con_nombres_viejos
 def load(
-    anios: Iterable[int] | int | None = None,
+    years: Iterable[int] | int | None = None,
     empalme: bool = False,
     columnas="core",
     armonizar: bool = True,
@@ -395,7 +392,7 @@ def load(
 
     Parámetros
     ----------
-    anios
+    years
         Año, lista o rango de años (2012–2025). ``None`` para todos los descargados.
     empalme
         Llevar 2012–2021 al marco 2018 para comparar con 2022 en adelante, como la serie que publica el DANE: factor de
@@ -449,10 +446,10 @@ def load(
     >>> round(float((peso * hog.pobre).sum() / peso.sum() * 100), 1)  # doctest: +SKIP
     28.0
     """
-    archivos = find_files(anios, raiz=raiz)
+    archivos = find_files(years, raiz=raiz)
     if not archivos:
         raise FileNotFoundError(
-            f"No hay datos de pobreza para años={anios} en {_root(raiz)}. "
+            f"No hay datos de pobreza para años={years} en {_root(raiz)}. "
             "Descárguelos con dane_data.pobreza.download(...) o revise dane_data.set_paths(...)."
         )
     if empalme and not armonizar:

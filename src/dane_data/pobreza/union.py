@@ -6,7 +6,7 @@ from typing import Iterable
 
 import pandas as pd
 
-from ..stats import _avisar, _con_nombres_viejos
+from ..stats import _avisar
 from .loader import LLAVES, load
 
 _LLAVES = ["anio", "mes", *LLAVES]
@@ -26,7 +26,6 @@ def _llaves_enteras(df: pd.DataFrame, que: str) -> pd.DataFrame:
     return llaves.astype("int64")
 
 
-@_con_nombres_viejos
 def unir_geih(
     geih: pd.DataFrame,
     hogares: pd.DataFrame | None = None,

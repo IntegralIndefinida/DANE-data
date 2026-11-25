@@ -18,7 +18,7 @@ import pandas as pd
 from .. import config
 from ..eevv.loader import _unir
 from ..geih.agregados import _clave_json, _firma_codigo, _mascara
-from ..stats import _avisar, _con_nombres_viejos, _enteros
+from ..stats import _avisar, _enteros
 from ..geih.loader import _borrar_cache, _desde_cache
 from .indicadores import _lista, indicadores
 from .ipm import COLUMNAS_IPM, MODULOS_IPM, ipm, privaciones
@@ -82,9 +82,8 @@ def _faltan_internos(anios, raiz, ipm: bool) -> None:
                          f"oficiales. Bájelos con dd.ecv.download({sorted({a for a, _ in pedidos if a in anios})}).")
 
 
-@_con_nombres_viejos
 def serie_indicadores(
-    anios: Iterable[int] | int | None = None,
+    years: Iterable[int] | int | None = None,
     por: str | Iterable[str] | None = None,
     filtros: dict | None = None,
     dropna: bool = True,
@@ -94,12 +93,12 @@ def serie_indicadores(
     """
     Indicadores de la serie de la ECV por año, sin tener toda la serie en memoria.
 
-    Da lo mismo que ``indicadores(load(anios, modulos=[...]), por=["anio", *por])`` con los capítulos que piden los
+    Da lo mismo que ``indicadores(load(years, modulos=[...]), por=["anio", *por])`` con los capítulos que piden los
     indicadores, pero lee un año a la vez, solo las columnas necesarias, y guarda cada resultado en disco.
 
     Parámetros
     ----------
-    anios
+    years
         Año o lista de años. ``None`` para todos los descargados.
     por
         Columna o lista de columnas para desagregar, además del año, por ejemplo ``"area"`` o ``"departamento"``.
@@ -138,11 +137,11 @@ def serie_indicadores(
     1  2025  18952290.4                73.9           97.2
     >>> dd.ecv.serie_indicadores(2025, por="departamento")  # doctest: +SKIP
     """
-    anios = _enteros(anios)
+    years = _enteros(years)
     llaves = ["anio", *_lista(por)]
-    archivos = find_files(anios, modulo="caracteristicas", raiz=raiz)
+    archivos = find_files(years, modulo="caracteristicas", raiz=raiz)
     if not archivos:
-        raise FileNotFoundError(f"No hay datos de la ECV para años={anios} en {_root(raiz)}. "
+        raise FileNotFoundError(f"No hay datos de la ECV para años={years} en {_root(raiz)}. "
                                 "Descárguelos con dane_data.ecv.download(...) o revise dane_data.set_paths(...).")
     _faltan_internos(archivos, raiz, ipm=False)
     # Aquí y no en calcular: un año que sale de la caché no vuelve a leer los datos, y el aviso se perdía
@@ -172,9 +171,8 @@ def serie_indicadores(
     return _unir(partes).sort_values(llaves, ignore_index=True)
 
 
-@_con_nombres_viejos
 def serie_ipm(
-    anios: Iterable[int] | int | None = None,
+    years: Iterable[int] | int | None = None,
     por: str | Iterable[str] | None = None,
     muestra: str | None = None,
     dropna: bool = True,
@@ -184,13 +182,13 @@ def serie_ipm(
     """
     El IPM por año, sin tener toda la serie en memoria.
 
-    Da lo mismo que ``ipm(load(anios, modulos=MODULOS_IPM), por=["anio", *por])``, pero lee un año a la vez, solo las
+    Da lo mismo que ``ipm(load(years, modulos=MODULOS_IPM), por=["anio", *por])``, pero lee un año a la vez, solo las
     columnas necesarias, y guarda en disco las privaciones de cada hogar: otra desagregación del mismo año no vuelve a
     leer los datos.
 
     Parámetros
     ----------
-    anios
+    years
         Año o lista de años. ``None`` para todos los descargados.
     por
         Columna o lista de columnas para desagregar, además del año: ``"area"``, ``"region_ipm"`` (las regiones de los
@@ -230,10 +228,10 @@ def serie_ipm(
     1  2025       9.913  0.040
     >>> dd.ecv.serie_ipm(2025, por="departamento")  # doctest: +SKIP
     """
-    anios = _enteros(anios)
-    archivos = find_files(anios, modulo="caracteristicas", raiz=raiz)
+    years = _enteros(years)
+    archivos = find_files(years, modulo="caracteristicas", raiz=raiz)
     if not archivos:
-        raise FileNotFoundError(f"No hay datos de la ECV para años={anios} en {_root(raiz)}. "
+        raise FileNotFoundError(f"No hay datos de la ECV para años={years} en {_root(raiz)}. "
                                 "Descárguelos con dane_data.ecv.download(...) o revise dane_data.set_paths(...).")
     codigo = _firma_codigo(_CODIGO)
     partes = []

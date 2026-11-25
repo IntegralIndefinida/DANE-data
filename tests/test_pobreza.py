@@ -314,9 +314,9 @@ def test_cli_descargar_pobreza(monkeypatch):
     monkeypatch.setattr(dd.pobreza, "download", lambda **kw: llamada.update(kw) or [])
     monkeypatch.setattr(dd.eevv, "download", lambda **kw: pytest.fail("pobreza no debe ir a EEVV"))
     assert cli.main(["descargar", "pobreza", "--anios", "2024", "2025", "--empalme", "--archivos", "hogares"]) == 0
-    assert llamada == {"anios": [2024, 2025], "archivos": ["hogares"], "empalme": True, "borrar_zips": False,
+    assert llamada == {"years": [2024, 2025], "archivos": ["hogares"], "empalme": True, "borrar_zips": False,
                        "forzar": False}
-    assert cli.main(["descargar", "pobreza"]) == 0 and llamada["anios"] is None and llamada["archivos"] is None
+    assert cli.main(["descargar", "pobreza"]) == 0 and llamada["years"] is None and llamada["archivos"] is None
     monkeypatch.setattr(dd.pobreza, "download", lambda **kw: ["hogares 2025: no se pudo descargar"])
     assert cli.main(["descargar", "pobreza", "--anios", "2025"]) == 1
 

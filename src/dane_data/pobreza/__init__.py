@@ -10,14 +10,13 @@ from .indicadores import GLOSARIO, indicadores
 from .loader import (CATEGORIAS, CORE, DOMINIOS, ETIQUETAS, GRUPOS_DOMINIO, METODOLOGIAS, TRECE_CIUDADES, _root,
                      available, find_files, harmonize, load)
 from .union import VARIABLES_GEIH, unir_geih
-from ..stats import _con_nombres_viejos, _enteros, _opciones
+from ..stats import _enteros, _opciones
 
 ANIOS_DISPONIBLES = sorted({a for a, _ in POBREZA_KNOWN_FILES if a != "empalme"})
 
 
-@_con_nombres_viejos
 def download(
-    anios: Iterable[int] | int | None = None,
+    years: Iterable[int] | int | None = None,
     archivos: Iterable[str] | str | None = None,
     empalme: bool = False,
     raiz=None,
@@ -34,7 +33,7 @@ def download(
 
     Parámetros
     ----------
-    anios
+    years
         Año o lista de años (2012–2025). ``None`` descarga toda la serie (unos 1,4 GB de ZIP); una lista vacía, ninguno.
         Los años que no están en el ANDA quedan en la lista que se devuelve.
     archivos
@@ -43,7 +42,7 @@ def download(
     empalme
         Bajar también, a ``<carpeta>/datos/empalme/``, los archivos para comparar 2012–2021 con las cifras del marco
         2018: el factor de empalme 2012–2020, los hogares empalmados de 2021 y las líneas actualizadas de 2012–2018.
-        Se bajan una sola vez, cualquiera que sea ``anios``.
+        Se bajan una sola vez, cualquiera que sea ``years``.
     raiz
         Carpeta de destino. Por defecto, la de ``dd.get_path("pobreza")``.
     borrar_zips
@@ -79,11 +78,11 @@ def download(
     >>> dd.pobreza.download(2025)  # doctest: +SKIP
     >>> dd.pobreza.download(range(2012, 2026), archivos="hogares", empalme=True)  # doctest: +SKIP
     """
-    anios = _enteros(anios)
+    years = _enteros(years)
     archivos = _opciones(archivos, ARCHIVOS, "Archivo")
     dl = PobrezaDownloader(base_dir=_root(raiz), keep_zips=not borrar_zips, progress=progreso,
                            should_stop=detener, forzar=forzar)
-    return dl.run_pipeline(target_years=anios, archivos=tuple(archivos), empalme=empalme)
+    return dl.run_pipeline(target_years=years, archivos=tuple(archivos), empalme=empalme)
 
 
 __all__ = [

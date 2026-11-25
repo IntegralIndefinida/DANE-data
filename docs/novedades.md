@@ -14,14 +14,16 @@
 
 **Cambios**
 
-* Los parámetros de toda la API pública tienen ahora nombres en español, los mismos en todas las encuestas. Antes se
+* Los parámetros de toda la API pública se llaman igual en todas las encuestas, en español salvo `years`. Antes se
   mezclaban (`dd.geih.load(years, months, columns, modules)` frente a `dd.geih.serie_indicadores(anios, meses)`; la
-  GEIH pedía `modules` y la EMICRON y la ECV, `modulos`), así que `dd.geih.load(anios=2024)` o
-  `dd.geih.serie_indicadores(years=2024)` daban error. Los nombres de las funciones no cambian.
+  GEIH pedía `modules` y la EMICRON y la ECV, `modulos`), así que `dd.geih.load(meses=1)` o
+  `dd.geih.serie_indicadores(years=2024)` daban error. Los nombres de las funciones no cambian. **Los nombres de antes
+  ya no se aceptan**: el código escrito para 0.6.0 que los use con nombre (`months=[1, 2, 3]`) da `TypeError` y hay que
+  cambiarlo; pasados por posición (`dd.geih.load(2025, [1, 2, 3])`) siguen funcionando.
 
   | Antes | Ahora | Dónde |
   |---|---|---|
-  | `years` | `anios` | `download`, `load`, `find_files`, `find_months`, `load_personal` |
+  | `anios` | `years` | las `serie_*`, {dd}`geih.exportar()`, {dd}`eevv.tasas()`, {dd}`eevv.tasas_especificas()`, {dd}`eam.panel()` y {dd}`poblacion()` |
   | `months` | `meses` | {dd}`geih.load()` |
   | `columns` | `columnas` | `load`, {dd}`geih.load_month()`, `serie_tabla`, `serie_frecuencias`, `exportar` |
   | `modules` | `modulos` | {dd}`geih.download()`, {dd}`geih.load()`, {dd}`geih.load_month()` |
@@ -37,9 +39,7 @@
   | `values`, `weights` | `valores`, `pesos` | {dd}`weighted_mean()`, {dd}`weighted_quantile()`, {dd}`weighted_gini()` |
   | `on` | `llaves` | {dd}`eam.deflactar()` |
 
-  Los nombres viejos siguen funcionando, con un `FutureWarning` que dice cuál usar (por ejemplo, «`years` está
-  obsoleto: use `anios`»), y se quitarán en una versión futura. Pasar los dos a la vez es un error. El «código Python
-  equivalente» de la aplicación ya usa los nombres nuevos.
+  El «código Python equivalente» de la aplicación ya usa los nombres nuevos.
 * Los avisos de `dane-data` apuntan siempre a la línea del código de quien llama a la función, no a una línea de la
   librería.
 * {dd}`geih.indicadores()` deja fuera por defecto a quien no tiene valor en la variable de `por` (`dropna=True`), como

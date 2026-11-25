@@ -10,15 +10,14 @@ from .agregados import (POBLACIONES, POR_PRECALCULADOS, VARIABLES_INDICADORES, e
 from .indicadores import GLOSARIO, indicadores, trimestre_movil
 from .loader import (CATEGORIAS, CONDICIONES, CORE_RAW, GRUPOS_EDAD, MARCOS, MODULOS, NIVELES_EDUC, available,
                      _root, clear_cache, find_months, harmonize, load, load_month, marco_muestral)
-from ..stats import _con_nombres_viejos, _enteros
+from ..stats import _enteros
 
 ANIOS_DISPONIBLES = sorted(int(y) for y in KNOWN_CATALOGS)
 ANIOS_EMPALME = sorted(int(y) for y in EMPALME_CATALOGS)
 
 
-@_con_nombres_viejos
 def download(
-    anios: Iterable[int] | int | None = None,
+    years: Iterable[int] | int | None = None,
     modulos: Iterable[str] | None = None,
     empalme: bool = False,
     raiz=None,
@@ -37,7 +36,7 @@ def download(
 
     Parámetros
     ----------
-    anios
+    years
         Año o lista de años. ``None`` descarga todos los de la serie (``ANIOS_DISPONIBLES``, o
         ``ANIOS_EMPALME`` con ``empalme=True``); una lista vacía, ninguno. Los años que no están en el
         ANDA se saltan y quedan en la lista que se devuelve.
@@ -99,7 +98,7 @@ def download(
     >>> dd.geih.download(2025, limite_archivos=1)  # solo enero, para probar  # doctest: +SKIP
     >>> dd.geih.download(2024, forzar=True)  # el DANE volvió a publicar 2024  # doctest: +SKIP
     """
-    anios = _enteros(anios)
+    years = _enteros(years)
     dl = GEIHDownloader(
         base_dir=_root(empalme, raiz),
         keep_zips=not borrar_zips,
@@ -109,7 +108,7 @@ def download(
         should_stop=detener,
         forzar=forzar,
     )
-    return dl.run_pipeline(target_years=anios, limit_files=limite_archivos)
+    return dl.run_pipeline(target_years=years, limit_files=limite_archivos)
 
 
 __all__ = [

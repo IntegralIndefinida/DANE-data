@@ -10,14 +10,13 @@ from .indicadores import GLOSARIO, indicadores
 from .ipm import COLUMNAS_IPM, MODULOS_IPM, PRIVACIONES, ipm, privaciones
 from .loader import (CATEGORIAS, ETIQUETAS, KEYS_HOGAR, KEYS_PERSONA, MODULOS, NIVELES, UNIDADES, _root, available,
                      find_files, harmonize, load)
-from ..stats import _con_nombres_viejos, _enteros, _opciones
+from ..stats import _enteros, _opciones
 
 ANIOS_DISPONIBLES = sorted(_CATALOGOS)
 
 
-@_con_nombres_viejos
 def download(
-    anios: Iterable[int] | int | None = None,
+    years: Iterable[int] | int | None = None,
     modulos: Iterable[str] | str | None = None,
     raiz=None,
     borrar_zips: bool = False,
@@ -37,7 +36,7 @@ def download(
 
     Parámetros
     ----------
-    anios
+    years
         Año o lista de años. ``None`` descarga 2018–2025; una lista vacía, ninguno. Los años que no están en el ANDA se
         saltan y quedan en la lista que se devuelve.
     modulos
@@ -83,7 +82,7 @@ def download(
     >>> dd.ecv.download(2025)  # doctest: +SKIP
     >>> dd.ecv.download(range(2018, 2026), modulos=["caracteristicas", "salud"])  # doctest: +SKIP
     """
-    anios = _enteros(anios)
+    years = _enteros(years)
     modulos = _opciones(modulos, MODULOS, "Módulo")
     dl = ECVDownloader(
         base_dir=_root(raiz),
@@ -92,7 +91,7 @@ def download(
         should_stop=detener,
         forzar=forzar,
     )
-    return dl.run_pipeline(target_years=anios, modulos=modulos)
+    return dl.run_pipeline(target_years=years, modulos=modulos)
 
 
 __all__ = [

@@ -8,14 +8,13 @@ from .downloader import EMICRON_KNOWN_FILES, EMICRONDownloader
 from .indicadores import GLOSARIO, a_miles_anuales, indicadores
 from .loader import (CATEGORIAS, CIUDADES, CLAVE, CORE, ETIQUETAS, FACTORES, MODULOS, MONTOS, _root,
                      available, find_files, harmonize, load, load_personal)
-from ..stats import _con_nombres_viejos, _enteros, _opciones
+from ..stats import _enteros, _opciones
 
 ANIOS_DISPONIBLES = sorted({a for a, _ in EMICRON_KNOWN_FILES})
 
 
-@_con_nombres_viejos
 def download(
-    anios: Iterable[int] | int | None = None,
+    years: Iterable[int] | int | None = None,
     modulos: Iterable[str] | str | None = None,
     raiz=None,
     borrar_zips: bool = False,
@@ -30,7 +29,7 @@ def download(
 
     Parámetros
     ----------
-    anios
+    years
         Año o lista de años entre 2019 y 2025. ``None`` descarga toda la serie (unos 300 MB de ZIP); una lista vacía,
         ninguno. Los años que no están en el ANDA se saltan y quedan en la lista que se devuelve.
     modulos
@@ -76,7 +75,7 @@ def download(
     >>> dd.emicron.download(2024)  # doctest: +SKIP
     >>> dd.emicron.download(range(2019, 2025), modulos=["ventas", "costos"])  # doctest: +SKIP
     """
-    anios = _enteros(anios)
+    years = _enteros(years)
     if modulos is not None:  # None: el descargador decide (todos)
         modulos = list(_opciones(modulos, MODULOS, "Módulo"))
     dl = EMICRONDownloader(
@@ -86,7 +85,7 @@ def download(
         should_stop=detener,
         forzar=forzar,
     )
-    return dl.run_pipeline(target_years=anios, modulos=modulos)
+    return dl.run_pipeline(target_years=years, modulos=modulos)
 
 
 __all__ = [

@@ -36,7 +36,7 @@ import pandas as pd
 
 from .. import _io, config
 from .._io import columnas, normalize_columns, read_table, sniff
-from ..stats import _con_nombres_viejos, _enteros, _opciones
+from ..stats import _enteros, _opciones
 from ..referencias import DEPARTAMENTOS, MESES, SMLV, strip_accents
 
 log = logging.getLogger("dane_data.geih")
@@ -278,8 +278,7 @@ def _pick_files(files: list[Path]) -> dict[str, list[Path]]:
     return out
 
 
-@_con_nombres_viejos
-def find_months(anios: Iterable[int] | int | None = None, empalme: bool = False, raiz=None) -> list[MesGEIH]:
+def find_months(years: Iterable[int] | int | None = None, empalme: bool = False, raiz=None) -> list[MesGEIH]:
     """
     Meses de la GEIH que hay en disco.
 
@@ -289,7 +288,7 @@ def find_months(anios: Iterable[int] | int | None = None, empalme: bool = False,
 
     Parámetros
     ----------
-    anios
+    years
         Año o lista de años. ``None`` para todos.
     empalme
         Buscar en la carpeta de la serie de empalme.
@@ -320,11 +319,11 @@ def find_months(anios: Iterable[int] | int | None = None, empalme: bool = False,
     base = _csv_dir(_root(empalme, raiz))
     if not base.is_dir():
         return []
-    anios = _enteros(anios)  # también un año de numpy (df.anio.max())
+    years = _enteros(years)  # también un año de numpy (df.anio.max())
     result = []
     for ydir in sorted(p for p in base.iterdir() if p.is_dir() and p.name.isdigit()):
         anio = int(ydir.name)
-        if anios is not None and anio not in anios:
+        if years is not None and anio not in years:
             continue
         for mdir in sorted(p for p in ydir.iterdir() if p.is_dir()):
             mes = month_from_folder(mdir.name)
@@ -362,7 +361,6 @@ def _mtime(mes: MesGEIH) -> float:
     return max(fechas, default=0.0)
 
 
-@_con_nombres_viejos
 def available(empalme: bool = False, raiz=None) -> pd.DataFrame:
     """
     Tabla de los meses de la GEIH descargados.
@@ -453,7 +451,6 @@ def _read_module(files: list[Path], columnas) -> pd.DataFrame:
     return pd.concat(frames, ignore_index=True, sort=False) if len(frames) > 1 else frames[0]
 
 
-@_con_nombres_viejos
 def load_month(mes: MesGEIH, columnas="core", modulos: Iterable[str] | None = None) -> pd.DataFrame:
     """
     Une los módulos de un mes en una tabla de personas, sin armonizar.
@@ -985,9 +982,8 @@ def _modulos_sin_extraer(meses: list[MesGEIH], del_anio: dict[int, set]) -> dict
     return {modulo: sorted(anios) for modulo, anios in sin.items()}
 
 
-@_con_nombres_viejos
 def load(
-    anios: Iterable[int] | int,
+    years: Iterable[int] | int,
     meses: Iterable[int] | int | None = None,
     columnas="core",
     empalme: bool = False,
@@ -1008,7 +1004,7 @@ def load(
 
     Parámetros
     ----------
-    anios
+    years
         Año o lista de años.
     meses
         Mes o lista de meses (1–12); None para todos los disponibles.
@@ -1089,7 +1085,7 @@ def load(
     conservar = None
     if variables is not None:
         conservar = list(dict.fromkeys(["anio", "mes", *([variables] if isinstance(variables, str) else variables)]))
-    encontrados = find_months(anios, empalme=empalme, raiz=raiz)
+    encontrados = find_months(years, empalme=empalme, raiz=raiz)
     del_anio = _modulos_por_anio(encontrados)  # antes de filtrar los meses
     if meses is not None:
         encontrados = [m for m in encontrados if m.mes in meses]
@@ -1103,7 +1099,7 @@ def load(
         encontrados = [m for m in encontrados if m.completo]
     if not encontrados:
         raise FileNotFoundError(
-            f"No hay datos GEIH para años={anios}, meses={meses} en {_root(empalme, raiz)}. "
+            f"No hay datos GEIH para años={years}, meses={meses} en {_root(empalme, raiz)}. "
             "Descárguelos con dane_data.geih.download(...) o revise dane_data.set_paths(...)."
         )
     # Un año nuevo que la búsqueda del ANDA encuentra antes de que dane-data tenga su salario mínimo

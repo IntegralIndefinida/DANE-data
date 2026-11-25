@@ -33,7 +33,7 @@ import pandas as pd
 from .. import config
 from .._hooks import archivos_datos
 from .._io import read_table
-from ..stats import _con_nombres_viejos, _enteros
+from ..stats import _enteros
 from ..referencias import DEPARTAMENTOS
 
 log = logging.getLogger("dane_data.eam")
@@ -126,14 +126,13 @@ def _data_dir(raiz: Path) -> Path:
     return raiz / "datos" if (raiz / "datos").is_dir() else raiz
 
 
-@_con_nombres_viejos
-def find_files(anios: Iterable[int] | int | None = None, raiz=None) -> dict[int, Path]:
+def find_files(years: Iterable[int] | int | None = None, raiz=None) -> dict[int, Path]:
     """
     Archivo de datos de cada año de la EAM descargado.
 
     Parámetros
     ----------
-    anios
+    years
         Año o lista de años. ``None`` para todos.
     raiz
         Carpeta raíz. Por defecto, la configurada (``dd.get_path("eam")``).
@@ -153,11 +152,11 @@ def find_files(anios: Iterable[int] | int | None = None, raiz=None) -> dict[int,
     base = _data_dir(_root(raiz))
     if not base.is_dir():
         return {}
-    anios = _enteros(anios)  # también un año de numpy (df.anio.max())
+    years = _enteros(years)  # también un año de numpy (df.anio.max())
     out = {}
     for ydir in sorted(p for p in base.iterdir() if p.is_dir() and p.name.isdigit()):
         anio = int(ydir.name)
-        if anios is not None and anio not in anios:
+        if years is not None and anio not in years:
             continue
         files = archivos_datos(ydir, EXTENSIONES)
         if files:
@@ -167,7 +166,6 @@ def find_files(anios: Iterable[int] | int | None = None, raiz=None) -> dict[int,
     return out
 
 
-@_con_nombres_viejos
 def available(raiz=None) -> pd.DataFrame:
     """
     Tabla de los años de la EAM descargados.
@@ -302,9 +300,8 @@ def harmonize(df: pd.DataFrame, anio: int) -> pd.DataFrame:
     return df
 
 
-@_con_nombres_viejos
 def load(
-    anios: Iterable[int] | int | None = None,
+    years: Iterable[int] | int | None = None,
     columnas="core",
     armonizar: bool = True,
     raiz=None,
@@ -315,7 +312,7 @@ def load(
 
     Parámetros
     ----------
-    anios
+    years
         Año, lista o rango de años. ``None`` para todos los descargados.
     columnas
         ``"core"`` (las de ``CORE``, comparables entre años; por defecto), ``"all"`` o una lista de
@@ -365,10 +362,10 @@ def load(
     1  2022  2392         4       23  Minerales no metálicos  Cundinamarca
     2  2022  2429         4       24       Metalurgia básica     Antioquia
     """
-    files = find_files(anios, raiz=raiz)
+    files = find_files(years, raiz=raiz)
     if not files:
         raise FileNotFoundError(
-            f"No hay datos EAM para años={anios} en {_root(raiz)}. "
+            f"No hay datos EAM para años={years} en {_root(raiz)}. "
             "Descárguelos con dane_data.eam.download(...) o revise dane_data.set_paths(...)."
         )
     if isinstance(columnas, str) and columnas not in ("core", "all"):

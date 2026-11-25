@@ -579,7 +579,7 @@ def test_cli_descargar(monkeypatch):
     llamada = {}
     monkeypatch.setattr(dd.eevv, "download", lambda **kw: llamada.update(kw) or [])
     assert cli.main(["descargar", "eevv", "--anios", "2024", "2025", "--tipos", "fetales", "--borrar-zips"]) == 0
-    assert llamada == {"anios": [2024, 2025], "tipos": ["fetales"], "borrar_zips": True, "forzar": False}
+    assert llamada == {"years": [2024, 2025], "tipos": ["fetales"], "borrar_zips": True, "forzar": False}
     monkeypatch.setattr(dd.eevv, "download", lambda **kw: ["fetales 2025: no se pudo descargar"])
     assert cli.main(["descargar", "eevv", "--anios", "2025"]) == 1
 

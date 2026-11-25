@@ -18,7 +18,7 @@ import pandas as pd
 from .. import config
 from ..geih.agregados import _firma_codigo, _mascara
 from ..geih.loader import _borrar_cache, _desde_cache
-from ..stats import _as_list, _con_nombres_viejos, _enteros
+from ..stats import _as_list, _enteros
 from .indicadores import indicadores
 from .loader import _archivo, _avisar_metodologias, _root, find_files, load
 
@@ -81,9 +81,8 @@ def _armonizado(anio: int, ruta: Path, empalme: bool, raiz) -> pd.DataFrame:
     return _desde_cache(config.CACHE_DIR / "pobreza" / "anios" / f"{anio}_{digest}.parquet", leer, "pobreza")
 
 
-@_con_nombres_viejos
 def serie_indicadores(
-    anios: Iterable[int] | int | None = None,
+    years: Iterable[int] | int | None = None,
     por: str | Iterable[str] | None = None,
     empalme: bool = False,
     filtros: dict | None = None,
@@ -95,12 +94,12 @@ def serie_indicadores(
     """
     Indicadores de pobreza por año sin tener toda la serie en memoria.
 
-    Da lo mismo que ``indicadores(load(anios, empalme=empalme), por=["anio", *por])``, pero lee un año a la vez y guarda
+    Da lo mismo que ``indicadores(load(years, empalme=empalme), por=["anio", *por])``, pero lee un año a la vez y guarda
     cada año armonizado en disco: la segunda vez no vuelve a leer los archivos del DANE.
 
     Parámetros
     ----------
-    anios
+    years
         Año o lista de años. ``None`` para todos los descargados.
     por
         Columna o lista de columnas para desagregar, además del año, por ejemplo ``"grupo_dominio"``.
@@ -148,10 +147,10 @@ def serie_indicadores(
     2  2024      31.786              11.690  0.551
     3  2025      28.003               9.638  0.531
     """
-    archivos = find_files(_enteros(anios), raiz=raiz)
+    archivos = find_files(_enteros(years), raiz=raiz)
     if not archivos:
         raise FileNotFoundError(
-            f"No hay datos de pobreza para años={anios} en {_root(raiz)}. "
+            f"No hay datos de pobreza para años={years} en {_root(raiz)}. "
             "Descárguelos con dane_data.pobreza.download(...) o revise dane_data.set_paths(...)."
         )
     _avisar_metodologias(archivos, empalme)

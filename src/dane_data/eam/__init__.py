@@ -12,14 +12,13 @@ from .indicadores import GLOSARIO, crecimiento, deflactar, panel, participacion,
 indicadores = resumen
 from .loader import (CORE, ETIQUETAS, SECTORES, VARIABLES_COMUNES, available, find_files, harmonize,
                      load, _root)
-from ..stats import _con_nombres_viejos, _enteros
+from ..stats import _enteros
 
 ANIOS_DISPONIBLES = sorted(int(y) for y in EAM_KNOWN_CATALOGS)
 
 
-@_con_nombres_viejos
 def download(
-    anios: Iterable[int] | int | None = None,
+    years: Iterable[int] | int | None = None,
     raiz=None,
     incluir_tic: bool = False,
     borrar_zips: bool = False,
@@ -34,7 +33,7 @@ def download(
 
     Parámetros
     ----------
-    anios
+    years
         Año o lista de años entre 1992 y 2024. ``None`` descarga toda la serie (unos 330 MB); una lista
         vacía, ninguno. Los años que no están en el ANDA se
         saltan y quedan en la lista que se devuelve.
@@ -78,7 +77,7 @@ def download(
     >>> dd.eam.download([2022, 2023, 2024])  # doctest: +SKIP
     >>> dd.eam.download()  # toda la serie, 1992–2024  # doctest: +SKIP
     """
-    anios = _enteros(anios)
+    years = _enteros(years)
     dl = EAMDownloader(
         base_dir=_root(raiz),
         keep_zips=not borrar_zips,
@@ -87,7 +86,7 @@ def download(
         should_stop=detener,
         forzar=forzar,
     )
-    return dl.run_pipeline(target_years=anios)
+    return dl.run_pipeline(target_years=years)
 
 
 __all__ = [

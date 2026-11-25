@@ -1,5 +1,4 @@
 import json
-import warnings
 from pathlib import Path
 
 import numpy as np
@@ -138,26 +137,13 @@ def test_eam_deflactar(eam_root):
     assert avisos[0].filename == __file__                   # apunta a la línea del usuario, no a la librería
 
 
-def test_nombres_viejos_de_los_parametros(eam_root, geih_root):
-    """Los nombres en inglés de antes siguen funcionando, con un FutureWarning que apunta aquí; los dos a la vez, no."""
-    with pytest.warns(FutureWarning, match="`root` está obsoleto: use `raiz`") as avisos:
-        eam = dd.eam.load(root=eam_root)
-    assert [a.filename for a in avisos] == [__file__]
-    pd.testing.assert_frame_equal(eam, dd.eam.load(raiz=eam_root))
-    with pytest.raises(TypeError, match="`root` y `raiz`"):
-        dd.eam.load(root=eam_root, raiz=eam_root)
-    with pytest.raises(TypeError, match="`years` y `anios`"):   # el nuevo por posición
-        dd.eam.load(None, years=[2016])
-    # Las gemelas aceptan los mismos nombres: antes load pedía years y serie_indicadores, anios
-    with pytest.warns(FutureWarning, match="`years` está obsoleto: use `anios`"):
-        serie = dd.geih.serie_indicadores(years=2016, raiz=geih_root)
-    pd.testing.assert_frame_equal(serie, dd.geih.serie_indicadores(anios=2016, raiz=geih_root))
-    assert len(dd.geih.load(anios=2016, meses=1, raiz=geih_root, cache=False))
-    # Con el decorador en medio, el aviso propio de la función también apunta a la línea del usuario
-    with warnings.catch_warnings(record=True) as avisos:
-        warnings.simplefilter("always")
-        dd.eam.deflactar(eam, ["valagri"], pd.Series({2016: 100.0, 2024: 200.0}), on="anio")
-    assert [(a.category, a.filename) for a in avisos] == [(FutureWarning, __file__), (UserWarning, __file__)]
+def test_nombres_de_los_parametros(geih_root):
+    """``years`` en todas las funciones, también en las serie_*, que pedían ``anios``; los demás, solo en español."""
+    serie = dd.geih.serie_indicadores(years=2016, raiz=geih_root)
+    pd.testing.assert_frame_equal(serie, dd.geih.serie_indicadores(2016, raiz=geih_root))
+    assert len(dd.geih.load(years=2016, meses=1, raiz=geih_root, cache=False))
+    with pytest.raises(TypeError, match="months"):  # los nombres en inglés de antes ya no se aceptan
+        dd.geih.load(2016, months=1, raiz=geih_root, cache=False)
 
 
 def test_texto_que_se_pierde_al_convertir_se_avisa(tmp_path, caplog):

@@ -173,22 +173,22 @@ def _cmd_descargar(args) -> int:
         return 2
     logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
     if args.encuesta == "geih":
-        fallidos = geih.download(anios=args.anios, modulos=args.modulos, empalme=args.empalme,
+        fallidos = geih.download(years=args.anios, modulos=args.modulos, empalme=args.empalme,
                                  borrar_zips=args.borrar_zips, limite_archivos=args.limite, forzar=args.forzar)
     elif args.encuesta == "eam":
-        fallidos = eam.download(anios=args.anios, incluir_tic=args.tic, borrar_zips=args.borrar_zips,
+        fallidos = eam.download(years=args.anios, incluir_tic=args.tic, borrar_zips=args.borrar_zips,
                                 forzar=args.forzar)
     elif args.encuesta == "eevv":
-        fallidos = eevv.download(anios=args.anios, tipos=args.tipos, borrar_zips=args.borrar_zips, forzar=args.forzar)
+        fallidos = eevv.download(years=args.anios, tipos=args.tipos, borrar_zips=args.borrar_zips, forzar=args.forzar)
     elif args.encuesta == "emicron":
-        fallidos = emicron.download(anios=args.anios, modulos=args.modulos, borrar_zips=args.borrar_zips,
+        fallidos = emicron.download(years=args.anios, modulos=args.modulos, borrar_zips=args.borrar_zips,
                                     forzar=args.forzar)
     elif args.encuesta == "ecv":
-        fallidos = ecv.download(anios=args.anios, modulos=args.modulos, borrar_zips=args.borrar_zips, forzar=args.forzar)
+        fallidos = ecv.download(years=args.anios, modulos=args.modulos, borrar_zips=args.borrar_zips, forzar=args.forzar)
     else:
         if args.anios is None:
             print("Se descarga toda la serie 2012–2025 (unos 1,4 GB de ZIP). Use --anios para elegir años.")
-        fallidos = pobreza.download(anios=args.anios, archivos=args.archivos, empalme=args.empalme,
+        fallidos = pobreza.download(years=args.anios, archivos=args.archivos, empalme=args.empalme,
                                     borrar_zips=args.borrar_zips, forzar=args.forzar)
     return 1 if fallidos else 0  # el resumen de lo que falló ya quedó en el registro
 

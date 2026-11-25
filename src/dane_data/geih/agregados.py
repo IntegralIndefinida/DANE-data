@@ -22,7 +22,7 @@ import pandas as pd
 
 from .. import config
 from ..referencias import MESES
-from ..stats import (_as_list, _con_categorias, _con_nombres_viejos, _enteros, _meses_anotados, peso_mensual_promedio,
+from ..stats import (_as_list, _con_categorias, _enteros, _meses_anotados, peso_mensual_promedio,
                      weighted_quantile)
 from .indicadores import _COLUMNAS, indicadores
 from .loader import (CATEGORIAS, MesGEIH, _desde_cache, _firma_archivos, _meses, _root,
@@ -204,9 +204,8 @@ def _por_anio(tipo: str, anios, solicitud: dict, calcular: Callable[[int], pd.Da
 # --------------------------------------------------------------------------- #
 # Indicadores laborales
 # --------------------------------------------------------------------------- #
-@_con_nombres_viejos
 def serie_indicadores(
-    anios: Iterable[int] | int,
+    years: Iterable[int] | int,
     por: str | None = None,
     anual: bool = True,
     empalme: bool = False,
@@ -220,12 +219,12 @@ def serie_indicadores(
     Indicadores del mercado laboral de muchos años, sin cargar los microdatos en memoria.
 
     Da exactamente lo mismo que
-    ``indicadores(filtrar(load(anios, meses=meses), filtros), por=por, anual=anual, dropna=dropna)``,
+    ``indicadores(filtrar(load(years, meses=meses), filtros), por=por, anual=anual, dropna=dropna)``,
     pero carga un año a la vez y guarda el resultado de cada año en disco.
 
     Parámetros
     ----------
-    anios
+    years
         Año o lista de años, por ejemplo ``range(2007, 2027)``.
     por
         Desagregación: una de ``POR_PRECALCULADOS`` (``None``, ``"sexo"``, ``"zona"``,
@@ -310,7 +309,7 @@ def serie_indicadores(
                 partes.append(r.assign(desagregacion=p or "total", anual=a))
         return pd.concat(partes, ignore_index=True)
 
-    tablas = _por_anio("indicadores", anios, {"filtros": filtros or {}, "meses": _enteros(meses)}, calcular,
+    tablas = _por_anio("indicadores", years, {"filtros": filtros or {}, "meses": _enteros(meses)}, calcular,
                        meses=meses, empalme=empalme, raiz=raiz, progreso=progreso)
     res = pd.concat([t[(t["desagregacion"] == (por or "total")) & (t["anual"] == anual)] for t in tablas],
                     ignore_index=True)
@@ -328,9 +327,8 @@ def serie_indicadores(
 # --------------------------------------------------------------------------- #
 # Tablas ponderadas
 # --------------------------------------------------------------------------- #
-@_con_nombres_viejos
 def serie_frecuencias(
-    anios: Iterable[int] | int,
+    years: Iterable[int] | int,
     variable: str | None = None,
     por: str | Iterable[str] | None = None,
     poblacion: str | None = None,
@@ -350,7 +348,7 @@ def serie_frecuencias(
 
     Parámetros
     ----------
-    anios
+    years
         Año o lista de años.
     variable
         Variable cuya distribución se cuenta. Las filas donde está vacía se descartan. ``None`` cuenta
@@ -413,14 +411,13 @@ def serie_frecuencias(
 
     solicitud = {"variable": variable, "por": sorted(por), "poblacion": poblacion, "filtros": filtros or {},
                  "meses": _enteros(meses), "columnas": columnas}
-    tablas = _por_anio("frecuencias", anios, solicitud, calcular, meses=meses, empalme=empalme, raiz=raiz,
+    tablas = _por_anio("frecuencias", years, solicitud, calcular, meses=meses, empalme=empalme, raiz=raiz,
                        progreso=progreso)
     return pd.concat(tablas, ignore_index=True)
 
 
-@_con_nombres_viejos
 def serie_tabla(
-    anios: Iterable[int] | int,
+    years: Iterable[int] | int,
     por: str | Iterable[str] | None = None,
     variable: str | None = None,
     estadistico: str = "total",
@@ -437,12 +434,12 @@ def serie_tabla(
     Tabla ponderada de muchos años, sin cargar los microdatos en memoria.
 
     Da exactamente lo mismo que
-    ``dd.tabla(filtrar(load(anios, meses=meses), filtros, poblacion), por, variable, estadistico)``,
+    ``dd.tabla(filtrar(load(years, meses=meses), filtros, poblacion), por, variable, estadistico)``,
     pero calcula las frecuencias de un año a la vez y las guarda en disco.
 
     Parámetros
     ----------
-    anios
+    years
         Año o lista de años.
     por
         Variable o lista de variables que definen los grupos. Incluya ``"anio"`` para una fila por año;
@@ -509,7 +506,7 @@ def serie_tabla(
         raise ValueError("estadistico debe ser 'total', 'porcentaje', 'media' o 'mediana'.")
     if estadistico in ("media", "mediana") and variable is None:
         raise ValueError("Indique `variable` para media/mediana.")
-    f = serie_frecuencias(anios, variable, por, poblacion, filtros, meses, columnas, empalme, raiz, progreso)
+    f = serie_frecuencias(years, variable, por, poblacion, filtros, meses, columnas, empalme, raiz, progreso)
     if dropna and por:
         f = f.dropna(subset=por)
     return tabla_de_frecuencias(f, por, variable, estadistico)
@@ -599,9 +596,8 @@ def tabla_de_frecuencias(f: pd.DataFrame, por: str | Iterable[str] | None = None
 # --------------------------------------------------------------------------- #
 # Exportar microdatos
 # --------------------------------------------------------------------------- #
-@_con_nombres_viejos
 def exportar(
-    anios: Iterable[int] | int,
+    years: Iterable[int] | int,
     ruta,
     variables: Iterable[str] | None = None,
     poblacion: str | None = None,
@@ -623,7 +619,7 @@ def exportar(
 
     Parámetros
     ----------
-    anios
+    years
         Año o lista de años.
     ruta
         Archivo CSV de destino (UTF-8 con BOM, para que Excel lea bien las tildes).
@@ -670,7 +666,7 @@ def exportar(
     >>> dd.geih.exportar(2024, "para_excel.csv", sep=";", decimal=",")  # doctest: +SKIP
     """
     ruta = Path(ruta)
-    por_anio = _meses_por_anio(anios, meses, empalme, raiz)
+    por_anio = _meses_por_anio(years, meses, empalme, raiz)
     lista = [m for _, ms in sorted(por_anio.items()) for m in ms]
     necesarias = leer = None  # sin variables: se leen y escriben todas las armonizadas
     if variables is not None:

@@ -41,7 +41,7 @@ def _dpto(valor) -> int:
 
 
 def poblacion(
-    anios: Iterable[int] | int | None = None,
+    years: Iterable[int] | int | None = None,
     por: Iterable[str] | str | None = None,
     sexo: str | None = None,
     edades: int | tuple[int, int] | None = None,
@@ -53,7 +53,7 @@ def poblacion(
 
     Parámetros
     ----------
-    anios
+    years
         Año o lista de años. ``None`` para todos (1950–2070).
     por
         Desagregar, además de por año: ``"departamento"`` (nombre), ``"dpto"`` (código), ``"area"``, ``"sexo"`` o
@@ -118,7 +118,7 @@ def poblacion(
         raise ValueError(f"No se puede desagregar por {desconocidas}. Opciones: {list(_POR)}")
     d = _datos()
     mascara = pd.Series(True, index=d.index)
-    pedidos = _enteros(anios)
+    pedidos = _enteros(years)
     if pedidos is not None:
         mascara &= d["anio"].isin(pedidos)
     if sexo is not None:

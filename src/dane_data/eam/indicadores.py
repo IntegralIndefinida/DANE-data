@@ -7,7 +7,7 @@ from typing import Iterable
 import numpy as np
 import pandas as pd
 
-from ..stats import _as_list, _avisar, _con_nombres_viejos
+from ..stats import _as_list, _avisar
 
 GLOSARIO = {
     "Producción bruta": "Valor total de lo producido por el establecimiento en el año (prodbr2).",
@@ -232,7 +232,6 @@ def crecimiento(df: pd.DataFrame, valor: str, por: str | Iterable[str] | None = 
     return d
 
 
-@_con_nombres_viejos
 def deflactar(df: pd.DataFrame, columnas: Iterable[str], deflactor: pd.DataFrame | pd.Series,
               llaves: str | list[str] = "anio", base: float = 100.0, sufijo: str = "_real") -> pd.DataFrame:
     """
@@ -312,7 +311,7 @@ def deflactar(df: pd.DataFrame, columnas: Iterable[str], deflactor: pd.DataFrame
     return d
 
 
-def panel(df: pd.DataFrame, balanceado: bool = False, anios: Iterable[int] | None = None,
+def panel(df: pd.DataFrame, balanceado: bool = False, years: Iterable[int] | None = None,
           excluir_microagregados: bool = False) -> pd.DataFrame:
     """
     Panel de establecimientos: una fila por establecimiento y año.
@@ -322,8 +321,8 @@ def panel(df: pd.DataFrame, balanceado: bool = False, anios: Iterable[int] | Non
     df
         Microdatos de ``load``.
     balanceado
-        Conservar solo los establecimientos observados en todos los años de ``anios``.
-    anios
+        Conservar solo los establecimientos observados en todos los años de ``years``.
+    years
         Años del panel. Por defecto, todos los de ``df``.
     excluir_microagregados
         Quitar los registros ``microagregado``, que traen el promedio de su grupo y no los valores del
@@ -377,8 +376,8 @@ def panel(df: pd.DataFrame, balanceado: bool = False, anios: Iterable[int] | Non
     [(1, 2023), (1, 2024)]
     """
     d = df.dropna(subset=["nordest"]).copy()
-    anios = sorted(set(anios) if anios is not None else d["anio"].unique())
-    d = d[d["anio"].isin(anios)]
+    years = sorted(set(years) if years is not None else d["anio"].unique())
+    d = d[d["anio"].isin(years)]
     if excluir_microagregados:
         if "microagregado" not in d.columns:
             raise ValueError("excluir_microagregados=True necesita la columna microagregado: cargue con "
@@ -387,7 +386,7 @@ def panel(df: pd.DataFrame, balanceado: bool = False, anios: Iterable[int] | Non
     d = d.drop_duplicates(subset=["nordest", "anio"])
     if balanceado:
         n = d.groupby("nordest")["anio"].nunique()
-        d = d[d["nordest"].isin(n[n == len(anios)].index)]
+        d = d[d["nordest"].isin(n[n == len(years)].index)]
     if "microagregado" in d.columns and d["microagregado"].any():
         micro = d.loc[d["microagregado"].astype(bool), "nordest"].nunique()
         _avisar(f"{micro} de {d['nordest'].nunique()} establecimientos del panel tienen algún año con valores "

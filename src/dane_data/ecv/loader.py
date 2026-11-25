@@ -27,7 +27,7 @@ import pandas as pd
 from .. import config
 from .._hooks import archivos_datos
 from .._io import read_table
-from ..stats import _avisar, _con_nombres_viejos, _enteros
+from ..stats import _avisar, _enteros
 from ..eevv.loader import _categoria, _unir
 from ..referencias import DEPARTAMENTOS
 
@@ -135,14 +135,13 @@ def _modulo_valido(modulo: str) -> str:
     return modulo
 
 
-@_con_nombres_viejos
-def find_files(anios: Iterable[int] | int | None = None, modulo: str = "caracteristicas", raiz=None) -> dict[int, Path]:
+def find_files(years: Iterable[int] | int | None = None, modulo: str = "caracteristicas", raiz=None) -> dict[int, Path]:
     """
     Archivo de datos de un capítulo en cada año descargado.
 
     Parámetros
     ----------
-    anios
+    years
         Año o lista de años. ``None`` para todos.
     modulo
         Uno de ``dd.ecv.MODULOS``.
@@ -169,16 +168,15 @@ def find_files(anios: Iterable[int] | int | None = None, modulo: str = "caracter
     base = _root(raiz) / "datos"
     if not base.is_dir():
         return {}
-    anios = _enteros(anios)  # también un año de numpy (df.anio.max())
+    years = _enteros(years)  # también un año de numpy (df.anio.max())
     out = {}
     for carpeta in sorted(p for p in base.iterdir() if p.is_dir() and p.name.isdigit()):
         anio = int(carpeta.name)
-        if (anios is None or anio in anios) and (archivos := archivos_datos(carpeta / modulo, EXTENSIONES)):
+        if (years is None or anio in years) and (archivos := archivos_datos(carpeta / modulo, EXTENSIONES)):
             out[anio] = max(archivos, key=lambda f: (f.suffix.lower() != ".dta", f.stat().st_size))
     return out
 
 
-@_con_nombres_viejos
 def available(raiz=None) -> pd.DataFrame:
     """
     Qué capítulos de cada año están descargados.
@@ -401,9 +399,8 @@ def harmonize(df: pd.DataFrame) -> pd.DataFrame:
     return pd.concat([df, pd.DataFrame(nuevas, index=df.index)], axis=1)
 
 
-@_con_nombres_viejos
 def load(
-    anios: Iterable[int] | int | None = None,
+    years: Iterable[int] | int | None = None,
     modulos: Iterable[str] | str | None = None,
     nivel: str = "persona",
     columnas: Iterable[str] | None = None,
@@ -415,7 +412,7 @@ def load(
 
     Parámetros
     ----------
-    anios
+    years
         Año o lista de años. ``None`` para todos los descargados.
     modulos
         Capítulos de ``dd.ecv.MODULOS`` que se agregan. Siempre va el que trae a todas las personas
@@ -458,9 +455,9 @@ def load(
     """
     modulos = _modulos_validos(modulos, nivel)
     columnas = None if columnas is None else [*dict.fromkeys([*columnas, *_ARMONIZAR])]
-    bases = find_files(anios, modulo=modulos[0], raiz=raiz)
+    bases = find_files(years, modulo=modulos[0], raiz=raiz)
     if not bases:
-        raise FileNotFoundError(f"No hay {modulos[0]} de la ECV para años={anios} en {_root(raiz)}. "
+        raise FileNotFoundError(f"No hay {modulos[0]} de la ECV para años={years} en {_root(raiz)}. "
                                 "Descárguela con dane_data.ecv.download(...) o revise dane_data.set_paths(...).")
     faltan: dict[str, list[int]] = {}
     partes = []

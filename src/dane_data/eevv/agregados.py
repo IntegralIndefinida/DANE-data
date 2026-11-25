@@ -18,7 +18,7 @@ import pandas as pd
 
 from .. import config
 from ..geih.agregados import _clave_json, _firma_codigo, _mascara
-from ..stats import _avisar, _con_nombres_viejos, _enteros
+from ..stats import _avisar, _enteros
 from ..geih.loader import _borrar_cache, _desde_cache
 from ..proyecciones import poblacion
 from .indicadores import _lista, indicadores
@@ -115,9 +115,8 @@ def _aplicar_filtros(df: pd.DataFrame, filtros: dict | None) -> pd.DataFrame:
     return df[_mascara(df, filtros)] if filtros else df
 
 
-@_con_nombres_viejos
 def serie_indicadores(
-    anios: Iterable[int] | int | None = None,
+    years: Iterable[int] | int | None = None,
     tipo: str = "defunciones",
     por: str | Iterable[str] | None = None,
     filtros: dict | None = None,
@@ -128,12 +127,12 @@ def serie_indicadores(
     """
     Indicadores por año sin tener toda la serie en memoria.
 
-    Da exactamente lo mismo que ``indicadores(load(anios, tipo), por=["anio", *por])``, pero lee un año a la vez y guarda
+    Da exactamente lo mismo que ``indicadores(load(years, tipo), por=["anio", *por])``, pero lee un año a la vez y guarda
     cada resultado en disco.
 
     Parámetros
     ----------
-    anios
+    years
         Año o lista de años. ``None`` para todos los descargados.
     tipo
         ``"defunciones"``, ``"nacimientos"`` o ``"fetales"``.
@@ -175,21 +174,20 @@ def serie_indicadores(
     2  2025       441537           11.0         53.8
     >>> dd.eevv.serie_indicadores(2025, por="gran_causa", filtros={"sexo": ["Mujer"]})  # doctest: +SKIP
     """
-    anios = _enteros(anios)
+    years = _enteros(years)
     if tipo == "defunciones":
-        _avisar_cobertura(tipo, anios if anios is not None else find_files(tipo=tipo, raiz=raiz))
+        _avisar_cobertura(tipo, years if years is not None else find_files(tipo=tipo, raiz=raiz))
     llaves = ["anio", *_lista(por)]
 
     def calcular(d: pd.DataFrame) -> pd.DataFrame:
         return indicadores(_aplicar_filtros(d, filtros), por=llaves, dropna=dropna)
 
-    partes = _por_anio("indicadores", anios, tipo, {"por": llaves, "filtros": filtros, "dropna": dropna}, calcular, raiz, progreso)
+    partes = _por_anio("indicadores", years, tipo, {"por": llaves, "filtros": filtros, "dropna": dropna}, calcular, raiz, progreso)
     return _unir(partes).sort_values(llaves, ignore_index=True)
 
 
-@_con_nombres_viejos
 def serie_conteos(
-    anios: Iterable[int] | int | None = None,
+    years: Iterable[int] | int | None = None,
     tipo: str = "defunciones",
     por: str | Iterable[str] | None = None,
     filtros: dict | None = None,
@@ -202,7 +200,7 @@ def serie_conteos(
 
     Parámetros
     ----------
-    anios
+    years
         Año o lista de años. ``None`` para todos los descargados.
     tipo
         ``"defunciones"``, ``"nacimientos"`` o ``"fetales"``.
@@ -240,16 +238,16 @@ def serie_conteos(
     31                             Enfermedades isquémicas del corazón  49261
     18      Enfermedades crónicas de las vías respiratorias inferiores  18187
     """
-    anios = _enteros(anios)
+    years = _enteros(years)
     if tipo == "defunciones":
-        _avisar_cobertura(tipo, anios if anios is not None else find_files(tipo=tipo, raiz=raiz))
+        _avisar_cobertura(tipo, years if years is not None else find_files(tipo=tipo, raiz=raiz))
     llaves = ["anio", *_lista(por)]
 
     def calcular(d: pd.DataFrame) -> pd.DataFrame:
         d = _aplicar_filtros(d, filtros)
         return d.groupby(llaves, observed=True, dropna=dropna, sort=True).size().rename("n").reset_index()
 
-    partes = _por_anio("conteos", anios, tipo, {"por": llaves, "filtros": filtros, "dropna": dropna}, calcular, raiz, progreso)
+    partes = _por_anio("conteos", years, tipo, {"por": llaves, "filtros": filtros, "dropna": dropna}, calcular, raiz, progreso)
     return _unir(partes).sort_values(llaves, ignore_index=True)
 
 
@@ -323,9 +321,8 @@ def _avisar_sin_poblacion(res: pd.DataFrame, por: list[str]) -> None:
                 "Las proyecciones por departamento empiezan en 1985.", UserWarning)
 
 
-@_con_nombres_viejos
 def tasas(
-    anios: Iterable[int] | int | None = None,
+    years: Iterable[int] | int | None = None,
     por: str | Iterable[str] | None = None,
     raiz=None,
     progreso=None,
@@ -338,7 +335,7 @@ def tasas(
 
     Parámetros
     ----------
-    anios
+    years
         Año o lista de años. ``None`` para todos los descargados.
     por
         ``"departamento"`` (de residencia), ``"sexo"`` o ``"area"`` (de residencia: ``"Cabecera"`` o ``"Centros poblados y
@@ -412,15 +409,15 @@ def tasas(
     >>> dd.eevv.tasas(range(2015, 2026), por="departamento")  # doctest: +SKIP
     """
     por = _por_valido(por)
-    anios = _enteros(anios)
+    years = _enteros(years)
     tipos = ("defunciones", "nacimientos", "fetales")
-    if not any(find_files(anios, tipo=t, raiz=raiz) for t in tipos):
+    if not any(find_files(years, tipo=t, raiz=raiz) for t in tipos):
         raise FileNotFoundError(
-            f"No hay Estadísticas Vitales para años={anios} en {_root(raiz)}. "
+            f"No hay Estadísticas Vitales para años={years} en {_root(raiz)}. "
             "Descárguelas con dane_data.eevv.download(...) o revise dane_data.set_paths(...)."
         )
     llaves = ["anio", *por]
-    disponibles = _anios_descargados(anios, tipos, raiz)
+    disponibles = _anios_descargados(years, tipos, raiz)
     con_defunciones = find_files(tipo="defunciones", raiz=raiz)
     _avisar_cobertura("defunciones", [a for a in disponibles if a in con_defunciones])
 
@@ -453,7 +450,7 @@ def tasas(
     res["mortalidad_perinatal"] = (_MIL * (res["mortinatos"] + res["defunciones_neonatales_precoces"])
                                    / (res["nacimientos"] + res["mortinatos"]))
     res["tasa_global_fecundidad"] = np.nan
-    if "sexo" not in por and find_files(anios, tipo="nacimientos", raiz=raiz):
+    if "sexo" not in por and find_files(years, tipo="nacimientos", raiz=raiz):
         especificas = tasas_especificas(disponibles, "nacimientos", por, raiz=raiz)
         fertil = especificas[especificas["edad_madre"].isin([f"De {a} a {b} años" for a, b in _EDADES_FERTILES])]
         tgf = (5 * (fertil["nacimientos"] / fertil["mujeres"]).groupby([fertil[k] for k in llaves], observed=True).sum(min_count=7)
@@ -468,9 +465,8 @@ def tasas(
     return res[orden].replace([np.inf, -np.inf], np.nan).sort_values(llaves, ignore_index=True)
 
 
-@_con_nombres_viejos
 def tasas_especificas(
-    anios: Iterable[int] | int | None = None,
+    years: Iterable[int] | int | None = None,
     tipo: str = "nacimientos",
     por: str | Iterable[str] | None = None,
     raiz=None,
@@ -481,7 +477,7 @@ def tasas_especificas(
 
     Parámetros
     ----------
-    anios
+    years
         Año o lista de años. ``None`` para todos los descargados.
     tipo
         ``"nacimientos"`` da nacimientos por edad de la madre sobre las mujeres de esa edad; ``"defunciones"``,
@@ -537,9 +533,9 @@ def tasas_especificas(
     por = _por_valido(por)
     if tipo == "nacimientos" and "sexo" in por:
         raise ValueError("La fecundidad es de las mujeres: no se puede desagregar por sexo.")
-    anios = _enteros(anios)
+    years = _enteros(years)
     if tipo == "defunciones":
-        _avisar_cobertura(tipo, anios if anios is not None else find_files(tipo=tipo, raiz=raiz))
+        _avisar_cobertura(tipo, years if years is not None else find_files(tipo=tipo, raiz=raiz))
     edad, bandas, numerador, denominador = (("edad_madre", _EDADES_MADRE, "nacimientos", "mujeres") if tipo == "nacimientos"
                                             else ("grupo_edad", _EDADES_DEFUNCION, "defunciones", "poblacion"))
     llaves = ["anio", *por]
@@ -554,7 +550,7 @@ def tasas_especificas(
             conteo[numerador] = conteo[numerador].astype("float64").mask(conteo[edad].isin(menores))
         return conteo[conteo[edad].isin(list(bandas))]
 
-    partes = _por_anio("especificas", anios, tipo, {"por": por}, calcular, raiz, progreso)
+    partes = _por_anio("especificas", years, tipo, {"por": por}, calcular, raiz, progreso)
     conteo = pd.concat(partes, ignore_index=True)
     disponibles = sorted(conteo["anio"].unique().tolist())
     sexo_pob = {"sexo": "Mujer"} if tipo == "nacimientos" else {}
