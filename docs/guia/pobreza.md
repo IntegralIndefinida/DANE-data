@@ -36,7 +36,7 @@ ZIP: pedir solo los hogares lo baja entero, aunque extrae solo lo pedido.
 ## Variables armonizadas
 
 Las variables en minúscula las crea `dane-data` y significan lo mismo en todos los años; las llaves `DIRECTORIO` y
-`SECUENCIA_P` quedan como en la GEIH. Para agregar variables del DANE, use `columns=["P5090", "NPOBRES"]` o `columns="all"`.
+`SECUENCIA_P` quedan como en la GEIH. Para agregar variables del DANE, use `columnas=["P5090", "NPOBRES"]` o `columnas="all"`.
 
 ```{include} ../_generado/pobreza_variables.md
 ```

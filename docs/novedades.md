@@ -14,6 +14,34 @@
 
 **Cambios**
 
+* Los parámetros de toda la API pública tienen ahora nombres en español, los mismos en todas las encuestas. Antes se
+  mezclaban (`dd.geih.load(years, months, columns, modules)` frente a `dd.geih.serie_indicadores(anios, meses)`; la
+  GEIH pedía `modules` y la EMICRON y la ECV, `modulos`), así que `dd.geih.load(anios=2024)` o
+  `dd.geih.serie_indicadores(years=2024)` daban error. Los nombres de las funciones no cambian.
+
+  | Antes | Ahora | Dónde |
+  |---|---|---|
+  | `years` | `anios` | `download`, `load`, `find_files`, `find_months`, `load_personal` |
+  | `months` | `meses` | {dd}`geih.load()` |
+  | `columns` | `columnas` | `load`, {dd}`geih.load_month()`, `serie_tabla`, `serie_frecuencias`, `exportar` |
+  | `modules` | `modulos` | {dd}`geih.download()`, {dd}`geih.load()`, {dd}`geih.load_month()` |
+  | `root` | `raiz` | todas las que leen o descargan |
+  | `progress` | `progreso` | todas las que descargan, cargan o calculan una serie |
+  | `should_stop` | `detener` | `download` |
+  | `delete_zips` | `borrar_zips` | `download` |
+  | `include_tic` | `incluir_tic` | {dd}`eam.download()` |
+  | `limit_files` | `limite_archivos` | {dd}`geih.download()` |
+  | `harmonize_vars` | `armonizar` | `load` de la GEIH, la EAM, las Estadísticas Vitales y la pobreza |
+  | `save` | `guardar` | {dd}`set_paths()` |
+  | `key` | `clave` | {dd}`get_path()` |
+  | `values`, `weights` | `valores`, `pesos` | {dd}`weighted_mean()`, {dd}`weighted_quantile()`, {dd}`weighted_gini()` |
+  | `on` | `llaves` | {dd}`eam.deflactar()` |
+
+  Los nombres viejos siguen funcionando, con un `FutureWarning` que dice cuál usar (por ejemplo, «`years` está
+  obsoleto: use `anios`»), y se quitarán en una versión futura. Pasar los dos a la vez es un error. El «código Python
+  equivalente» de la aplicación ya usa los nombres nuevos.
+* Los avisos de `dane-data` apuntan siempre a la línea del código de quien llama a la función, no a una línea de la
+  librería.
 * {dd}`geih.indicadores()` deja fuera por defecto a quien no tiene valor en la variable de `por` (`dropna=True`), como
   {dd}`geih.serie_indicadores()` y los `indicadores` de las demás encuestas: las dos formas de calcular lo mismo daban
   tablas con un número distinto de filas. Para conservar la fila del grupo vacío, use `dropna=False`.
@@ -25,7 +53,7 @@
 **Correcciones**
 
 * {dd}`geih.load()` ignoraba los módulos con un nombre desconocido o con el nombre que usa {dd}`geih.download()`
-  (`modules=["fuerza_trabajo", "desocupados"]`): no los unía, y la tasa de desocupación salía 0 % y la TGP 100 % sin
+  (`modulos=["fuerza_trabajo", "desocupados"]`): no los unía, y la tasa de desocupación salía 0 % y la TGP 100 % sin
   ningún aviso. Ahora acepta también los nombres de `download`, falla con un nombre desconocido y avisa si los módulos
   pedidos no alcanzan para la condición de actividad (por ejemplo, sin `no_ocupados`).
 * Un filtro con un valor mal escrito en una variable categórica (`filtros={"sexo": ["mujer"]}`) devolvía una tabla vacía
@@ -33,7 +61,7 @@
   pobreza. Ahora falla y dice cuáles son los valores posibles.
 * {dd}`geih.indicadores()` y {dd}`tabla()` sin una columna que necesitan fallaban con un `KeyError` de pandas
   (`KeyError: 'pet'`). Ahora dicen qué columnas faltan, cómo cargarlas y, si solo cambia la mayúscula (`por="Sexo"`),
-  cuál quiso decir. Un mes fuera de 1–12 (`months=13`) ya no pide descargarlo: dice que el mes no existe.
+  cuál quiso decir. Un mes fuera de 1–12 (`meses=13`) ya no pide descargarlo: dice que el mes no existe.
 * En *Tablas y microdatos* de la aplicación, exportar unos años sueltos (2016 y 2025) ya no reemplaza la exportación de
   todo el rango con los mismos extremos (2016–2025): el nombre del archivo distingue los años elegidos.
 * {dd}`geih.download()` y {dd}`eam.download()` con los años en un generador (`map(int, anios)`, `(a for a in ...)`) no
@@ -48,8 +76,8 @@
   juntarlo con otros años. Ahora {dd}`geih.load()` avisa y la aplicación deja ese año fuera de esa pestaña, con un aviso.
 * Cerrar la ventana de la aplicación a mitad de una descarga dejaba para siempre el archivo a medias (`.part`, decenas de
   MB) junto al ZIP. Ahora la siguiente descarga del mismo archivo borra los que llevan más de un día sin escribirse.
-* {dd}`geih.load()` con una variable que ya se lee siempre (`columns=["OCI"]`) o que no está en los archivos del DANE
-  (`columns=["smlv"]`) volvía a leer todos los meses desde los CSV, como si fuera otra carga, y guardaba otra copia en
+* {dd}`geih.load()` con una variable que ya se lee siempre (`columnas=["OCI"]`) o que no está en los archivos del DANE
+  (`columnas=["smlv"]`) volvía a leer todos los meses desde los CSV, como si fuera otra carga, y guardaba otra copia en
   la caché. Ahora usa la caché que ya tenía.
 * En la GEIH de septiembre a diciembre de 2017, `ingreso_laboral` y `ratio_smlv` salían en infinito para unos 4.500
   ocupados por mes, e `ingreso_no_laboral` para unas 50.000 personas: los CSV del ANDA de esos meses escriben las celdas

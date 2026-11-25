@@ -5,7 +5,7 @@ reparten, cuál es la media o la mediana de una variable numérica. Usa el {term
 los totales de varios meses en promedios mensuales (vea {doc}`ponderacion`).
 
 ```python
-df = dd.geih.load(2024, months=[1, 2, 3])
+df = dd.geih.load(2024, meses=[1, 2, 3])
 ocupados = df[df.ocupado == 1]
 ```
 
@@ -48,10 +48,10 @@ Las filas donde `variable` está vacía se descartan: aquí, los ocupados sin in
 
 ## Cualquier pregunta de la encuesta
 
-La tabla funciona con cualquier columna, también las variables del DANE que se cargan con `columns`:
+La tabla funciona con cualquier columna, también las variables del DANE que se cargan con `columnas`:
 
 ```python
->>> df = dd.geih.load(2024, months=1, columns=["P6920"])    # P6920: ¿cotiza a pensión? 1 sí, 2 no, 3 pensionado
+>>> df = dd.geih.load(2024, meses=1, columnas=["P6920"])    # P6920: ¿cotiza a pensión? 1 sí, 2 no, 3 pensionado
 >>> dd.tabla(df[df.ocupado == 1], por=["sexo", "P6920"], estadistico="porcentaje").round(1)
      sexo  P6920      total  n_muestra  porcentaje
 0  Hombre    1.0  5461614.6       6701        41.6

@@ -67,7 +67,7 @@ python -c "import dane_data; print(dane_data.__version__)"
 ```python
 import dane_data as dd
 
-dd.set_paths(geih="D:/datos/GEIH", eam="D:/datos/EAM", eevv="D:/datos/EEVV", ecv="D:/datos/ECV", save=True)   # opcional
+dd.set_paths(geih="D:/datos/GEIH", eam="D:/datos/EAM", eevv="D:/datos/EEVV", ecv="D:/datos/ECV", guardar=True)   # opcional
 dd.geih.download(2025)
 dd.eam.download(range(2014, 2025))
 dd.eevv.download(2025)

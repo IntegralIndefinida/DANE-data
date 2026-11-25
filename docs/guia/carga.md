@@ -5,7 +5,7 @@ mes**, los módulos ya unidos y las {doc}`variables armonizadas <variables>`.
 
 ```python
 >>> import dane_data as dd
->>> df = dd.geih.load(2024, months=[1, 2, 3])
+>>> df = dd.geih.load(2024, meses=[1, 2, 3])
 >>> df.shape
 (213515, 69)
 >>> df[["anio", "mes", "fex", "sexo", "edad", "condicion", "ingreso_laboral"]].head()
@@ -24,8 +24,8 @@ Las columnas en **minúscula** las crea `dane-data` y significan lo mismo en tod
 
 ```python
 dd.geih.load(2025)                          # todos los meses descargados de 2025
-dd.geih.load([2023, 2024], months=[1, 2, 3]) # primer trimestre de cada año
-dd.geih.load(range(2015, 2020), months=12)  # diciembre de cada año
+dd.geih.load([2023, 2024], meses=[1, 2, 3]) # primer trimestre de cada año
+dd.geih.load(range(2015, 2020), meses=12)   # diciembre de cada año
 dd.geih.load(2016, empalme=True)            # serie de empalme
 ```
 
@@ -34,19 +34,19 @@ dd.geih.load(2016, empalme=True)            # serie de empalme
 Por defecto se leen las variables del DANE de `dd.geih.CORE_RAW`, las que hacen falta para armonizar. Hay
 dos formas de cambiarlo:
 
-`columns`: variables del DANE **adicionales**
+`columnas`: variables del DANE **adicionales**
 : Para usar una pregunta que no está en el núcleo, búsquela con {dd}`buscar_variable()` y pídala en
-  `columns`:
+  `columnas`:
 
   ```python
   >>> dd.describir("P6500")
   'Antes de descuentos ¿cuánto ganó ... El mes pasado en este empleo?'
   >>> dd.describir("P7070")
   '¿cuánto recibio o ganó ... El mes pasado en ese segundo trabajo?'
-  >>> df = dd.geih.load(2024, columns=["P6500", "P7070"])
+  >>> df = dd.geih.load(2024, columnas=["P6500", "P7070"])
   ```
 
-  `columns="all"` lee todas las variables de todos los módulos (cientos de columnas).
+  `columnas="all"` lee todas las variables de todos los módulos (cientos de columnas).
 
 `variables`: **conservar** solo algunas columnas
 : Recorta cada mes antes de juntarlos, así que la memoria depende solo de lo que se conserva. Es la forma
@@ -57,7 +57,7 @@ dos formas de cambiarlo:
   ```
 
   `anio` y `mes` se conservan siempre. Una variable del DANE fuera del núcleo hay que pedirla en los dos
-  lugares: `columns=["P6500"], variables=["fex", "P6500"]`.
+  lugares: `columnas=["P6500"], variables=["fex", "P6500"]`.
 
 Como referencia, el primer trimestre de 2024 ocupa 105 MB con las variables por defecto y 7 MB con
 `variables=["fex", "sexo", "ocupado", "ingreso_laboral"]`.

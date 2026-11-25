@@ -197,7 +197,7 @@ Las listas de categorías también están en `dd.geih.CONDICIONES`, `dd.geih.NIV
 
 ## Variables del DANE
 
-Cualquier otra pregunta de la encuesta se puede cargar con `columns=` (vea {doc}`carga`). Para encontrar el
+Cualquier otra pregunta de la encuesta se puede cargar con `columnas=` (vea {doc}`carga`). Para encontrar el
 nombre:
 
 ```python

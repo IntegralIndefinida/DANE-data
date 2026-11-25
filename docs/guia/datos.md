@@ -26,10 +26,10 @@ Por defecto todo queda en `~/dane_data_datos/`. Para usar otras carpetas (por ej
 import dane_data as dd
 
 dd.set_paths(geih="D:/datos/GEIH", geih_empalme="D:/datos/GEIH_empalme", eam="D:/datos/EAM", eevv="D:/datos/EEVV",
-             emicron="D:/datos/EMICRON", ecv="D:/datos/ECV", pobreza="D:/datos/pobreza", save=True)
+             emicron="D:/datos/EMICRON", ecv="D:/datos/ECV", pobreza="D:/datos/pobreza", guardar=True)
 ```
 
-Con `save=True` quedan guardadas en `~/.config/dane_data/config.json` para las próximas sesiones, para la
+Con `guardar=True` quedan guardadas en `~/.config/dane_data/config.json` para las próximas sesiones, para la
 línea de comandos y para la aplicación; sin él, valen solo para la sesión actual. Lo mismo se hace desde la
 terminal con `dane-data config --geih RUTA --empalme RUTA --eam RUTA --eevv RUTA --emicron RUTA --ecv RUTA --pobreza RUTA`
 o desde la página de inicio de la
@@ -46,14 +46,14 @@ Cada carpeta se resuelve en este orden:
 
 {dd}`show_paths()` muestra las carpetas que se están usando, y {dd}`get_path()` una sola.
 
-Todas las funciones que leen o descargan aceptan además `root=` para usar otra carpeta en una sola llamada.
+Todas las funciones que leen o descargan aceptan además `raiz=` para usar otra carpeta en una sola llamada.
 
 ## Descargar
 
 ```python
 dd.geih.download([2024, 2025])          # serie principal
 dd.geih.download(2016, empalme=True)    # serie de empalme
-dd.geih.download(2025, limit_files=1)   # solo enero, para probar
+dd.geih.download(2025, limite_archivos=1)  # solo enero, para probar
 dd.eam.download(range(2014, 2025))      # EAM
 dd.eam.download()                       # toda la EAM, 1992–2024
 dd.eevv.download(2025)                  # los tres certificados de las Estadísticas Vitales
@@ -78,12 +78,12 @@ que extrae el CSV. {dd}`pobreza.download()` también tiene una tabla fija, por a
 * Si el DANE corrige o vuelve a publicar un mes o un año, `forzar=True` lo baja de nuevo y reemplaza lo que
   había (`dane-data descargar ... --forzar` en la terminal; en la aplicación, «Volver a bajar lo que ya está
   descargado»). Lo nuevo se extrae aparte y reemplaza a lo de antes solo si salió completo; si no, lo de
-  antes se conserva. Con `modules`, se reemplazan solo esos módulos y los demás quedan como estaban.
-* Para bajar solo algunos módulos, `modules=["caracteristicas", "ocupados"]`; los nombres están en
+  antes se conserva. Con `modulos`, se reemplazan solo esos módulos y los demás quedan como estaban.
+* Para bajar solo algunos módulos, `modulos=["caracteristicas", "ocupados"]`; los nombres están en
   `dd.geih.DEFAULT_MODULES`.
 * Si un mes ya descargado no tiene un módulo que se pide ahora (por ejemplo `otros_ingresos` o `migracion`,
   que antes no se extraían) y su ZIP sigue en `<raíz>/raw_zips/`, la descarga lo saca de ese ZIP sin bajar
-  nada. Si el ZIP se borró, hace falta `forzar=True`; con `modules=["otros_ingresos", "migracion"]` se
+  nada. Si el ZIP se borró, hace falta `forzar=True`; con `modulos=["otros_ingresos", "migracion"]` se
   reemplazan solo esos dos.
 
 Todas las funciones de descarga devuelven lo que no se pudo bajar o extraer (un ZIP que no se descargó tras tres intentos,
@@ -96,7 +96,7 @@ if fallidos:
     print("\n".join(fallidos))   # vuelva a correr la misma descarga: lo completo se salta
 ```
 
-Todas aceptan `progress=` (una función que recibe el avance) y `should_stop=` (una función
+Todas aceptan `progreso=` (una función que recibe el avance) y `detener=` (una función
 que, si devuelve True, detiene la descarga con {dd}`DownloadCancelled`). La aplicación los usa para la
 barra de progreso y el botón de cancelar.
 
@@ -135,7 +135,7 @@ Desde la terminal, `dane-data estado` muestra lo mismo resumido por año. Para l
 
 | | Tamaño aproximado |
 |---|---|
-| Un año de la GEIH extraído | 600 MB, más los ZIP si se conservan (`delete_zips=False`, el valor por defecto) |
+| Un año de la GEIH extraído | 600 MB, más los ZIP si se conservan (`borrar_zips=False`, el valor por defecto) |
 | Toda la serie principal 2007–2026 | 11 GB extraída |
 | Toda la EAM 1992–2024 | 330 MB |
 | Todas las Estadísticas Vitales | 3,6 GB extraídas (2,2 GB de nacimientos, 1,2 GB de defunciones), 1,6 GB de ZIP |

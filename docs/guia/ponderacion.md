@@ -10,7 +10,7 @@ encuestados, no al país.
 En un mes, la suma de `fex` es la población:
 
 ```python
->>> df = dd.geih.load(2024, months=[1, 2, 3])
+>>> df = dd.geih.load(2024, meses=[1, 2, 3])
 >>> (df.groupby("mes")["fex"].sum() / 1e6).round(2)     # millones de personas
 mes
 1    51.31
@@ -76,7 +76,7 @@ las doce tasas mensuales (aunque suelen ser muy parecidos). Así las publica el 
 Un trimestre se calcula igual: cargue los tres meses y pida el resultado anual.
 
 ```python
->>> dd.geih.indicadores(dd.geih.load(2024, months=[1, 2, 3]))[["tgp", "to", "td"]].round(1)
+>>> dd.geih.indicadores(dd.geih.load(2024, meses=[1, 2, 3]))[["tgp", "to", "td"]].round(1)
     tgp    to    td
 0  63.7  56.1  11.9
 ```

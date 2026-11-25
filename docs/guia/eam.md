@@ -32,8 +32,8 @@ Por defecto se leen las variables comparables entre años (`dd.eam.CORE`):
 ```
 
 Los **montos están en miles de pesos corrientes**: el {term}`valor agregado` total de 2024 suma unos 1,48 × 10¹¹,
-es decir, unos 148 billones de pesos. Para otras variables use `columns=["c3r10c1", ...]` o
-`columns="all"`, y {dd}`buscar_variable()` con `encuesta="eam"` para encontrarlas.
+es decir, unos 148 billones de pesos. Para otras variables use `columnas=["c3r10c1", ...]` o
+`columnas="all"`, y {dd}`buscar_variable()` con `encuesta="eam"` para encontrarlas.
 
 ## Revisiones de la CIIU
 

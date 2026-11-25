@@ -38,7 +38,7 @@ trae Características (o Servicios, con hogares) y la geografía de la vivienda:
 ```python
 df = dd.ecv.load(2025, modulos=["salud", "educacion"])          # personas, con Salud y Educación
 hogares = dd.ecv.load(2025, modulos=["tenencia", "vivienda"], nivel="hogar")
-df = dd.ecv.load(range(2018, 2026), modulos="salud", columns=["P6090", "P6100"])  # solo esas variables
+df = dd.ecv.load(range(2018, 2026), modulos="salud", columnas=["P6090", "P6100"])  # solo esas variables
 ```
 
 Las llaves salen de la *Estructura de la base de datos* del DANE. La vivienda es `DIRECTORIO`; en las tablas de hogar, el
@@ -105,7 +105,7 @@ personas lo son.
 ```
 
 ```python
-personas = dd.ecv.load(2025, modulos=dd.ecv.MODULOS_IPM, columns=dd.ecv.COLUMNAS_IPM)
+personas = dd.ecv.load(2025, modulos=dd.ecv.MODULOS_IPM, columnas=dd.ecv.COLUMNAS_IPM)
 hogares = dd.ecv.privaciones(personas)     # una fila por hogar: las 15 privaciones, el puntaje y si es pobre
 dd.ecv.ipm(hogares, por="area")            # incidencia, intensidad, IPM y % de hogares con cada privación
 dd.ecv.serie_ipm(range(2018, 2026), por="departamento")   # año por año, con caché

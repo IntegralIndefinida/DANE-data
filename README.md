@@ -102,7 +102,7 @@ una red de confianza.
 import dane_data as dd
 
 # 1. ¿Dónde están (o estarán) los datos?  Se recuerda para siempre.
-dd.set_paths(geih="~/datos/GEIH/data", eam="~/datos/EAM/data", save=True)
+dd.set_paths(geih="~/datos/GEIH/data", eam="~/datos/EAM/data", guardar=True)
 
 # 2. Descargar (incremental: lo ya bajado se salta)
 dd.geih.download([2024, 2025])
@@ -110,8 +110,8 @@ dd.eam.download(range(2014, 2025))
 
 # 3. Cargar: una persona por fila, módulos ya unidos y variables armonizadas
 df = dd.geih.load(2025)                                  # todos los meses
-df = dd.geih.load([2024, 2025], months=[1, 2, 3])        # primer trimestre
-df = dd.geih.load(2025, columns=["P6500", "P7070"])      # + variables DANE extra
+df = dd.geih.load([2024, 2025], meses=[1, 2, 3])         # primer trimestre
+df = dd.geih.load(2025, columnas=["P6500", "P7070"])     # + variables DANE extra
 df = dd.geih.load(2016, empalme=True)                    # serie de empalme (marco 2018)
 pocas = dd.geih.load(range(2015, 2026), variables=["fex", "sexo", "ocupado"])  # solo esas columnas
 
@@ -368,13 +368,13 @@ el DANE, así que en estos casos no coincide con las variables armonizadas.
 | Variable | Qué dice el ANDA | Qué muestran los datos y qué hace `dane-data` |
 |---|---|---|
 | `GRU_ED1` → `grupo_edad`, `menor_un_anio` (defunciones, enero–junio de 1991, catálogo 396) | El DDI da el mismo esquema de 25 grupos que en 1979–1990: del 1 al 5, menores de un año. | Esos seis meses casi no tienen códigos del 1 al 5 (56 registros en total, frente a unos 1 000 por mes en el segundo semestre): las muertes de menores de 10 años, también las de causa perinatal, están en el 6, 7 y 8, sin poder separarse. Salen como «Menor de 10 años, sin detalle»; `menor_un_anio` queda vacía y `tasas` no da mortalidad infantil para 1991. `load` lo avisa. |
-| `GRU_ED1`, códigos 6 y 7 (defunciones 1979–1990, catálogo 396) | 6 = «de un año» y 7 = «de 2 a 4 años». | Por confirmar. Los dos no empalman con 1992, aunque su suma sí: en 1990 valen 3 126 y 1 074, y en 1992, 2 070 y 2 059. `grupo_edad` solo usa la suma («De 1 a 4 años»). El código original se puede cargar con `columns=["GRU_ED1"]`. |
+| `GRU_ED1`, códigos 6 y 7 (defunciones 1979–1990, catálogo 396) | 6 = «de un año» y 7 = «de 2 a 4 años». | Por confirmar. Los dos no empalman con 1992, aunque su suma sí: en 1990 valen 3 126 y 1 074, y en 1992, 2 070 y 2 059. `grupo_edad` solo usa la suma («De 1 a 4 años»). El código original se puede cargar con `columnas=["GRU_ED1"]`. |
 | `GRU_ED1`, código 15 (defunciones 1998–2007, catálogo 366) | «De 35 a 99 años». | Es una errata: es de 35 a 39 años, como confirman su tamaño y los grupos vecinos. `grupo_edad` lo trata así. |
 | Cobertura de 1979 y 1980 (defunciones, catálogo 396) | El catálogo presenta la serie 1979–1991 sin distinguir años. | En 1979 faltan Caldas, Norte de Santander, Quindío, Risaralda, Santander y Arauca (de 1 a 3 registros de ocurrencia o ninguno), y en 1980 Caldas, Quindío y Risaralda traen cerca de la mitad de lo de 1981. Esos totales nacionales no son comparables. `load`, `tasas` y `serie_*` lo avisan; los datos se dejan como están. |
 | `COD_DPTO`, `CODPTORE` → `dpto_*`, `departamento_*` (defunciones 1979–1981, catálogo 396) | El DDI no trae el código 83. | Por confirmar, porque es una deducción: 83 tiene entre 1 280 y 1 480 registros de ocurrencia por año en 1979–1981 y ninguno después, y 18 (Caquetá) ninguno antes de 1982 y 1 500 ese año. `dane-data` lo lee como Caquetá. |
 | Costa Caribe en 1983 (defunciones, catálogo 396) | Nada. | Por confirmar: Atlántico, Bolívar, Cesar, Magdalena y Sucre suben de 13 879 defunciones en 1982 a 19 681 en 1983 y vuelven a 13 491 en 1984, en todos los meses y sin más duplicados que otros años. El total nacional casi no se mueve, porque el resto del país baja. Los datos se dejan como están. |
-| `NIV_EDUM` → `nivel_educativo_madre` (fetales 2009, catálogo 375) | El mismo esquema de 2008–2011: 13 = ninguno, 99 = sin información. | Casi no aparecen ni el 13 (6 registros) ni el 99 (213), y el 9 sube a 7 005, frente a 3 019 en 2008. No se sabe qué es cada código, así que `nivel_educativo_madre` queda vacía ese año. El código original se puede cargar con `columns=["NIV_EDUM"]`. |
-| `N_HIJOSM` (fetales 1998, catálogo 366) | Número de hijos nacidos muertos. | 10 995 de los 16 004 registros traen el texto «Número de hijos nacidos muertos» y 2 546 «Sin información», en vez de un número. No es una variable armonizada; si se carga con `columns=["N_HIJOSM"]`, llega como texto. |
+| `NIV_EDUM` → `nivel_educativo_madre` (fetales 2009, catálogo 375) | El mismo esquema de 2008–2011: 13 = ninguno, 99 = sin información. | Casi no aparecen ni el 13 (6 registros) ni el 99 (213), y el 9 sube a 7 005, frente a 3 019 en 2008. No se sabe qué es cada código, así que `nivel_educativo_madre` queda vacía ese año. El código original se puede cargar con `columnas=["NIV_EDUM"]`. |
+| `N_HIJOSM` (fetales 1998, catálogo 366) | Número de hijos nacidos muertos. | 10 995 de los 16 004 registros traen el texto «Número de hijos nacidos muertos» y 2 546 «Sin información», en vez de un número. No es una variable armonizada; si se carga con `columnas=["N_HIJOSM"]`, llega como texto. |
 | `MUL_PARTO` → `parto_multiple` (nacimientos 2008–2011 y 2014–2019) | «Sin información» es el 5. | En los datos siempre es el 9, como en los demás años, y el 5 no aparece. `parto_multiple` deja vacíos los dos. |
 | `CAUSA_667`, `CAU_HOMOL` → `causa_667_nombre`, `causa_105_nombre` (toda la serie) | El DDI trae los códigos sin nombre. | Los nombres salen de los cuadros de defunciones del DANE. `CAUSA_666` (hasta 2018) es otra lista, aunque se parezca: el 407 de una es el 406 de la otra, así que `causa_667` queda vacía donde solo está `CAUSA_666` y `gran_causa` usa su primer dígito, que sí coincide (el 7 de la 6/66 es el 0 de la 6/67). |
 | `PESO_NAC` → `mortinato`, `mortalidad_perinatal` (fetales, toda la serie) | La ficha técnica de la tasa de mortalidad perinatal del DANE (2026) cuenta como mortinato la defunción fetal de 22 semanas o más **o** de 500 gramos o más. | Los microdatos agrupan el peso desde «menos de 1.000 gramos» (los cuadros del DANE sí separan de 300 a 999), así que con menos de 22 semanas, o sin gestación, no se puede saber si pesaba 500 gramos. `mortinato` es True con 22 semanas o más o con 1.000 gramos o más, False con menos de 22 semanas y de 1.000 gramos (el DANE contaría las de 500 a 999), y vacío sin gestación y con menos de 1.000 gramos: 2 309 de las 19 620 defunciones fetales de 2025. Por eso `mortalidad_perinatal` puede quedar algo por debajo de la del DANE. |

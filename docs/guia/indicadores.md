@@ -34,7 +34,7 @@ mensual. Las definiciones de cada término están también en el {doc}`../glosar
 ## Uso
 
 ```python
->>> df = dd.geih.load(2024, months=[1, 2, 3])
+>>> df = dd.geih.load(2024, meses=[1, 2, 3])
 >>> dd.geih.indicadores(df).round(1).T
                                       0
 anio                             2024.0

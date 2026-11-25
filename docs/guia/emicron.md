@@ -38,9 +38,9 @@ inclusión financiera ni capital social, 2021 no trae capital social y el módul
 existe en 2020.
 
 {dd}`emicron.load()` une a la identificación los módulos que haya, por la clave del micronegocio, y deja una fila por
-micronegocio. Toda la serie 2019–2025 carga en unos 6 segundos con las variables armonizadas. Con `columns="all"` trae
+micronegocio. Toda la serie 2019–2025 carga en unos 6 segundos con las variables armonizadas. Con `columnas="all"` trae
 también las preguntas del formulario con su nombre del DANE en minúscula, y con una lista agrega solo las que pida (por
-ejemplo `columns=["p3051", "p3034"]`, el motivo para crear el negocio y los meses que lleva). Las puede buscar con
+ejemplo `columnas=["p3051", "p3034"]`, el motivo para crear el negocio y los meses que lleva). Las puede buscar con
 {dd}`buscar_variable()` y `encuesta="emicron"`.
 
 El módulo de personal ocupado tiene una fila por trabajador, socio o familiar, así que no entra en `load`: se carga con

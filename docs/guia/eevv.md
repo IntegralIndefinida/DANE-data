@@ -38,7 +38,7 @@ largas, {dd}`eevv.serie_indicadores()` y {dd}`eevv.serie_conteos()` leen un año
 ## Variables armonizadas
 
 Las variables en minúscula las crea `dane-data` y significan lo mismo en todos los años. `load` devuelve solo estas, porque
-las originales ocupan mucho más. Para agregar variables del DANE, use `columns=["HORA", "GRU_ED1"]` o `columns="all"`; las
+las originales ocupan mucho más. Para agregar variables del DANE, use `columnas=["HORA", "GRU_ED1"]` o `columnas="all"`; las
 puede buscar en {dd}`buscar_variable()` con `encuesta="eevv_defunciones"`, `"eevv_nacimientos"` o `"eevv_fetales"`.
 
 ### Defunciones
