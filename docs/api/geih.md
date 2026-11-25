@@ -93,4 +93,5 @@ Vea {doc}`../guia/tablas` y {doc}`../guia/series_largas`.
 | `GRUPOS_EDAD` | Categorías (ordenadas) de `grupo_edad` |
 | `CATEGORIAS` | Tipos categóricos fijos de las variables armonizadas (`sexo`, `zona`, `condicion`...) |
 | `MARCOS` | Marcos muestrales de los factores de expansión y su definición de PET (vea `marco_muestral`) |
+| `ETIQUETAS` | Qué es cada variable armonizada |
 | `GLOSARIO` | Definiciones de los indicadores; es la fuente del {doc}`../glosario` |

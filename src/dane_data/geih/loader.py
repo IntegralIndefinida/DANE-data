@@ -697,8 +697,43 @@ CATEGORIAS = {
     "residencia_hace_12_meses": pd.CategoricalDtype(["No había nacido", *LUGARES]),
     "residencia_hace_5_anios": pd.CategoricalDtype(["No había nacido", *LUGARES]),
 }
+# Qué es cada variable armonizada (la guía «Variables armonizadas» lo explica en detalle)
+ETIQUETAS = {
+    "anio": "Año de la encuesta",
+    "mes": "Mes de la encuesta (1–12)",
+    "fex": "Factor de expansión mensual (FEX_C18 desde 2022, FEX_C en 2020 y en el empalme, FEX_C_2011 en 2007–2021)",
+    "dpto": "Código DIVIPOLA del departamento (DPTO)",
+    "departamento": "Nombre del departamento (DPTO)",
+    "zona": "Urbano (cabecera) o Rural (centros poblados y disperso) (CLASE)",
+    "sexo": "Hombre o Mujer (P3271 desde 2022, P6020 antes)",
+    "edad": "Años cumplidos (P6040)",
+    "grupo_edad": "Grupo de edad: 0–14, 15–24, 25–34, 35–44, 45–54, 55–64 y 65+",
+    "jefe_hogar": "1 si es el jefe o la jefa del hogar (P6050)",
+    "nivel_educativo": "Ninguno, Primaria, Secundaria, Media o Superior (P3042 desde 2022, P6210 antes)",
+    "pet": "1 si está en la población en edad de trabajar",
+    "fuerza_trabajo": "1 si está ocupado o desocupado",
+    "ocupado": "1 si está ocupado",
+    "desocupado": "1 si está desocupado",
+    "inactivo": "1 si está en la PET pero no en la fuerza de trabajo",
+    "condicion": "Ocupado, Desocupado, Inactivo o Fuera de la PET",
+    "formal": "1 si el ocupado es formal según la medición del DANE, 0 si es informal; vacía antes de 2022",
+    "formal_marco2005": "Lo mismo con la medición anterior del DANE (empresas de hasta 5 personas), 2007–2021",
+    "cotiza_pension": "1 si el ocupado cotiza a un fondo de pensiones (P6920)",
+    "ingreso_laboral": "Ingreso laboral mensual del ocupado, en pesos corrientes, imputado por el DANE (INGLABO)",
+    "smlv": "Salario mínimo mensual del año (dd.SMLV)",
+    "ratio_smlv": "Ingreso laboral en salarios mínimos",
+    "horas_semana": "Horas que trabaja normalmente a la semana en el empleo principal (P6800)",
+    "posicion_ocupacional": "Empleado particular, del gobierno, doméstico, cuenta propia, patrón… (P6430)",
+    "rama2d": "Rama de actividad a 2 dígitos de la CIIU (RAMA2D_R4 o RAMA2D)",
+    "rama_rev": "Revisión de la CIIU de rama2d: 3 o 4",
+    "ingreso_no_laboral": "Ingreso no laboral mensual: arriendos, pensiones, ayudas e intereses, sin imputar "
+                          "(módulo Otros ingresos)",
+    "lugar_nacimiento": "Este municipio, Otro municipio, Venezuela u Otro país (P3373; módulo Migración, desde 2022)",
+    "residencia_hace_12_meses": "Dónde vivía hace 12 meses (P3384; módulo Migración, desde 2022)",
+    "residencia_hace_5_anios": "Dónde vivía hace 5 años (P3382; módulo Migración, desde 2022)",
+}
 MARCOS = {
-    "censo 2005": "proyecciones de población del censo 2005 y PET de 12 años o más (10 en la zona rural)",
+    "censo 2005":"proyecciones de población del censo 2005 y PET de 12 años o más (10 en la zona rural)",
     "CNPV 2018": "proyecciones de población del CNPV 2018 y PET de 15 años o más",
 }
 

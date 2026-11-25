@@ -263,6 +263,12 @@ def test_load_variables(geih_root):
     assert isinstance(df["departamento"].dtype, pd.CategoricalDtype)  # se conserva al concatenar meses
 
 
+@pytest.mark.filterwarnings("ignore")  # meses incompletos de la fixture
+def test_etiquetas_cubren_las_armonizadas(geih_root):
+    df = dd.geih.load([2011, 2016, 2021, 2025], raiz=geih_root, cache=False)
+    assert {c for c in df.columns if c.islower()} == set(dd.geih.ETIQUETAS)
+
+
 def test_empalme_pet_15_anios(tmp_path):
     """El empalme se publica con PET de 15+; octubre de 2012 la trae con la definición anterior."""
     m = tmp_path / "datos_csv" / "2012" / "10. Octubre"

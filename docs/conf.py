@@ -184,7 +184,7 @@ def _cli() -> str:
 
 _escribir("cli.md", _cli())
 _escribir("eam_variables.md", "| Variable | Contenido |\n|---|---|\n" + "".join(
-    f"| `{v}` | {e} |\n" for v, e in dane_data.eam.ETIQUETAS.items()))
+    f"| `{v}` | {e} |\n" for v, e in dane_data.eam.ETIQUETAS.items() if v in dane_data.eam.CORE))
 _escribir("emicron_variables.md", "| Variable | Contenido |\n|---|---|\n" + "".join(
     f"| `{v}` | {e} |\n" for v, e in dane_data.emicron.ETIQUETAS.items()))
 _escribir("pobreza_variables.md", "| Variable | Contenido |\n|---|---|\n" + "".join(

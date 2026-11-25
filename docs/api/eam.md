@@ -62,6 +62,6 @@ miles de pesos corrientes. Vea {doc}`../guia/eam`.
 | `ANIOS_DISPONIBLES` | Años con catálogo conocido en el ANDA (1992–2024) |
 | `VARIABLES_COMUNES` | Variables presentes en todos los años 1992–2024 |
 | `CORE` | `VARIABLES_COMUNES` más las que existen desde 2000; es lo que `load` lee por defecto |
-| `ETIQUETAS` | Nombre legible de cada variable de `CORE` |
+| `ETIQUETAS` | Nombre legible de cada variable de `CORE` y de las armonizadas |
 | `SECTORES` | Nombre de cada división CIIU, por revisión: `{revisión: {división: nombre}}` |
 | `GLOSARIO` | Definiciones de los agregados; es la fuente del {doc}`../glosario` |

@@ -4,6 +4,8 @@
 
 **Novedades**
 
+* `dd.geih.ETIQUETAS` dice qué es cada variable armonizada de la GEIH, como en las demás encuestas, y
+  `dd.eam.ETIQUETAS` ahora también describe las armonizadas de la EAM (`ciiu`, `sector`, `microagregado`…).
 * {dd}`eam.indicadores()` es otro nombre de {dd}`eam.resumen()`, como `dd.<encuesta>.indicadores(df)` en las demás
   encuestas: antes `dd.eam.indicadores(df)` fallaba con `'module' object is not callable`.
 * La EAM se compara con las cifras del DANE, como las demás encuestas: los totales nacionales de 1992–2011 y 2015–2024

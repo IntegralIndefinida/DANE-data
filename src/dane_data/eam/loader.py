@@ -79,6 +79,15 @@ ETIQUETAS = {
     "eelec": "Energía eléctrica consumida (kWh)",
     "totalv": "Valor de otros energéticos consumidos",
     "deprecia": "Depreciación",
+    # Las que agrega harmonize; las de arriba son las de CORE, con el nombre del DANE en minúscula
+    "anio": "Año de referencia",
+    "ciiu": "Código CIIU como texto (normalmente 4 dígitos; algunos años lo publican con 2 o 3 por anonimización)",
+    "ciiu_rev": "Revisión de la CIIU: 2, 3 o 4, según la variable de origen",
+    "division": "Los dos primeros dígitos del código CIIU",
+    "sector": "Nombre de la división (de dd.eam.SECTORES)",
+    "departamento": "Nombre del departamento",
+    "microagregado": "Si los valores del registro son el promedio de un grupo de establecimientos",
+    "grupo_microagregacion": "Número del grupo de microagregación dentro del año (vacío si no está microagregado)",
 }
 
 # Nombres de división (2 dígitos) por revisión de la CIIU.

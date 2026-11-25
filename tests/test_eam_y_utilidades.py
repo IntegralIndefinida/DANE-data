@@ -50,6 +50,7 @@ def test_eam_load_harmonizes(eam_root):
     assert r.loc[(2024, 10), "ciiu"] == "1011"  # 1011.0 de Stata -> "1011"
     assert r.loc[(2024, 10), "departamento"] == "Antioquia"
     assert not any(c.startswith("ciiu") and c not in ("ciiu", "ciiu_rev") for c in eam.columns)
+    assert set(eam.columns) - set(dd.eam.CORE) == set(dd.eam.ETIQUETAS) - set(dd.eam.CORE)  # armonizadas documentadas
 
 
 def test_eam_microagregacion(tmp_path):
