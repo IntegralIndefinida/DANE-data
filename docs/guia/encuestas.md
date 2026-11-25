@@ -140,7 +140,7 @@ Python:
 ```
 
 {dd}`buscar_variable()` también busca en las variables armonizadas, que salen primero: la columna `origen` dice
-`"dane-data"` en ellas y `"DANE"` en las del DDI, y `ddi` el año del diccionario de donde sale cada variable del DANE.
+`"dane-data"` en ellas y `"DANE"` en las del DDI, y `ddi` el año del diccionario de donde sale cada variable del DANE (`"armonizada"` en las de `dane-data`).
 
 Los diccionarios se dejan tal como los publica el DANE, aunque a veces no coincidan con los datos; esos
 casos están en {doc}`diferencias`.

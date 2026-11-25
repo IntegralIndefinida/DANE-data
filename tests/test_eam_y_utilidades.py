@@ -205,8 +205,8 @@ def test_diccionario_y_busqueda():
     assert "P6920" in res["variable"].tolist()
     assert dd.diccionario("eam")["VALAGRI"]["etiqueta"] == "Valor agregado"
     eam = dd.buscar_variable("", "eam").set_index("variable")
-    assert eam.loc["sector", "origen"] == "dane-data" and pd.isna(eam.loc["sector", "ddi"])
-    assert eam.loc["VALAGRI", "ddi"] == 2024 and "valagri" not in eam.index  # las de CORE ya están en el DDI
+    assert eam.loc["sector", "origen"] == "dane-data" and eam.loc["sector", "ddi"] == "armonizada"
+    assert eam.loc["VALAGRI", "ddi"] == "2024" and "valagri" not in eam.index  # las de CORE ya están en el DDI
 
 
 def test_config_persistence(tmp_path, monkeypatch):

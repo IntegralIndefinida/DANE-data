@@ -162,7 +162,7 @@ def buscar_variable(texto: str, encuesta: str = "geih"):
     --------
     DataFrame
         Una fila por variable con ``variable``, ``origen`` (``"dane-data"`` en las armonizadas, ``"DANE"`` en las
-        del DDI), ``ddi`` (el año del DDI de donde sale la variable; vacío en las armonizadas), ``etiqueta``,
+        del DDI), ``ddi`` (el año del DDI de donde sale la variable, como texto, o ``"armonizada"``), ``etiqueta``,
         ``pregunta`` y ``modulo``. Las armonizadas no tienen pregunta ni módulo.
 
     Véase también
@@ -176,21 +176,20 @@ def buscar_variable(texto: str, encuesta: str = "geih"):
     >>> dd.buscar_variable("arriendo")["variable"].tolist()
     ['ingreso_no_laboral', 'P3064S1', 'P5090', 'P5130', 'P5140', 'P7495', 'P7500S1', 'P7500S1A1']
     >>> dd.buscar_variable("fex")[["variable", "origen", "ddi"]]
-      variable     origen   ddi
-    0      fex  dane-data  <NA>
-    1  FEX_C18       DANE  2025
+      variable     origen         ddi
+    0      fex  dane-data  armonizada
+    1  FEX_C18       DANE        2025
     """
     import pandas as pd
 
     encuesta = encuesta.lower()
     q = strip_accents(texto)
-    rows = [{"variable": var, "origen": "dane-data", "ddi": None, "etiqueta": etiqueta, "pregunta": "", "modulo": ""}
+    rows = [{"variable": var, "origen": "dane-data", "ddi": "armonizada", "etiqueta": etiqueta, "pregunta": "", "modulo": ""}
             for var, etiqueta in _armonizadas(encuesta).items() if q in strip_accents(f"{var} {etiqueta}")]
     _, ddi = _DICCIONARIOS[encuesta]
     for var, info in diccionario(encuesta).items():
         blob = strip_accents(f"{var} {info['etiqueta']} {info['pregunta']}")
         if q in blob:
-            rows.append({"variable": var, "origen": "DANE", "ddi": ddi, "etiqueta": info["etiqueta"],
+            rows.append({"variable": var, "origen": "DANE", "ddi": str(ddi), "etiqueta": info["etiqueta"],
                          "pregunta": info["pregunta"], "modulo": ", ".join(info.get("modulos", []))[:80]})
-    return pd.DataFrame(rows, columns=["variable", "origen", "ddi", "etiqueta", "pregunta", "modulo"]).astype(
-        {"ddi": "Int64"})
+    return pd.DataFrame(rows, columns=["variable", "origen", "ddi", "etiqueta", "pregunta", "modulo"])

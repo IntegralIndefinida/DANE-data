@@ -8,7 +8,7 @@
   `dd.eam.ETIQUETAS` ahora también describe las armonizadas de la EAM (`ciiu`, `sector`, `microagregado`…).
 * {dd}`buscar_variable()` también encuentra las variables armonizadas (`fex`, `condicion`, `ingreso_laboral`…), que
   salen primero, y trae dos columnas nuevas: `origen` (`"dane-data"` o `"DANE"`) y `ddi`, el año del diccionario del
-  DANE de donde sale cada variable. Antes `dd.buscar_variable("fex")` solo encontraba `FEX_C18`, que existe desde 2022,
+  DANE de donde sale cada variable (`"armonizada"` en las de `dane-data`). Antes `dd.buscar_variable("fex")` solo encontraba `FEX_C18`, que existe desde 2022,
   y no `fex`, el factor de expansión de todos los años. En la app, la página *Diccionario de variables* las muestra en la
   misma tabla.
 * {dd}`eam.indicadores()` es otro nombre de {dd}`eam.resumen()`, como `dd.<encuesta>.indicadores(df)` en las demás
