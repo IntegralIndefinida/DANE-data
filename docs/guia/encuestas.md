@@ -134,10 +134,13 @@ Python:
 
 ```python
 >>> dd.buscar_variable("arriendo")["variable"].tolist()
-['P3064S1', 'P5090', 'P5130', 'P5140', 'P7495', 'P7500S1', 'P7500S1A1']
+['ingreso_no_laboral', 'P3064S1', 'P5090', 'P5130', 'P5140', 'P7495', 'P7500S1', 'P7500S1A1']
 >>> dd.describir("P6920")
 '¿está ... Cotizando actualmente a un fondo de pensiones?'
 ```
+
+{dd}`buscar_variable()` también busca en las variables armonizadas, que salen primero: la columna `origen` dice
+`"dane-data"` en ellas y `"DANE"` en las del DDI, y `ddi` el año del diccionario de donde sale cada variable del DANE.
 
 Los diccionarios se dejan tal como los publica el DANE, aunque a veces no coincidan con los datos; esos
 casos están en {doc}`diferencias`.

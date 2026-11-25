@@ -41,9 +41,11 @@ def strip_accents(text: str) -> str:
     return "".join(c for c in unicodedata.normalize("NFD", text) if unicodedata.category(c) != "Mn").lower()
 
 
-_DICCIONARIOS = {"geih": "geih_diccionario.json", "eam": "eam_diccionario.json", "emicron": "emicron_diccionario.json",
-                 **{f"eevv_{t}": f"eevv_{t}_diccionario.json" for t in ("defunciones", "nacimientos", "fetales")},
-                 "ecv": "ecv_diccionario.json"}
+# Archivo de cada diccionario y año del DDI del que sale
+_DICCIONARIOS = {"geih": ("geih_diccionario.json", 2025), "eam": ("eam_diccionario.json", 2024),
+                 "emicron": ("emicron_diccionario.json", 2024),
+                 **{f"eevv_{t}": (f"eevv_{t}_diccionario.json", 2025) for t in ("defunciones", "nacimientos", "fetales")},
+                 "ecv": ("ecv_diccionario.json", 2025)}
 
 
 @lru_cache(maxsize=None)
@@ -86,7 +88,7 @@ def diccionario(encuesta: str) -> dict:
     >>> geih["P6920"]["categorias"]
     {'1': 'Sí', '2': 'No', '3': 'Ya es pensionado'}
     """
-    name = _DICCIONARIOS[encuesta.lower()]
+    name, _ = _DICCIONARIOS[encuesta.lower()]
     with resources.files("dane_data.data").joinpath(name).open(encoding="utf-8") as f:
         return json.load(f)
 
@@ -128,11 +130,25 @@ def describir(variable: str, encuesta: str = "geih") -> str:
     return info["etiqueta"] if info and info["etiqueta"] else variable
 
 
+def _armonizadas(encuesta: str) -> dict:
+    """Las variables que crea ``dane-data`` en una encuesta, con su descripción."""
+    from . import eam, ecv, eevv, emicron, geih
+
+    if encuesta.startswith("eevv_"):
+        return eevv.ETIQUETAS[encuesta.removeprefix("eevv_")]
+    if encuesta == "ecv":
+        return {var: texto for nivel in ecv.ETIQUETAS.values() for var, texto in nivel.items()}
+    if encuesta == "eam":  # la EAM usa los nombres del DANE en minúscula: las de CORE ya están en el DDI
+        return {var: texto for var, texto in eam.ETIQUETAS.items() if var.upper() not in diccionario("eam")}
+    return {"geih": geih.ETIQUETAS, "emicron": emicron.ETIQUETAS}[encuesta]
+
+
 def buscar_variable(texto: str, encuesta: str = "geih"):
     """
     Busca variables por su nombre, etiqueta o pregunta.
 
-    La búsqueda no distingue mayúsculas ni tildes.
+    Busca en las variables armonizadas que crea ``dane-data`` (en minúscula, iguales en todos los años), que
+    salen primero, y en el diccionario oficial (DDI) del DANE. La búsqueda no distingue mayúsculas ni tildes.
 
     Parámetros
     ----------
@@ -145,7 +161,9 @@ def buscar_variable(texto: str, encuesta: str = "geih"):
     Devuelve
     --------
     DataFrame
-        Una fila por variable con ``variable``, ``etiqueta``, ``pregunta`` y ``modulo``.
+        Una fila por variable con ``variable``, ``origen`` (``"dane-data"`` en las armonizadas, ``"DANE"`` en las
+        del DDI), ``ddi`` (el año del DDI de donde sale la variable; vacío en las armonizadas), ``etiqueta``,
+        ``pregunta`` y ``modulo``. Las armonizadas no tienen pregunta ni módulo.
 
     Véase también
     -------------
@@ -156,15 +174,23 @@ def buscar_variable(texto: str, encuesta: str = "geih"):
     --------
     >>> import dane_data as dd
     >>> dd.buscar_variable("arriendo")["variable"].tolist()
-    ['P3064S1', 'P5090', 'P5130', 'P5140', 'P7495', 'P7500S1', 'P7500S1A1']
+    ['ingreso_no_laboral', 'P3064S1', 'P5090', 'P5130', 'P5140', 'P7495', 'P7500S1', 'P7500S1A1']
+    >>> dd.buscar_variable("fex")[["variable", "origen", "ddi"]]
+      variable     origen   ddi
+    0      fex  dane-data  <NA>
+    1  FEX_C18       DANE  2025
     """
     import pandas as pd
 
+    encuesta = encuesta.lower()
     q = strip_accents(texto)
-    rows = []
+    rows = [{"variable": var, "origen": "dane-data", "ddi": None, "etiqueta": etiqueta, "pregunta": "", "modulo": ""}
+            for var, etiqueta in _armonizadas(encuesta).items() if q in strip_accents(f"{var} {etiqueta}")]
+    _, ddi = _DICCIONARIOS[encuesta]
     for var, info in diccionario(encuesta).items():
         blob = strip_accents(f"{var} {info['etiqueta']} {info['pregunta']}")
         if q in blob:
-            rows.append({"variable": var, "etiqueta": info["etiqueta"], "pregunta": info["pregunta"],
-                         "modulo": ", ".join(info.get("modulos", []))[:80]})
-    return pd.DataFrame(rows, columns=["variable", "etiqueta", "pregunta", "modulo"])
+            rows.append({"variable": var, "origen": "DANE", "ddi": ddi, "etiqueta": info["etiqueta"],
+                         "pregunta": info["pregunta"], "modulo": ", ".join(info.get("modulos", []))[:80]})
+    return pd.DataFrame(rows, columns=["variable", "origen", "ddi", "etiqueta", "pregunta", "modulo"]).astype(
+        {"ddi": "Int64"})

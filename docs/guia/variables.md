@@ -202,9 +202,10 @@ nombre:
 
 ```python
 >>> dd.buscar_variable("arriendo")["variable"].tolist()
-['P3064S1', 'P5090', 'P5130', 'P5140', 'P7495', 'P7500S1', 'P7500S1A1']
+['ingreso_no_laboral', 'P3064S1', 'P5090', 'P5130', 'P5140', 'P7495', 'P7500S1', 'P7500S1A1']
 >>> dd.diccionario("geih")["P6920"]["categorias"]
 {'1': 'Sí', '2': 'No', '3': 'Ya es pensionado'}
 ```
 
-El diccionario es el de 2025: algunos nombres y categorías de años anteriores son distintos.
+`ingreso_no_laboral` sale primero porque es armonizada (columna `origen`, `"dane-data"`); las demás son del
+diccionario del DANE, que es el de 2025 (columna `ddi`): algunos nombres y categorías de años anteriores son distintos.
