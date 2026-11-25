@@ -59,12 +59,12 @@ if encuesta.startswith("GEIH"):
     st.info(f"Tamaño aproximado: **{fmt_num(0.7 * len(anios) if not prueba else 0.05 * len(anios), 1)} GB** · "
             f"destino: `{dd.get_path('geih_empalme' if empalme else 'geih')}`")
     lanzar = lambda prog, stop: dd.geih.download(  # noqa: E731
-        anios, modules=modulos, empalme=empalme, delete_zips=borrar, limit_files=1 if prueba else None,
-        progress=prog, should_stop=stop, forzar=forzar)
+        anios, modulos=modulos, empalme=empalme, borrar_zips=borrar, limite_archivos=1 if prueba else None,
+        progreso=prog, detener=stop, forzar=forzar)
     # Con todas las opciones elegidas, para que el código haga lo mismo que el botón
     codigo_py = f"dd.geih.download({anios!r}" + args_py(
-        modules=modulos if set(modulos) != set(NOMBRES) else None, empalme=empalme, delete_zips=borrar,
-        limit_files=1 if prueba else None, forzar=forzar) + ")"
+        modulos=modulos if set(modulos) != set(NOMBRES) else None, empalme=empalme, borrar_zips=borrar,
+        limite_archivos=1 if prueba else None, forzar=forzar) + ")"
 elif encuesta.startswith("Estadísticas"):
     ya = disponibles("eevv", rutas)
     elegidos = st.multiselect("Certificados", list(CERTIFICADOS), default=list(CERTIFICADOS), placeholder="Elija los certificados",
@@ -86,9 +86,9 @@ elif encuesta.startswith("Estadísticas"):
     # Promedio por año en disco, ya extraído (toda la serie ocupa unos 3,6 GB)
     peso = sum({"nacimientos": 90, "defunciones": 40, "fetales": 5}[t] for t in tipos) * len(anios)
     st.info(f"Tamaño aproximado en disco: **{peso} MB** · destino: `{dd.get_path('eevv')}`")
-    lanzar = lambda prog, stop: dd.eevv.download(anios, tipos=tipos, delete_zips=borrar, progress=prog,  # noqa: E731
-                                                 should_stop=stop, forzar=forzar)
-    codigo_py = f"dd.eevv.download({anios!r}, tipos={tipos!r}" + args_py(delete_zips=borrar, forzar=forzar) + ")"
+    lanzar = lambda prog, stop: dd.eevv.download(anios, tipos=tipos, borrar_zips=borrar, progreso=prog,  # noqa: E731
+                                                 detener=stop, forzar=forzar)
+    codigo_py = f"dd.eevv.download({anios!r}, tipos={tipos!r}" + args_py(borrar_zips=borrar, forzar=forzar) + ")"
 elif encuesta.startswith("EMICRON"):
     ya = disponibles("emicron", rutas)
     tiene = set(ya.anio.unique()) if len(ya) else set()
@@ -112,8 +112,8 @@ elif encuesta.startswith("EMICRON"):
     st.info(f"Tamaño aproximado en disco: **{70 * len(anios) if todos_mod else 30 * len(anios)} MB** · "
             f"destino: `{dd.get_path('emicron')}`")
     lanzar = lambda prog, stop: dd.emicron.download(anios, modulos=None if todos_mod else modulos,  # noqa: E731
-                                                    delete_zips=borrar, progress=prog, should_stop=stop, forzar=forzar)
-    codigo_py = f"dd.emicron.download({anios!r}" + args_py(modulos=None if todos_mod else modulos, delete_zips=borrar,
+                                                    borrar_zips=borrar, progreso=prog, detener=stop, forzar=forzar)
+    codigo_py = f"dd.emicron.download({anios!r}" + args_py(modulos=None if todos_mod else modulos, borrar_zips=borrar,
                                                           forzar=forzar) + ")"
 elif encuesta.startswith("ECV"):
     ya = disponibles("ecv", rutas)
@@ -137,10 +137,10 @@ elif encuesta.startswith("ECV"):
     # Los ZIP de 2024 y 2025 pesan mucho más: unos 1,4 GB con los once capítulos, contra 150 MB de los años anteriores
     peso = sum(1.4 if a >= 2024 else 0.15 for a in anios) * len(modulos) / len(CAPITULOS)
     st.info(f"Tamaño aproximado de la descarga: **{fmt_num(peso, 1)} GB** · destino: `{dd.get_path('ecv')}`")
-    lanzar = lambda prog, stop: dd.ecv.download(anios, modulos=modulos, delete_zips=borrar, progress=prog,  # noqa: E731
-                                                should_stop=stop, forzar=forzar)
+    lanzar = lambda prog, stop: dd.ecv.download(anios, modulos=modulos, borrar_zips=borrar, progreso=prog,  # noqa: E731
+                                                detener=stop, forzar=forzar)
     codigo_py = f"dd.ecv.download({anios!r}" + args_py(
-        modulos=modulos if set(modulos) != set(CAPITULOS) else None, delete_zips=borrar, forzar=forzar) + ")"
+        modulos=modulos if set(modulos) != set(CAPITULOS) else None, borrar_zips=borrar, forzar=forzar) + ")"
 elif encuesta.startswith("Pobreza"):
     ya = disponibles("pobreza", rutas)
     tiene = set(ya.anio.dropna().astype(int)) if len(ya) else set()  # las filas del empalme no tienen año
@@ -163,9 +163,9 @@ elif encuesta.startswith("Pobreza"):
     peso = (36 + 220 * personas) * len(anios) + 100 * empalme
     st.info(f"Tamaño aproximado en disco: **{peso} MB** · destino: `{dd.get_path('pobreza')}`")
     lanzar = lambda prog, stop: dd.pobreza.download(anios, archivos=archivos, empalme=empalme,  # noqa: E731
-                                                    delete_zips=borrar, progress=prog, should_stop=stop, forzar=forzar)
+                                                    borrar_zips=borrar, progreso=prog, detener=stop, forzar=forzar)
     codigo_py = f"dd.pobreza.download({anios!r}, archivos={archivos!r}" + args_py(
-        empalme=empalme, delete_zips=borrar, forzar=forzar) + ")"
+        empalme=empalme, borrar_zips=borrar, forzar=forzar) + ")"
 elif encuesta.startswith("EAM"):
     ya = disponibles("eam", rutas)
     tiene = set(ya.anio.unique()) if len(ya) else set()
@@ -182,9 +182,9 @@ elif encuesta.startswith("EAM"):
     tic = st.toggle("Incluir módulo de TIC (2008–2018)")
     borrar, forzar = opciones_disco()
     st.info(f"Tamaño aproximado: **{10 * len(anios)} MB** · destino: `{dd.get_path('eam')}`")
-    lanzar = lambda prog, stop: dd.eam.download(anios, include_tic=tic, delete_zips=borrar,  # noqa: E731
-                                                progress=prog, should_stop=stop, forzar=forzar)
-    codigo_py = f"dd.eam.download({anios!r}" + args_py(include_tic=tic, delete_zips=borrar, forzar=forzar) + ")"
+    lanzar = lambda prog, stop: dd.eam.download(anios, incluir_tic=tic, borrar_zips=borrar,  # noqa: E731
+                                                progreso=prog, detener=stop, forzar=forzar)
+    codigo_py = f"dd.eam.download({anios!r}" + args_py(incluir_tic=tic, borrar_zips=borrar, forzar=forzar) + ")"
 
 sin_modulos = encuesta.startswith(("GEIH", "ECV")) and not modulos  # sin módulos, la librería no sabe qué bajar
 if sin_modulos:

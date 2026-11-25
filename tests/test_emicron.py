@@ -290,7 +290,7 @@ def test_cli_descargar(monkeypatch):
     llamada = {}
     monkeypatch.setattr(dd.emicron, "download", lambda **kw: llamada.update(kw) or [])
     assert cli.main(["descargar", "emicron", "--anios", "2024", "--modulos", "ventas", "tic", "--borrar-zips"]) == 0
-    assert llamada == {"years": [2024], "modulos": ["ventas", "tic"], "delete_zips": True, "forzar": False}
+    assert llamada == {"anios": [2024], "modulos": ["ventas", "tic"], "borrar_zips": True, "forzar": False}
     monkeypatch.setattr(dd.emicron, "download", lambda **kw: ["2024 ventas: no se pudo descargar"])
     assert cli.main(["descargar", "emicron", "--anios", "2024"]) == 1
 

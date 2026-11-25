@@ -262,16 +262,16 @@ def _barra(texto: str):
 
 def _con_barra(texto: str, fn, *args, silenciar: bool = False, **kw):
     """
-    ``fn(*args, progress=..., **kw)`` con una barra de progreso que se quita al terminar, también si falla (antes quedaba
+    ``fn(*args, progreso=..., **kw)`` con una barra de progreso que se quita al terminar, también si falla (antes quedaba
     encima del error). Con ``silenciar``, sin los UserWarning de cobertura: la página los muestra aparte.
     """
     barra, progreso = _barra(texto)
     try:
         if not silenciar:
-            return fn(*args, progress=progreso, **kw)
+            return fn(*args, progreso=progreso, **kw)
         with AVISOS, warnings.catch_warnings():
             warnings.simplefilter("ignore", UserWarning)
-            return fn(*args, progress=progreso, **kw)
+            return fn(*args, progreso=progreso, **kw)
     finally:
         barra.empty()
 
@@ -306,7 +306,7 @@ def frecuencias_geih(anios: tuple, variable: str | None, por: tuple, poblacion: 
 @st.cache_data(max_entries=5, show_spinner="Leyendo un mes de microdatos…")
 def muestra_geih(anio: int, mes: int, variables: tuple, columnas: tuple, empalme: bool, rutas: tuple) -> pd.DataFrame:
     """Un solo mes de microdatos (vista previa, tipos de las variables adicionales)."""
-    return dd.geih.load(anio, months=mes, columns=list(columnas) or "core", empalme=empalme,
+    return dd.geih.load(anio, meses=mes, columnas=list(columnas) or "core", empalme=empalme,
                         variables=list(variables))
 
 
@@ -317,7 +317,7 @@ def args_py(**kw) -> str:
 
 @st.cache_resource(max_entries=2, show_spinner=False)
 def cargar_eam(anios: tuple, extra: tuple, rutas: tuple) -> pd.DataFrame:
-    return dd.eam.load(list(anios), columns=list(extra) or "core")
+    return dd.eam.load(list(anios), columnas=list(extra) or "core")
 
 
 # Como en la GEIH: las Estadísticas Vitales salen de dd.eevv.serie_* y tasas, año por año, y quedan en disco. Sus avisos
@@ -712,7 +712,7 @@ def selector_eam(extra: tuple = (), clave: str = "eam"):
     if df.empty:  # p. ej. un sector que no existe en los departamentos elegidos
         st.warning("Ningún establecimiento cumple los filtros elegidos.")
         st.stop()
-    carga = f"eam = dd.eam.load(range({lo}, {hi + 1})" + (f", columns={sorted(extra)!r}" if extra else "") + ")"
+    carga = f"eam = dd.eam.load(range({lo}, {hi + 1})" + (f", columnas={sorted(extra)!r}" if extra else "") + ")"
     if sectores:
         carga += f'\neam = eam[eam["sector"].isin({sectores!r})]'
     if dptos:

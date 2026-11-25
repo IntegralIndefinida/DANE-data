@@ -137,7 +137,7 @@ def _cmd_config(args) -> int:
     # --empalme es la clave geih_empalme; las demás opciones se llaman como su clave
     carpetas = {clave: getattr(args, "empalme" if clave == "geih_empalme" else clave) for clave in config._KEYS}
     try:
-        config.set_paths(**carpetas, save=True)
+        config.set_paths(**carpetas, guardar=True)
     except ValueError as e:  # una carpeta vacía
         print(f"dane-data config: {e}", file=sys.stderr)
         return 2
@@ -173,23 +173,23 @@ def _cmd_descargar(args) -> int:
         return 2
     logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
     if args.encuesta == "geih":
-        fallidos = geih.download(years=args.anios, modules=args.modulos, empalme=args.empalme,
-                                 delete_zips=args.borrar_zips, limit_files=args.limite, forzar=args.forzar)
+        fallidos = geih.download(anios=args.anios, modulos=args.modulos, empalme=args.empalme,
+                                 borrar_zips=args.borrar_zips, limite_archivos=args.limite, forzar=args.forzar)
     elif args.encuesta == "eam":
-        fallidos = eam.download(years=args.anios, include_tic=args.tic, delete_zips=args.borrar_zips,
+        fallidos = eam.download(anios=args.anios, incluir_tic=args.tic, borrar_zips=args.borrar_zips,
                                 forzar=args.forzar)
     elif args.encuesta == "eevv":
-        fallidos = eevv.download(years=args.anios, tipos=args.tipos, delete_zips=args.borrar_zips, forzar=args.forzar)
+        fallidos = eevv.download(anios=args.anios, tipos=args.tipos, borrar_zips=args.borrar_zips, forzar=args.forzar)
     elif args.encuesta == "emicron":
-        fallidos = emicron.download(years=args.anios, modulos=args.modulos, delete_zips=args.borrar_zips,
+        fallidos = emicron.download(anios=args.anios, modulos=args.modulos, borrar_zips=args.borrar_zips,
                                     forzar=args.forzar)
     elif args.encuesta == "ecv":
-        fallidos = ecv.download(years=args.anios, modulos=args.modulos, delete_zips=args.borrar_zips, forzar=args.forzar)
+        fallidos = ecv.download(anios=args.anios, modulos=args.modulos, borrar_zips=args.borrar_zips, forzar=args.forzar)
     else:
         if args.anios is None:
             print("Se descarga toda la serie 2012–2025 (unos 1,4 GB de ZIP). Use --anios para elegir años.")
-        fallidos = pobreza.download(years=args.anios, archivos=args.archivos, empalme=args.empalme,
-                                    delete_zips=args.borrar_zips, forzar=args.forzar)
+        fallidos = pobreza.download(anios=args.anios, archivos=args.archivos, empalme=args.empalme,
+                                    borrar_zips=args.borrar_zips, forzar=args.forzar)
     return 1 if fallidos else 0  # el resumen de lo que falló ya quedó en el registro
 
 

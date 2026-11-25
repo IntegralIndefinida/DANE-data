@@ -37,13 +37,13 @@ if filas:
         st.dataframe(pd.DataFrame(list(info["categorias"].items()), columns=["código", "significado"]),
                      hide_index=True)
     if clave.startswith("eevv_"):
-        carga = f'df = dd.eevv.load(2025, tipo="{clave.removeprefix("eevv_")}", columns=["{var}"])'
+        carga = f'df = dd.eevv.load(2025, tipo="{clave.removeprefix("eevv_")}", columnas=["{var}"])'
     elif clave == "ecv":  # el capítulo donde está la variable; Características siempre se carga
         modulo = next((m for m in info["modulos"] if m != "caracteristicas"), None)
-        carga = (f'df = dd.ecv.load(2025, columns=["{var}"])' if modulo is None
-                 else f'df = dd.ecv.load(2025, modulos=["{modulo}"], columns=["{var}"])')
+        carga = (f'df = dd.ecv.load(2025, columnas=["{var}"])' if modulo is None
+                 else f'df = dd.ecv.load(2025, modulos=["{modulo}"], columnas=["{var}"])')
     else:
-        carga = f'df = dd.{clave}.load(2024, columns=["{var if clave == "geih" else var.lower()}"])'
+        carga = f'df = dd.{clave}.load(2024, columnas=["{var if clave == "geih" else var.lower()}"])'
     st.code(carga, language="python")
 else:
     st.caption("Seleccione una fila para ver sus categorías.")

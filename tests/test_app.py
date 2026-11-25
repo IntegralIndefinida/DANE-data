@@ -135,10 +135,10 @@ def test_descargar_codigo_equivalente_con_las_opciones(tmp_path, monkeypatch):
         monkeypatch.setitem(dd.config._session, clave, tmp_path / clave)
     at = AppTest.from_file(str(PAGINAS / "descargar.py")).run()
     next(m for m in at.multiselect if m.label == "Módulos").set_value(["caracteristicas", "ocupados"]).run()
-    assert "modules=['caracteristicas', 'ocupados'], delete_zips=True)" in at.code[0].value
+    assert "modulos=['caracteristicas', 'ocupados'], borrar_zips=True)" in at.code[0].value
     at.radio[0].set_value("EAM (industria, anual)").run()
     next(t for t in at.toggle if t.label.startswith("Incluir módulo de TIC")).set_value(True).run()
-    assert "include_tic=True, delete_zips=True)" in at.code[0].value
+    assert "incluir_tic=True, borrar_zips=True)" in at.code[0].value
     at.radio[0].set_value("Estadísticas Vitales (nacimientos y defunciones)").run()
     next(t for t in at.toggle if t.label.startswith("Borrar")).set_value(False).run()
     assert at.code[0].value.endswith("tipos=['defunciones', 'nacimientos', 'fetales'])")
@@ -366,7 +366,7 @@ def test_tablas_y_microdatos_sin_cargar_todos_los_anios(geih_root, tmp_path, mon
     assert any(o.startswith("P6040 ") for o in extra.options)  # las de CORE_RAW también se ofrecen
     extra.set_value(["P5000", "P6040"]).run()
     assert not at.exception
-    assert "columns=['P5000']" in at.code[0].value             # P6040 ya se lee siempre
+    assert "columnas=['P5000']" in at.code[0].value             # P6040 ya se lee siempre
 
     next(b for b in at.button if b.label == "Exportar a CSV").click().run()
     assert not at.exception
@@ -398,9 +398,9 @@ def test_tablas_y_microdatos_sin_cargar_todos_los_anios(geih_root, tmp_path, mon
 
 def _solo_un_mes(load):
     """La app nunca debe pedir más de un mes de microdatos a la vez."""
-    def envoltura(years, months=None, **kw):
-        assert months is not None and len([months] if isinstance(months, int) else months) == 1
-        return load(years, meses=months, **kw)
+    def envoltura(anios, meses=None, **kw):
+        assert meses is not None and len([meses] if isinstance(meses, int) else meses) == 1
+        return load(anios, meses=meses, **kw)
     return envoltura
 
 
@@ -1063,7 +1063,7 @@ def test_descargar_pobreza(tmp_path, monkeypatch):
     at = AppTest.from_file(str(PAGINAS / "descargar.py")).run()
     at.radio[0].set_value("Pobreza monetaria (hogares, anual)").run()
     assert not at.exception
-    assert "dd.pobreza.download([2023, 2024, 2025], archivos=['hogares'], empalme=True, delete_zips=True)" in at.code[0].value
+    assert "dd.pobreza.download([2023, 2024, 2025], archivos=['hogares'], empalme=True, borrar_zips=True)" in at.code[0].value
     next(b for b in at.button if b.label.endswith("Descargar")).click().run()
     assert not at.exception and len(llamadas) == 1
     assert llamadas[0][1]["empalme"] and llamadas[0][1]["archivos"] == ["hogares"]

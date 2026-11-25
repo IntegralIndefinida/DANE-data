@@ -139,7 +139,7 @@ with st.expander("Carpetas de datos", icon=":material/folder:", expanded=not (le
                          r"Por ejemplo `~/datos_dane` o `C:\Users\ana\datos_dane`.")
             else:
                 try:
-                    dd.set_paths(**cambios, save=True)
+                    dd.set_paths(**cambios, guardar=True)
                 except ValueError as e:
                     st.error(str(e))
                 else:

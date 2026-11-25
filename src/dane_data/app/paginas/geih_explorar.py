@@ -60,12 +60,12 @@ with st.sidebar:
     )
 sel = seleccion_geih(clave="exp")
 anios = tuple(sel["anios"])
-# Las variables de CORE_RAW se leen siempre: pedirlas en `columns` solo crearía otra caché.
+# Las variables de CORE_RAW se leen siempre: pedirlas en `columnas` solo crearía otra caché.
 columnas = tuple(sorted(e for e in extra if e not in dd.geih.CORE_RAW))
 # Todas las tablas salen de dd.geih.serie_*: año por año y guardadas en disco, nunca todos los años en memoria.
 comunes = dict(filtros=sel["filtros"], meses=tuple(sel["meses"]) if sel["meses"] else None, columnas=columnas,
                empalme=sel["empalme"], meses_disp=sel["meses_disponibles"], rutas=rutas_actuales())
-args_comunes = args_py(filtros=sel["filtros"], meses=sel["meses"], columns=list(columnas), empalme=sel["empalme"])
+args_comunes = args_py(filtros=sel["filtros"], meses=sel["meses"], columnas=list(columnas), empalme=sel["empalme"])
 
 pob = st.radio("Población", list(POBLACIONES), horizontal=True, index=3)
 poblacion = POBLACIONES[pob]
@@ -255,7 +255,7 @@ with tab3:
                "tener todos los meses en memoria.")
     if st.button("Exportar a CSV", key="exportar"):
         filas = _con_barra("Exportando…", dd.geih.exportar, list(anios), destino, variables=elegidas, poblacion=poblacion,
-                           filtros=sel["filtros"] or None, meses=sel["meses"], columns=list(columnas) or "core",
+                           filtros=sel["filtros"] or None, meses=sel["meses"], columnas=list(columnas) or "core",
                            empalme=sel["empalme"], **formato)
         st.success(f"Listo: {fmt_num(filas)} filas en `{destino}`.")
         if destino.stat().st_size < 100e6:
