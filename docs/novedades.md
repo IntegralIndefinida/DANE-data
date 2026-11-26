@@ -18,6 +18,8 @@
   que el DANE dejó fuera del total que publicó esos años (desde 2015 los incluye), y `pertem3` no cuenta a todos los
   temporales directos en 2003–2019. Esto y lo que sigue sin explicar (los montos de 2011, los establecimientos de 1992)
   está en {doc}`guia/diferencias`; las etiquetas de `pertotal` y `pertem3` lo dicen.
+* {doc}`guia/diferencias` explica que desde 2022 `P6050` (parentesco con el jefe) tiene 13 códigos, los del
+  cuestionario, y no los 9 del diccionario del DANE: por ejemplo, el nieto pasó del 4 al 8. `jefe_hogar` no cambia.
 
 **Cambios**
 

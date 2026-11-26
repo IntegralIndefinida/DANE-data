@@ -834,6 +834,7 @@ def harmonize(df: pd.DataFrame, edad_minima_pet: int | None = None) -> pd.DataFr
     df["sexo"] = pd.Categorical(sexo.map({1: "Hombre", 2: "Mujer"}), dtype=CATEGORIAS["sexo"])
     df["edad"] = _num(df, "P6040")
     df["grupo_edad"] = pd.cut(df["edad"], bins=[-1, 14, 24, 34, 44, 54, 64, 200], labels=GRUPOS_EDAD)
+    # Desde 2022 P6050 tiene 13 códigos y no los 9 del DDI (ver README), pero el 1 sigue siendo el jefe
     df["jefe_hogar"] = (_num(df, "P6050") == 1).astype("Int8")
 
     dpto = _num(df, "DPTO")
