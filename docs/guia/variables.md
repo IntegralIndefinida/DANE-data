@@ -69,7 +69,7 @@ Estas variables solo tienen valor para los **ocupados**; para los demás quedan 
 |---|---|---|
 | `formal` | 1 si el DANE lo cuenta como formal; 0 si como informal. Vacía antes de 2022 | El código del DANE (abajo) |
 | `formal_marco2005` | Lo mismo con la medición anterior del DANE, 2007–2021. Vacía desde 2022 | `P6430`, `P6870`, `OFICIO` (abajo) |
-| `cotiza_pension` | 1 si cotiza a un fondo de pensiones | `P6920 == 1` |
+| `cotiza_pension` | 1 si cotiza a un fondo de pensiones; 0 si no cotiza o ya está pensionado. Vacía si no respondió (sin dato o 9, «no sabe») | `P6920 == 1` |
 | `ingreso_laboral` | Ingreso laboral mensual, en pesos corrientes, imputado por el DANE | `INGLABO` |
 | `smlv` | Salario mínimo del año (para todas las personas) | `dd.SMLV` |
 | `ratio_smlv` | Ingreso laboral en salarios mínimos | `ingreso_laboral / smlv` |

@@ -104,6 +104,11 @@
   como el 98 y el 99. Por lo mismo, `ingreso_laboral` queda vacío si `INGLABO` es de 999.999.999 o más: en abril de
   2010 el DANE sumó ese código en el `INGLABO` de un ocupado (1.000.199.999), y el ingreso laboral medio de ese mes
   subía de 702.387 a 717.177 pesos.
+* En la GEIH, `cotiza_pension` contaba como que no cotiza al ocupado que no respondió `P6920` o respondió 9 («no
+  sabe», solo en 2015). Ahora le deja la variable vacía. Donde más cambia es en marzo y abril de 2020 (operativo
+  telefónico): nueve de cada diez ocupados no respondieron, y la cobertura salía en 3 % y 4 %. Ahora sale en 14 % y
+  19 %, pero solo con el 10 % que respondió, así que esos dos meses no son representativos. En un mes normal cambia
+  poco (en junio de 2015, de 35,3 % a 36,2 %).
 
 ## 0.6.0 (20 de noviembre de 2026)
 

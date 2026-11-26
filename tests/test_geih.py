@@ -250,6 +250,13 @@ def test_ingreso_no_laboral_y_lugares():
     assert h["residencia_hace_5_anios"].isna().all()                    # sin P3382: vacía, sin error
 
 
+def test_cotiza_pension_sin_respuesta_queda_vacia():
+    """El 9 («no sabe», en 2015) y la respuesta vacía no cuentan como que no cotiza; el pensionado (3), sí."""
+    df = pd.DataFrame({"anio": 2015, "mes": 6, "OCI": [1, 1, 1, 1, 1, None], "P6920": [1, 2, 3, 9, None, 1]})
+    cotiza = dd.geih.harmonize(df)["cotiza_pension"]
+    assert cotiza[:3].tolist() == [1, 0, 0] and cotiza[3:].isna().all()
+
+
 def test_ingreso_laboral_con_un_no_informa():
     """INGLABO suma el «no informa» de 999.999.999 como si fuera un monto (abril de 2010): queda vacío."""
     df = pd.DataFrame({"anio": 2010, "mes": 4, "OCI": [1, 1], "INGLABO": [1_000_199_999, 900_000]})

@@ -720,7 +720,7 @@ ETIQUETAS = {
     "condicion": "Ocupado, Desocupado, Inactivo o Fuera de la PET",
     "formal": "1 si el ocupado es formal según la medición del DANE, 0 si es informal; vacía antes de 2022",
     "formal_marco2005": "Lo mismo con la medición anterior del DANE (empresas de hasta 5 personas), 2007–2021",
-    "cotiza_pension": "1 si el ocupado cotiza a un fondo de pensiones (P6920)",
+    "cotiza_pension": "1 si el ocupado cotiza a un fondo de pensiones (P6920); vacía si no respondió",
     "ingreso_laboral": "Ingreso laboral mensual del ocupado, en pesos corrientes, imputado por el DANE (INGLABO)",
     "smlv": "Salario mínimo mensual del año (dd.SMLV)",
     "ratio_smlv": "Ingreso laboral en salarios mínimos",
@@ -864,8 +864,10 @@ def harmonize(df: pd.DataFrame, edad_minima_pet: int | None = None) -> pd.DataFr
     # Formalidad: la medición del DANE, desde 2022 (_formal_dane). Solo para ocupados.
     df["formal"] = _formal_dane(df, anio).astype("Int8").where(ocupado)
     df["formal_marco2005"] = _formal_marco2005(df, anio).astype("Int8").where(ocupado)
-    cotiza = _num(df, "P6920") == 1
-    df["cotiza_pension"] = cotiza.astype("Int8").where(ocupado)
+    # Sin respuesta válida (vacía, o el 9 de «no sabe» que el DDI no trae, en 2015) queda por fuera: antes contaba como
+    # que no cotiza, y en marzo y abril de 2020 (operativo telefónico) eran nueve de cada diez ocupados
+    p6920 = _num(df, "P6920")
+    df["cotiza_pension"] = (p6920 == 1).astype("Int8").where(ocupado & p6920.isin([1, 2, 3]))
 
     ing = _num(df, "INGLABO")
     # INGLABO suma los montos como vienen, también un «no informa» de 999.999.999: en abril de 2010 da 1.000.199.999
