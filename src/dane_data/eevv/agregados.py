@@ -1,8 +1,9 @@
 """
-Agregados de las Estadísticas Vitales calculados año por año y guardados en disco, y tasas sobre la población.
+Agregados de las Estadísticas Vitales calculados año por año y guardados en disco, y tasas sobre la
+población.
 
-Un año de nacimientos pasa de 700 000 filas: así no hace falta tener toda la serie en memoria. La caché vive en
-``~/.cache/dane_data/eevv/`` y se invalida sola si cambian los archivos o el código.
+Un año de nacimientos pasa de 700 000 filas: así no hace falta tener toda la serie en memoria. La
+caché vive en ``~/.cache/dane_data/eevv/`` y se invalida sola si cambian los archivos o el código.
 """
 
 from __future__ import annotations
@@ -28,18 +29,36 @@ _MIL = 1000
 
 # Cómo se llama cada desagregación de las tasas en los certificados
 _POR_TASAS = {"departamento": "departamento_residencia", "sexo": "sexo", "area": "area_residencia"}
-_AREA_POBLACION = {"Cabecera": "Cabecera", "Centro poblado": "Centros poblados y rural disperso",
-                   "Rural disperso": "Centros poblados y rural disperso", "Resto": "Centros poblados y rural disperso"}
+_AREA_POBLACION = {
+    "Cabecera": "Cabecera",
+    "Centro poblado": "Centros poblados y rural disperso",
+    "Rural disperso": "Centros poblados y rural disperso",
+    "Resto": "Centros poblados y rural disperso",
+}
 _EDADES_FERTILES = [(a, a + 4) for a in range(15, 50, 5)]
 _EDADES_MADRE = {f"De {a} a {a + 4} años": (a, a + 4) for a in range(10, 55, 5)}
-_EDADES_DEFUNCION = {"Menor de 1 año": (0, 0), "De 1 a 4 años": (1, 4),
-                     **{f"De {a} a {a + 4} años": (a, a + 4) for a in range(5, 85, 5)}, "De 85 años y más": (85, 100)}
+_EDADES_DEFUNCION = {
+    "Menor de 1 año": (0, 0),
+    "De 1 a 4 años": (1, 4),
+    **{f"De {a} a {a + 4} años": (a, a + 4) for a in range(5, 85, 5)},
+    "De 85 años y más": (85, 100),
+}
 
 
-# Lo que produce los resultados (para _firma_codigo). stats.py (_con_categorias) y geih/agregados.py (_mascara,
-# _clave_json) también dan forma a lo que se guarda.
-_CODIGO = ("eevv/loader.py", "eevv/indicadores.py", "eevv/agregados.py", "proyecciones.py", "referencias.py", "_io.py",
-           "stats.py", "geih/agregados.py", "data/eevv_causas.json", "data/proyecciones_poblacion.parquet")
+# Lo que produce los resultados (para _firma_codigo). stats.py (_con_categorias) y
+# geih/agregados.py (_mascara, _clave_json) también dan forma a lo que se guarda.
+_CODIGO = (
+    "eevv/loader.py",
+    "eevv/indicadores.py",
+    "eevv/agregados.py",
+    "proyecciones.py",
+    "referencias.py",
+    "_io.py",
+    "stats.py",
+    "geih/agregados.py",
+    "data/eevv_causas.json",
+    "data/proyecciones_poblacion.parquet",
+)
 
 
 def _firma_archivo(ruta: Path) -> str:
@@ -51,8 +70,8 @@ def clear_cache(dias: float | None = None) -> int:
     """
     Borra la caché de las Estadísticas Vitales.
 
-    Nunca hace falta para tener resultados correctos, porque se invalida sola cuando cambian los datos o el código: sirve
-    para liberar espacio.
+    Nunca hace falta para tener resultados correctos, porque se invalida sola cuando cambian los
+    datos o el código: sirve para liberar espacio.
 
     Parámetros
     ----------
@@ -78,34 +97,54 @@ def clear_cache(dias: float | None = None) -> int:
 
 
 def _armonizado(tipo: str, anio: int, ruta: Path) -> pd.DataFrame:
-    """Un año ya armonizado. Leerlo de la caché es unas diez veces más rápido que del archivo del DANE."""
-    digest = hashlib.sha1("|".join([_firma_codigo(_CODIGO), _firma_archivo(ruta)]).encode()).hexdigest()[:16]
+    """Un año ya armonizado. Leerlo de la caché es unas diez veces más rápido que del archivo del
+    DANE.
+    """
+    digest = hashlib.sha1(
+        "|".join([_firma_codigo(_CODIGO), _firma_archivo(ruta)]).encode()
+    ).hexdigest()[:16]
 
     def leer() -> pd.DataFrame:
         with warnings.catch_warnings():
-            warnings.simplefilter("ignore", UserWarning)  # las funciones de este módulo avisan una sola vez
+            # Las funciones de este módulo avisan una sola vez
+            warnings.simplefilter("ignore", UserWarning)
             return load(anio, tipo=tipo, raiz=ruta.parents[3])
 
-    return _desde_cache(config.CACHE_DIR / "eevv" / tipo / "anios" / f"{anio}_{digest}.parquet", leer, "eevv")
+    return _desde_cache(
+        config.CACHE_DIR / "eevv" / tipo / "anios" / f"{anio}_{digest}.parquet", leer, "eevv"
+    )
 
 
-def _por_anio(tabla: str, anios, tipo: str, solicitud: dict, calcular: Callable[[pd.DataFrame], pd.DataFrame], raiz=None,
-              progreso=None) -> list[pd.DataFrame]:
-    """``calcular(datos del año)`` para cada año, leído de la caché si ya se hizo con los mismos archivos y solicitud."""
+def _por_anio(
+    tabla: str,
+    anios,
+    tipo: str,
+    solicitud: dict,
+    calcular: Callable[[pd.DataFrame], pd.DataFrame],
+    raiz=None,
+    progreso=None,
+) -> list[pd.DataFrame]:
+    """``calcular(datos del año)`` para cada año, leído de la caché si ya se hizo con los mismos
+    archivos y solicitud.
+    """
     archivos = find_files(anios, tipo=_tipo_valido(tipo), raiz=raiz)
     if not archivos:
         raise FileNotFoundError(
-            f"No hay datos de {tipo} para años={anios} en {_root(raiz)}. "
-            "Descárguelos con dane_data.eevv.download(...) o revise dane_data.set_paths(...)."
+            f"No hay datos de {tipo} para años={anios} en {_root(raiz)}. Descárguelos con "
+            "dane_data.eevv.download(...) o revise dane_data.set_paths(...)."
         )
     texto = json.dumps(_clave_json(solicitud), sort_keys=True, default=str, ensure_ascii=False)
     partes = []
     for i, (anio, ruta) in enumerate(sorted(archivos.items())):
         if progreso:
             progreso(i / len(archivos), f"Calculando {tipo} {anio} (solo la primera vez)")
-        digest = hashlib.sha1("|".join([_firma_codigo(_CODIGO), _firma_archivo(ruta), texto]).encode()).hexdigest()[:16]
+        digest = hashlib.sha1(
+            "|".join([_firma_codigo(_CODIGO), _firma_archivo(ruta), texto]).encode()
+        ).hexdigest()[:16]
         destino = config.CACHE_DIR / "eevv" / tipo / tabla / f"{anio}_{digest}.parquet"
-        partes.append(_desde_cache(destino, lambda a=anio, r=ruta: calcular(_armonizado(tipo, a, r)), "eevv"))
+        partes.append(
+            _desde_cache(destino, lambda a=anio, r=ruta: calcular(_armonizado(tipo, a, r)), "eevv")
+        )
     if progreso:
         progreso(1.0, "Listo")
     return partes
@@ -127,8 +166,8 @@ def serie_indicadores(
     """
     Indicadores por año sin tener toda la serie en memoria.
 
-    Da exactamente lo mismo que ``indicadores(load(years, tipo), por=["anio", *por])``, pero lee un año a la vez y guarda
-    cada resultado en disco.
+    Da exactamente lo mismo que ``indicadores(load(years, tipo), por=["anio", *por])``, pero lee un
+    año a la vez y guarda cada resultado en disco.
 
     Parámetros
     ----------
@@ -172,7 +211,9 @@ def serie_indicadores(
     0  2023       515549           11.0         50.0
     1  2024       453901           11.3         51.8
     2  2025       441537           11.0         53.8
-    >>> dd.eevv.serie_indicadores(2025, por="gran_causa", filtros={"sexo": ["Mujer"]})  # doctest: +SKIP
+    >>> dd.eevv.serie_indicadores(
+    ...     2025, por="gran_causa", filtros={"sexo": ["Mujer"]}
+    ... )  # doctest: +SKIP
     """
     years = _enteros(years)
     if tipo == "defunciones":
@@ -182,7 +223,15 @@ def serie_indicadores(
     def calcular(d: pd.DataFrame) -> pd.DataFrame:
         return indicadores(_aplicar_filtros(d, filtros), por=llaves, dropna=dropna)
 
-    partes = _por_anio("indicadores", years, tipo, {"por": llaves, "filtros": filtros, "dropna": dropna}, calcular, raiz, progreso)
+    partes = _por_anio(
+        "indicadores",
+        years,
+        tipo,
+        {"por": llaves, "filtros": filtros, "dropna": dropna},
+        calcular,
+        raiz,
+        progreso,
+    )
     return _unir(partes).sort_values(llaves, ignore_index=True)
 
 
@@ -245,9 +294,22 @@ def serie_conteos(
 
     def calcular(d: pd.DataFrame) -> pd.DataFrame:
         d = _aplicar_filtros(d, filtros)
-        return d.groupby(llaves, observed=True, dropna=dropna, sort=True).size().rename("n").reset_index()
+        return (
+            d.groupby(llaves, observed=True, dropna=dropna, sort=True)
+            .size()
+            .rename("n")
+            .reset_index()
+        )
 
-    partes = _por_anio("conteos", years, tipo, {"por": llaves, "filtros": filtros, "dropna": dropna}, calcular, raiz, progreso)
+    partes = _por_anio(
+        "conteos",
+        years,
+        tipo,
+        {"por": llaves, "filtros": filtros, "dropna": dropna},
+        calcular,
+        raiz,
+        progreso,
+    )
     return _unir(partes).sort_values(llaves, ignore_index=True)
 
 
@@ -255,7 +317,9 @@ def serie_conteos(
 # Tasas
 # --------------------------------------------------------------------------- #
 def _para_tasas(d: pd.DataFrame, por: list[str]) -> pd.DataFrame:
-    """Los datos de un año con las columnas de ``por`` como en la población. Lo que no tiene dato queda vacío."""
+    """Los datos de un año con las columnas de ``por`` como en la población. Lo que no tiene dato
+    queda vacío.
+    """
     d = d.copy()
     if "departamento" in por:
         d["departamento"] = d["departamento_residencia"].astype("object")
@@ -267,7 +331,9 @@ def _para_tasas(d: pd.DataFrame, por: list[str]) -> pd.DataFrame:
 
 
 def _contar_para_tasas(tipo: str, anios, por: list[str], raiz, progreso=None) -> pd.DataFrame:
-    """Los hechos de un tipo por año y grupo. Vacío si ese tipo no está descargado: las demás tasas sí se pueden calcular."""
+    """Los hechos de un tipo por año y grupo. Vacío si ese tipo no está descargado: las demás tasas
+    sí se pueden calcular.
+    """
     if not find_files(anios, tipo=tipo, raiz=raiz):
         return pd.DataFrame(columns=["anio", *por])
     llaves = ["anio", *por]
@@ -277,18 +343,50 @@ def _contar_para_tasas(tipo: str, anios, por: list[str], raiz, progreso=None) ->
         grupos = d.groupby(llaves, observed=True, sort=True)
         res = grupos.size().rename(tipo).to_frame()
         if tipo == "defunciones":
-            sin_detalle = d["grupo_edad"].eq(_SIN_DETALLE).groupby([d[k] for k in llaves], observed=True).sum()
-            menores = d["menor_un_anio"].fillna(False).astype(bool).groupby([d[k] for k in llaves], observed=True).sum()
+            sin_detalle = (
+                d["grupo_edad"]
+                .eq(_SIN_DETALLE)
+                .groupby([d[k] for k in llaves], observed=True)
+                .sum()
+            )
+            menores = (
+                d["menor_un_anio"]
+                .fillna(False)
+                .astype(bool)
+                .groupby([d[k] for k in llaves], observed=True)
+                .sum()
+            )
             res["defunciones_menores_1"] = menores.astype("float64").where(sin_detalle == 0)
-            for columna, nombre in (("neonatal", "defunciones_neonatales"), ("neonatal_precoz", "defunciones_neonatales_precoces")):
+            for columna, nombre in (
+                ("neonatal", "defunciones_neonatales"),
+                ("neonatal_precoz", "defunciones_neonatales_precoces"),
+            ):
                 con_dato = d[columna].notna().groupby([d[k] for k in llaves], observed=True).sum()
-                n = d[columna].fillna(False).astype(bool).groupby([d[k] for k in llaves], observed=True).sum()
+                n = (
+                    d[columna]
+                    .fillna(False)
+                    .astype(bool)
+                    .groupby([d[k] for k in llaves], observed=True)
+                    .sum()
+                )
                 res[nombre] = n.astype("float64").where((sin_detalle == 0) & (con_dato > 0))
             con_causa = d["materna"].notna().groupby([d[k] for k in llaves], observed=True).sum()
-            maternas = d["materna"].fillna(False).astype(bool).groupby([d[k] for k in llaves], observed=True).sum()
+            maternas = (
+                d["materna"]
+                .fillna(False)
+                .astype(bool)
+                .groupby([d[k] for k in llaves], observed=True)
+                .sum()
+            )
             res["defunciones_maternas"] = maternas.astype("float64").where(con_causa > 0)
         elif tipo == "fetales":
-            mortinatos = d["mortinato"].fillna(False).astype(bool).groupby([d[k] for k in llaves], observed=True).sum()
+            mortinatos = (
+                d["mortinato"]
+                .fillna(False)
+                .astype(bool)
+                .groupby([d[k] for k in llaves], observed=True)
+                .sum()
+            )
             res["mortinatos"] = mortinatos.astype("float64")
         return res.reset_index()
 
@@ -298,7 +396,8 @@ def _contar_para_tasas(tipo: str, anios, por: list[str], raiz, progreso=None) ->
 
 def _poblacion_por(anios: list[int], por: list[str], **kw) -> pd.DataFrame:
     with warnings.catch_warnings():
-        warnings.simplefilter("ignore", UserWarning)  # los años sin población quedan vacíos: se avisa una vez, arriba
+        # Los años sin población quedan vacíos: se avisa una vez, arriba
+        warnings.simplefilter("ignore", UserWarning)
         return poblacion(anios, por=por, **kw)
 
 
@@ -311,14 +410,19 @@ def _anios_descargados(anios, tipos, raiz) -> list[int]:
 def _por_valido(por) -> list[str]:
     por = _lista(por)
     if desconocidas := [c for c in por if c not in _POR_TASAS]:
-        raise ValueError(f"Las tasas no se pueden desagregar por {desconocidas}. Opciones: {list(_POR_TASAS)}")
+        raise ValueError(
+            f"Las tasas no se pueden desagregar por {desconocidas}. Opciones: {list(_POR_TASAS)}"
+        )
     return por
 
 
 def _avisar_sin_poblacion(res: pd.DataFrame, por: list[str]) -> None:
     if "departamento" in por and (viejos := sorted(a for a in res["anio"].unique() if a < 1985)):
-        _avisar(f"Sin población por departamento para {viejos[0]}–{viejos[-1]}: esos años quedan sin tasa. "
-                "Las proyecciones por departamento empiezan en 1985.", UserWarning)
+        _avisar(
+            f"Sin población por departamento para {viejos[0]}–{viejos[-1]}: esos años quedan sin "
+            "tasa. Las proyecciones por departamento empiezan en 1985.",
+            UserWarning,
+        )
 
 
 def tasas(
@@ -330,16 +434,16 @@ def tasas(
     """
     Tasas de natalidad, mortalidad y fecundidad con las proyecciones de población del DANE.
 
-    Combina los tres certificados con :func:`dane_data.poblacion`, un año a la vez. Cada tasa se calcula con lo que haya
-    descargado; las demás quedan vacías.
+    Combina los tres certificados con :func:`dane_data.poblacion`, un año a la vez. Cada tasa se
+    calcula con lo que haya descargado; las demás quedan vacías.
 
     Parámetros
     ----------
     years
         Año o lista de años. ``None`` para todos los descargados.
     por
-        ``"departamento"`` (de residencia), ``"sexo"`` o ``"area"`` (de residencia: ``"Cabecera"`` o ``"Centros poblados y
-        rural disperso"``), o una lista de ellos.
+        ``"departamento"`` (de residencia), ``"sexo"`` o ``"area"`` (de residencia: ``"Cabecera"``
+        o ``"Centros poblados y rural disperso"``), o una lista de ellos.
     raiz
         Carpeta raíz de las Estadísticas Vitales. Por defecto, la configurada.
     progreso
@@ -350,19 +454,20 @@ def tasas(
     DataFrame
         ``anio``, las columnas de ``por`` y:
 
-        * ``poblacion``, ``nacimientos``, ``defunciones``, ``defunciones_menores_1``, ``defunciones_neonatales``
-          (0 a 27 días), ``defunciones_neonatales_precoces`` (0 a 6 días), ``defunciones_maternas``, ``fetales`` y
-          ``mortinatos``.
+        * ``poblacion``, ``nacimientos``, ``defunciones``, ``defunciones_menores_1``,
+          ``defunciones_neonatales`` (0 a 27 días), ``defunciones_neonatales_precoces`` (0 a 6
+          días), ``defunciones_maternas``, ``fetales`` y ``mortinatos``.
         * ``tasa_natalidad`` y ``tasa_mortalidad``, por 1.000 habitantes.
         * ``tasa_global_fecundidad``, hijos por mujer, de 15 a 49 años.
-        * ``mortalidad_infantil`` y ``mortalidad_neonatal``, por 1.000 nacidos vivos. La neonatal queda vacía antes de
-          1998, cuando los grupos de edad juntan de 7 a 29 días.
-        * ``mortalidad_perinatal``: mortinatos y defunciones de 0 a 6 días, por 1.000 nacidos vivos más mortinatos.
-        * ``razon_mortalidad_materna``, por 100.000 nacidos vivos. Cuenta las muertes maternas de hasta 42 días
-          (``materna``: capítulo O sin O96 ni O97).
+        * ``mortalidad_infantil`` y ``mortalidad_neonatal``, por 1.000 nacidos vivos. La neonatal
+          queda vacía antes de 1998, cuando los grupos de edad juntan de 7 a 29 días.
+        * ``mortalidad_perinatal``: mortinatos y defunciones de 0 a 6 días, por 1.000 nacidos vivos
+          más mortinatos.
+        * ``razon_mortalidad_materna``, por 100.000 nacidos vivos. Cuenta las muertes maternas de
+          hasta 42 días (``materna``: capítulo O sin O96 ni O97).
 
-        Cada una sigue la ficha técnica del DANE (2026). Por sexo solo hay ``tasa_mortalidad``, ``mortalidad_infantil``
-        y ``mortalidad_neonatal``: las demás quedan vacías.
+        Cada una sigue la ficha técnica del DANE (2026). Por sexo solo hay ``tasa_mortalidad``,
+        ``mortalidad_infantil`` y ``mortalidad_neonatal``: las demás quedan vacías.
 
     Lanza
     -----
@@ -374,8 +479,8 @@ def tasas(
     Avisos
     ------
     UserWarning
-        Si los años incluyen defunciones con problemas de cobertura (1979, 1980, 1991), o años sin población para esa
-        desagregación.
+        Si los años incluyen defunciones con problemas de cobertura (1979, 1980, 1991), o años sin
+        población para esa desagregación.
 
     Véase también
     -------------
@@ -384,26 +489,30 @@ def tasas(
 
     Notas
     -----
-    **Son tasas de hechos registrados, sin ajustar por subregistro.** No tienen por qué coincidir con los indicadores
-    demográficos que publica el DANE, que salen del modelo de sus proyecciones. Las de los años antiguos, con más
-    subregistro, salen más bajas que las reales.
+    **Son tasas de hechos registrados, sin ajustar por subregistro.** No tienen por qué coincidir
+    con los indicadores demográficos que publica el DANE, que salen del modelo de sus proyecciones.
+    Las de los años antiguos, con más subregistro, salen más bajas que las reales.
 
-    Por departamento se usa la residencia, y quedan por fuera los registros sin departamento o de residentes en el
-    extranjero; por eso la suma es menor que el total nacional, que sí los incluye para coincidir con lo publicado.
-    Los certificados de nacimiento y las defunciones de menores de un año se atribuyen a la residencia de la madre.
+    Por departamento se usa la residencia, y quedan por fuera los registros sin departamento o de
+    residentes en el extranjero; por eso la suma es menor que el total nacional, que sí los incluye
+    para coincidir con lo publicado. Los certificados de nacimiento y las defunciones de menores de
+    un año se atribuyen a la residencia de la madre.
 
-    Por sexo, los nacimientos se cuentan por el sexo del nacido, no de quien los tiene: la natalidad y la fecundidad no
-    se pueden partir así, y las muertes maternas, todas de mujeres, no se pueden dividir por las nacidas mujeres. Las
-    defunciones fetales casi siempre traen sexo indeterminado.
+    Por sexo, los nacimientos se cuentan por el sexo del nacido, no de quien los tiene: la
+    natalidad y la fecundidad no se pueden partir así, y las muertes maternas, todas de mujeres, no
+    se pueden dividir por las nacidas mujeres. Las defunciones fetales casi siempre traen sexo
+    indeterminado.
 
-    Los nacimientos sin edad de la madre no entran en la fecundidad, lo que la subestima un poco: son como mucho 1,5 % de
-    los nacimientos de cada año.
+    Los nacimientos sin edad de la madre no entran en la fecundidad, lo que la subestima un poco:
+    son como mucho 1,5 % de los nacimientos de cada año.
 
     Ejemplos
     --------
     >>> import dane_data as dd
     >>> r = dd.eevv.tasas(2025)  # doctest: +SKIP
-    >>> r[["tasa_natalidad", "tasa_mortalidad", "tasa_global_fecundidad", "mortalidad_infantil"]].round(2)  # doctest: +SKIP
+    >>> r[
+    ...     ["tasa_natalidad", "tasa_mortalidad", "tasa_global_fecundidad", "mortalidad_infantil"]
+    ... ].round(2)  # doctest: +SKIP
        tasa_natalidad  tasa_mortalidad  tasa_global_fecundidad  mortalidad_infantil
     0            8.32             5.36                    1.02                10.25
     >>> dd.eevv.tasas(range(2015, 2026), por="departamento")  # doctest: +SKIP
@@ -413,8 +522,8 @@ def tasas(
     tipos = ("defunciones", "nacimientos", "fetales")
     if not any(find_files(years, tipo=t, raiz=raiz) for t in tipos):
         raise FileNotFoundError(
-            f"No hay Estadísticas Vitales para años={years} en {_root(raiz)}. "
-            "Descárguelas con dane_data.eevv.download(...) o revise dane_data.set_paths(...)."
+            f"No hay Estadísticas Vitales para años={years} en {_root(raiz)}. Descárguelas con "
+            "dane_data.eevv.download(...) o revise dane_data.set_paths(...)."
         )
     llaves = ["anio", *por]
     disponibles = _anios_descargados(years, tipos, raiz)
@@ -429,8 +538,16 @@ def tasas(
         avance = None if progreso is None else lambda f, m, i=i: progreso((i + f) / len(tipos), m)
         conteo = _contar_para_tasas(tipo, disponibles, por, raiz, avance)
         res = conteo if res is None else res.merge(conteo, how="outer", on=llaves)
-    for columna in ("nacimientos", "defunciones", "defunciones_menores_1", "defunciones_neonatales",
-                    "defunciones_neonatales_precoces", "defunciones_maternas", "fetales", "mortinatos"):
+    for columna in (
+        "nacimientos",
+        "defunciones",
+        "defunciones_menores_1",
+        "defunciones_neonatales",
+        "defunciones_neonatales_precoces",
+        "defunciones_maternas",
+        "fetales",
+        "mortinatos",
+    ):
         if columna not in res.columns:
             res[columna] = np.nan
 
@@ -438,30 +555,50 @@ def tasas(
     res = res.merge(pob, how="left", on=llaves)
     _avisar_sin_poblacion(res, por)
 
-    # Por sexo, los nacimientos son los del sexo del nacido: dividirlos por la población de ese sexo, o dividir por las
-    # nacidas mujeres las muertes maternas (todas de mujeres), no mide nada. La mortalidad infantil sí: niños sobre niños.
+    # Por sexo, los nacimientos son los del sexo del nacido: dividirlos por la población de ese
+    # sexo, o dividir por las nacidas mujeres las muertes maternas (todas de mujeres), no mide
+    # nada. La mortalidad infantil sí: niños sobre niños.
     por_sexo = "sexo" in por
     res["tasa_natalidad"] = np.nan if por_sexo else _MIL * res["nacimientos"] / res["poblacion"]
     res["tasa_mortalidad"] = _MIL * res["defunciones"] / res["poblacion"]
     res["mortalidad_infantil"] = _MIL * res["defunciones_menores_1"] / res["nacimientos"]
-    res["razon_mortalidad_materna"] = np.nan if por_sexo else 100_000 * res["defunciones_maternas"] / res["nacimientos"]
+    res["razon_mortalidad_materna"] = (
+        np.nan if por_sexo else 100_000 * res["defunciones_maternas"] / res["nacimientos"]
+    )
     res["mortalidad_neonatal"] = _MIL * res["defunciones_neonatales"] / res["nacimientos"]
-    # Ficha técnica de la mortalidad perinatal: el denominador suma los mortinatos, no todas las defunciones fetales
-    res["mortalidad_perinatal"] = (_MIL * (res["mortinatos"] + res["defunciones_neonatales_precoces"])
-                                   / (res["nacimientos"] + res["mortinatos"]))
+    # Ficha técnica de la mortalidad perinatal: el denominador suma los mortinatos, no todas las
+    # defunciones fetales
+    res["mortalidad_perinatal"] = (
+        _MIL
+        * (res["mortinatos"] + res["defunciones_neonatales_precoces"])
+        / (res["nacimientos"] + res["mortinatos"])
+    )
     res["tasa_global_fecundidad"] = np.nan
     if "sexo" not in por and find_files(years, tipo="nacimientos", raiz=raiz):
         especificas = tasas_especificas(disponibles, "nacimientos", por, raiz=raiz)
-        fertil = especificas[especificas["edad_madre"].isin([f"De {a} a {b} años" for a, b in _EDADES_FERTILES])]
-        tgf = (5 * (fertil["nacimientos"] / fertil["mujeres"]).groupby([fertil[k] for k in llaves], observed=True).sum(min_count=7)
-               ).rename("_tgf").reset_index()
+        fertil = especificas[
+            especificas["edad_madre"].isin([f"De {a} a {b} años" for a, b in _EDADES_FERTILES])
+        ]
+        tgf = (
+            (
+                5
+                * (fertil["nacimientos"] / fertil["mujeres"])
+                .groupby([fertil[k] for k in llaves], observed=True)
+                .sum(min_count=7)
+            )
+            .rename("_tgf")
+            .reset_index()
+        )
         res = res.merge(tgf, how="left", on=llaves)
         res["tasa_global_fecundidad"] = res.pop("_tgf")
 
-    orden = [*llaves, "poblacion", "nacimientos", "defunciones", "defunciones_menores_1", "defunciones_neonatales",
-             "defunciones_neonatales_precoces", "defunciones_maternas", "fetales", "mortinatos", "tasa_natalidad",
-             "tasa_mortalidad", "tasa_global_fecundidad", "mortalidad_infantil", "mortalidad_neonatal",
+    # fmt: off
+    orden = [*llaves, "poblacion", "nacimientos", "defunciones", "defunciones_menores_1",
+             "defunciones_neonatales", "defunciones_neonatales_precoces", "defunciones_maternas",
+             "fetales", "mortinatos", "tasa_natalidad", "tasa_mortalidad",
+             "tasa_global_fecundidad", "mortalidad_infantil", "mortalidad_neonatal",
              "mortalidad_perinatal", "razon_mortalidad_materna"]
+    # fmt: on
     return res[orden].replace([np.inf, -np.inf], np.nan).sort_values(llaves, ignore_index=True)
 
 
@@ -480,10 +617,11 @@ def tasas_especificas(
     years
         Año o lista de años. ``None`` para todos los descargados.
     tipo
-        ``"nacimientos"`` da nacimientos por edad de la madre sobre las mujeres de esa edad; ``"defunciones"``,
-        defunciones por grupo de edad sobre las personas de esa edad.
+        ``"nacimientos"`` da nacimientos por edad de la madre sobre las mujeres de esa edad;
+        ``"defunciones"``, defunciones por grupo de edad sobre las personas de esa edad.
     por
-        ``"departamento"`` (de residencia), ``"area"`` y, solo en defunciones, ``"sexo"``. Un nombre o una lista.
+        ``"departamento"`` (de residencia), ``"area"`` y, solo en defunciones, ``"sexo"``. Un
+        nombre o una lista.
     raiz
         Carpeta raíz. Por defecto, la configurada.
     progreso
@@ -495,8 +633,8 @@ def tasas_especificas(
         ``anio``, las columnas de ``por`` y, según el tipo:
 
         * Nacimientos: ``edad_madre``, ``nacimientos``, ``mujeres`` y ``tasa``, por 1.000 mujeres.
-        * Defunciones: ``grupo_edad``, ``defunciones``, ``poblacion`` y ``tasa``, por 100.000 personas. En 1991 los grupos
-          de menores de 10 años quedan vacíos.
+        * Defunciones: ``grupo_edad``, ``defunciones``, ``poblacion`` y ``tasa``, por 100.000
+          personas. En 1991 los grupos de menores de 10 años quedan vacíos.
 
     Lanza
     -----
@@ -516,7 +654,8 @@ def tasas_especificas(
 
     Notas
     -----
-    Son hechos registrados, sin ajustar por subregistro (vea :func:`tasas`). Quedan por fuera los registros sin edad.
+    Son hechos registrados, sin ajustar por subregistro (vea :func:`tasas`). Quedan por fuera los
+    registros sin edad.
 
     Ejemplos
     --------
@@ -529,40 +668,62 @@ def tasas_especificas(
     >>> dd.eevv.tasas_especificas(2025, "defunciones", por="sexo")  # doctest: +SKIP
     """
     if tipo not in ("nacimientos", "defunciones"):
-        raise ValueError(f"Las tasas específicas son de 'nacimientos' o 'defunciones', no de {tipo!r}.")
+        raise ValueError(
+            f"Las tasas específicas son de 'nacimientos' o 'defunciones', no de {tipo!r}."
+        )
     por = _por_valido(por)
     if tipo == "nacimientos" and "sexo" in por:
         raise ValueError("La fecundidad es de las mujeres: no se puede desagregar por sexo.")
     years = _enteros(years)
     if tipo == "defunciones":
         _avisar_cobertura(tipo, years if years is not None else find_files(tipo=tipo, raiz=raiz))
-    edad, bandas, numerador, denominador = (("edad_madre", _EDADES_MADRE, "nacimientos", "mujeres") if tipo == "nacimientos"
-                                            else ("grupo_edad", _EDADES_DEFUNCION, "defunciones", "poblacion"))
+    edad, bandas, numerador, denominador = (
+        ("edad_madre", _EDADES_MADRE, "nacimientos", "mujeres")
+        if tipo == "nacimientos"
+        else ("grupo_edad", _EDADES_DEFUNCION, "defunciones", "poblacion")
+    )
     llaves = ["anio", *por]
 
     def calcular(d: pd.DataFrame) -> pd.DataFrame:
         d = _para_tasas(d, por).dropna(subset=por)
         d = d.assign(**{edad: d[edad].astype("object")})
-        conteo = d.groupby([*llaves, edad], observed=True, sort=True).size().rename(numerador).reset_index()
-        # Enero–junio de 1991: los menores de 10 años no se pueden repartir, así que esos grupos contarían de menos
+        conteo = (
+            d.groupby([*llaves, edad], observed=True, sort=True)
+            .size()
+            .rename(numerador)
+            .reset_index()
+        )
+        # Enero–junio de 1991: los menores de 10 años no se pueden repartir, así que esos grupos
+        # contarían de menos
         if tipo == "defunciones" and (d[edad] == _SIN_DETALLE).any():
             menores = ["Menor de 1 año", "De 1 a 4 años", "De 5 a 9 años"]
-            conteo[numerador] = conteo[numerador].astype("float64").mask(conteo[edad].isin(menores))
+            conteo[numerador] = (
+                conteo[numerador].astype("float64").mask(conteo[edad].isin(menores))
+            )
         return conteo[conteo[edad].isin(list(bandas))]
 
     partes = _por_anio("especificas", years, tipo, {"por": por}, calcular, raiz, progreso)
     conteo = pd.concat(partes, ignore_index=True)
     disponibles = sorted(conteo["anio"].unique().tolist())
     sexo_pob = {"sexo": "Mujer"} if tipo == "nacimientos" else {}
-    pobs = [_poblacion_por(disponibles, por, edades=rango, **sexo_pob).assign(**{edad: nombre}) for nombre, rango in bandas.items()]
+    pobs = [
+        _poblacion_por(disponibles, por, edades=rango, **sexo_pob).assign(**{edad: nombre})
+        for nombre, rango in bandas.items()
+    ]
     pob = pd.concat(pobs, ignore_index=True).rename(columns={"poblacion": denominador})
-    # Con merge por la derecha, un grupo sin hechos queda en 0 en vez de desaparecer: es una tasa de 0, no un dato faltante
+    # Con merge por la derecha, un grupo sin hechos queda en 0 en vez de desaparecer: es una tasa
+    # de 0, no un dato faltante
     res = conteo.merge(pob, how="right", on=[*llaves, edad])
-    faltantes = res[numerador].isna() & ~res["anio"].isin(conteo.loc[conteo[numerador].isna(), "anio"])
+    faltantes = res[numerador].isna() & ~res["anio"].isin(
+        conteo.loc[conteo[numerador].isna(), "anio"]
+    )
     res[numerador] = res[numerador].astype("float64").mask(faltantes, 0.0)
     _avisar_sin_poblacion(conteo, por)
-    # Fichas técnicas del DANE: la fecundidad específica va por 1.000 mujeres y la mortalidad específica por 100.000
+    # Fichas técnicas del DANE: la fecundidad específica va por 1.000 mujeres y la mortalidad
+    # específica por 100.000
     res["tasa"] = (_MIL if tipo == "nacimientos" else 100_000) * res[numerador] / res[denominador]
     orden = list(bandas)
     res[edad] = pd.Categorical(res[edad], categories=orden, ordered=True)
-    return res[[*llaves, edad, numerador, denominador, "tasa"]].sort_values([*llaves, edad], ignore_index=True)
+    return res[[*llaves, edad, numerador, denominador, "tasa"]].sort_values(
+        [*llaves, edad], ignore_index=True
+    )

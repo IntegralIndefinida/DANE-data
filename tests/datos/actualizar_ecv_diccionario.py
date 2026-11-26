@@ -1,11 +1,13 @@
 """
-Regenera el diccionario de la ECV (``src/dane_data/data/ecv_diccionario.json``) desde el DDI del ANDA.
+Regenera el diccionario de la ECV (``src/dane_data/data/ecv_diccionario.json``) desde el DDI del
+ANDA.
 
     uv run python tests/datos/actualizar_ecv_diccionario.py [ARCHIVO_DDI.xml]
 
-Sin argumento se baja el DDI del catálogo más reciente. Solo van las variables de los capítulos que descarga
-``dd.ecv.download``, y en ``modulos`` el nombre del capítulo en ``dd.ecv.MODULOS`` (el que se pide a ``dd.ecv.load``). Se
-guarda tal como lo publica el DANE: lo que contradice los datos va en la tabla de diferencias del README.
+Sin argumento se baja el DDI del catálogo más reciente. Solo van las variables de los capítulos que
+descarga ``dd.ecv.download``, y en ``modulos`` el nombre del capítulo en ``dd.ecv.MODULOS`` (el que
+se pide a ``dd.ecv.load``). Se guarda tal como lo publica el DANE: lo que contradice los datos va
+en la tabla de diferencias del README.
 """
 
 from __future__ import annotations
@@ -74,9 +76,15 @@ def main() -> None:
                 categorias[codigo] = _texto(c.find(q("labl")))
         etiqueta = _texto(v.find(q("labl")))
         pregunta = _texto(v.find(f"{q('qstn')}/{q('qstnLit')}")) or etiqueta
-        diccionario[nombre] = {"etiqueta": etiqueta, "pregunta": pregunta, "categorias": categorias,
-                               "modulos": [capitulo[v.get("files")]]}
-    SALIDA.write_text(json.dumps(diccionario, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+        diccionario[nombre] = {
+            "etiqueta": etiqueta,
+            "pregunta": pregunta,
+            "categorias": categorias,
+            "modulos": [capitulo[v.get("files")]],
+        }
+    SALIDA.write_text(
+        json.dumps(diccionario, ensure_ascii=False, indent=1) + "\n", encoding="utf-8"
+    )
     print(f"{SALIDA.name}: {len(diccionario)} variables")
 
 

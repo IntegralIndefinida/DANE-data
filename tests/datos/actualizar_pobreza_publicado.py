@@ -1,11 +1,13 @@
 """
 Regenera ``dane_pobreza_publicado.csv`` con las cifras de pobreza monetaria que publica el DANE.
 
-    uv run --extra app python tests/datos/actualizar_pobreza_publicado.py [ANEXO_NACIONAL.xlsx ANEXO_DEPARTAMENTAL.xlsx]
+    uv run --extra app python tests/datos/actualizar_pobreza_publicado.py [ANEXO_NACIONAL.xlsx
+    ANEXO_DEPARTAMENTAL.xlsx]
 
-Sin argumentos baja los anexos del boletín más reciente de dane.gov.co. De cada hoja de la metodología actualizada (la
-serie empalmada, 2012–2025 nacional y 2021–2025 departamental) se toma cada fila: grandes dominios, ciudades y
-departamentos. Una fila del CSV por año, nivel, dominio e indicador, con la unidad y la hoja de donde salió.
+Sin argumentos baja los anexos del boletín más reciente de dane.gov.co. De cada hoja de la
+metodología actualizada (la serie empalmada, 2012–2025 nacional y 2021–2025 departamental) se toma
+cada fila: grandes dominios, ciudades y departamentos. Una fila del CSV por año, nivel, dominio e
+indicador, con la unidad y la hoja de donde salió.
 
 Si el DANE cambia las hojas o sus bloques, el script falla en vez de escribir un CSV incompleto.
 """
@@ -39,12 +41,16 @@ HOJAS = {
 # Títulos de sección dentro de un bloque: no son dominios
 SECCIONES = {"Grandes dominios", "Ciudades capitales", "Ciudades con Área Metropolitana"}
 # Ni las notas, la fuente, los títulos de los bloques o la unidad
-NO_DOMINIO = ("Nota", "Fuente", "Fecha", "Cifras", "Personas en", "Brecha de", "Severidad de", "Líneas de", "Incidencia de",
-              "Coeficiente", "Ingreso per", "Población total")
+# fmt: off
+NO_DOMINIO = ("Nota", "Fuente", "Fecha", "Cifras", "Personas en", "Brecha de", "Severidad de",
+              "Líneas de", "Incidencia de", "Coeficiente", "Ingreso per", "Población total")
+# fmt: on
 
 
 def _numero(v) -> float | None:
-    """El número de una celda, o None si está vacía o no es un número (una celda vacía de Excel llega como NaN)."""
+    """El número de una celda, o None si está vacía o no es un número (una celda vacía de Excel
+    llega como NaN).
+    """
     if isinstance(v, str):
         v = v.strip().replace(",", ".")
     try:
@@ -55,17 +61,27 @@ def _numero(v) -> float | None:
 
 
 def _bloques(hoja: pd.DataFrame) -> list[tuple[list[int], list[tuple[str, list]]]]:
-    """Cada bloque de la hoja: los años del encabezado y las filas (etiqueta, valores) que le siguen."""
+    """Cada bloque de la hoja: los años del encabezado y las filas (etiqueta, valores) que le
+    siguen.
+    """
     bloques = []
     for _, fila in hoja.iterrows():
         valores = fila.tolist()
         anios = [_numero(v) for v in valores[1:]]
-        if all(a is None or 2000 <= a <= 2100 and a == int(a) for a in anios) and sum(a is not None for a in anios) >= 3:
+        if (
+            all(a is None or 2000 <= a <= 2100 and a == int(a) for a in anios)
+            and sum(a is not None for a in anios) >= 3
+        ):
             bloques.append(([int(a) if a is not None else None for a in anios], []))
             continue
         etiqueta = valores[0]
-        if (bloques and isinstance(etiqueta, str) and etiqueta.strip() and etiqueta.strip() not in SECCIONES
-                and not etiqueta.strip().startswith(NO_DOMINIO)):
+        if (
+            bloques
+            and isinstance(etiqueta, str)
+            and etiqueta.strip()
+            and etiqueta.strip() not in SECCIONES
+            and not etiqueta.strip().startswith(NO_DOMINIO)
+        ):
             nums = [_numero(v) for v in valores[1:]]
             if any(n is not None for n in nums):
                 bloques[-1][1].append((etiqueta.strip(), nums))
@@ -80,8 +96,10 @@ def leer(ruta_o_bytes, nivel: str) -> pd.DataFrame:
             raise SystemExit(f"El anexo {nivel} ya no trae la hoja {nombre!r}: revise HOJAS.")
         bloques = [b for b in _bloques(libro[nombre]) if b[1]]
         if len(bloques) != len(indicadores):
-            raise SystemExit(f"{nivel}, hoja {nombre!r}: {len(bloques)} bloques con datos, se esperaban "
-                             f"{len(indicadores)}. Revise HOJAS.")
+            raise SystemExit(
+                f"{nivel}, hoja {nombre!r}: {len(bloques)} bloques con datos, se esperaban "
+                f"{len(indicadores)}. Revise HOJAS."
+            )
         for (anios, datos), (indicador, unidad) in zip(bloques, indicadores):
             for etiqueta, nums in datos:
                 for anio, valor in zip(anios, nums):
@@ -91,8 +109,17 @@ def leer(ruta_o_bytes, nivel: str) -> pd.DataFrame:
                         valor, unidad_csv = valor * 1000, "personas"
                     else:
                         unidad_csv = unidad
-                    filas.append({"anio": anio, "nivel": nivel, "dominio": etiqueta, "indicador": indicador,
-                                  "valor": valor, "unidad": unidad_csv, "fuente": f"{ANEXOS[nivel].rsplit('/', 1)[1]}: {nombre}"})
+                    filas.append(
+                        {
+                            "anio": anio,
+                            "nivel": nivel,
+                            "dominio": etiqueta,
+                            "indicador": indicador,
+                            "valor": valor,
+                            "unidad": unidad_csv,
+                            "fuente": f"{ANEXOS[nivel].rsplit('/', 1)[1]}: {nombre}",
+                        }
+                    )
     return pd.DataFrame(filas)
 
 

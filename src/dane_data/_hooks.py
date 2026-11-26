@@ -20,13 +20,13 @@ import requests
 ProgressFn = Callable[[Optional[float], str], None]
 
 
-class DownloadCancelled(Exception):
+class DownloadCancelled(Exception):  # noqa: N818 (nombre público: no se cambia)
     """
     La descarga se detuvo porque ``detener()`` devolvió True.
 
-    La lanzan ``dd.geih.download``, ``dd.eam.download`` y ``dd.eevv.download`` cuando se les pasa ``detener`` (la aplicación
-    lo usa para su botón de cancelar). Los meses o años que ya terminaron quedan en disco y la próxima
-    descarga los salta.
+    La lanzan ``dd.geih.download``, ``dd.eam.download`` y ``dd.eevv.download`` cuando se les pasa
+    ``detener`` (la aplicación lo usa para su botón de cancelar). Los meses o años que ya
+    terminaron quedan en disco y la próxima descarga los salta.
 
     Ejemplos
     --------
@@ -41,7 +41,9 @@ class DownloadCancelled(Exception):
 
 
 class DescargadorANDA:
-    """Lo común de los descargadores: la sesión HTTP, la descarga de cada ZIP y los ganchos de progreso y cancelación."""
+    """Lo común de los descargadores: la sesión HTTP, la descarga de cada ZIP y los ganchos de
+    progreso y cancelación.
+    """
 
     base_url = "https://microdatos.dane.gov.co"
     log = logging.getLogger("dane_data")  # cada descargador pone el suyo
@@ -60,20 +62,30 @@ class DescargadorANDA:
     def _abrir_sesion(self) -> None:
         self.fallidos: list[str] = []
         self.session = requests.Session()
-        self.session.headers.update({
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-        })
+        self.session.headers.update(
+            {
+                "User-Agent": (
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like "
+                    "Gecko) Chrome/124.0.0.0 Safari/537.36"
+                )
+            }
+        )
 
     def _enlaces(self, catalog_id: str) -> dict:
         """
-        ``{url: nombre}`` de los archivos de /get-microdata del catálogo, sacados de ``mostrarModal('nombre', 'url')``.
-        Solo los del ANDA por https (``url_del_anda``); vacío si la página no responde o no trae enlaces.
+        ``{url: nombre}`` de los archivos de /get-microdata del catálogo, sacados de
+        ``mostrarModal('nombre', 'url')``. Solo los del ANDA por https (``url_del_anda``); vacío si
+        la página no responde o no trae enlaces.
         """
         try:
-            res = self.session.get(f"{self.base_url}/index.php/catalog/{catalog_id}/get-microdata", timeout=20)
+            res = self.session.get(
+                f"{self.base_url}/index.php/catalog/{catalog_id}/get-microdata", timeout=20
+            )
             res.raise_for_status()
         except Exception as e:
-            self.log.warning(f"No se pudo leer la página de microdatos del catálogo {catalog_id}: {e}")
+            self.log.warning(
+                f"No se pudo leer la página de microdatos del catálogo {catalog_id}: {e}"
+            )
             return {}
         matches = re.findall(r"mostrarModal\(\s*'([^']+)'\s*,\s*'([^']+)'\s*\)", res.text)
         if not matches:
@@ -81,7 +93,10 @@ class DescargadorANDA:
         enlaces = {}
         for name, url in matches:
             if (completa := url_del_anda(url, self.base_url)) is None:
-                self.log.warning(f"Enlace de {name.strip()} fuera del ANDA o sin https, se ignora: {url.strip()}")
+                self.log.warning(
+                    f"Enlace de {name.strip()} fuera del ANDA o sin https, se ignora: "
+                    f"{url.strip()}"
+                )
             else:
                 enlaces.setdefault(completa, name.strip())
         return enlaces
@@ -93,14 +108,18 @@ class DescargadorANDA:
         log = self.log
         if not self.forzar and dest_path.exists() and dest_path.stat().st_size > 0:
             if zip_valido(dest_path):
-                log.info(f"Archivo ya existente: {dest_path.name} ({dest_path.stat().st_size / 1024 / 1024:.1f} MB). Saltando descarga.")
+                log.info(
+                    f"Archivo ya existente: {dest_path.name} "
+                    f"({dest_path.stat().st_size / 1024 / 1024:.1f} MB). Saltando descarga."
+                )
                 return True
             log.warning(f"{dest_path.name} en disco está dañado: se vuelve a descargar.")
             dest_path.unlink()
 
         temp_dest = _temporal(dest_path)
-        # finally y no solo except: el botón Detener de Streamlit (StopException) y Ctrl+C no son Exception,
-        # y como el nombre es único, ninguna descarga posterior pisaría el temporal que quedara.
+        # finally y no solo except: el botón Detener de Streamlit (StopException) y Ctrl+C no son
+        # Exception, y como el nombre es único, ninguna descarga posterior pisaría el temporal que
+        # quedara.
         try:
             for attempt in range(1, max_retries + 1):
                 try:
@@ -117,14 +136,25 @@ class DescargadorANDA:
                                     f.write(chunk)
                                     downloaded += len(chunk)
                                     if total_size:
-                                        self._emit(None, f"{dest_path.name}: {downloaded / 1e6:.1f} / {total_size / 1e6:.1f} MB")
+                                        self._emit(
+                                            None,
+                                            f"{dest_path.name}: {downloaded / 1e6:.1f} / "
+                                            f"{total_size / 1e6:.1f} MB",
+                                        )
 
                         if total_size > 0 and downloaded < total_size:
-                            log.warning(f"Descarga incompleta ({downloaded}/{total_size} bytes). Reintentando...")
+                            log.warning(
+                                f"Descarga incompleta ({downloaded}/{total_size} bytes). "
+                                "Reintentando..."
+                            )
                             continue
-                        # Sin content-length, un corte o una página de error del ANDA no se notan arriba
+                        # Sin content-length, un corte o una página de error del ANDA no se notan
+                        # arriba
                         if not zip_valido(temp_dest, dest_path):
-                            log.warning(f"{dest_path.name}: lo descargado no es un ZIP válido. Reintentando...")
+                            log.warning(
+                                f"{dest_path.name}: lo descargado no es un ZIP válido. "
+                                "Reintentando..."
+                            )
                             continue
 
                     temp_dest.replace(dest_path)
@@ -143,7 +173,9 @@ class DescargadorANDA:
             temp_dest.unlink(missing_ok=True)
 
     def _fallo(self, mensaje: str) -> None:
-        """Anota algo que no se pudo bajar o extraer: ``run_pipeline`` lo resume al final y lo devuelve."""
+        """Anota algo que no se pudo bajar o extraer: ``run_pipeline`` lo resume al final y lo
+        devuelve.
+        """
         self.log.error(mensaje)
         self.fallidos.append(mensaje)
 
@@ -151,9 +183,11 @@ class DescargadorANDA:
         """Cierre de ``run_pipeline``: éxito solo si nada falló. Devuelve lo que falló."""
         if self.fallidos:
             self._emit(1.0, f"Descarga terminada con {len(self.fallidos)} problema(s)")
-            self.log.warning(f"\nLa descarga de {serie} terminó con {len(self.fallidos)} problema(s):\n  - "
-                             + "\n  - ".join(self.fallidos)
-                             + "\nVuelva a descargar los mismos años: lo que ya está completo se salta.")
+            self.log.warning(
+                f"\nLa descarga de {serie} terminó con {len(self.fallidos)} problema(s):\n  - "
+                + "\n  - ".join(self.fallidos)
+                + "\nVuelva a descargar los mismos años: lo que ya está completo se salta."
+            )
         else:
             self._emit(1.0, "Descarga terminada")
             self.log.info(f"\n¡Descarga de {serie} finalizada exitosamente!")
@@ -161,17 +195,19 @@ class DescargadorANDA:
         return list(self.fallidos)
 
 
-_PARTE_VIEJA = 86400  # segundos sin escribirse tras los cuales un temporal ya no es de ninguna descarga en curso
+# Segundos sin escribirse tras los cuales un temporal ya no es de ninguna descarga en curso
+_PARTE_VIEJA = 86400
 
 
 def _temporal(destino: Path) -> Path:
     """
-    Nombre temporal único junto a ``destino``. Con uno fijo (``<archivo>.part``), dos descargas del mismo
-    año a la vez (dos pestañas, la app en modo aula) escribirían el mismo archivo; en Windows la segunda
-    falla porque está en uso.
+    Nombre temporal único junto a ``destino``. Con uno fijo (``<archivo>.part``), dos descargas del
+    mismo año a la vez (dos pestañas, la app en modo aula) escribirían el mismo archivo; en Windows
+    la segunda falla porque está en uso.
 
-    Antes borra los temporales de ``destino`` que llevan más de un día sin escribirse: los que dejó un proceso
-    que se mató (cerrar la ventana de la app no deja correr los ``finally``), que con el nombre único nadie más borraría.
+    Antes borra los temporales de ``destino`` que llevan más de un día sin escribirse: los que dejó
+    un proceso que se mató (cerrar la ventana de la app no deja correr los ``finally``), que con el
+    nombre único nadie más borraría.
     """
     for viejo in destino.parent.glob(f"{glob.escape(destino.name)}.*.part"):
         try:
@@ -184,19 +220,24 @@ def _temporal(destino: Path) -> Path:
 
 def url_del_anda(url: str, base: str = DescargadorANDA.base_url) -> str | None:
     """
-    El enlace de descarga sacado de una página del ANDA, si apunta al ANDA por https (los relativos se
-    completan con ``base``); ``None`` si apunta a otro sitio o por http. Así un enlace raro en la página
-    no hace descargar nada de otro servidor.
+    El enlace de descarga sacado de una página del ANDA, si apunta al ANDA por https (los relativos
+    se completan con ``base``); ``None`` si apunta a otro sitio o por http. Así un enlace raro en
+    la página no hace descargar nada de otro servidor.
     """
     completa = urljoin(base + "/", url.strip())
     partes = urlparse(completa)
-    return completa if partes.scheme == "https" and partes.hostname == urlparse(base).hostname else None
+    return (
+        completa
+        if partes.scheme == "https" and partes.hostname == urlparse(base).hostname
+        else None
+    )
 
 
 def zip_valido(archivo: Path, nombre: Path | None = None) -> bool:
     """
     ``archivo`` es un ZIP legible, o no se espera que lo sea (``nombre``, por defecto el mismo
-    ``archivo``, no termina en ``.zip``). Detecta descargas cortadas y páginas de error del servidor.
+    ``archivo``, no termina en ``.zip``). Detecta descargas cortadas y páginas de error del
+    servidor.
     """
     return (nombre or archivo).suffix.lower() != ".zip" or zipfile.is_zipfile(archivo)
 
@@ -217,17 +258,21 @@ def ya_extraido(member: zipfile.ZipInfo, destino: Path) -> bool:
 
 
 def archivos_datos(carpeta: Path, extensiones) -> list[Path]:
-    """Archivos de datos (con alguna de ``extensiones``) ya extraídos en ``carpeta``, sin entrar en subcarpetas como ``TIC/``."""
+    """Archivos de datos (con alguna de ``extensiones``) ya extraídos en ``carpeta``, sin entrar en
+    subcarpetas como ``TIC/``.
+    """
     if not carpeta.is_dir():
         return []
     return sorted(f for f in carpeta.iterdir() if f.is_file() and f.suffix.lower() in extensiones)
 
 
-def extraer_aparte(extraer: Callable[[Path], list[Path]], carpeta: Path, temporal: Path, extensiones) -> bool:
+def extraer_aparte(
+    extraer: Callable[[Path], list[Path]], carpeta: Path, temporal: Path, extensiones
+) -> bool:
     """
-    Corre ``extraer(nueva)`` en una carpeta nueva dentro de ``temporal`` y, solo si sacó archivos, los pasa a ``carpeta`` y
-    borra los archivos de datos que había y no se reemplazaron (los de antes, con ``forzar``). Si no sacó nada o falla,
-    queda lo de antes. Devuelve si sacó algo.
+    Corre ``extraer(nueva)`` en una carpeta nueva dentro de ``temporal`` y, solo si sacó archivos,
+    los pasa a ``carpeta`` y borra los archivos de datos que había y no se reemplazaron (los de
+    antes, con ``forzar``). Si no sacó nada o falla, queda lo de antes. Devuelve si sacó algo.
     """
     nueva = Path(tempfile.mkdtemp(prefix="extraccion-", dir=temporal))
     try:
@@ -251,15 +296,21 @@ _DEFLATE64 = 9  # método de compresión que zipfile no lee; lo usa Windows con 
 
 
 def _copiar_deflate64(z: zipfile.ZipFile, member: zipfile.ZipInfo, dst) -> None:
-    """Descomprime un miembro en Deflate64 (Educación 2021 de la ECV) con inflate64, leyendo los bytes crudos del ZIP."""
+    """Descomprime un miembro en Deflate64 (Educación 2021 de la ECV) con inflate64, leyendo los
+    bytes crudos del ZIP.
+    """
     import inflate64
 
     with open(z.filename, "rb") as f:
         f.seek(member.header_offset)
-        cabecera = f.read(30)  # encabezado local: firma, versiones, banderas... y largo del nombre y del campo extra
+        # Encabezado local: firma, versiones, banderas... y largo del nombre y del campo extra
+        cabecera = f.read(30)
         if cabecera[:4] != b"PK\x03\x04":
             raise zipfile.BadZipFile(f"Encabezado dañado en {member.filename}")
-        f.seek(int.from_bytes(cabecera[26:28], "little") + int.from_bytes(cabecera[28:30], "little"), 1)
+        f.seek(
+            int.from_bytes(cabecera[26:28], "little") + int.from_bytes(cabecera[28:30], "little"),
+            1,
+        )
         inflador, faltan, crc = inflate64.Inflater(), member.compress_size, 0
         while faltan > 0:
             bloque = f.read(min(1 << 20, faltan))

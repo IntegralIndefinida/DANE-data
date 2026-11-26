@@ -1,9 +1,10 @@
 """
 Proyecciones de población del DANE, empaquetadas con la librería (sin descargar nada).
 
-Son los archivos vigentes de la página del DANE (2018 en adelante, actualizados el 30 de julio de 2025, y la
-retroproyección 1950–2017): por departamento 1985–2050 y total nacional 1950–2070, por sexo y edad simple (hasta 100
-años o más). Se regeneran con ``tests/datos/actualizar_proyecciones.py``.
+Son los archivos vigentes de la página del DANE (2018 en adelante, actualizados el 30 de julio de
+2025, y la retroproyección 1950–2017): por departamento 1985–2050 y total nacional 1950–2070, por
+sexo y edad simple (hasta 100 años o más). Se regeneran con
+``tests/datos/actualizar_proyecciones.py``.
 """
 
 from __future__ import annotations
@@ -24,7 +25,11 @@ _NACIONAL = 0  # Valor de dpto en los años que solo tienen total nacional
 
 @lru_cache(maxsize=1)
 def _datos() -> pd.DataFrame:
-    with resources.files("dane_data.data").joinpath("proyecciones_poblacion.parquet").open("rb") as f:
+    with (
+        resources.files("dane_data.data")
+        .joinpath("proyecciones_poblacion.parquet")
+        .open("rb") as f
+    ):
         return pd.read_parquet(f)
 
 
@@ -37,7 +42,9 @@ def _dpto(valor) -> int:
         for codigo, nombre in DEPARTAMENTOS.items():
             if strip_accents(nombre) == buscado:
                 return codigo
-    raise ValueError(f"Departamento desconocido {valor!r}. Opciones: {list(DEPARTAMENTOS.values())}")
+    raise ValueError(
+        f"Departamento desconocido {valor!r}. Opciones: {list(DEPARTAMENTOS.values())}"
+    )
 
 
 def poblacion(
@@ -56,12 +63,13 @@ def poblacion(
     years
         Año o lista de años. ``None`` para todos (1950–2070).
     por
-        Desagregar, además de por año: ``"departamento"`` (nombre), ``"dpto"`` (código), ``"area"``, ``"sexo"`` o
-        ``"edad"``. Un nombre o una lista.
+        Desagregar, además de por año: ``"departamento"`` (nombre), ``"dpto"`` (código),
+        ``"area"``, ``"sexo"`` o ``"edad"``. Un nombre o una lista.
     sexo
         ``"Hombre"`` o ``"Mujer"``. Por defecto, ambos.
     edades
-        Una edad o un rango ``(mínima, máxima)``, incluidos los extremos. La edad 100 es «100 años o más».
+        Una edad o un rango ``(mínima, máxima)``, incluidos los extremos. La edad 100 es «100 años
+        o más».
     departamento
         Nombre o código de un departamento, o una lista de ellos.
     area
@@ -88,14 +96,15 @@ def poblacion(
 
     Notas
     -----
-    Es una serie continua: los archivos del DANE empalman sin saltos y la suma de los departamentos da
-    exactamente el total nacional en cada año. Los años tienen distinto detalle:
+    Es una serie continua: los archivos del DANE empalman sin saltos y la suma de los departamentos
+    da exactamente el total nacional en cada año. Los años tienen distinto detalle:
 
     * Por departamento: 1985–2050. Antes y después solo hay total nacional.
-    * Por área: 1950–2045. En los años siguientes no se parte por área, y con ``por="area"`` esas filas salen
-      como ``"Total"``.
+    * Por área: 1950–2045. En los años siguientes no se parte por área, y con ``por="area"`` esas
+      filas salen como ``"Total"``.
 
-    No es el marco de la GEIH de 2007–2019 y 2021, que usa las proyecciones anteriores, con base en el censo 2005.
+    No es el marco de la GEIH de 2007–2019 y 2021, que usa las proyecciones anteriores, con base en
+    el censo 2005.
 
     Ejemplos
     --------
@@ -123,7 +132,9 @@ def poblacion(
         mascara &= d["anio"].isin(pedidos)
     if sexo is not None:
         if sexo not in d["sexo"].cat.categories:
-            raise ValueError(f"Sexo desconocido {sexo!r}. Opciones: {list(d['sexo'].cat.categories)}")
+            raise ValueError(
+                f"Sexo desconocido {sexo!r}. Opciones: {list(d['sexo'].cat.categories)}"
+            )
         mascara &= d["sexo"] == sexo
     if edades is not None:
         minima, maxima = (edades, edades) if isinstance(edades, numbers.Integral) else edades
@@ -134,16 +145,20 @@ def poblacion(
             raise ValueError(f"Área desconocida {area!r}. Opciones: {areas}")
         mascara &= d["area"] == area
     if departamento is not None:
-        lista = [departamento] if isinstance(departamento, (str, numbers.Integral)) else departamento
+        lista = (
+            [departamento] if isinstance(departamento, (str, numbers.Integral)) else departamento
+        )
         mascara &= d["dpto"].isin([_dpto(v) for v in lista])
     elif "departamento" in por or "dpto" in por:
         mascara &= d["dpto"] != _NACIONAL
 
     res = d[mascara]
     if pedidos and (sin_datos := sorted(set(pedidos) - set(res["anio"].unique()))):
-        _avisar(f"Sin proyecciones con esa desagregación para: {', '.join(map(str, sin_datos))}. "
-                "Por departamento hay 1985–2050, por área hasta 2045 (y total nacional 1950–2070).",
-                UserWarning)
+        _avisar(
+            f"Sin proyecciones con esa desagregación para: {', '.join(map(str, sin_datos))}. Por "
+            "departamento hay 1985–2050, por área hasta 2045 (y total nacional 1950–2070).",
+            UserWarning,
+        )
     if "departamento" in por:
         res = res.assign(departamento=res["dpto"].map(DEPARTAMENTOS))
     llaves = ["anio", *por]

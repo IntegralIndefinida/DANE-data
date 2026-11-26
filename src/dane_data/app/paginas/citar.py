@@ -3,24 +3,28 @@ import streamlit as st
 import dane_data as dd
 
 # La misma cita que CITATION.cff y docs/citar.md, con la versión instalada
-TITULO = "dane-data: microdatos del DANE (GEIH, EAM, Estadísticas Vitales, EMICRON, ECV y pobreza monetaria) listos para analizar"
+# Entero en una línea: tests/test_docs.py comprueba que sea el mismo título de CITATION.cff
+TITULO = "dane-data: microdatos del DANE (GEIH, EAM, Estadísticas Vitales, EMICRON, ECV y pobreza monetaria) listos para analizar"  # noqa: E501
 REPOSITORIO = "https://github.com/IntegralIndefinida/DANE-data"
 DOCS = "https://integralindefinida.github.io/DANE-data"
 
 st.title("Cómo citar")
 st.markdown(
-    "Si usó esta aplicación o la librería en una tesis, un trabajo o un artículo, cite **los datos del DANE** "
-    "y **dane-data**. Mencione también las decisiones metodológicas que afecten sus resultados, por ejemplo "
-    "la serie usada (principal o de empalme) y qué medición de informalidad usó: la actual del DANE, desde 2022 "
-    "(`formal`), o la anterior, para 2007–2021 (`formal_marco2005`) "
-    f"(vea las [advertencias]({DOCS}/guia/advertencias.html))."
+    "Si usó esta aplicación o la librería en una tesis, un trabajo o un artículo, cite **los "
+    "datos del DANE** y **dane-data**. Mencione también las decisiones metodológicas que afecten "
+    "sus resultados, por ejemplo la serie usada (principal o de empalme) y qué medición de "
+    "informalidad usó: la actual del DANE, desde 2022 (`formal`), o la anterior, para 2007–2021 "
+    f"(`formal_marco2005`) (vea las [advertencias]({DOCS}/guia/advertencias.html))."
 )
 
 st.subheader("dane-data")
 st.caption(f"Con la versión instalada en este computador ({dd.__version__}).")
 st.markdown("**APA**")
-st.code(f"Ramírez, L. (2026). {TITULO} (versión {dd.__version__}) [software]. {REPOSITORIO}",
-        language=None, wrap_lines=True)
+st.code(
+    f"Ramírez, L. (2026). {TITULO} (versión {dd.__version__}) [software]. {REPOSITORIO}",
+    language=None,
+    wrap_lines=True,
+)
 st.markdown("**BibTeX**")
 st.code(
     "@software{dane_data,\n"
@@ -34,27 +38,34 @@ st.code(
 )
 
 st.subheader("Los datos")
-st.markdown("Cite la encuesta y el catálogo del ANDA que usó. Si usó tasas de las Estadísticas Vitales, cite también las "
-            "proyecciones de población; si usó el IPM, la metodología del DANE:")
+st.markdown(
+    "Cite la encuesta y el catálogo del ANDA que usó. Si usó tasas de las Estadísticas Vitales, "
+    "cite también las proyecciones de población; si usó el IPM, la metodología del DANE:"
+)
 st.code(
-    "DANE. Gran Encuesta Integrada de Hogares (GEIH) [microdatos]. Archivo Nacional de Datos (ANDA). "
-    "https://microdatos.dane.gov.co\n\n"
+    "DANE. Gran Encuesta Integrada de Hogares (GEIH) [microdatos]. Archivo Nacional de Datos "
+    "(ANDA). https://microdatos.dane.gov.co\n\n"
     "DANE. Encuesta Anual Manufacturera (EAM) [microdatos]. Archivo Nacional de Datos (ANDA). "
     "https://microdatos.dane.gov.co\n\n"
     "DANE. Estadísticas Vitales (EEVV) [microdatos]. Archivo Nacional de Datos (ANDA). "
     "https://microdatos.dane.gov.co\n\n"
     "DANE. Encuesta de Micronegocios (EMICRON) [microdatos]. Archivo Nacional de Datos (ANDA). "
     "https://microdatos.dane.gov.co\n\n"
-    "DANE. Encuesta Nacional de Calidad de Vida (ECV) [microdatos]. Archivo Nacional de Datos (ANDA). "
-    "https://microdatos.dane.gov.co\n\n"
+    "DANE. Encuesta Nacional de Calidad de Vida (ECV) [microdatos]. Archivo Nacional de Datos "
+    "(ANDA). https://microdatos.dane.gov.co\n\n"
     "DANE. Índice de Pobreza Multidimensional (IPM): metodología. "
-    "https://www.dane.gov.co/index.php/estadisticas-por-tema/pobreza-y-condiciones-de-vida/pobreza-multidimensional\n\n"
-    "DANE. Medición de Pobreza Monetaria y Desigualdad [microdatos]. Archivo Nacional de Datos (ANDA). "
+    "https://www.dane.gov.co/index.php/estadisticas-por-tema/pobreza-y-condiciones-de-vida/pobreza-multidimensional\n"
+    "\n"
+    "DANE. Medición de Pobreza Monetaria y Desigualdad [microdatos]. "
+    "Archivo Nacional de Datos (ANDA). "
     "https://microdatos.dane.gov.co\n\n"
     "DANE. Proyecciones de población. "
     "https://www.dane.gov.co/index.php/estadisticas-por-tema/demografia-y-poblacion/proyecciones-de-poblacion",
-    language=None, wrap_lines=True,
+    language=None,
+    wrap_lines=True,
 )
 
-st.caption(f"En GitHub, el botón *Cite this repository* da la cita en otros formatos. Más en "
-           f"[Cómo citar]({DOCS}/citar.html).")
+st.caption(
+    "En GitHub, el botón *Cite this repository* da la cita en otros formatos. Más en [Cómo "
+    f"citar]({DOCS}/citar.html)."
+)

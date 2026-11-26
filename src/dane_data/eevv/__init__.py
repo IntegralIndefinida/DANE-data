@@ -7,8 +7,21 @@ from typing import Iterable
 from .agregados import clear_cache, serie_conteos, serie_indicadores, tasas, tasas_especificas
 from .downloader import EEVV_KNOWN_FILES, EEVVDownloader
 from .indicadores import GLOSARIO, indicadores
-from .loader import (CATEGORIAS, CORE, ETIQUETAS, GRANDES_CAUSAS, GRUPOS_EDAD, GRUPOS_EDAD_AMPLIOS, TIPOS,
-                     _root, available, causas, find_files, harmonize, load)
+from .loader import (
+    CATEGORIAS,
+    CORE,
+    ETIQUETAS,
+    GRANDES_CAUSAS,
+    GRUPOS_EDAD,
+    GRUPOS_EDAD_AMPLIOS,
+    TIPOS,
+    _root,
+    available,
+    causas,
+    find_files,
+    harmonize,
+    load,
+)
 from ..stats import _enteros, _opciones
 
 ANIOS_DISPONIBLES = {tipo: sorted(a for a, t in EEVV_KNOWN_FILES if t == tipo) for tipo in TIPOS}
@@ -26,16 +39,17 @@ def download(
     """
     Descarga los microdatos de las Estadísticas Vitales del ANDA del DANE.
 
-    Un archivo por año y tipo en ``<carpeta>/datos/<tipo>/<año>/``. Es incremental: lo ya extraído se salta.
+    Un archivo por año y tipo en ``<carpeta>/datos/<tipo>/<año>/``. Es incremental: lo ya extraído
+    se salta.
 
     Parámetros
     ----------
     years
-        Año o lista de años. ``None`` descarga toda la serie (unos 1,6 GB de ZIP); una lista vacía, ninguno. Los
-        años que no están en el ANDA se saltan y quedan en la lista que se devuelve.
+        Año o lista de años. ``None`` descarga toda la serie (unos 1,6 GB de ZIP); una lista vacía,
+        ninguno. Los años que no están en el ANDA se saltan y quedan en la lista que se devuelve.
     tipos
-        ``"defunciones"`` (1979–2025), ``"nacimientos"`` o ``"fetales"`` (ambos 1998–2025), o una lista. ``None``
-        para los tres.
+        ``"defunciones"`` (1979–2025), ``"nacimientos"`` o ``"fetales"`` (ambos 1998–2025), o una
+        lista. ``None`` para los tres.
     raiz
         Carpeta de destino. Por defecto, la de ``dd.get_path("eevv")``.
     borrar_zips
@@ -45,13 +59,15 @@ def download(
     detener
         Función sin argumentos; si devuelve True, la descarga se detiene con ``DownloadCancelled``.
     forzar
-        Volver a bajar y extraer aunque ya esté en disco, por ejemplo si el DANE corrigió los archivos. Lo
-        extraído antes se reemplaza solo si el ZIP nuevo se extrajo bien; si no, se conserva.
+        Volver a bajar y extraer aunque ya esté en disco, por ejemplo si el DANE corrigió los
+        archivos. Lo extraído antes se reemplaza solo si el ZIP nuevo se extrajo bien; si no, se
+        conserva.
 
     Devuelve
     --------
     list[str]
-        Lo que no se pudo descargar o extraer, con el tipo, el año y el motivo; vacía si todo salió bien.
+        Lo que no se pudo descargar o extraer, con el tipo, el año y el motivo; vacía si todo salió
+        bien.
 
     Lanza
     -----
@@ -66,9 +82,9 @@ def download(
 
     Notas
     -----
-    Algunos ZIP del ANDA traen varios años (2008–2011, 2012–2013, 2017–2018), así que pedir un solo año baja el
-    paquete entero: los nacimientos de 2008–2011 pesan 192 MB. Se extrae solo el año pedido y el ZIP queda para
-    los demás, salvo con ``borrar_zips``.
+    Algunos ZIP del ANDA traen varios años (2008–2011, 2012–2013, 2017–2018), así que pedir un solo
+    año baja el paquete entero: los nacimientos de 2008–2011 pesan 192 MB. Se extrae solo el año
+    pedido y el ZIP queda para los demás, salvo con ``borrar_zips``.
 
     Ejemplos
     --------
@@ -89,7 +105,25 @@ def download(
 
 
 __all__ = [
-    "download", "available", "find_files", "load", "harmonize", "causas", "indicadores", "serie_indicadores",
-    "serie_conteos", "tasas", "tasas_especificas", "clear_cache", "TIPOS", "ANIOS_DISPONIBLES", "CORE", "ETIQUETAS",
-    "CATEGORIAS", "GRANDES_CAUSAS", "GRUPOS_EDAD", "GRUPOS_EDAD_AMPLIOS", "GLOSARIO",
+    "download",
+    "available",
+    "find_files",
+    "load",
+    "harmonize",
+    "causas",
+    "indicadores",
+    "serie_indicadores",
+    "serie_conteos",
+    "tasas",
+    "tasas_especificas",
+    "clear_cache",
+    "TIPOS",
+    "ANIOS_DISPONIBLES",
+    "CORE",
+    "ETIQUETAS",
+    "CATEGORIAS",
+    "GRANDES_CAUSAS",
+    "GRUPOS_EDAD",
+    "GRUPOS_EDAD_AMPLIOS",
+    "GLOSARIO",
 ]

@@ -1,11 +1,11 @@
 """
 Ejecuta los notebooks de la documentación con los microdatos locales y guarda sus salidas.
 
-    uv run --extra docs python docs/ejecutar_notebooks.py              # todos
-    uv run --extra docs python docs/ejecutar_notebooks.py desempleo    # los que contengan «desempleo»
+    uv run --extra docs python docs/ejecutar_notebooks.py            # todos
+    uv run --extra docs python docs/ejecutar_notebooks.py desempleo  # los que tengan «desempleo»
 
-El servidor de la documentación no tiene los microdatos: publica los notebooks con las salidas que quedan
-guardadas aquí. La figura de la celda con la etiqueta «miniatura» se guarda además en
+El servidor de la documentación no tiene los microdatos: publica los notebooks con las salidas que
+quedan guardadas aquí. La figura de la celda con la etiqueta «miniatura» se guarda además en
 docs/_static/galeria/<notebook>.png, para la galería de ejemplos y la portada.
 """
 
@@ -23,8 +23,13 @@ GALERIA = DOCS / "_static" / "galeria"
 
 def ejecutar(ruta: Path) -> None:
     nb = nbformat.read(ruta, as_version=4)
-    NotebookClient(nb, timeout=1800, kernel_name="python3", record_timing=False,
-                   resources={"metadata": {"path": str(ruta.parent)}}).execute()
+    NotebookClient(
+        nb,
+        timeout=1800,
+        kernel_name="python3",
+        record_timing=False,
+        resources={"metadata": {"path": str(ruta.parent)}},
+    ).execute()
     nbformat.write(nb, ruta)
     for celda in nb.cells:
         if "miniatura" not in celda.metadata.get("tags", []):

@@ -1,12 +1,13 @@
 """
-Regenera el diccionario de la EMICRON (``src/dane_data/data/emicron_diccionario.json``) desde el DDI del ANDA.
+Regenera el diccionario de la EMICRON (``src/dane_data/data/emicron_diccionario.json``) desde el
+DDI del ANDA.
 
     uv run python tests/datos/actualizar_emicron_diccionario.py [ARCHIVO_DDI.xml]
 
-Sin argumento se baja el DDI de 2024, el último año con cobertura nacional (2025 solo cubre las 24 ciudades). Se guarda
-tal como lo publica el DANE, salvo las categorías sin etiqueta, que no dicen nada. Las variables que repiten los
-módulos (CLASE_TE, COD_DEPTO, AREA, F_EXP y la clave) quedan una vez, con la etiqueta de su primer módulo y la lista de
-todos los módulos que las traen.
+Sin argumento se baja el DDI de 2024, el último año con cobertura nacional (2025 solo cubre las 24
+ciudades). Se guarda tal como lo publica el DANE, salvo las categorías sin etiqueta, que no dicen
+nada. Las variables que repiten los módulos (CLASE_TE, COD_DEPTO, AREA, F_EXP y la clave) quedan
+una vez, con la etiqueta de su primer módulo y la lista de todos los módulos que las traen.
 """
 
 from __future__ import annotations
@@ -37,7 +38,10 @@ def main() -> None:
         raiz = ET.fromstring(r.content)
     ns = raiz.tag.split("}")[0].strip("{")
     q = lambda s: f"{{{ns}}}{s}"  # noqa: E731
-    archivos = {f.get("ID"): _texto(f.find(f".//{q('fileName')}")) for f in raiz.iterfind(f".//{q('fileDscr')}")}
+    archivos = {
+        f.get("ID"): _texto(f.find(f".//{q('fileName')}"))
+        for f in raiz.iterfind(f".//{q('fileDscr')}")
+    }
     d: dict[str, dict] = {}
     for v in raiz.iterfind(f".//{q('var')}"):
         nombre = v.get("name", "").upper()
@@ -53,7 +57,12 @@ def main() -> None:
                 categorias[codigo] = etiqueta
         etiqueta = _texto(v.find(q("labl")))
         pregunta = _texto(v.find(f"{q('qstn')}/{q('qstnLit')}")) or etiqueta
-        d[nombre] = {"etiqueta": etiqueta, "pregunta": pregunta, "categorias": categorias, "modulos": [modulo]}
+        d[nombre] = {
+            "etiqueta": etiqueta,
+            "pregunta": pregunta,
+            "categorias": categorias,
+            "modulos": [modulo],
+        }
     if len(d) < 300:
         raise ValueError(f"El DDI trae solo {len(d)} variables: ¿es el de la EMICRON?")
     SALIDA.write_text(json.dumps(d, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")

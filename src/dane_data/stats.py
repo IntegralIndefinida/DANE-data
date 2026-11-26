@@ -17,13 +17,16 @@ _APP = os.path.join(_PAQUETE, "app") + os.sep
 
 def _avisar(mensaje: str, categoria: type[Warning] = UserWarning) -> None:
     """
-    ``warnings.warn`` que apunta a la línea del usuario: al primer marco de la pila que no es de dane-data, sin
-    importar cuántas funciones o decoradores de la librería haya en medio. La app (``dane_data/app``) cuenta como
-    usuario. Todo aviso de la librería pasa por aquí.
+    ``warnings.warn`` que apunta a la línea del usuario: al primer marco de la pila que no es de
+    dane-data, sin importar cuántas funciones o decoradores de la librería haya en medio. La app
+    (``dane_data/app``) cuenta como usuario. Todo aviso de la librería pasa por aquí.
     """
     marco, nivel = sys._getframe(1), 2
-    while marco.f_back is not None and (archivo := marco.f_code.co_filename).startswith(_PAQUETE) \
-            and not archivo.startswith(_APP):
+    while (
+        marco.f_back is not None
+        and (archivo := marco.f_code.co_filename).startswith(_PAQUETE)
+        and not archivo.startswith(_APP)
+    ):
         marco, nivel = marco.f_back, nivel + 1
     warnings.warn(mensaje, categoria, stacklevel=nivel)
 
@@ -34,15 +37,19 @@ def _as_list(x) -> list:
     return [x] if isinstance(x, str) else list(x)
 
 
-
 def _enteros(x) -> list[int] | None:
     """
-    Uno o varios años (o meses) como lista ordenada y sin repetir; ``None`` queda ``None``. Un solo valor (``2024``,
-    ``"2024"``, un entero de numpy) no se recorre: ``"12"`` serían el 1 y el 2. Se recorre una sola vez, así que un
-    generador sirve.
+    Uno o varios años (o meses) como lista ordenada y sin repetir; ``None`` queda ``None``. Un solo
+    valor (``2024``, ``"2024"``, un entero de numpy) no se recorre: ``"12"`` serían el 1 y el 2. Se
+    recorre una sola vez, así que un generador sirve.
 
     >>> from dane_data.stats import _enteros
-    >>> _enteros("12"), _enteros(range(2025, 2023, -1)), _enteros(a for a in [3, 1, 3]), _enteros(None)
+    >>> (
+    ...     _enteros("12"),
+    ...     _enteros(range(2025, 2023, -1)),
+    ...     _enteros(a for a in [3, 1, 3]),
+    ...     _enteros(None),
+    ... )
     ([12], [2024, 2025], [1, 3], None)
     """
     if x is None:
@@ -52,8 +59,8 @@ def _enteros(x) -> list[int] | None:
 
 def _opciones(valores, validas, nombre: str) -> tuple:
     """
-    Uno o varios ``valores`` como tupla, si todos están en ``validas``; ``None`` son todas. Si no, ``ValueError`` con
-    ``nombre`` (``"Módulo"``, ``"Tipo"``...) y las opciones.
+    Uno o varios ``valores`` como tupla, si todos están en ``validas``; ``None`` son todas. Si no,
+    ``ValueError`` con ``nombre`` (``"Módulo"``, ``"Tipo"``...) y las opciones.
 
     >>> from dane_data.stats import _opciones
     >>> _opciones("a", ("a", "b"), "Módulo"), _opciones(None, ("a", "b"), "Módulo")
@@ -65,17 +72,20 @@ def _opciones(valores, validas, nombre: str) -> tuple:
     """
     if valores is None:
         return tuple(validas)
-    valores = (valores,) if isinstance(valores, str) else tuple(valores)  # tuple("ocupados") lo partiría en letras
+    # Tuple("ocupados") lo partiría en letras
+    valores = (valores,) if isinstance(valores, str) else tuple(valores)
     if raros := [v for v in valores if v not in validas]:
-        raise ValueError(f"{nombre} desconocido {', '.join(map(repr, raros))}. Opciones: {', '.join(validas)}.")
+        raise ValueError(
+            f"{nombre} desconocido {', '.join(map(repr, raros))}. Opciones: {', '.join(validas)}."
+        )
     return valores
 
 
 def _exigir(df: pd.DataFrame, columnas, ayuda: str = "") -> None:
     """
-    ``ValueError`` en español si a ``df`` le falta alguna de ``columnas``, con la que solo cambia en mayúsculas si la hay
-    (``"Sexo"`` → ``"sexo"``; por parecido, a ``desocupado`` le sugeriría ``ocupado``); sin esto, pandas solo dice
-    ``KeyError: 'pet'``.
+    ``ValueError`` en español si a ``df`` le falta alguna de ``columnas``, con la que solo cambia
+    en mayúsculas si la hay (``"Sexo"`` → ``"sexo"``; por parecido, a ``desocupado`` le sugeriría
+    ``ocupado``); sin esto, pandas solo dice ``KeyError: 'pet'``.
 
     >>> import pandas as pd
     >>> from dane_data.stats import _exigir
@@ -86,19 +96,25 @@ def _exigir(df: pd.DataFrame, columnas, ayuda: str = "") -> None:
     """
     if faltan := [c for c in dict.fromkeys(columnas) if c not in df.columns]:
         nombres = {str(c).lower(): c for c in df.columns}
-        detalle = ", ".join(f"{c!r}" + (f" (¿quiso decir {p!r}?)" if (p := nombres.get(str(c).lower())) else "")
-                            for c in faltan)
+        detalle = ", ".join(
+            f"{c!r}" + (f" (¿quiso decir {p!r}?)" if (p := nombres.get(str(c).lower())) else "")
+            for c in faltan
+        )
         raise ValueError(f"Faltan columnas: {detalle}." + (f" {ayuda}" if ayuda else ""))
 
 
 def _con_categorias(res: pd.DataFrame, df: pd.DataFrame, por: list[str]) -> pd.DataFrame:
     """
-    Devuelve a las columnas de ``por`` el tipo categórico que tienen en ``df``. Con varias llaves, dropna=False
-    y un grupo vacío, el groupby de pandas 2 las deja sin orden (``ordered=False``), y el nivel educativo ya no
-    va de Ninguno a Superior; pandas 3 lo conserva.
+    Devuelve a las columnas de ``por`` el tipo categórico que tienen en ``df``. Con varias llaves,
+    dropna=False y un grupo vacío, el groupby de pandas 2 las deja sin orden (``ordered=False``), y
+    el nivel educativo ya no va de Ninguno a Superior; pandas 3 lo conserva.
     """
     for k in por:
-        if k in res.columns and isinstance(df[k].dtype, pd.CategoricalDtype) and res[k].dtype != df[k].dtype:
+        if (
+            k in res.columns
+            and isinstance(df[k].dtype, pd.CategoricalDtype)
+            and res[k].dtype != df[k].dtype
+        ):
             res[k] = res[k].astype(df[k].dtype)
     return res
 
@@ -116,8 +132,8 @@ def peso_mensual_promedio(df: pd.DataFrame, peso: str = "fex") -> pd.Series:
     Parámetros
     ----------
     df
-        Microdatos con ``anio``, ``mes`` y la columna del peso. Sin ``anio`` o ``mes`` se devuelve el
-        peso tal cual.
+        Microdatos con ``anio``, ``mes`` y la columna del peso. Sin ``anio`` o ``mes`` se devuelve
+        el peso tal cual.
     peso
         Columna del factor de expansión.
 
@@ -128,18 +144,21 @@ def peso_mensual_promedio(df: pd.DataFrame, peso: str = "fex") -> pd.Series:
 
     Notas
     -----
-    Si ``df.attrs["meses_por_anio"]`` existe (``{anio: número de meses}``), se divide por esos meses; si no,
-    por los meses que hay en ``df``. ``geih.filtrar`` lo anota con los meses de antes de filtrar: así un
-    mes que el filtro deja sin nadie (un grupo pequeño) cuenta como 0 en el promedio, en vez de sacarse
-    del promedio. Con ``df[df.mes <= 3]`` se cuentan los meses que quedan, como debe ser para un trimestre,
-    también después de ``filtrar``: la anotación deja de valer si ``df`` ya no tiene las filas que dejó
-    ``filtrar`` (pandas la copia a los subconjuntos).
+    Si ``df.attrs["meses_por_anio"]`` existe (``{anio: número de meses}``), se divide por esos
+    meses; si no, por los meses que hay en ``df``. ``geih.filtrar`` lo anota con los meses de antes
+    de filtrar: así un mes que el filtro deja sin nadie (un grupo pequeño) cuenta como 0 en el
+    promedio, en vez de sacarse del promedio. Con ``df[df.mes <= 3]`` se cuentan los meses que
+    quedan, como debe ser para un trimestre, también después de ``filtrar``: la anotación deja de
+    valer si ``df`` ya no tiene las filas que dejó ``filtrar`` (pandas la copia a los
+    subconjuntos).
 
     Ejemplos
     --------
     >>> import pandas as pd
     >>> from dane_data.stats import peso_mensual_promedio
-    >>> df = pd.DataFrame({"anio": [2024, 2024, 2024], "mes": [1, 2, 2], "fex": [100.0, 90.0, 30.0]})
+    >>> df = pd.DataFrame(
+    ...     {"anio": [2024, 2024, 2024], "mes": [1, 2, 2], "fex": [100.0, 90.0, 30.0]}
+    ... )
     >>> peso_mensual_promedio(df).tolist()
     [50.0, 45.0, 15.0]
     >>> df.attrs["meses_por_anio"] = {2024: 4}  # se cargaron 4 meses; en dos no quedó nadie
@@ -158,8 +177,8 @@ def _meses_anotados(df: pd.DataFrame) -> dict | None:
     """
     Los meses que anotó ``geih.filtrar``, si ``df`` todavía tiene las filas que dejó. pandas copia
     ``attrs`` a cualquier subconjunto: sin esta revisión, ``filtrar(...)[lambda d: d.mes <= 3]``
-    dividiría por los 12 meses de antes y no por 3. Una anotación sin el número de filas (puesta a mano)
-    vale siempre.
+    dividiría por los 12 meses de antes y no por 3. Una anotación sin el número de filas (puesta a
+    mano) vale siempre.
     """
     meses = df.attrs.get("meses_por_anio")
     filas = df.attrs.get("meses_por_anio_filas")
@@ -170,19 +189,20 @@ def weighted_quantile(valores, pesos, q: float) -> float:
     """
     Cuantil ponderado.
 
-    Es el menor valor cuya masa acumulada alcanza la fracción ``q`` del peso total. Siempre devuelve uno de
-    los valores observados (no interpola). Coincide con ``_pctile`` de Stata salvo cuando la masa acumulada
-    llega justo a esa fracción: ahí Stata promedia ese valor y el siguiente, y aquí queda el menor (con cuatro
-    valores de igual peso, la mediana es el segundo, no el promedio del segundo y el tercero). Con los factores
-    de expansión de la GEIH, que tienen decimales, eso casi nunca pasa; con ``peso=None`` o pesos enteros, sí.
+    Es el menor valor cuya masa acumulada alcanza la fracción ``q`` del peso total. Siempre
+    devuelve uno de los valores observados (no interpola). Coincide con ``_pctile`` de Stata salvo
+    cuando la masa acumulada llega justo a esa fracción: ahí Stata promedia ese valor y el
+    siguiente, y aquí queda el menor (con cuatro valores de igual peso, la mediana es el segundo,
+    no el promedio del segundo y el tercero). Con los factores de expansión de la GEIH, que tienen
+    decimales, eso casi nunca pasa; con ``peso=None`` o pesos enteros, sí.
 
     Parámetros
     ----------
     valores
         Valores (cualquier secuencia numérica).
     pesos
-        Pesos, del mismo largo que ``valores``. Se ignoran los pares con algún NaN y los pesos que no son
-        positivos.
+        Pesos, del mismo largo que ``valores``. Se ignoran los pares con algún NaN y los pesos que
+        no son positivos.
     q
         Fracción entre 0 y 1: 0.5 es la mediana.
 
@@ -214,7 +234,8 @@ def weighted_quantile(valores, pesos, q: float) -> float:
         return np.nan
     order = np.argsort(v, kind="stable")
     v, w = v[order], w[order]
-    # CDF inversa: el menor valor cuya masa acumulada alcanza q (Stata promedia con el siguiente si la alcanza justo).
+    # CDF inversa: el menor valor cuya masa acumulada alcanza q (Stata promedia con el siguiente si
+    # la alcanza justo).
     cum = np.cumsum(w)
     return float(v[np.searchsorted(cum, q * cum[-1], side="left")])
 
@@ -251,29 +272,33 @@ def weighted_mean(valores, pesos) -> float:
     v = np.asarray(valores, dtype=float)
     w = np.asarray(pesos, dtype=float)
     mask = ~(np.isnan(v) | np.isnan(w))
-    return float(np.average(v[mask], weights=w[mask])) if mask.any() and w[mask].sum() > 0 else np.nan
+    return (
+        float(np.average(v[mask], weights=w[mask])) if mask.any() and w[mask].sum() > 0 else np.nan
+    )
 
 
 def weighted_gini(valores, pesos) -> float:
     """
     Coeficiente de Gini ponderado.
 
-    Es uno menos el doble del área bajo la curva de Lorenz: con los valores ordenados de menor a mayor,
-    ``G = 1 − Σ Δp_i (L_i + L_{i−1})``, donde ``Δp_i = w_i / Σw`` es la fracción del peso de cada valor y ``L_i`` la
-    fracción acumulada del total hasta él. Así calcula el DANE el Gini del ingreso per cápita: con los pesos de las
-    personas, reproduce las cifras publicadas.
+    Es uno menos el doble del área bajo la curva de Lorenz: con los valores ordenados de menor a
+    mayor, ``G = 1 − Σ Δp_i (L_i + L_{i−1})``, donde ``Δp_i = w_i / Σw`` es la fracción del peso de
+    cada valor y ``L_i`` la fracción acumulada del total hasta él. Así calcula el DANE el Gini del
+    ingreso per cápita: con los pesos de las personas, reproduce las cifras publicadas.
 
     Parámetros
     ----------
     valores
         Valores (cualquier secuencia numérica), sin negativos.
     pesos
-        Pesos, del mismo largo que ``valores``. Se ignoran los pares con algún NaN y los pesos que no son positivos.
+        Pesos, del mismo largo que ``valores``. Se ignoran los pares con algún NaN y los pesos que
+        no son positivos.
 
     Devuelve
     --------
     float
-        Entre 0 (todos tienen lo mismo) y casi 1 (uno tiene todo), o NaN si no quedan valores o todos son 0.
+        Entre 0 (todos tienen lo mismo) y casi 1 (uno tiene todo), o NaN si no quedan valores o
+        todos son 0.
 
     Lanza
     -----
@@ -292,7 +317,10 @@ def weighted_gini(valores, pesos) -> float:
     0.0
     >>> dd.weighted_gini([0, 0, 0, 100], [1, 1, 1, 1])  # uno tiene todo: (n − 1) / n
     0.75
-    >>> round(dd.weighted_gini([1, 2], [1, 3]), 4), round(dd.weighted_gini([1, 2, 2, 2], [1, 1, 1, 1]), 4)
+    >>> (
+    ...     round(dd.weighted_gini([1, 2], [1, 3]), 4),
+    ...     round(dd.weighted_gini([1, 2, 2, 2], [1, 1, 1, 1]), 4),
+    ... )
     (0.1071, 0.1071)
     """
     v = np.asarray(valores, dtype=float)
@@ -312,19 +340,25 @@ def weighted_gini(valores, pesos) -> float:
 
 def _motivo_sin_peso(peso: str, anios: list) -> str:
     """
-    Por qué falta el peso, según los años de las filas que no lo tienen (``anios`` vacío si los datos no tienen
-    ``anio``). Solo se explica ``fex_dpto`` de la EMICRON: 2025 no lo trae, y en los demás años falta el archivo.
+    Por qué falta el peso, según los años de las filas que no lo tienen (``anios`` vacío si los
+    datos no tienen ``anio``). Solo se explica ``fex_dpto`` de la EMICRON: 2025 no lo trae, y en
+    los demás años falta el archivo.
     """
     if peso != "fex_dpto":
         return ""
     otros = [a for a in anios if a != 2025]
     texto = ""
     if 2025 in anios:
-        texto += (" La EMICRON 2025 no trae factor departamental: solo cubre las 24 ciudades, así que no tiene cifras por "
-                  "departamento (con peso='fex', las de las ciudades).")
+        texto += (
+            " La EMICRON 2025 no trae factor departamental: solo cubre las 24 ciudades, así que "
+            "no tiene cifras por departamento (con peso='fex', las de las ciudades)."
+        )
     if otros or not anios:
         de = f" de {', '.join(map(str, otros))}" if otros else ""
-        texto += f" Falta el factor departamental{de}: vuelva a descargar esos años con dane_data.emicron.download(...)."
+        texto += (
+            f" Falta el factor departamental{de}: vuelva a descargar esos años con "
+            "dane_data.emicron.download(...)."
+        )
     return texto
 
 
@@ -338,9 +372,9 @@ def tabla(
     """
     Tabla ponderada de cualquier variable.
 
-    Expande la muestra con el factor de expansión y, si hay varios meses de un mismo año, convierte los
-    totales en promedios mensuales, como el DANE. Sirve para la GEIH y para cualquier otra tabla con
-    pesos.
+    Expande la muestra con el factor de expansión y, si hay varios meses de un mismo año, convierte
+    los totales en promedios mensuales, como el DANE. Sirve para la GEIH y para cualquier otra
+    tabla con pesos.
 
     Parámetros
     ----------
@@ -358,21 +392,21 @@ def tabla(
         ejemplo, con ``por=["anio", "sexo"]``, el porcentaje de cada sexo en cada año.
         ``"media"`` o ``"mediana"``: de ``variable``, ponderadas, en cada grupo.
     peso
-        Columna del factor de expansión. ``None`` cuenta observaciones sin expandir. Las filas con el peso vacío se
-        dejan fuera, con un aviso: no cuentan ni en ``total`` ni en ``n_muestra``.
+        Columna del factor de expansión. ``None`` cuenta observaciones sin expandir. Las filas con
+        el peso vacío se dejan fuera, con un aviso: no cuentan ni en ``total`` ni en ``n_muestra``.
 
     Devuelve
     --------
     DataFrame
         Una fila por grupo con las columnas de ``por``, el estadístico (``total``, ``porcentaje``,
-        ``media`` o ``mediana``; ``"porcentaje"`` trae también ``total``) y ``n_muestra``, el número de
-        observaciones sin expandir.
+        ``media`` o ``mediana``; ``"porcentaje"`` trae también ``total``) y ``n_muestra``, el
+        número de observaciones sin expandir.
 
     Lanza
     -----
     ValueError
-        Si ``estadistico`` no es uno de los cuatro, falta ``variable`` para la media o la mediana, o ninguna fila tiene
-        ``peso``.
+        Si ``estadistico`` no es uno de los cuatro, falta ``variable`` para la media o la mediana,
+        o ninguna fila tiene ``peso``.
 
     Véase también
     -------------
@@ -382,11 +416,12 @@ def tabla(
 
     Notas
     -----
-    Con pocas observaciones las cifras expandidas no son confiables: revise ``n_muestra`` y desconfíe de
-    los grupos con menos de unas 30 a 100 personas.
+    Con pocas observaciones las cifras expandidas no son confiables: revise ``n_muestra`` y
+    desconfíe de los grupos con menos de unas 30 a 100 personas.
 
     La mediana es la de ``weighted_quantile`` (el menor valor que acumula la mitad del peso). Con
-    ``peso=None`` y un número par de valores es el menor de los dos del medio, no su promedio como en Stata.
+    ``peso=None`` y un número par de valores es el menor de los dos del medio, no su promedio como
+    en Stata.
 
     Ejemplos
     --------
@@ -394,12 +429,15 @@ def tabla(
 
     >>> import pandas as pd
     >>> import dane_data as dd
-    >>> df = pd.DataFrame({
-    ...     "anio": 2024, "mes": [1, 1, 1, 2, 2, 2],
-    ...     "sexo": ["Mujer", "Hombre", "Mujer", "Mujer", "Hombre", "Hombre"],
-    ...     "ingreso": [1.2, 2.0, 1.5, 1.3, 2.2, 1.8],
-    ...     "fex": [100.0, 150.0, 50.0, 120.0, 90.0, 110.0],
-    ... })
+    >>> df = pd.DataFrame(
+    ...     {
+    ...         "anio": 2024,
+    ...         "mes": [1, 1, 1, 2, 2, 2],
+    ...         "sexo": ["Mujer", "Hombre", "Mujer", "Mujer", "Hombre", "Hombre"],
+    ...         "ingreso": [1.2, 2.0, 1.5, 1.3, 2.2, 1.8],
+    ...         "fex": [100.0, 150.0, 50.0, 120.0, 90.0, 110.0],
+    ...     }
+    ... )
     >>> dd.tabla(df, por="sexo")
          sexo  total  n_muestra
     0  Hombre  175.0          3
@@ -417,31 +455,50 @@ def tabla(
 
     >>> df = dd.geih.load(2024)  # doctest: +SKIP
     >>> dd.tabla(df, por=["anio", "nivel_educativo"], estadistico="porcentaje")  # doctest: +SKIP
-    >>> dd.tabla(df[df.ocupado == 1], por="sexo", variable="ingreso_laboral", estadistico="mediana")  # doctest: +SKIP
+    >>> dd.tabla(
+    ...     df[df.ocupado == 1], por="sexo", variable="ingreso_laboral", estadistico="mediana"
+    ... )  # doctest: +SKIP
     """
     if estadistico not in ("total", "porcentaje", "media", "mediana"):
         raise ValueError("estadistico debe ser 'total', 'porcentaje', 'media' o 'mediana'.")
     por = _as_list(por)
     _exigir(df, [*por, *([variable] if variable else []), *([peso] if peso else [])])
-    # Solo las columnas que se usan: copiar todo df duplica la memoria (con columnas="all", varios GB)
-    usadas = [*por, *([variable] if variable else []), *(c for c in ("anio", "mes") if c in df.columns),
-              *([peso] if peso else [])]
+    # Solo las columnas que se usan: copiar todo df duplica la memoria (con columnas="all", varios
+    # GB)
+    usadas = [
+        *por,
+        *([variable] if variable else []),
+        *(c for c in ("anio", "mes") if c in df.columns),
+        *([peso] if peso else []),
+    ]
     d = df[list(dict.fromkeys(usadas))].copy()
     if peso is None:
         d["_w"] = 1.0
     else:
         d[peso] = pd.to_numeric(d[peso], errors="coerce")
         d["_w"] = peso_mensual_promedio(d, peso)
-        # Un peso vacío no es cero: la fila no se puede expandir. Se quita después de calcular _w, que divide por los
-        # meses de antes (geih.filtrar los anota con el número de filas); quitarla antes cambiaría ese divisor.
+        # Un peso vacío no es cero: la fila no se puede expandir. Se quita después de calcular _w,
+        # que divide por los meses de antes (geih.filtrar los anota con el número de filas);
+        # quitarla antes cambiaría ese divisor.
         if (sin_peso := d["_w"].isna()).any():
-            anios = d.loc[sin_peso, "anio"].value_counts().sort_index() if "anio" in d.columns else None
+            anios = (
+                d.loc[sin_peso, "anio"].value_counts().sort_index()
+                if "anio" in d.columns
+                else None
+            )
             motivo = _motivo_sin_peso(peso, [] if anios is None else anios.index.tolist())
             if sin_peso.all():
                 raise ValueError(f"Ninguna fila tiene {peso}." + motivo)
-            detalle = ", ".join(f"{n} de {a}" for a, n in anios.items()) if anios is not None else str(sin_peso.sum())
-            _avisar(f"Sin {peso}: se dejan fuera {detalle} fila(s), que no se pueden expandir; los grupos que se "
-                    f"quedan sin filas no aparecen." + motivo)
+            detalle = (
+                ", ".join(f"{n} de {a}" for a, n in anios.items())
+                if anios is not None
+                else str(sin_peso.sum())
+            )
+            _avisar(
+                f"Sin {peso}: se dejan fuera {detalle} fila(s), que no se pueden expandir; los "
+                "grupos que se "
+                f"quedan sin filas no aparecen." + motivo
+            )
             d = d[~sin_peso]
     if variable is not None:
         d = d[d[variable].notna()]
@@ -451,12 +508,17 @@ def tabla(
         if g is None:
             res = pd.DataFrame({"total": [d["_w"].sum()], "n_muestra": [len(d)]})
         else:
-            res = _con_categorias(g.agg(total=("_w", "sum"), n_muestra=("_w", "size")).reset_index(), d, por)
+            res = _con_categorias(
+                g.agg(total=("_w", "sum"), n_muestra=("_w", "size")).reset_index(), d, por
+            )
         if estadistico == "porcentaje":
             outer = por[:-1]
             # dropna=False como en la agregación: un grupo exterior vacío (NaN) también suma 100 %
-            denom = (res.groupby(outer, observed=True, dropna=False)["total"].transform("sum") if outer
-                     else res["total"].sum())
+            denom = (
+                res.groupby(outer, observed=True, dropna=False)["total"].transform("sum")
+                if outer
+                else res["total"].sum()
+            )
             res["porcentaje"] = 100 * res["total"] / denom
         return res
 
@@ -468,7 +530,8 @@ def tabla(
         fn = lambda x: weighted_quantile(x[variable], x["_w"], 0.5)  # noqa: E731
     if g is None:
         return pd.DataFrame({estadistico: [fn(d)], "n_muestra": [len(d)]})
-    if d.empty:  # nadie con la variable (ingreso_laboral en 2007): apply daría un DataFrame y rename fallaría
+    # Nadie con la variable (ingreso_laboral en 2007): apply daría un DataFrame y rename fallaría
+    if d.empty:
         return pd.DataFrame(columns=[*por, estadistico, "n_muestra"])
     stat = g[[variable, "_w"]].apply(fn).rename(estadistico)
     n = g.size().rename("n_muestra")

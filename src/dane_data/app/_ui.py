@@ -19,30 +19,37 @@ import dane_data as dd
 from dane_data.app import _actualizacion
 from dane_data.referencias import strip_accents
 
-# Paleta categórica validada (orden fijo; nunca se recicla). Ver skill dataviz. Es la misma en los dos modos: pasa las
-# pruebas sobre el fondo claro y sobre el oscuro (#1a1a19). Una por modo no sirve: al elegir otro modo en el menú,
-# Streamlit no vuelve a dibujar las gráficas y quedaban con los colores del modo anterior.
+# Paleta categórica validada (orden fijo; nunca se recicla). Ver skill dataviz. Es la misma en los
+# dos modos: pasa las pruebas sobre el fondo claro y sobre el oscuro (#1a1a19). Una por modo no
+# sirve: al elegir otro modo en el menú, Streamlit no vuelve a dibujar las gráficas y quedaban con
+# los colores del modo anterior.
 PALETA = ["#3987e5", "#d95926", "#199e70", "#c98500", "#d55181", "#008300", "#9085e9", "#e66767"]
 MAX_SERIES = len(PALETA)
-# Grupos con orden (edades, niveles educativos, años): un solo tono, de claro a oscuro, para que el orden se vea en el
-# color. Seis pasos entre el 250 (#86b6ef) y el 600 (#184f95) del azul de la skill dataviz, interpolados en OKLab:
-# validados como ordinales sobre los dos fondos, y no caben más con un salto visible entre vecinos.
+# Grupos con orden (edades, niveles educativos, años): un solo tono, de claro a oscuro, para que el
+# orden se vea en el color. Seis pasos entre el 250 (#86b6ef) y el 600 (#184f95) del azul de la
+# skill dataviz, interpolados en OKLab: validados como ordinales sobre los dos fondos, y no caben
+# más con un salto visible entre vecinos.
 RAMPA = ["#86b6ef", "#70a1dd", "#5a8ccb", "#4477b9", "#2f63a7", "#184f95"]
 GRIS = "#898781"  # «Sin información» y parecidos, que no van en el orden
 SIN_DATO = re.compile(r"desconocid|sin informaci|sin detalle", re.IGNORECASE)
-# warnings.catch_warnings cambia los filtros de avisos de todo el proceso, y cada sesión de Streamlit es un hilo del mismo
-# proceso: sin este candado, el «ignore» de una sesión se tragaba los avisos que recogía otra (los de metodologías de la
-# pobreza), y si salían en otro orden los avisos quedaban mal puestos para siempre. Todo catch_warnings de la app va con él.
+# warnings.catch_warnings cambia los filtros de avisos de todo el proceso, y cada sesión de
+# Streamlit es un hilo del mismo proceso: sin este candado, el «ignore» de una sesión se tragaba
+# los avisos que recogía otra (los de metodologías de la pobreza), y si salían en otro orden los
+# avisos quedaban mal puestos para siempre. Todo catch_warnings de la app va con él.
 AVISOS = threading.RLock()
 
 
 def _rampa(n: int) -> list[str]:
     """``n`` tonos de RAMPA, repartidos de punta a punta."""
-    return [PALETA[0]] if n == 1 else [RAMPA[round(i * (len(RAMPA) - 1) / (n - 1))] for i in range(n)]
+    return (
+        [PALETA[0]] if n == 1 else [RAMPA[round(i * (len(RAMPA) - 1) / (n - 1))] for i in range(n)]
+    )
 
 
 def _grupos_posibles(s: pd.Series) -> list[str]:
-    """Todos los grupos de una columna, en su orden: las categorías, aunque los filtros dejen solo algunas."""
+    """Todos los grupos de una columna, en su orden: las categorías, aunque los filtros dejen solo
+    algunas.
+    """
     if isinstance(s.dtype, pd.CategoricalDtype):
         return [str(c) for c in s.cat.categories]
     return [str(v) for v in sorted(s.dropna().unique())]
@@ -50,10 +57,11 @@ def _grupos_posibles(s: pd.Series) -> list[str]:
 
 def colores(grupos: list[str], universo: list[str], ordenados: bool = False) -> dict[str, str]:
     """
-    El color de cada grupo sigue al grupo, no a su posición: quitar Antioquia no pinta a Atlántico de otro color.
-    Si todos los grupos posibles (``universo``) caben en la paleta, cada uno lleva el de su lugar ahí. Si no caben
-    (33 departamentos), cada grupo guarda su color en la sesión mientras siga elegido, y uno nuevo toma el primero libre.
-    Los ``ordenados`` van en RAMPA si caben (si todos los posibles no caben, los tonos se reparten entre los visibles).
+    El color de cada grupo sigue al grupo, no a su posición: quitar Antioquia no pinta a Atlántico
+    de otro color. Si todos los grupos posibles (``universo``) caben en la paleta, cada uno lleva
+    el de su lugar ahí. Si no caben (33 departamentos), cada grupo guarda su color en la sesión
+    mientras siga elegido, y uno nuevo toma el primero libre. Los ``ordenados`` van en RAMPA si
+    caben (si todos los posibles no caben, los tonos se reparten entre los visibles).
     """
     if ordenados:
         reales = [g for g in universo if not SIN_DATO.search(g)]
@@ -68,22 +76,30 @@ def colores(grupos: list[str], universo: list[str], ordenados: bool = False) -> 
         del memoria[g]
     for g in grupos:
         if g not in memoria:
-            memoria[g] = [c for c in PALETA if c not in memoria.values()][0]  # los llamadores eligen <= MAX_SERIES
+            # Los llamadores eligen <= MAX_SERIES
+            memoria[g] = [c for c in PALETA if c not in memoria.values()][0]
     return {g: memoria[g] for g in grupos}
 
 
-def _por_grupo(df: pd.DataFrame, color: str | None, todos: pd.Series | None) -> tuple[pd.DataFrame, dict]:
+def _por_grupo(
+    df: pd.DataFrame, color: str | None, todos: pd.Series | None
+) -> tuple[pd.DataFrame, dict]:
     """``df`` con el grupo como texto, y los colores y el orden de la leyenda para px."""
     if not color:
         return df, {"color_discrete_sequence": PALETA}
     s = df[color] if todos is None else todos
     universo = _grupos_posibles(s)
-    ordenados = (isinstance(s.dtype, pd.CategoricalDtype) and bool(s.cat.ordered)) or pd.api.types.is_numeric_dtype(s)
+    ordenados = (
+        isinstance(s.dtype, pd.CategoricalDtype) and bool(s.cat.ordered)
+    ) or pd.api.types.is_numeric_dtype(s)
     df = df.assign(**{color: df[color].astype(str)})
     presentes = set(df[color])
     universo += [g for g in sorted(presentes) if g not in universo]
     grupos = [g for g in universo if g in presentes]
-    return df, {"color_discrete_map": colores(grupos, universo, ordenados), "category_orders": {color: grupos}}
+    return df, {
+        "color_discrete_map": colores(grupos, universo, ordenados),
+        "category_orders": {color: grupos},
+    }
 
 
 # --------------------------------------------------------------------------- #
@@ -103,10 +119,12 @@ def fmt_pct(x: float) -> str:
     return "—" if pd.isna(x) else fmt_num(x, 1) + " %"
 
 
-def variacion(actual: float, anterior: float, anio: int, pp: bool = False, inversa: bool = False) -> dict:
+def variacion(
+    actual: float, anterior: float, anio: int, pp: bool = False, inversa: bool = False
+) -> dict:
     """
-    ``delta`` y ``delta_color`` de st.metric, con coma decimal: en puntos porcentuales (``pp``) o en %.
-    Una variación que redondea a cero va en gris y sin flecha (antes salía «-0.0» en verde).
+    ``delta`` y ``delta_color`` de st.metric, con coma decimal: en puntos porcentuales (``pp``) o
+    en %. Una variación que redondea a cero va en gris y sin flecha (antes salía «-0.0» en verde).
     """
     if pd.isna(actual) or pd.isna(anterior) or (not pp and anterior == 0):
         return {}
@@ -114,8 +132,10 @@ def variacion(actual: float, anterior: float, anio: int, pp: bool = False, inver
     unidad = "p.p." if pp else "%"
     if d == 0:
         return {"delta": f"0,0 {unidad} vs {anio}", "delta_color": "off", "delta_arrow": "off"}
-    return {"delta": f"{'+' if d > 0 else ''}{fmt_num(d, 1)} {unidad} vs {anio}",
-            "delta_color": "inverse" if inversa else "normal"}
+    return {
+        "delta": f"{'+' if d > 0 else ''}{fmt_num(d, 1)} {unidad} vs {anio}",
+        "delta_color": "inverse" if inversa else "normal",
+    }
 
 
 def fmt_grande(x: float) -> str:
@@ -140,11 +160,17 @@ def _estilo(fig: go.Figure, pct: bool = False, desde_cero: bool = True) -> go.Fi
         font=dict(size=13),
     )
     fig.update_xaxes(showgrid=False, title=None)
-    # Las barras desde cero: su largo es el valor. Las líneas, con el rango de los datos: desde cero, la participación
-    # (~64 %) quedaba plana contra el borde de arriba y no se veía cómo cambia.
-    fig.update_yaxes(gridcolor="rgba(128,128,128,0.18)", zeroline=False, title=None,
-                     rangemode="tozero" if desde_cero else "normal",
-                     ticksuffix=" %" if pct else None, tickformat=",~f")
+    # Las barras desde cero: su largo es el valor. Las líneas, con el rango de los datos: desde
+    # cero, la participación (~64 %) quedaba plana contra el borde de arriba y no se veía cómo
+    # cambia.
+    fig.update_yaxes(
+        gridcolor="rgba(128,128,128,0.18)",
+        zeroline=False,
+        title=None,
+        rangemode="tozero" if desde_cero else "normal",
+        ticksuffix=" %" if pct else None,
+        tickformat=",~f",
+    )
     return fig
 
 
@@ -152,104 +178,214 @@ MAX_PUNTOS = 24  # más puntos por línea y la gráfica va sin marcadores
 
 
 def _valor(eje: str, pct: bool) -> str:
-    """El valor en el recuadro al pasar el mouse: redondeado, con coma decimal (``separators``) y «%» si es tasa."""
+    """El valor en el recuadro al pasar el mouse: redondeado, con coma decimal (``separators``) y
+    «%» si es tasa.
+    """
     return f"%{{{eje}:,.1f}} %" if pct else f"%{{{eje}:,.2~f}}"
 
 
-def linea(df: pd.DataFrame, x: str, y: str, color: str | None = None, pct: bool = False,
-          todos: pd.Series | None = None) -> go.Figure:
-    """``todos``: la columna de grupos original, si ``df`` ya no tiene sus categorías (filtrada o como texto)."""
+def linea(
+    df: pd.DataFrame,
+    x: str,
+    y: str,
+    color: str | None = None,
+    pct: bool = False,
+    todos: pd.Series | None = None,
+) -> go.Figure:
+    """``todos``: la columna de grupos original, si ``df`` ya no tiene sus categorías (filtrada o
+    como texto).
+    """
     df, colores_px = _por_grupo(df, color, todos)
-    # Un punto en cada dato solo si son pocos: en una serie mensual larga (240 meses) tapaban la línea
+    # Un punto en cada dato solo si son pocos: en una serie mensual larga (240 meses) tapaban la
+    # línea
     puntos = df.groupby(color)[x].nunique().max() if color else df[x].nunique()
     fig = px.line(df, x=x, y=y, color=color, markers=puntos <= MAX_PUNTOS, **colores_px)
-    # Sin esto, el recuadro repetía la fecha y mostraba el nombre de la columna con seis decimales («td=7,977104 %»)
-    fig.update_traces(line=dict(width=2), marker=dict(size=8),
-                      hovertemplate=("%{fullData.name}: " if color else "") + _valor("y", pct) + "<extra></extra>")
+    # Sin esto, el recuadro repetía la fecha y mostraba el nombre de la columna con seis decimales
+    # («td=7,977104 %»)
+    fig.update_traces(
+        line=dict(width=2),
+        marker=dict(size=8),
+        hovertemplate=("%{fullData.name}: " if color else "")
+        + _valor("y", pct)
+        + "<extra></extra>",
+    )
     fig = _estilo(fig, pct, desde_cero=False)
     fig.update_layout(hovermode="x unified")
     if pd.api.types.is_integer_dtype(df[x]) or x == "anio":
         fig.update_xaxes(dtick=1 if df[x].nunique() <= 15 else None, tickformat="d")
-    elif pd.api.types.is_datetime64_any_dtype(df[x]):  # series mensuales (día 1): «marzo de 2025», no «mar 1, 2025»
+    elif pd.api.types.is_datetime64_any_dtype(
+        df[x]
+    ):  # series mensuales (día 1): «marzo de 2025», no «mar 1, 2025»
         fig.update_xaxes(hoverformat="%B de %Y")
     return fig
 
 
-def barras(df: pd.DataFrame, x: str, y: str, color: str | None = None, pct: bool = False, horizontal: bool = False,
-           todos: pd.Series | None = None) -> go.Figure:
+def barras(
+    df: pd.DataFrame,
+    x: str,
+    y: str,
+    color: str | None = None,
+    pct: bool = False,
+    horizontal: bool = False,
+    todos: pd.Series | None = None,
+) -> go.Figure:
     df, colores_px = _por_grupo(df, color, todos)
     if horizontal:
         fig = px.bar(df, y=x, x=y, color=color, orientation="h", barmode="group", **colores_px)
         fig.update_yaxes(categoryorder="total ascending", title=None)
-        fig.update_xaxes(gridcolor="rgba(128,128,128,0.18)", title=None, ticksuffix=" %" if pct else None,
-                         tickformat=",~f")
-        fig.update_layout(separators=",.", margin=dict(l=10, r=10, t=40, b=10), legend=dict(orientation="h", y=1.02, title=None),
-                          height=max(350, 24 * df[x].nunique() * (df[color].nunique() if color else 1)))
+        fig.update_xaxes(
+            gridcolor="rgba(128,128,128,0.18)",
+            title=None,
+            ticksuffix=" %" if pct else None,
+            tickformat=",~f",
+        )
+        fig.update_layout(
+            separators=",.",
+            margin=dict(l=10, r=10, t=40, b=10),
+            legend=dict(orientation="h", y=1.02, title=None),
+            height=max(350, 24 * df[x].nunique() * (df[color].nunique() if color else 1)),
+        )
     else:
         fig = px.bar(df, x=x, y=y, color=color, barmode="group", **colores_px)
         fig = _estilo(fig, pct)
-    # «Hombre: 58,5 %», con el grupo de color delante si lo hay; no «anio=2025<br>sexo=Hombre<br>porcentaje=58.4567»
+    # «Hombre: 58,5 %», con el grupo de color delante si lo hay; no
+    # «anio=2025<br>sexo=Hombre<br>porcentaje=58.4567»
     categoria, valor = ("%{y}", _valor("x", pct)) if horizontal else ("%{x}", _valor("y", pct))
-    fig.update_traces(marker_line_width=0, hovertemplate=("%{fullData.name} · " if color else "") + categoria + ": "
-                      + valor + "<extra></extra>")
-    # Barras delgadas (skill dataviz: <= 24 px, con aire alrededor) y punta redondeada de 4 px. Plotly no fija el ancho
-    # en píxeles: el hueco sale de cuántas barras hay, para unos 24 px en una gráfica de ~950 px de ancho. Las horizontales
-    # ya miden 18 px (24 px de alto por barra, menos el hueco).
+    fig.update_traces(
+        marker_line_width=0,
+        hovertemplate=("%{fullData.name} · " if color else "")
+        + categoria
+        + ": "
+        + valor
+        + "<extra></extra>",
+    )
+    # Barras delgadas (skill dataviz: <= 24 px, con aire alrededor) y punta redondeada de 4 px.
+    # Plotly no fija el ancho en píxeles: el hueco sale de cuántas barras hay, para unos 24 px en
+    # una gráfica de ~950 px de ancho. Las horizontales ya miden 18 px (24 px de alto por barra,
+    # menos el hueco).
     por_grupo = df[color].nunique() if color else 1
     hueco = 0.25 if horizontal else min(0.9, max(0.2, 1 - 24 * por_grupo * df[x].nunique() / 950))
     fig.update_layout(bargap=hueco, bargroupgap=0.08, barcornerradius=4)
     return fig
 
 
-# Meses y días en español para las fechas de Plotly: config "locale": "es" solo no basta, porque el archivo de ese
-# idioma no viene con Streamlit y las fechas salían en inglés («Jan 2025»).
-_MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre",
-          "noviembre", "diciembre"]
+# Meses y días en español para las fechas de Plotly: config "locale": "es" solo no basta, porque el
+# archivo de ese idioma no viene con Streamlit y las fechas salían en inglés («Jan 2025»).
+# fmt: off
+_MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre",
+          "octubre", "noviembre", "diciembre"]
+# fmt: on
 _DIAS = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"]
-LOCALE_ES = {"format": {"months": _MESES, "shortMonths": [m[:3] for m in _MESES], "days": _DIAS,
-                        "shortDays": [d[:3] for d in _DIAS], "date": "%d/%m/%Y"},
-             "dictionary": {"Download plot as a png": "Descargar como imagen", "Download plot": "Descargar",
-                            "Reset axes": "Volver a la vista inicial",
-                            "Double-click to zoom back out": "Doble clic para volver a la vista inicial"}}
-# Las imágenes que se descargan (botón de la cámara) llevan la fuente; los rangos de la EEVV, que son hechos registrados.
-# Plotly no parte las líneas largas: las de las fuentes van partidas a mano.
+LOCALE_ES = {
+    "format": {
+        "months": _MESES,
+        "shortMonths": [m[:3] for m in _MESES],
+        "days": _DIAS,
+        "shortDays": [d[:3] for d in _DIAS],
+        "date": "%d/%m/%Y",
+    },
+    "dictionary": {
+        "Download plot as a png": "Descargar como imagen",
+        "Download plot": "Descargar",
+        "Reset axes": "Volver a la vista inicial",
+        "Double-click to zoom back out": "Doble clic para volver a la vista inicial",
+    },
+}
+# Las imágenes que se descargan (botón de la cámara) llevan la fuente; los rangos de la EEVV, que
+# son hechos registrados. Plotly no parte las líneas largas: las de las fuentes van partidas a
+# mano.
 FUENTES = {
     "geih": "Fuente: DANE, GEIH. Cálculos con dane-data.",
     "eam": "Fuente: DANE, EAM. Cálculos con dane-data.",
     "emicron": "Fuente: DANE, EMICRON. Cálculos con dane-data.",
-    "eevv": "Fuente: DANE, Estadísticas Vitales: hechos registrados,<br>sin ajuste por subregistro. Cálculos con dane-data.",
-    "pobreza": "Fuente: DANE, Medición de Pobreza Monetaria y Desigualdad (GEIH). Cálculos con dane-data.",
-    "tasas": "Fuente: DANE, Estadísticas Vitales y proyecciones de población:<br>hechos registrados, sin ajuste por "
-             "subregistro. Cálculos con dane-data.",
+    "eevv": (
+        "Fuente: DANE, Estadísticas Vitales: hechos registrados,<br>sin ajuste por subregistro. "
+        "Cálculos con dane-data."
+    ),
+    "pobreza": (
+        "Fuente: DANE, Medición de Pobreza Monetaria y Desigualdad (GEIH). Cálculos con dane-data."
+    ),
+    "tasas": (
+        "Fuente: DANE, Estadísticas Vitales y proyecciones de población:<br>hechos registrados, "
+        "sin ajuste por subregistro. Cálculos con dane-data."
+    ),
     "ecv": "Fuente: DANE, Encuesta Nacional de Calidad de Vida (ECV). Cálculos con dane-data.",
-    "ipm": "Fuente: DANE, ECV. Índice de Pobreza Multidimensional (metodología del DANE)<br>calculado con dane-data.",
+    "ipm": (
+        "Fuente: DANE, ECV. Índice de Pobreza Multidimensional (metodología del "
+        "DANE)<br>calculado con dane-data."
+    ),
 }
 
 
 def grafico(fig: go.Figure, titulo: str, fuente: str, subtitulo: str | None = None) -> None:
     """
-    Dibuja la figura con el título, el subtítulo y la fuente adentro, para que la imagen que se descarga sirva sola en
-    una tesis o un informe. El título dice qué se mide, así que los ejes no repiten su nombre.
+    Dibuja la figura con el título, el subtítulo y la fuente adentro, para que la imagen que se
+    descarga sirva sola en una tesis o un informe. El título dice qué se mide, así que los ejes no
+    repiten su nombre.
     """
-    # Plotly no parte las líneas: a ~56 caracteres el título, ~90 el subtítulo (el tema de Streamlit lo pone todo en negrita)
+    # Plotly no parte las líneas: a ~56 caracteres el título, ~90 el subtítulo (el tema de
+    # Streamlit lo pone todo en negrita)
     lineas = [f"<b>{t}</b>" for t in textwrap.wrap(titulo, 56)]
-    lineas += [f"<span style='font-size:12px;font-weight:normal'>{t}</span>" for t in textwrap.wrap(subtitulo or "", 90)]
+    lineas += [
+        f"<span style='font-size:12px;font-weight:normal'>{t}</span>"
+        for t in textwrap.wrap(subtitulo or "", 90)
+    ]
     leyenda = sum(1 for t in fig.data if t.showlegend is not False and t.name) > 1
     arriba = 18 + 20 * len(lineas) + (28 if leyenda else 6)
     eje_x = 24 if fig.layout.xaxis.title.text else 0
     texto_fuente = FUENTES[fuente]
-    fig.update_layout(title=dict(text="<br>".join(lineas), x=0, xref="paper", xanchor="left", y=1, yref="container",
-                                 yanchor="top", pad=dict(t=12)),
-                      margin=dict(t=arriba, b=40 + eje_x + 14 * (texto_fuente.count("<br>") + 1)))
-    fig.add_annotation(text=texto_fuente, xref="paper", yref="paper", x=0, y=0, xanchor="left", yanchor="top",
-                       yshift=-(28 + eje_x), showarrow=False, align="left", font=dict(size=11, color=GRIS))
+    fig.update_layout(
+        title=dict(
+            text="<br>".join(lineas),
+            x=0,
+            xref="paper",
+            xanchor="left",
+            y=1,
+            yref="container",
+            yanchor="top",
+            pad=dict(t=12),
+        ),
+        margin=dict(t=arriba, b=40 + eje_x + 14 * (texto_fuente.count("<br>") + 1)),
+    )
+    fig.add_annotation(
+        text=texto_fuente,
+        xref="paper",
+        yref="paper",
+        x=0,
+        y=0,
+        xanchor="left",
+        yanchor="top",
+        yshift=-(28 + eje_x),
+        showarrow=False,
+        align="left",
+        font=dict(size=11, color=GRIS),
+    )
     archivo = re.sub(r"[^a-z0-9]+", "_", strip_accents(titulo)).strip("_")[:60] or "grafica"
-    st.plotly_chart(fig, width="stretch", config={
-        "displaylogo": False, "locale": "es", "locales": {"es": LOCALE_ES},
-        # Solo descargar la imagen y volver a la vista inicial: el zoom sigue funcionando con el mouse
-        "modeBarButtonsToRemove": ["zoom2d", "pan2d", "select2d", "lasso2d", "zoomIn2d", "zoomOut2d", "autoScale2d"],
-        "toImageButtonOptions": {"format": "png", "scale": 3, "filename": archivo},  # nítida al imprimir
-    })
+    st.plotly_chart(
+        fig,
+        width="stretch",
+        config={
+            "displaylogo": False,
+            "locale": "es",
+            "locales": {"es": LOCALE_ES},
+            # Solo descargar la imagen y volver a la vista inicial: el zoom sigue funcionando con
+            # el mouse
+            "modeBarButtonsToRemove": [
+                "zoom2d",
+                "pan2d",
+                "select2d",
+                "lasso2d",
+                "zoomIn2d",
+                "zoomOut2d",
+                "autoScale2d",
+            ],
+            "toImageButtonOptions": {
+                "format": "png",
+                "scale": 3,
+                "filename": archivo,
+            },  # nítida al imprimir
+        },
+    )
 
 
 # --------------------------------------------------------------------------- #
@@ -262,8 +398,9 @@ def _barra(texto: str):
 
 def _con_barra(texto: str, fn, *args, silenciar: bool = False, **kw):
     """
-    ``fn(*args, progreso=..., **kw)`` con una barra de progreso que se quita al terminar, también si falla (antes quedaba
-    encima del error). Con ``silenciar``, sin los UserWarning de cobertura: la página los muestra aparte.
+    ``fn(*args, progreso=..., **kw)`` con una barra de progreso que se quita al terminar, también
+    si falla (antes quedaba encima del error). Con ``silenciar``, sin los UserWarning de cobertura:
+    la página los muestra aparte.
     """
     barra, progreso = _barra(texto)
     try:
@@ -276,43 +413,109 @@ def _con_barra(texto: str, fn, *args, silenciar: bool = False, **kw):
         barra.empty()
 
 
-# Los resultados de la GEIH salen de dd.geih.serie_*: se calculan año por año y quedan en disco, así
-# que nunca hay más de un año de microdatos en memoria. `meses_disp` va en la llave para que un mes
-# recién descargado se vea.
+# Los resultados de la GEIH salen de dd.geih.serie_*: se calculan año por año y quedan en disco,
+# así que nunca hay más de un año de microdatos en memoria. `meses_disp` va en la llave para que un
+# mes recién descargado se vea.
 @st.cache_data(max_entries=50, show_spinner=False)
-def serie_geih(anios: tuple, por: str | None, anual: bool, empalme: bool, filtros: dict, meses: tuple | None,
-               meses_disp: tuple, rutas: tuple) -> pd.DataFrame:
-    return _con_barra("Preparando indicadores…", dd.geih.serie_indicadores, list(anios), por=por, anual=anual,
-                      empalme=empalme, filtros=filtros or None, meses=list(meses) if meses else None)
+def serie_geih(
+    anios: tuple,
+    por: str | None,
+    anual: bool,
+    empalme: bool,
+    filtros: dict,
+    meses: tuple | None,
+    meses_disp: tuple,
+    rutas: tuple,
+) -> pd.DataFrame:
+    return _con_barra(
+        "Preparando indicadores…",
+        dd.geih.serie_indicadores,
+        list(anios),
+        por=por,
+        anual=anual,
+        empalme=empalme,
+        filtros=filtros or None,
+        meses=list(meses) if meses else None,
+    )
 
 
 @st.cache_data(max_entries=100, show_spinner=False)
-def tabla_geih(anios: tuple, por: tuple, variable: str | None, estadistico: str, poblacion: str | None,
-               filtros: dict, meses: tuple | None, dropna: bool, columnas: tuple, empalme: bool,
-               meses_disp: tuple, rutas: tuple) -> pd.DataFrame:
-    return _con_barra("Preparando la tabla…", dd.geih.serie_tabla, list(anios), list(por), variable, estadistico,
-                      poblacion, filtros or None, list(meses) if meses else None, dropna, list(columnas) or "core",
-                      empalme)
+def tabla_geih(
+    anios: tuple,
+    por: tuple,
+    variable: str | None,
+    estadistico: str,
+    poblacion: str | None,
+    filtros: dict,
+    meses: tuple | None,
+    dropna: bool,
+    columnas: tuple,
+    empalme: bool,
+    meses_disp: tuple,
+    rutas: tuple,
+) -> pd.DataFrame:
+    return _con_barra(
+        "Preparando la tabla…",
+        dd.geih.serie_tabla,
+        list(anios),
+        list(por),
+        variable,
+        estadistico,
+        poblacion,
+        filtros or None,
+        list(meses) if meses else None,
+        dropna,
+        list(columnas) or "core",
+        empalme,
+    )
 
 
 @st.cache_data(max_entries=50, show_spinner=False)
-def frecuencias_geih(anios: tuple, variable: str | None, por: tuple, poblacion: str | None, filtros: dict,
-                     meses: tuple | None, columnas: tuple, empalme: bool, meses_disp: tuple,
-                     rutas: tuple) -> pd.DataFrame:
-    return _con_barra("Preparando la distribución…", dd.geih.serie_frecuencias, list(anios), variable, list(por),
-                      poblacion, filtros or None, list(meses) if meses else None, list(columnas) or "core", empalme)
+def frecuencias_geih(
+    anios: tuple,
+    variable: str | None,
+    por: tuple,
+    poblacion: str | None,
+    filtros: dict,
+    meses: tuple | None,
+    columnas: tuple,
+    empalme: bool,
+    meses_disp: tuple,
+    rutas: tuple,
+) -> pd.DataFrame:
+    return _con_barra(
+        "Preparando la distribución…",
+        dd.geih.serie_frecuencias,
+        list(anios),
+        variable,
+        list(por),
+        poblacion,
+        filtros or None,
+        list(meses) if meses else None,
+        list(columnas) or "core",
+        empalme,
+    )
 
 
 @st.cache_data(max_entries=5, show_spinner="Leyendo un mes de microdatos…")
-def muestra_geih(anio: int, mes: int, variables: tuple, columnas: tuple, empalme: bool, rutas: tuple) -> pd.DataFrame:
+def muestra_geih(
+    anio: int, mes: int, variables: tuple, columnas: tuple, empalme: bool, rutas: tuple
+) -> pd.DataFrame:
     """Un solo mes de microdatos (vista previa, tipos de las variables adicionales)."""
-    return dd.geih.load(anio, meses=mes, columnas=list(columnas) or "core", empalme=empalme,
-                        variables=list(variables))
+    return dd.geih.load(
+        anio,
+        meses=mes,
+        columnas=list(columnas) or "core",
+        empalme=empalme,
+        variables=list(variables),
+    )
 
 
 def args_py(**kw) -> str:
     """Argumentos para el código equivalente: solo los que no tienen su valor por defecto."""
-    return "".join(f", {k}={v!r}" for k, v in kw.items() if v not in (None, False, {}, (), [], "core"))
+    return "".join(
+        f", {k}={v!r}" for k, v in kw.items() if v not in (None, False, {}, (), [], "core")
+    )
 
 
 @st.cache_resource(max_entries=2, show_spinner=False)
@@ -320,31 +523,58 @@ def cargar_eam(anios: tuple, extra: tuple, rutas: tuple) -> pd.DataFrame:
     return dd.eam.load(list(anios), columnas=list(extra) or "core")
 
 
-# Como en la GEIH: las Estadísticas Vitales salen de dd.eevv.serie_* y tasas, año por año, y quedan en disco. Sus avisos
-# de cobertura se muestran en la barra lateral (seleccion_eevv): aquí solo llegarían a la terminal. ``rutas``
-# (rutas_actuales()) es parte de la llave: si la carpeta cambia por fuera de la app, se recalcula.
+# Como en la GEIH: las Estadísticas Vitales salen de dd.eevv.serie_* y tasas, año por año, y quedan
+# en disco. Sus avisos de cobertura se muestran en la barra lateral (seleccion_eevv): aquí solo
+# llegarían a la terminal. ``rutas`` (rutas_actuales()) es parte de la llave: si la carpeta cambia
+# por fuera de la app, se recalcula.
 @st.cache_data(max_entries=50, show_spinner=False)
-def indicadores_eevv(anios, tipo: str, por: str | None, filtros: dict, rutas: tuple) -> pd.DataFrame:
-    return _con_barra("Preparando indicadores…", dd.eevv.serie_indicadores, anios, tipo, por=por,
-                      filtros=filtros or None, silenciar=True)
+def indicadores_eevv(
+    anios, tipo: str, por: str | None, filtros: dict, rutas: tuple
+) -> pd.DataFrame:
+    return _con_barra(
+        "Preparando indicadores…",
+        dd.eevv.serie_indicadores,
+        anios,
+        tipo,
+        por=por,
+        filtros=filtros or None,
+        silenciar=True,
+    )
 
 
 @st.cache_data(max_entries=50, show_spinner=False)
 def conteos_eevv(anios, tipo: str, por: str | None, filtros: dict, rutas: tuple) -> pd.DataFrame:
-    return _con_barra("Preparando la tabla…", dd.eevv.serie_conteos, anios, tipo, por=por, filtros=filtros or None,
-                      silenciar=True)
+    return _con_barra(
+        "Preparando la tabla…",
+        dd.eevv.serie_conteos,
+        anios,
+        tipo,
+        por=por,
+        filtros=filtros or None,
+        silenciar=True,
+    )
 
 
-# La pobreza también sale año por año de la caché en disco (dd.pobreza.serie_indicadores). A diferencia de las EEVV, sus avisos
-# (metodologías o marcos distintos) se devuelven para mostrarlos en la página: son la advertencia más importante de la serie.
+# La pobreza también sale año por año de la caché en disco (dd.pobreza.serie_indicadores). A
+# diferencia de las EEVV, sus avisos (metodologías o marcos distintos) se devuelven para mostrarlos
+# en la página: son la advertencia más importante de la serie.
 @st.cache_data(max_entries=50, show_spinner=False)
-def indicadores_pobreza(anios, por: str | None, empalme: bool, departamental: bool,
-                        rutas: tuple) -> tuple[pd.DataFrame, list[str]]:
+def indicadores_pobreza(
+    anios, por: str | None, empalme: bool, departamental: bool, rutas: tuple
+) -> tuple[pd.DataFrame, list[str]]:
     with AVISOS, warnings.catch_warnings(record=True) as avisos:
         warnings.simplefilter("always", UserWarning)
-        res = _con_barra("Preparando los indicadores de pobreza (la primera vez lee los archivos del DANE)…",
-                         dd.pobreza.serie_indicadores, anios, por=por, empalme=empalme, departamental=departamental)
-    return res, list(dict.fromkeys(str(a.message) for a in avisos if issubclass(a.category, UserWarning)))
+        res = _con_barra(
+            "Preparando los indicadores de pobreza (la primera vez lee los archivos del DANE)…",
+            dd.pobreza.serie_indicadores,
+            anios,
+            por=por,
+            empalme=empalme,
+            departamental=departamental,
+        )
+    return res, list(
+        dict.fromkeys(str(a.message) for a in avisos if issubclass(a.category, UserWarning))
+    )
 
 
 @st.cache_data(max_entries=20, show_spinner=False)
@@ -352,11 +582,14 @@ def tasas_eevv(anios, por: str | None, rutas: tuple) -> pd.DataFrame:
     return _con_barra("Calculando las tasas…", dd.eevv.tasas, anios, por=por, silenciar=True)
 
 
-# La ECV, como las Estadísticas Vitales: año por año con dd.ecv.serie_*, en disco. Sus avisos (capítulos que faltan, IPM de
+# La ECV, como las Estadísticas Vitales: año por año con dd.ecv.serie_*, en disco. Sus avisos
+# (capítulos que faltan, IPM de
 # 2020) se muestran en la página.
 @st.cache_data(max_entries=50, show_spinner=False)
 def indicadores_ecv(anios, por: str | None, rutas: tuple) -> pd.DataFrame:
-    return _con_barra("Preparando indicadores…", dd.ecv.serie_indicadores, anios, por=por, silenciar=True)
+    return _con_barra(
+        "Preparando indicadores…", dd.ecv.serie_indicadores, anios, por=por, silenciar=True
+    )
 
 
 @st.cache_data(max_entries=50, show_spinner=False)
@@ -371,7 +604,9 @@ def rutas_actuales() -> tuple:
 
 @st.cache_data(ttl=30, show_spinner=False)
 def disponibles(fuente: str, rutas: tuple, empalme: bool = False) -> pd.DataFrame:
-    """``dd.<fuente>.available()`` (``"geih"``, ``"eam"``, ``"eevv"``, ``"emicron"``, ``"ecv"`` o ``"pobreza"``)."""
+    """``dd.<fuente>.available()`` (``"geih"``, ``"eam"``, ``"eevv"``, ``"emicron"``, ``"ecv"`` o
+    ``"pobreza"``).
+    """
     modulo = getattr(dd, fuente)
     return modulo.available(empalme=empalme) if fuente == "geih" else modulo.available()
 
@@ -389,11 +624,15 @@ def _stata(df: pd.DataFrame) -> bytes:
     buf = io.BytesIO()
     d = df.copy()
     largos = []
-    # Stata no acepta categorías/nullable, objetos que no son todos texto ni nombres largos. Se decide por el
-    # tipo de la columna y no por sus valores, para que una muestra (botones_descarga) diga si se puede.
+    # Stata no acepta categorías/nullable, objetos que no son todos texto ni nombres largos. Se
+    # decide por el tipo de la columna y no por sus valores, para que una muestra
+    # (botones_descarga) diga si se puede.
     for c in d.columns:
-        if isinstance(d[c].dtype, pd.CategoricalDtype) or pd.api.types.is_string_dtype(d[c].dtype) \
-                or pd.api.types.is_object_dtype(d[c].dtype):
+        if (
+            isinstance(d[c].dtype, pd.CategoricalDtype)
+            or pd.api.types.is_string_dtype(d[c].dtype)
+            or pd.api.types.is_object_dtype(d[c].dtype)
+        ):
             d[c] = d[c].astype(object).where(d[c].notna(), "").astype(str)
             if d[c].str.len().max() > 2045:  # más largo, solo como strL
                 largos.append(c[:32])
@@ -405,31 +644,52 @@ def _stata(df: pd.DataFrame) -> bytes:
 
 
 def botones_descarga(df: pd.DataFrame, nombre: str, key: str) -> None:
-    # Cada archivo se arma al hacer clic (data como función): armar los tres formatos en cada interacción
-    # hacía lenta la página aunque nadie descargara.
+    # Cada archivo se arma al hacer clic (data como función): armar los tres formatos en cada
+    # interacción hacía lenta la página aunque nadie descargara.
     c1, c2, c3 = st.columns(3)
-    c1.download_button("CSV", lambda: df.to_csv(index=False).encode("utf-8-sig"), f"{nombre}.csv",
-                       "text/csv", key=f"{key}_csv", width="stretch", icon=":material/download:")
+    c1.download_button(
+        "CSV",
+        lambda: df.to_csv(index=False).encode("utf-8-sig"),
+        f"{nombre}.csv",
+        "text/csv",
+        key=f"{key}_csv",
+        width="stretch",
+        icon=":material/download:",
+    )
     if len(df) < 1_000_000:
-        c2.download_button("Excel", lambda: _excel(df), f"{nombre}.xlsx",
-                           "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                           key=f"{key}_xlsx", width="stretch", icon=":material/download:")
+        c2.download_button(
+            "Excel",
+            lambda: _excel(df),
+            f"{nombre}.xlsx",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            key=f"{key}_xlsx",
+            width="stretch",
+            icon=":material/download:",
+        )
     else:
         c2.caption("Excel no admite más de 1 millón de filas.")
     try:
-        _stata(df.head(50))  # basta una muestra: _stata decide por el tipo de cada columna, no por sus valores
+        # Basta una muestra: _stata decide por el tipo de cada columna, no por sus valores
+        _stata(df.head(50))
     except Exception as e:  # noqa: BLE001
         c3.caption(f"Stata no disponible: {e}")
     else:
-        c3.download_button("Stata (.dta)", lambda: _stata(df), f"{nombre}.dta", "application/x-stata-dta",
-                           key=f"{key}_dta", width="stretch", icon=":material/download:")
+        c3.download_button(
+            "Stata (.dta)",
+            lambda: _stata(df),
+            f"{nombre}.dta",
+            "application/x-stata-dta",
+            key=f"{key}_dta",
+            width="stretch",
+            icon=":material/download:",
+        )
 
 
 def aviso_version_nueva() -> None:
     """
     Si hay una versión nueva en PyPI: sus novedades y cómo instalarla, con un botón en el zip para
-    estudiantes. Se revisa una vez por sesión (y como mucho una vez al día en internet); nada se actualiza
-    sin el clic.
+    estudiantes. Se revisa una vez por sesión (y como mucho una vez al día en internet); nada se
+    actualiza sin el clic.
     """
     if "version_nueva" not in st.session_state:
         st.session_state["version_nueva"] = _actualizacion.revisar()
@@ -437,23 +697,31 @@ def aviso_version_nueva() -> None:
         return
     version, novedades = st.session_state["version_nueva"]
     with st.container(border=True):
-        st.markdown(f"#### Hay una versión nueva de dane-data: {version}\n"
-                    f"Usted tiene la {dd.__version__}. Actualizar no borra sus datos descargados.")
+        st.markdown(
+            f"#### Hay una versión nueva de dane-data: {version}\nUsted tiene la "
+            f"{dd.__version__}. Actualizar no borra sus datos descargados."
+        )
         with st.expander("Qué cambia en la versión nueva"):
-            st.markdown(novedades or f"Vea las [novedades]({_actualizacion.URL_DOCS}novedades.html).")
+            st.markdown(
+                novedades or f"Vea las [novedades]({_actualizacion.URL_DOCS}novedades.html)."
+            )
         carpeta = _actualizacion.carpeta_zip()
         if carpeta is None:
             st.markdown("Para actualizar, en la terminal:")
             st.code('pip install --upgrade "dane-data[app]"', language="bash")
         elif st.session_state.get("actualizado") == version:
-            st.success("Listo. Cierre esta pestaña y la ventana negra de dane-data, y vuelva a abrir el lanzador: "
-                       "abrirá con la versión nueva.")
+            st.success(
+                "Listo. Cierre esta pestaña y la ventana negra de dane-data, y vuelva a abrir el "
+                "lanzador: abrirá con la versión nueva."
+            )
         elif st.button(f"Actualizar a la {version}", type="primary"):
             with st.spinner("Descargando la versión nueva… puede tardar unos minutos."):
                 error = _actualizacion.actualizar_zip(carpeta, version)
             if error:
-                st.error("No se pudo actualizar. Revise su conexión a internet e intente de nuevo; se sigue usando "
-                         f"la versión {dd.__version__}.\n\nDetalle: {error}")
+                st.error(
+                    "No se pudo actualizar. Revise su conexión a internet e intente de nuevo; se "
+                    f"sigue usando la versión {dd.__version__}.\n\nDetalle: {error}"
+                )
             else:
                 st.session_state["actualizado"] = version
                 st.rerun()
@@ -461,7 +729,10 @@ def aviso_version_nueva() -> None:
 
 def codigo(texto: str) -> None:
     with st.expander("Ver el código Python equivalente", icon=":material/code:"):
-        st.caption("Copie esto en un notebook para reproducir o extender el análisis con la librería `dane-data`.")
+        st.caption(
+            "Copie esto en un notebook para reproducir o extender el análisis con la librería "
+            "`dane-data`."
+        )
         st.code(texto.strip(), language="python")
 
 
@@ -483,20 +754,28 @@ class LogEnPantalla(logging.Handler):
 
 
 def sin_datos(encuesta: str, aviso: str | None = None) -> None:
-    """Aviso en la página, no en la barra lateral: en el celular la barra está cerrada y la página quedaba en blanco."""
+    """Aviso en la página, no en la barra lateral: en el celular la barra está cerrada y la página
+    quedaba en blanco.
+    """
     st.warning(aviso or f"No se encontraron datos de la {encuesta} en la carpeta configurada.")
     with st.container(horizontal=True, vertical_alignment="center"):
         if st.button("Ir a Descargar datos", type="primary", icon=":material/download:"):
             st.switch_page("paginas/descargar.py")
-        st.page_link("paginas/inicio.py", label="o configurar la carpeta en Inicio", icon=":material/folder:")
+        st.page_link(
+            "paginas/inicio.py",
+            label="o configurar la carpeta en Inicio",
+            icon=":material/folder:",
+        )
     st.stop()
 
 
 # --------------------------------------------------------------------------- #
 # Selector GEIH (barra lateral compartida)
 # --------------------------------------------------------------------------- #
-AYUDA_ANIOS = ("Los resultados se calculan año por año y quedan guardados: la primera vez tardan unos "
-               "segundos por año y después son instantáneos.")
+AYUDA_ANIOS = (
+    "Los resultados se calculan año por año y quedan guardados: la primera vez tardan unos "
+    "segundos por año y después son instantáneos."
+)
 
 
 def _rangos(anios) -> str:
@@ -512,41 +791,69 @@ def _rangos(anios) -> str:
 
 
 def aviso_marcos(anios, empalme: bool) -> None:
-    """Advierte cuando los años elegidos mezclan marcos de la GEIH: la serie salta por método, no por el mercado."""
+    """Advierte cuando los años elegidos mezclan marcos de la GEIH: la serie salta por método, no
+    por el mercado.
+    """
     grupos: dict[str, list[int]] = {}
     for a in anios:
         grupos.setdefault(dd.geih.marco_muestral(a, empalme), []).append(a)
     if len(grupos) < 2:
         return
-    partes = [f"{_rangos(v)} {'usan' if len(v) > 1 else 'usa'} {dd.geih.MARCOS[k]}" for k, v in grupos.items()]
-    texto = ("**Los años elegidos mezclan dos versiones de la GEIH que no son comparables.** "
-             + "; ".join(partes) + ". Entre esos años la serie salta por el cambio de método, no por el mercado "
-             "laboral (la población en edad de trabajar cambia ~5 %).")
+    partes = [
+        f"{_rangos(v)} {'usan' if len(v) > 1 else 'usa'} {dd.geih.MARCOS[k]}"
+        for k, v in grupos.items()
+    ]
+    texto = (
+        "**Los años elegidos mezclan dos versiones de la GEIH que no son comparables.** "
+        + "; ".join(partes)
+        + ". Entre esos años la serie salta por el cambio de método, no por el mercado "
+        "laboral (la población en edad de trabajar cambia ~5 %)."
+    )
     if any(2010 <= a <= 2020 for a in anios):
         texto += " Para comparar 2010–2020 sin saltos use la serie de empalme."
     st.warning(texto, icon=":material/warning:")
 
 
-def seleccion_geih(clave: str = "geih", varios_anios: bool = True, ayuda_anios: str = AYUDA_ANIOS) -> dict:
+def seleccion_geih(
+    clave: str = "geih", varios_anios: bool = True, ayuda_anios: str = AYUDA_ANIOS
+) -> dict:
     """Dibuja la barra lateral de la GEIH y devuelve la selección, sin cargar datos."""
     with st.sidebar:
         st.header("Datos GEIH")
-        serie = st.radio("Serie", ["Principal", "Empalme (2010–2020)"], horizontal=True, key=f"{clave}_serie",
-                         help="La serie de empalme re-pondera 2010–2020 con el censo 2018, para comparar "
-                              "con los datos desde 2021 sin saltos.")
+        serie = st.radio(
+            "Serie",
+            ["Principal", "Empalme (2010–2020)"],
+            horizontal=True,
+            key=f"{clave}_serie",
+            help=(
+                "La serie de empalme re-pondera 2010–2020 con el censo 2018, para comparar con "
+                "los datos desde 2021 sin saltos."
+            ),
+        )
     empalme = serie != "Principal"
     av = disponibles("geih", rutas_actuales(), empalme)
     if av.empty:
         sin_datos("GEIH")
     av = av[av.completo]
-    if av.empty:  # hay meses, pero a todos les falta algo: sin esto, pedía elegir un año de una lista vacía
-        sin_datos("GEIH", "Los meses de la GEIH que hay en la carpeta están incompletos y no se pueden usar. "
-                          "Vea cuáles y qué les falta en Inicio, y vuelva a descargarlos.")
+    if (
+        av.empty
+    ):  # hay meses, pero a todos les falta algo: sin esto, pedía elegir un año de una lista vacía
+        sin_datos(
+            "GEIH",
+            "Los meses de la GEIH que hay en la carpeta están incompletos y no se pueden usar. "
+            "Vea cuáles y qué les falta en Inicio, y vuelva a descargarlos.",
+        )
     with st.sidebar:
         anios_disp = sorted(av.anio.unique())
         defecto = anios_disp[-2:] if varios_anios else anios_disp[-1:]
-        anios = st.multiselect("Años", anios_disp, default=defecto, key=f"{clave}_anios", help=ayuda_anios,
-                               placeholder="Elija los años")
+        anios = st.multiselect(
+            "Años",
+            anios_disp,
+            default=defecto,
+            key=f"{clave}_anios",
+            help=ayuda_anios,
+            placeholder="Elija los años",
+        )
         if not anios:
             st.info("Elija al menos un año.")
             st.stop()
@@ -554,41 +861,71 @@ def seleccion_geih(clave: str = "geih", varios_anios: bool = True, ayuda_anios: 
         todos = st.toggle("Todos los meses", True, key=f"{clave}_todos")
         meses = None
         if not todos:
-            meses = st.multiselect("Meses", meses_disp, default=meses_disp[:1], format_func=dd.MESES.get,
-                                   placeholder="Elija los meses",
-                                   key=f"{clave}_meses")
+            meses = st.multiselect(
+                "Meses",
+                meses_disp,
+                default=meses_disp[:1],
+                format_func=dd.MESES.get,
+                placeholder="Elija los meses",
+                key=f"{clave}_meses",
+            )
             if not meses:
                 st.stop()
 
         st.header("Filtros")
-        sexo = st.multiselect("Sexo", ["Hombre", "Mujer"], key=f"{clave}_sexo", placeholder="Todos")
-        zona = st.multiselect("Zona", ["Urbano (cabecera)", "Rural (centros poblados y disperso)"],
-                              key=f"{clave}_zona", placeholder="Todas")
+        sexo = st.multiselect(
+            "Sexo", ["Hombre", "Mujer"], key=f"{clave}_sexo", placeholder="Todos"
+        )
+        zona = st.multiselect(
+            "Zona",
+            ["Urbano (cabecera)", "Rural (centros poblados y disperso)"],
+            key=f"{clave}_zona",
+            placeholder="Todas",
+        )
         edad = st.slider("Edad", 0, 100, (0, 100), key=f"{clave}_edad")
-        dptos = st.multiselect("Departamento", sorted(dd.DEPARTAMENTOS.values()), key=f"{clave}_dpto",
-                               placeholder="Todos")
+        dptos = st.multiselect(
+            "Departamento",
+            sorted(dd.DEPARTAMENTOS.values()),
+            key=f"{clave}_dpto",
+            placeholder="Todos",
+        )
 
-    partes = [f"{'empalme ' if empalme else ''}{_rangos(anios)}"]  # «2007–2026», no los 20 años uno por uno
+    # «2007–2026», no los 20 años uno por uno
+    partes = [f"{'empalme ' if empalme else ''}{_rangos(anios)}"]
     if meses:
         partes.append(", ".join(dd.MESES[m] for m in sorted(meses)))
     for nombre, val in (("sexo", sexo), ("zona", zona), ("dpto", dptos)):
         if val:
             partes.append(f"{nombre}: {', '.join(val)}")
-    # El 100 de la barra es «100 o más»: la GEIH trae personas de hasta 108 años, y con 100 quedaban por fuera
+    # El 100 de la barra es «100 o más»: la GEIH trae personas de hasta 108 años, y con 100
+    # quedaban por fuera
     rango_edad = (edad[0], 120 if edad[1] == 100 else edad[1])
     if edad != (0, 100):
         partes.append(f"edad {edad[0]}+" if edad[1] == 100 else f"edad {edad[0]}–{edad[1]}")
 
     elegidos = av[av.anio.isin(anios)]
     seleccion = {
-        "anios": sorted(map(int, anios)), "meses": sorted(map(int, meses)) if meses else None, "empalme": empalme,
-        "sexo": sexo, "zona": zona, "edad": edad, "dptos": dptos, "descripcion": " · ".join(partes),
+        "anios": sorted(map(int, anios)),
+        "meses": sorted(map(int, meses)) if meses else None,
+        "empalme": empalme,
+        "sexo": sexo,
+        "zona": zona,
+        "edad": edad,
+        "dptos": dptos,
+        "descripcion": " · ".join(partes),
         "meses_disponibles": tuple(zip(elegidos.anio.tolist(), elegidos.mes.tolist())),
         "filtrada": bool(meses or sexo or zona or dptos or edad != (0, 100)),
         # en el formato de dd.geih.filtrar
-        "filtros": {k: v for k, v in (("sexo", list(sexo)), ("zona", list(zona)),
-                                      ("edad", rango_edad if edad != (0, 100) else None),
-                                      ("departamento", list(dptos))) if v},
+        "filtros": {
+            k: v
+            for k, v in (
+                ("sexo", list(sexo)),
+                ("zona", list(zona)),
+                ("edad", rango_edad if edad != (0, 100) else None),
+                ("departamento", list(dptos)),
+            )
+            if v
+        },
     }
     aviso_marcos(seleccion["anios"], empalme)
     return seleccion
@@ -597,11 +934,17 @@ def seleccion_geih(clave: str = "geih", varios_anios: bool = True, ayuda_anios: 
 # --------------------------------------------------------------------------- #
 # Selector de las Estadísticas Vitales (barra lateral)
 # --------------------------------------------------------------------------- #
-CERTIFICADOS = {"Defunciones": "defunciones", "Nacimientos": "nacimientos", "Defunciones fetales": "fetales"}
+CERTIFICADOS = {
+    "Defunciones": "defunciones",
+    "Nacimientos": "nacimientos",
+    "Defunciones fetales": "fetales",
+}
 
 
 def seleccion_eevv(clave: str = "eevv") -> dict:
-    """Dibuja la barra lateral de las Estadísticas Vitales y devuelve la selección, sin cargar datos."""
+    """Dibuja la barra lateral de las Estadísticas Vitales y devuelve la selección, sin cargar
+    datos.
+    """
     av = disponibles("eevv", rutas_actuales())
     if av.empty:
         sin_datos("serie de Estadísticas Vitales")
@@ -611,56 +954,116 @@ def seleccion_eevv(clave: str = "eevv") -> dict:
         tipo = presentes[st.radio("Certificado", list(presentes), key=f"{clave}_tipo")]
         anios_disp = sorted(int(a) for a in av.loc[av["tipo"] == tipo, "anio"])
         inicio = next(a for a in anios_disp if a >= anios_disp[-1] - 9)
-        # La llave lleva el tipo: los años disponibles cambian, y un rango viejo de otro tipo no sería válido
-        lo, hi = st.select_slider("Años", options=anios_disp, value=(inicio, anios_disp[-1]), key=f"{clave}_rango_{tipo}",
-                                  help=AYUDA_ANIOS) if len(anios_disp) > 1 else (anios_disp[0], anios_disp[0])
+        # La llave lleva el tipo: los años disponibles cambian, y un rango viejo de otro tipo no
+        # sería válido
+        lo, hi = (
+            st.select_slider(
+                "Años",
+                options=anios_disp,
+                value=(inicio, anios_disp[-1]),
+                key=f"{clave}_rango_{tipo}",
+                help=AYUDA_ANIOS,
+            )
+            if len(anios_disp) > 1
+            else (anios_disp[0], anios_disp[0])
+        )
         anios = [a for a in anios_disp if lo <= a <= hi]
 
         st.header("Filtros")
         # Fetales casi siempre traen sexo indeterminado
-        sexo = [] if tipo == "fetales" else st.multiselect("Sexo", ["Hombre", "Mujer"], key=f"{clave}_sexo", placeholder="Todos")
-        dptos = st.multiselect("Departamento de residencia", sorted(dd.DEPARTAMENTOS.values()), key=f"{clave}_dpto",
-                               placeholder="Todos")
+        sexo = (
+            []
+            if tipo == "fetales"
+            else st.multiselect(
+                "Sexo", ["Hombre", "Mujer"], key=f"{clave}_sexo", placeholder="Todos"
+            )
+        )
+        dptos = st.multiselect(
+            "Departamento de residencia",
+            sorted(dd.DEPARTAMENTOS.values()),
+            key=f"{clave}_dpto",
+            placeholder="Todos",
+        )
     if tipo == "defunciones" and (lo <= 1980):
-        st.warning("Los archivos de 1979 y 1980 están incompletos: faltan departamentos enteros en 1979 y parte de otros en "
-                   "1980. Esos totales nacionales no son comparables con los de otros años.", icon=":material/warning:")
+        st.warning(
+            "Los archivos de 1979 y 1980 están incompletos: faltan departamentos enteros en 1979 "
+            "y parte de otros en 1980. Esos totales nacionales no son comparables con los de "
+            "otros años.",
+            icon=":material/warning:",
+        )
     if tipo == "defunciones" and lo <= 1991 <= hi:
-        st.warning("En enero–junio de 1991 no se pueden separar las edades de los menores de 10 años: las defunciones de "
-                   "menores de un año de ese año quedan vacías.", icon=":material/warning:")
-    partes = [f"{TITULOS_CERTIFICADO[tipo]} {lo}–{hi}" if lo != hi else f"{TITULOS_CERTIFICADO[tipo]} {lo}"]
+        st.warning(
+            "En enero–junio de 1991 no se pueden separar las edades de los menores de 10 años: "
+            "las defunciones de menores de un año de ese año quedan vacías.",
+            icon=":material/warning:",
+        )
+    partes = [
+        f"{TITULOS_CERTIFICADO[tipo]} {lo}–{hi}"
+        if lo != hi
+        else f"{TITULOS_CERTIFICADO[tipo]} {lo}"
+    ]
     for nombre, val in (("sexo", sexo), ("residencia", dptos)):
         if val:
             partes.append(f"{nombre}: {', '.join(val)}")
-    return {"tipo": tipo, "anios": anios, "descripcion": " · ".join(partes),
-            # en el formato de dd.eevv.serie_indicadores
-            "filtros": {k: v for k, v in (("sexo", list(sexo)), ("departamento_residencia", list(dptos))) if v}}
+    return {
+        "tipo": tipo,
+        "anios": anios,
+        "descripcion": " · ".join(partes),
+        # en el formato de dd.eevv.serie_indicadores
+        "filtros": {
+            k: v for k, v in (("sexo", list(sexo)), ("departamento_residencia", list(dptos))) if v
+        },
+    }
 
 
 TITULOS_CERTIFICADO = {v: k for k, v in CERTIFICADOS.items()}
 
 
-def serie_anual(res: pd.DataFrame, columna: str, por: str | None, tipo_valor: str, titulo: str, subtitulo: str,
-                fuente: str) -> None:
+def serie_anual(
+    res: pd.DataFrame,
+    columna: str,
+    por: str | None,
+    tipo_valor: str,
+    titulo: str,
+    subtitulo: str,
+    fuente: str,
+) -> None:
     """Gráfico de la variable por año, o por grupo en el único año elegido."""
     g = res[res[columna].notna()].copy()
     todos = None
     if por:
         g = g[g[por].notna()]
-        todos = g[por]  # antes del texto: con las categorías, un filtro no cambia los colores y se sabe si hay orden
+        # Antes del texto: con las categorías, un filtro no cambia los colores y se sabe si hay
+        # orden
+        todos = g[por]
         g[por] = g[por].astype(str)
     if g.empty:
         st.info("Esta variable no existe en los años elegidos.")
         return
     if por and g["anio"].nunique() == 1:
-        grafico(barras(g, x=por, y=columna, pct=tipo_valor == "pct", horizontal=True),
-                f"{titulo}, {g['anio'].iloc[0]}", fuente, subtitulo)
+        grafico(
+            barras(g, x=por, y=columna, pct=tipo_valor == "pct", horizontal=True),
+            f"{titulo}, {g['anio'].iloc[0]}",
+            fuente,
+            subtitulo,
+        )
         return
     if por and g[por].nunique() > MAX_SERIES:
         orden = g.groupby(por)[columna].sum().sort_values(ascending=False).index.tolist()
-        elegidos = st.multiselect(f"Hay {len(orden)} grupos; elija hasta {MAX_SERIES}", orden, default=orden[:5],
-                                  max_selections=MAX_SERIES, placeholder="Elija los grupos")
+        elegidos = st.multiselect(
+            f"Hay {len(orden)} grupos; elija hasta {MAX_SERIES}",
+            orden,
+            default=orden[:5],
+            max_selections=MAX_SERIES,
+            placeholder="Elija los grupos",
+        )
         g = g[g[por].isin(elegidos)]
-    grafico(linea(g, x="anio", y=columna, color=por, pct=tipo_valor == "pct", todos=todos), titulo, fuente, subtitulo)
+    grafico(
+        linea(g, x="anio", y=columna, color=por, pct=tipo_valor == "pct", todos=todos),
+        titulo,
+        fuente,
+        subtitulo,
+    )
 
 
 # --------------------------------------------------------------------------- #
@@ -675,8 +1078,17 @@ def seleccion_ecv(clave: str = "ecv") -> dict:
     with st.sidebar:
         st.header("ECV")
         anios_disp = sorted(int(a) for a in av["anio"])
-        lo, hi = st.select_slider("Años", options=anios_disp, value=(anios_disp[0], anios_disp[-1]),
-                                  key=f"{clave}_rango", help=AYUDA_ANIOS) if len(anios_disp) > 1 else (anios_disp[0],) * 2
+        lo, hi = (
+            st.select_slider(
+                "Años",
+                options=anios_disp,
+                value=(anios_disp[0], anios_disp[-1]),
+                key=f"{clave}_rango",
+                help=AYUDA_ANIOS,
+            )
+            if len(anios_disp) > 1
+            else (anios_disp[0],) * 2
+        )
     anios = [a for a in anios_disp if lo <= a <= hi]
     return {"anios": anios, "descripcion": f"ECV {lo}–{hi}" if lo != hi else f"ECV {lo}"}
 
@@ -691,20 +1103,32 @@ def selector_eam(extra: tuple = (), clave: str = "eam"):
     with st.sidebar:
         st.header("Datos EAM")
         anios_disp = sorted(av.anio.unique())
-        # Los últimos 10 años; el inicio tiene que ser un año descargado (pueden no ser consecutivos)
+        # Los últimos 10 años; el inicio tiene que ser un año descargado (pueden no ser
+        # consecutivos)
         inicio = next(a for a in anios_disp if a >= anios_disp[-1] - 9)
-        lo, hi = st.select_slider("Años", options=anios_disp, value=(inicio, anios_disp[-1]),
-                                  key=f"{clave}_rango")
+        lo, hi = st.select_slider(
+            "Años", options=anios_disp, value=(inicio, anios_disp[-1]), key=f"{clave}_rango"
+        )
         anios = [a for a in anios_disp if lo <= a <= hi]
-        st.caption("CIIU Rev. 2 hasta 2000, Rev. 3 2001–2011 y Rev. 4 desde 2012 (según los archivos del DANE): "
-                   "los sectores no son comparables entre revisiones.")
+        st.caption(
+            "CIIU Rev. 2 hasta 2000, Rev. 3 2001–2011 y Rev. 4 desde 2012 (según los archivos del "
+            "DANE): los sectores no son comparables entre revisiones."
+        )
     df = cargar_eam(tuple(anios), tuple(sorted(extra)), rutas_actuales())
     with st.sidebar:
         st.header("Filtros")
-        sectores = st.multiselect("Sector (división CIIU)", sorted(df["sector"].dropna().unique()),
-                                  key=f"{clave}_sector", placeholder="Todos")
-        dptos = st.multiselect("Departamento", sorted(df["departamento"].dropna().unique()),
-                               key=f"{clave}_dpto", placeholder="Todos")
+        sectores = st.multiselect(
+            "Sector (división CIIU)",
+            sorted(df["sector"].dropna().unique()),
+            key=f"{clave}_sector",
+            placeholder="Todos",
+        )
+        dptos = st.multiselect(
+            "Departamento",
+            sorted(df["departamento"].dropna().unique()),
+            key=f"{clave}_dpto",
+            placeholder="Todos",
+        )
     if sectores:
         df = df[df["sector"].isin(sectores)]
     if dptos:
@@ -712,10 +1136,18 @@ def selector_eam(extra: tuple = (), clave: str = "eam"):
     if df.empty:  # p. ej. un sector que no existe en los departamentos elegidos
         st.warning("Ningún establecimiento cumple los filtros elegidos.")
         st.stop()
-    carga = f"eam = dd.eam.load(range({lo}, {hi + 1})" + (f", columnas={sorted(extra)!r}" if extra else "") + ")"
+    carga = (
+        f"eam = dd.eam.load(range({lo}, {hi + 1})"
+        + (f", columnas={sorted(extra)!r}" if extra else "")
+        + ")"
+    )
     if sectores:
         carga += f'\neam = eam[eam["sector"].isin({sectores!r})]'
     if dptos:
         carga += f'\neam = eam[eam["departamento"].isin({dptos!r})]'
-    desc = f"{lo}–{hi}" + (f" · {', '.join(sectores)}" if sectores else "") + (f" · {', '.join(dptos)}" if dptos else "")
+    desc = (
+        f"{lo}–{hi}"
+        + (f" · {', '.join(sectores)}" if sectores else "")
+        + (f" · {', '.join(dptos)}" if dptos else "")
+    )
     return df, desc, {"carga": carga, "anios": anios}

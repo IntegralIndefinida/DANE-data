@@ -1,10 +1,11 @@
 """
-Aviso de versión nueva en la app: la última versión en PyPI, sus novedades y, en el zip para estudiantes, la
-instalación cuando el usuario la pide. Nada se actualiza solo.
+Aviso de versión nueva en la app: la última versión en PyPI, sus novedades y, en el zip para
+estudiantes, la instalación cuando el usuario la pide. Nada se actualiza solo.
 
-La consulta (pypi.org y raw.githubusercontent.com, sin enviar datos del usuario) se hace como mucho una vez
-al día y se desactiva con la variable de entorno ``DANE_DATA_SIN_ACTUALIZACIONES=1``. Está declarada en la
-sección «Privacidad» del README: si cambia lo que se consulta, hay que actualizarla.
+La consulta (pypi.org y raw.githubusercontent.com, sin enviar datos del usuario) se hace como mucho
+una vez al día y se desactiva con la variable de entorno ``DANE_DATA_SIN_ACTUALIZACIONES=1``. Está
+declarada en la sección «Privacidad» del README: si cambia lo que se consulta, hay que
+actualizarla.
 """
 
 from __future__ import annotations
@@ -25,7 +26,9 @@ import dane_data as dd
 from dane_data import config
 
 URL_PYPI = "https://pypi.org/pypi/dane-data/json"
-URL_NOVEDADES = "https://raw.githubusercontent.com/IntegralIndefinida/DANE-data/v{version}/docs/novedades.md"
+URL_NOVEDADES = (
+    "https://raw.githubusercontent.com/IntegralIndefinida/DANE-data/v{version}/docs/novedades.md"
+)
 URL_DOCS = "https://integralindefinida.github.io/DANE-data/"
 DESACTIVAR = "DANE_DATA_SIN_ACTUALIZACIONES"
 NOMBRE_ZIP = "dane-data-estudiantes"  # [project] name de estudiantes/pyproject.toml
@@ -43,18 +46,28 @@ def _es_nueva(version: str) -> bool:
 
 
 def _a_markdown(texto: str) -> str:
-    """Quita la sintaxis de Sphinx (MyST) de novedades.md: los roles {dd} y {doc} y los enlaces relativos."""
+    """Quita la sintaxis de Sphinx (MyST) de novedades.md: los roles {dd} y {doc} y los enlaces
+    relativos.
+    """
     texto = re.sub(r"\{dd\}`([^`]+)`", r"`dd.\1`", texto)
-    texto = re.sub(r"\{doc\}`([^`<]+?)\s*<([^`>]+)>`", lambda m: f"[{m[1]}]({URL_DOCS}{m[2]}.html)", texto)
-    texto = re.sub(r"\{doc\}`([^`]+)`", lambda m: f"[{m[1].rsplit('/', 1)[-1]}]({URL_DOCS}{m[1]}.html)", texto)
-    return re.sub(r"\]\((?![a-z]+:)([^)#]+)\.md(#[^)]*)?\)", lambda m: f"]({URL_DOCS}{m[1]}.html{m[2] or ''})",
-                  texto)
+    texto = re.sub(
+        r"\{doc\}`([^`<]+?)\s*<([^`>]+)>`", lambda m: f"[{m[1]}]({URL_DOCS}{m[2]}.html)", texto
+    )
+    texto = re.sub(
+        r"\{doc\}`([^`]+)`", lambda m: f"[{m[1].rsplit('/', 1)[-1]}]({URL_DOCS}{m[1]}.html)", texto
+    )
+    return re.sub(
+        r"\]\((?![a-z]+:)([^)#]+)\.md(#[^)]*)?\)",
+        lambda m: f"]({URL_DOCS}{m[1]}.html{m[2] or ''})",
+        texto,
+    )
 
 
 def extraer_novedades(texto: str, desde: str, hasta: str) -> str:
     """
-    Las secciones de ``docs/novedades.md`` de las versiones posteriores a ``desde`` y hasta ``hasta``, en
-    Markdown sin la sintaxis de Sphinx. Vacío si no hay ninguna (p. ej. si la sección sigue en «Sin publicar»).
+    Las secciones de ``docs/novedades.md`` de las versiones posteriores a ``desde`` y hasta
+    ``hasta``, en Markdown sin la sintaxis de Sphinx. Vacío si no hay ninguna (p. ej. si la sección
+    sigue en «Sin publicar»).
     """
     elegidas = []
     for seccion in re.split(r"(?m)^## ", texto)[1:]:
@@ -65,7 +78,9 @@ def extraer_novedades(texto: str, desde: str, hasta: str) -> str:
 
 
 def _consultar(timeout: float) -> dict | None:
-    """La última versión en PyPI y, si es nueva, el novedades.md de esa versión; None sin conexión."""
+    """La última versión en PyPI y, si es nueva, el novedades.md de esa versión; None sin
+    conexión.
+    """
     try:
         r = requests.get(URL_PYPI, timeout=timeout)
         r.raise_for_status()
@@ -85,10 +100,12 @@ def _consultar(timeout: float) -> dict | None:
 
 def revisar(timeout: float = 5) -> tuple[str, str | None] | None:
     """
-    ``(versión, novedades)`` si en PyPI hay una versión más nueva que la instalada, o None si no la hay, no se
-    pudo consultar o está desactivado. Las novedades van en Markdown (None si no se pudieron leer).
+    ``(versión, novedades)`` si en PyPI hay una versión más nueva que la instalada, o None si no la
+    hay, no se pudo consultar o está desactivado. Las novedades van en Markdown (None si no se
+    pudieron leer).
 
-    Consulta internet como mucho una vez al día: la respuesta queda en ``~/.cache/dane_data/version.json``.
+    Consulta internet como mucho una vez al día: la respuesta queda en
+    ``~/.cache/dane_data/version.json``.
     """
     if os.environ.get(DESACTIVAR):
         return None
@@ -116,7 +133,9 @@ def revisar(timeout: float = 5) -> tuple[str, str | None] | None:
 
 
 def carpeta_zip() -> Path | None:
-    """La carpeta del zip para estudiantes si la app corre desde su ``.venv``; None si se instaló de otra forma."""
+    """La carpeta del zip para estudiantes si la app corre desde su ``.venv``; None si se instaló
+    de otra forma.
+    """
     carpeta = Path(sys.prefix).parent
     try:
         texto = (carpeta / "pyproject.toml").read_text(encoding="utf-8")
@@ -127,10 +146,11 @@ def carpeta_zip() -> Path | None:
 
 def actualizar_zip(carpeta: Path, version: str) -> str | None:
     """
-    Pasa el zip para estudiantes de ``carpeta`` a ``version``: cambia su ``uv.lock`` y baja lo que falte a la
-    caché de uv, instalándolo en un entorno de prueba que después se borra. No toca el ``.venv`` de la app
-    abierta (en Windows no se pueden reemplazar las librerías en uso): el lanzador instala la versión nueva al
-    volver a abrir, desde la caché, así que ya no hace falta internet.
+    Pasa el zip para estudiantes de ``carpeta`` a ``version``: cambia su ``uv.lock`` y baja lo que
+    falte a la caché de uv, instalándolo en un entorno de prueba que después se borra. No toca el
+    ``.venv`` de la app abierta (en Windows no se pueden reemplazar las librerías en uso): el
+    lanzador instala la versión nueva al volver a abrir, desde la caché, así que ya no hace falta
+    internet.
 
     Devuelve None si salió bien, o el error; entonces el ``uv.lock`` queda como estaba.
     """
@@ -139,16 +159,29 @@ def actualizar_zip(carpeta: Path, version: str) -> str | None:
         return "no se encontró uv"
     lock = carpeta / "uv.lock"
     antes = lock.read_bytes() if lock.exists() else None
-    entorno = {k: v for k, v in os.environ.items() if k != "VIRTUAL_ENV"}  # el de la app, no el de prueba
+    # El de la app, no el de prueba
+    entorno = {k: v for k, v in os.environ.items() if k != "VIRTUAL_ENV"}
     try:
-        with tempfile.TemporaryDirectory(prefix=".venv-actualizacion-", dir=carpeta,
-                                         ignore_cleanup_errors=True) as prueba:
-            for comando, extra in (([uv, "lock", "--upgrade-package", f"dane-data=={version}"], {}),
-                                   ([uv, "sync", "--frozen", "--extra", "app"], {"UV_PROJECT_ENVIRONMENT": prueba})):
-                r = subprocess.run(comando, cwd=carpeta, env={**entorno, **extra}, capture_output=True,
-                                   encoding="utf-8", errors="replace", timeout=1800)
+        with tempfile.TemporaryDirectory(
+            prefix=".venv-actualizacion-", dir=carpeta, ignore_cleanup_errors=True
+        ) as prueba:
+            for comando, extra in (
+                ([uv, "lock", "--upgrade-package", f"dane-data=={version}"], {}),
+                ([uv, "sync", "--frozen", "--extra", "app"], {"UV_PROJECT_ENVIRONMENT": prueba}),
+            ):
+                r = subprocess.run(
+                    comando,
+                    cwd=carpeta,
+                    env={**entorno, **extra},
+                    capture_output=True,
+                    encoding="utf-8",
+                    errors="replace",
+                    timeout=1800,
+                )
                 if r.returncode != 0:
-                    raise RuntimeError((r.stderr or r.stdout).strip() or f"uv {comando[1]} terminó con error")
+                    raise RuntimeError(
+                        (r.stderr or r.stdout).strip() or f"uv {comando[1]} terminó con error"
+                    )
     except (OSError, RuntimeError, subprocess.SubprocessError) as e:
         if antes is not None:
             lock.write_bytes(antes)

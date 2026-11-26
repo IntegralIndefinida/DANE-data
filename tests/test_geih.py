@@ -10,34 +10,48 @@ import dane_data as dd
 from dane_data.geih.loader import classify_file, month_from_folder
 
 
-@pytest.mark.parametrize("name,expected", [
-    ("Cabecera - Características generales (Personas).csv", ("caracteristicas", "cabecera")),
-    ("Resto - Caracteristicas generales (Personas).CSV", ("caracteristicas", "resto")),
-    ("Area - Desocupados (1).csv", ("no_ocupados", "area")),
-    ("No ocupados.CSV", ("no_ocupados", None)),
-    ("Ocupados.CSV", ("ocupados", None)),
-    ("Datos del hogar y la vivienda.CSV.CSV", ("vivienda", None)),
-    ("Otras formas de trabajo.CSV", ("otras", None)),
-    ("Fuerza de trabajo.CSV", ("fuerza", None)),
-    ("No ocupado.CSV", ("no_ocupados", None)),                 # marzo 2024, en singular
-    ("Area - Ocupados04.csv", ("ocupados", "area")),            # 2013, sufijo de mes
-    ("Resto - Deocupados04.csv", ("no_ocupados", "resto")),
-    ("Cabecera - Otros ingresos.csv", ("otros_ingresos", "cabecera")),
-    ("Otros ingresos e impuestos.CSV", ("otros_ingresos", None)),
-    ("Migración.CSV", ("migracion", None)),
-    ("Desoucpados.CSV", ("no_ocupados", None)),                # erratas de octubre y noviembre de 2020
-    ("Inativos.CSV", ("no_ocupados", None)),
-    ("Fuerzo de trabajo.CSV", ("fuerza", None)),
-])
+@pytest.mark.parametrize(
+    "name,expected",
+    [
+        ("Cabecera - Características generales (Personas).csv", ("caracteristicas", "cabecera")),
+        ("Resto - Caracteristicas generales (Personas).CSV", ("caracteristicas", "resto")),
+        ("Area - Desocupados (1).csv", ("no_ocupados", "area")),
+        ("No ocupados.CSV", ("no_ocupados", None)),
+        ("Ocupados.CSV", ("ocupados", None)),
+        ("Datos del hogar y la vivienda.CSV.CSV", ("vivienda", None)),
+        ("Otras formas de trabajo.CSV", ("otras", None)),
+        ("Fuerza de trabajo.CSV", ("fuerza", None)),
+        ("No ocupado.CSV", ("no_ocupados", None)),  # marzo 2024, en singular
+        ("Area - Ocupados04.csv", ("ocupados", "area")),  # 2013, sufijo de mes
+        ("Resto - Deocupados04.csv", ("no_ocupados", "resto")),
+        ("Cabecera - Otros ingresos.csv", ("otros_ingresos", "cabecera")),
+        ("Otros ingresos e impuestos.CSV", ("otros_ingresos", None)),
+        ("Migración.CSV", ("migracion", None)),
+        ("Desoucpados.CSV", ("no_ocupados", None)),  # erratas de octubre y noviembre de 2020
+        ("Inativos.CSV", ("no_ocupados", None)),
+        ("Fuerzo de trabajo.CSV", ("fuerza", None)),
+    ],
+)
 def test_classify_file(name, expected):
     assert classify_file(name) == expected
 
 
-@pytest.mark.parametrize("folder,mes", [
-    ("Enero", 1), ("Diciembre_csv", 12), ("1.Enero", 1), ("10. Octubre", 10), ("Ene_2024", 1),
-    ("GEIH_Octubre_Marco_2018", 10), ("GEIH_Marzo_2022_Marco_2018", 3), ("Septiembre.csv 2 1", 9),
-    ("Noviembre_ 2024", 11), ("Total Departamentos", None), ("total_2009_csv", None),
-])
+@pytest.mark.parametrize(
+    "folder,mes",
+    [
+        ("Enero", 1),
+        ("Diciembre_csv", 12),
+        ("1.Enero", 1),
+        ("10. Octubre", 10),
+        ("Ene_2024", 1),
+        ("GEIH_Octubre_Marco_2018", 10),
+        ("GEIH_Marzo_2022_Marco_2018", 3),
+        ("Septiembre.csv 2 1", 9),
+        ("Noviembre_ 2024", 11),
+        ("Total Departamentos", None),
+        ("total_2009_csv", None),
+    ],
+)
 def test_month_from_folder(folder, mes):
     assert month_from_folder(folder) == mes
 
@@ -54,9 +68,12 @@ def test_csv_danado_usa_formato_alterno(geih_root):
     av = dd.geih.available(raiz=geih_root)
     assert av.set_index(["anio", "mes"]).loc[(2011, 3), "carpeta"] == "Marzo_txt"
     df = dd.geih.load(2011, raiz=geih_root, cache=False)
-    assert df["fex"].tolist() == pytest.approx([84.9491032387525, 84.9491032387525, 1078.45157267357])
+    assert df["fex"].tolist() == pytest.approx(
+        [84.9491032387525, 84.9491032387525, 1078.45157267357]
+    )
     assert df["condicion"].tolist() == ["Ocupado", "Desocupado", "Ocupado"]
-    assert "FEX_C" not in df.columns  # el factor de "Otras actividades" no reemplaza al de características
+    # El factor de "Otras actividades" no reemplaza al de características
+    assert "FEX_C" not in df.columns
 
 
 def test_mes_completo_en_dos_carpetas_no_se_duplica(geih_root, caplog):
@@ -64,7 +81,10 @@ def test_mes_completo_en_dos_carpetas_no_se_duplica(geih_root, caplog):
     import shutil
 
     antes = len(dd.geih.load(2016, raiz=geih_root, cache=False))
-    shutil.copytree(geih_root / "datos_csv" / "2016" / "Enero", geih_root / "datos_csv" / "2016" / "Enero_copia")
+    shutil.copytree(
+        geih_root / "datos_csv" / "2016" / "Enero",
+        geih_root / "datos_csv" / "2016" / "Enero_copia",
+    )
     with caplog.at_level("WARNING", logger="dane_data.geih"):
         assert len(dd.geih.find_months(2016, raiz=geih_root)) == 1
         assert len(dd.geih.load(2016, raiz=geih_root, cache=False)) == antes
@@ -85,7 +105,9 @@ def test_anio_sin_salario_minimo_avisa(geih_root, caplog, monkeypatch):
 
 
 def test_carpeta_del_mes_sin_archivos_reconocidos(geih_root):
-    """Junto al mes, otra carpeta con el nombre del mes pero sin módulos (un diccionario): no falla."""
+    """Junto al mes, otra carpeta con el nombre del mes pero sin módulos (un diccionario): no
+    falla.
+    """
     otra = geih_root / "datos_csv" / "2016" / "Enero_documentacion"
     otra.mkdir()
     (otra / "diccionario.csv").write_text("variable;descripcion\nP6020;Sexo\n", encoding="utf-8")
@@ -94,11 +116,14 @@ def test_carpeta_del_mes_sin_archivos_reconocidos(geih_root):
 
 
 def test_archivo_reemplazado_se_vuelve_a_revisar(geih_root):
-    """Con la app abierta, un CSV dañado que se reemplaza por uno bueno en la misma ruta deja de omitirse."""
+    """Con la app abierta, un CSV dañado que se reemplaza por uno bueno en la misma ruta deja de
+    omitirse.
+    """
     car = next((geih_root / "datos_csv" / "2016" / "Enero").glob("Cabecera - Car*"))
     bueno = car.read_bytes()
     assert dd.geih.find_months(2016, raiz=geih_root)[0].completo
-    car.write_text(car.read_text(encoding="utf-8").replace(";", " "), encoding="utf-8")  # separado por espacios
+    # Separado por espacios
+    car.write_text(car.read_text(encoding="utf-8").replace(";", " "), encoding="utf-8")
     os.utime(car, ns=(car.stat().st_atime_ns, car.stat().st_mtime_ns + 10**9))
     assert not dd.geih.find_months(2016, raiz=geih_root)[0].completo
     car.write_bytes(bueno)
@@ -116,9 +141,18 @@ def test_csv_ilegible_usa_stata(geih_root):
 
 
 def test_stata_110(geih_root):
-    """El Stata de septiembre de 2021 es formato 110 (Stata 7), que pandas 2 no lee; se traduce al 111."""
+    """El Stata de septiembre de 2021 es formato 110 (Stata 7), que pandas 2 no lee; se traduce al
+    111.
+    """
     from dane_data import _io
-    p = geih_root / "datos_csv" / "2021" / "Septiembre" / "Cabecera - Características generales (Personas).dta"
+
+    p = (
+        geih_root
+        / "datos_csv"
+        / "2021"
+        / "Septiembre"
+        / "Cabecera - Características generales (Personas).dta"
+    )
     assert p.read_bytes()[0] == 110
     df = pd.read_stata(_io._stata(p), convert_categoricals=False)
     assert df["P6040"].tolist() == [101, 38]
@@ -128,13 +162,18 @@ def test_stata_110(geih_root):
     assert df["CLASE"].dtype == "int8"  # sin valores ambiguos no cambia
     assert _io.columnas(p)[:3] == ["DIRECTORIO", "SECUENCIA_P", "ORDEN"]
     if int(pd.__version__.split(".")[0]) >= 3:  # pandas 3 lee el formato 110 directamente
-        pd.testing.assert_frame_equal(pd.read_stata(p, convert_categoricals=False), df, check_dtype=False)
+        pd.testing.assert_frame_equal(
+            pd.read_stata(p, convert_categoricals=False), df, check_dtype=False
+        )
 
 
-@pytest.mark.parametrize("anio,carpeta,defecto", [(2011, "Marzo_txt", "sin punto decimal"),
-                                                    (2021, "Septiembre", "separado por espacios")])
+@pytest.mark.parametrize(
+    "anio,carpeta,defecto",
+    [(2011, "Marzo_txt", "sin punto decimal"), (2021, "Septiembre", "separado por espacios")],
+)
 def test_csv_danado_sin_alterno_se_omite(geih_root, caplog, anio, carpeta, defecto):
     import shutil
+
     shutil.rmtree(geih_root / "datos_csv" / str(anio) / carpeta)
     av = dd.geih.available(raiz=geih_root).set_index("anio")
     assert not av.loc[anio, "completo"] and defecto in av.loc[anio, "faltantes"]
@@ -146,17 +185,21 @@ def test_csv_danado_sin_alterno_se_omite(geih_root, caplog, anio, carpeta, defec
 def test_old_era_cabecera_plus_resto(geih_root):
     df = dd.geih.load(2016, raiz=geih_root, cache=False)
     assert len(df) == 5  # Cabecera (4) + Resto (1); Area no se duplica
-    assert df["fex"].tolist() == pytest.approx([100.5, 100.5, 100.5, 200.0, 300.25])  # coma decimal
+    # Coma decimal
+    assert df["fex"].tolist() == pytest.approx([100.5, 100.5, 100.5, 200.0, 300.25])
     cond = df.set_index(["DIRECTORIO", "ORDEN"])["condicion"]
     assert cond[(1, 1)] == "Ocupado"
     assert cond[(1, 2)] == "Desocupado"
     assert cond[(1, 3)] == "Fuera de la PET"
     assert cond[(3, 1)] == "Inactivo"
     assert df["sexo"].tolist() == ["Hombre", "Mujer", "Mujer", "Hombre", "Mujer"]
-    # Antes de 2022 el cuestionario no tiene las preguntas de la medición de informalidad del DANE; la del
-    # marco 2005 sí
+    # Antes de 2022 el cuestionario no tiene las preguntas de la medición de informalidad del DANE;
+    # la del marco 2005 sí
     assert df["formal"].isna().all()
-    assert df.set_index(["DIRECTORIO", "ORDEN"])["formal_marco2005"].dropna().to_dict() == {(1, 1): 1, (2, 1): 0}
+    assert df.set_index(["DIRECTORIO", "ORDEN"])["formal_marco2005"].dropna().to_dict() == {
+        (1, 1): 1,
+        (2, 1): 0,
+    }
     assert set(df["rama_rev"].dropna()) == {3}
     assert df.loc[df.DIRECTORIO.eq(1) & df.ORDEN.eq(1), "nivel_educativo"].item() == "Superior"
 
@@ -173,47 +216,79 @@ def test_new_era_and_nested_folder(geih_root):
 
 
 def test_otros_ingresos_y_migracion(geih_root):
-    """Los dos módulos se unen por persona (hasta 2021, Cabecera + Resto) y de ellos salen las variables nuevas."""
+    """Los dos módulos se unen por persona (hasta 2021, Cabecera + Resto) y de ellos salen las
+    variables nuevas.
+    """
     df = dd.geih.load([2016, 2025], raiz=geih_root, cache=False)
     p = df.set_index(["anio", "DIRECTORIO", "ORDEN"])
     assert p["ingreso_no_laboral"].dropna().to_dict() == {
-        (2016, 1, 1): 800000, (2016, 2, 1): 0, (2016, 3, 1): 150000, (2025, 10, 1): 0, (2025, 11, 1): 100000}
+        (2016, 1, 1): 800000,
+        (2016, 2, 1): 0,
+        (2016, 3, 1): 150000,
+        (2025, 10, 1): 0,
+        (2025, 11, 1): 100000,
+    }
     assert p["lugar_nacimiento"].dropna().astype(str).to_dict() == {
-        (2025, 10, 1): "Este municipio", (2025, 10, 2): "Venezuela", (2025, 11, 1): "Otro municipio"}
+        (2025, 10, 1): "Este municipio",
+        (2025, 10, 2): "Venezuela",
+        (2025, 11, 1): "Otro municipio",
+    }
 
 
 def test_aviso_de_modulos_que_faltan_en_un_mes(geih_root, caplog):
-    """Un mes sin módulos que sí traen otros meses de su año se avisa, aunque se cargue solo; con modulos, solo esos."""
+    """Un mes sin módulos que sí traen otros meses de su año se avisa, aunque se cargue solo; con
+    modulos, solo esos.
+    """
     with caplog.at_level("WARNING", logger="dane_data.geih"):
         dd.geih.load(2025, meses=2, raiz=geih_root, cache=False, incluir_incompletos=True)
     assert "migracion, no_ocupados, otros_ingresos, vivienda en Febrero 2025" in caplog.text
     caplog.clear()
     with caplog.at_level("WARNING", logger="dane_data.geih"):
-        dd.geih.load(2025, raiz=geih_root, cache=False)                              # enero los trae todos
-        dd.geih.load(2025, meses=2, raiz=geih_root, cache=False, incluir_incompletos=True,
-                      modulos=["caracteristicas", "fuerza", "ocupados"])
+        dd.geih.load(2025, raiz=geih_root, cache=False)  # enero los trae todos
+        dd.geih.load(
+            2025,
+            meses=2,
+            raiz=geih_root,
+            cache=False,
+            incluir_incompletos=True,
+            modulos=["caracteristicas", "fuerza", "ocupados"],
+        )
     assert "Meses sin módulos" not in caplog.text
 
 
 def test_modulos_valida_y_acepta_los_nombres_de_download(geih_root, caplog):
-    """Un nombre desconocido se ignoraba y la TD salía 0 % sin aviso: ahora falla, y los nombres de download valen."""
+    """Un nombre desconocido se ignoraba y la TD salía 0 % sin aviso: ahora falla, y los nombres de
+    download valen.
+    """
     with pytest.raises(ValueError, match="Módulo desconocido 'ocupado'"):
         dd.geih.load(2016, raiz=geih_root, cache=False, modulos=["caracteristicas", "ocupado"])
     with caplog.at_level("WARNING", logger="dane_data.geih"):
-        de_descarga = dd.geih.load(2016, raiz=geih_root, cache=False,
-                                   modulos=["caracteristicas", "fuerza_trabajo", "ocupados", "desocupados", "inactivos"])
-        de_carga = dd.geih.load(2016, raiz=geih_root, cache=False,
-                                modulos=["caracteristicas", "fuerza", "ocupados", "no_ocupados"])
+        de_descarga = dd.geih.load(
+            2016,
+            raiz=geih_root,
+            cache=False,
+            modulos=["caracteristicas", "fuerza_trabajo", "ocupados", "desocupados", "inactivos"],
+        )
+        de_carga = dd.geih.load(
+            2016,
+            raiz=geih_root,
+            cache=False,
+            modulos=["caracteristicas", "fuerza", "ocupados", "no_ocupados"],
+        )
     pd.testing.assert_frame_equal(de_descarga, de_carga)
     assert "condición de actividad" not in caplog.text
     with caplog.at_level("WARNING", logger="dane_data.geih"):
-        dd.geih.load(2016, raiz=geih_root, cache=False, modulos=["caracteristicas", "fuerza", "ocupados"])
+        dd.geih.load(
+            2016, raiz=geih_root, cache=False, modulos=["caracteristicas", "fuerza", "ocupados"]
+        )
     assert "falta desocupados: la condición de actividad" in caplog.text
 
 
 def test_aviso_de_partes_y_de_modulos_sin_extraer(geih_root, caplog):
-    """Sin «Resto - Otros ingresos» se avisa la parte; sin el módulo en todo el año (bajado con una versión que no lo
-    extraía), cómo volver a bajarlo, salvo de marzo a julio de 2020, cuando el DANE no lo publicó."""
+    """Sin «Resto - Otros ingresos» se avisa la parte; sin el módulo en todo el año (bajado con una
+    versión que no lo extraía), cómo volver a bajarlo, salvo de marzo a julio de 2020, cuando el
+    DANE no lo publicó.
+    """
     import shutil
 
     enero = geih_root / "datos_csv" / "2016" / "Enero"
@@ -229,36 +304,66 @@ def test_aviso_de_partes_y_de_modulos_sin_extraer(geih_root, caplog):
     with caplog.at_level("WARNING", logger="dane_data.geih"):
         dd.geih.load([2016, 2020], raiz=geih_root, cache=False)
     assert "Ningún mes de 2016 en disco trae el módulo otros_ingresos" in caplog.text
-    assert "dane_data.geih.download([2016], forzar=True, modulos=['otros_ingresos'])" in caplog.text
+    assert (
+        "dane_data.geih.download([2016], forzar=True, modulos=['otros_ingresos'])" in caplog.text
+    )
     assert "Resto - Otros ingresos" not in caplog.text
 
 
 def test_ingreso_no_laboral_y_lugares():
-    """Lo de 12 meses va por mes; 98, 99 y 999.999.999 son «no sabe» y «no informa»; las residencias corren los códigos
+    """Lo de 12 meses va por mes; 98, 99 y 999.999.999 son «no sabe» y «no informa»; las
+    residencias corren los códigos
     en uno."""
-    df = pd.DataFrame({"anio": 2024, "mes": 1, "P7495": [1, 2, 1, None, 2, 1], "P7505": [1, 2, 2, None, 1, 2],
-                       "P7500S2A1": [1_000_000, None, 98, None, None, 999_999_999],
-                       "P7510S3A1": [1_200_000, None, None, None, 99, None],
-                       "P7510S7A1": [5_000_000, None, None, None, None, None],     # «otras fuentes»: no cuenta
-                       "P3373": [1, 2, 3, 3, None, None], "P3373S3": [".", ".", "862", "840", None, None],
-                       "P3384": [1, 2, 4, 3, None, None], "P3384S3": [".", ".", "862", ".", None, None]})
+    df = pd.DataFrame(
+        {
+            "anio": 2024,
+            "mes": 1,
+            "P7495": [1, 2, 1, None, 2, 1],
+            "P7505": [1, 2, 2, None, 1, 2],
+            "P7500S2A1": [1_000_000, None, 98, None, None, 999_999_999],
+            "P7510S3A1": [1_200_000, None, None, None, 99, None],
+            "P7510S7A1": [5_000_000, None, None, None, None, None],  # «otras fuentes»: no cuenta
+            "P3373": [1, 2, 3, 3, None, None],
+            "P3373S3": [".", ".", "862", "840", None, None],
+            "P3384": [1, 2, 4, 3, None, None],
+            "P3384S3": [".", ".", "862", ".", None, None],
+        }
+    )
     h = dd.geih.harmonize(df)
-    assert h["ingreso_no_laboral"].tolist()[:2] == [1_100_000, 0] and h["ingreso_no_laboral"][2:].isna().all()
-    assert h["lugar_nacimiento"].tolist()[:4] == ["Este municipio", "Otro municipio", "Venezuela", "Otro país"]
-    assert h["residencia_hace_12_meses"].tolist()[:4] == ["No había nacido", "Este municipio", "Venezuela",
-                                                          "Otro municipio"]
-    assert h["residencia_hace_5_anios"].isna().all()                    # sin P3382: vacía, sin error
+    assert (
+        h["ingreso_no_laboral"].tolist()[:2] == [1_100_000, 0]
+        and h["ingreso_no_laboral"][2:].isna().all()
+    )
+    assert h["lugar_nacimiento"].tolist()[:4] == [
+        "Este municipio",
+        "Otro municipio",
+        "Venezuela",
+        "Otro país",
+    ]
+    assert h["residencia_hace_12_meses"].tolist()[:4] == [
+        "No había nacido",
+        "Este municipio",
+        "Venezuela",
+        "Otro municipio",
+    ]
+    assert h["residencia_hace_5_anios"].isna().all()  # sin P3382: vacía, sin error
 
 
 def test_cotiza_pension_sin_respuesta_queda_vacia():
-    """El 9 («no sabe», en 2015) y la respuesta vacía no cuentan como que no cotiza; el pensionado (3), sí."""
-    df = pd.DataFrame({"anio": 2015, "mes": 6, "OCI": [1, 1, 1, 1, 1, None], "P6920": [1, 2, 3, 9, None, 1]})
+    """El 9 («no sabe», en 2015) y la respuesta vacía no cuentan como que no cotiza; el pensionado
+    (3), sí.
+    """
+    df = pd.DataFrame(
+        {"anio": 2015, "mes": 6, "OCI": [1, 1, 1, 1, 1, None], "P6920": [1, 2, 3, 9, None, 1]}
+    )
     cotiza = dd.geih.harmonize(df)["cotiza_pension"]
     assert cotiza[:3].tolist() == [1, 0, 0] and cotiza[3:].isna().all()
 
 
 def test_ingreso_laboral_con_un_no_informa():
-    """INGLABO suma el «no informa» de 999.999.999 como si fuera un monto (abril de 2010): queda vacío."""
+    """INGLABO suma el «no informa» de 999.999.999 como si fuera un monto (abril de 2010): queda
+    vacío.
+    """
     df = pd.DataFrame({"anio": 2010, "mes": 4, "OCI": [1, 1], "INGLABO": [1_000_199_999, 900_000]})
     ingreso = dd.geih.harmonize(df)["ingreso_laboral"]
     assert pd.isna(ingreso[0]) and ingreso[1] == 900_000
@@ -266,17 +371,27 @@ def test_ingreso_laboral_con_un_no_informa():
 
 def test_posicion_ocupacional_cambia_en_2022():
     """Desde 2022 el código 7 de P6430 es jornalero y el 8 'otro' (antes eran el 8 y el 9)."""
-    df = pd.DataFrame({"anio": [2021, 2021, 2021, 2022, 2022], "mes": 1, "OCI": 1, "P6430": [7, 8, 9, 7, 8]})
+    df = pd.DataFrame(
+        {"anio": [2021, 2021, 2021, 2022, 2022], "mes": 1, "OCI": 1, "P6430": [7, 8, 9, 7, 8]}
+    )
     assert dd.geih.harmonize(df)["posicion_ocupacional"].tolist() == [
-        "Sin remuneración (otros hogares)", "Jornalero o peón", "Otro", "Jornalero o peón", "Otro"]
+        "Sin remuneración (otros hogares)",
+        "Jornalero o peón",
+        "Otro",
+        "Jornalero o peón",
+        "Otro",
+    ]
 
 
 def test_load_variables(geih_root):
     completo = dd.geih.load([2016, 2025], raiz=geih_root, cache=False)
-    df = dd.geih.load([2016, 2025], raiz=geih_root, cache=False, variables=["fex", "departamento", "P6040"])
+    df = dd.geih.load(
+        [2016, 2025], raiz=geih_root, cache=False, variables=["fex", "departamento", "P6040"]
+    )
     assert list(df.columns) == ["anio", "mes", "fex", "departamento", "P6040"]
     pd.testing.assert_frame_equal(df, completo[df.columns])
-    assert isinstance(df["departamento"].dtype, pd.CategoricalDtype)  # se conserva al concatenar meses
+    # Se conserva al concatenar meses
+    assert isinstance(df["departamento"].dtype, pd.CategoricalDtype)
 
 
 @pytest.mark.filterwarnings("ignore")  # meses incompletos de la fixture
@@ -291,7 +406,11 @@ def test_empalme_pet_15_anios(tmp_path):
     m.mkdir(parents=True)
     (m / "Características generales (personas).CSV").write_text(
         "DIRECTORIO;SECUENCIA_P;ORDEN;P6040;CLASE;OCI;DSI;PETI;INGLABO;FEX_C\n"
-        "1;1;1;40;1;1;;1;900000;100\n1;1;2;12;1;1;;1;200000;100\n1;1;3;13;2;;;1;;100\n", encoding="utf-8")
+        "1;1;1;40;1;1;;1;900000;100\n"
+        "1;1;2;12;1;1;;1;200000;100\n"
+        "1;1;3;13;2;;;1;;100\n",
+        encoding="utf-8",
+    )
     empalme = dd.geih.load(2012, empalme=True, raiz=tmp_path, cache=False)
     assert empalme["condicion"].tolist() == ["Ocupado", "Fuera de la PET", "Fuera de la PET"]
     assert empalme["ingreso_laboral"].notna().tolist() == [True, False, False]
@@ -301,8 +420,14 @@ def test_empalme_pet_15_anios(tmp_path):
 
 def test_marco_muestral():
     principal = {a: dd.geih.marco_muestral(a) for a in (2007, 2019, 2020, 2021, 2022, 2025)}
-    assert principal == {2007: "censo 2005", 2019: "censo 2005", 2020: "CNPV 2018", 2021: "censo 2005",
-                         2022: "CNPV 2018", 2025: "CNPV 2018"}
+    assert principal == {
+        2007: "censo 2005",
+        2019: "censo 2005",
+        2020: "CNPV 2018",
+        2021: "censo 2005",
+        2022: "CNPV 2018",
+        2025: "CNPV 2018",
+    }
     assert dd.geih.marco_muestral(2015, empalme=True) == "CNPV 2018"
 
 
@@ -310,7 +435,7 @@ def test_include_incomplete(geih_root):
     df = dd.geih.load(2025, raiz=geih_root, cache=False, incluir_incompletos=True)
     assert set(df["mes"]) == {1, 2}
     enero = df[df.mes.eq(1)].set_index(["DIRECTORIO", "ORDEN"])["formal"]
-    assert enero[(10, 1)] == 1 and enero.drop((10, 1)).isna().all()     # solo los ocupados
+    assert enero[(10, 1)] == 1 and enero.drop((10, 1)).isna().all()  # solo los ocupados
 
 
 def test_indicadores_weighted(geih_root):
@@ -320,15 +445,23 @@ def test_indicadores_weighted(geih_root):
     assert ind["fuerza_trabajo"] == pytest.approx(401.0)
     assert ind["td"] == pytest.approx(100 * 100.5 / 401.0)
     assert ind["pet"] == pytest.approx(701.25)
-    assert pd.isna(ind["tasa_informalidad"])                        # 2016: sin la medición del DANE, vacía y no 0
+    assert pd.isna(ind["tasa_informalidad"])  # 2016: sin la medición del DANE, vacía y no 0
     assert ind["tasa_informalidad_marco2005"] == pytest.approx(100 * 200 / 300.5)
-    sin = dd.geih.indicadores(df.drop(columns=["formal", "formal_marco2005"])).iloc[0]   # vacías, sin KeyError
+    # Vacías, sin KeyError
+    sin = dd.geih.indicadores(df.drop(columns=["formal", "formal_marco2005"])).iloc[0]
     assert pd.isna(sin["tasa_informalidad"]) and pd.isna(sin["tasa_informalidad_marco2005"])
-    assert dd.geih.indicadores(dd.geih.load(2025, meses=1, raiz=geih_root, cache=False))["tasa_informalidad"].item() == 0
+    assert (
+        dd.geih.indicadores(dd.geih.load(2025, meses=1, raiz=geih_root, cache=False))[
+            "tasa_informalidad"
+        ].item()
+        == 0
+    )
 
 
 def test_preguntas_de_informalidad_en_float32(geih_root):
-    """Son códigos pequeños que solo existen en unos años: en float32 ocupan la mitad de memoria."""
+    """Son códigos pequeños que solo existen en unos años: en float32 ocupan la mitad de
+    memoria.
+    """
     from dane_data.geih.loader import _COMPACTAS
 
     df = dd.geih.load(2025, meses=1, raiz=geih_root, cache=False)
@@ -337,15 +470,29 @@ def test_preguntas_de_informalidad_en_float32(geih_root):
 
 
 def test_informalidad_vacia_si_falta_la_medicion():
-    """Marzo de 2020: sin P6870 para la mayoría, la tasa marco 2005 queda vacía en vez de salir muy baja."""
-    df = pd.DataFrame({"anio": 2020, "mes": [2, 2, 2, 3, 3, 3], "fex": [100.0, 100.0, 1.0, 100.0, 100.0, 100.0],
-                       "pet": 1, "fuerza_trabajo": 1, "ocupado": 1, "desocupado": 0, "inactivo": 0,
-                       "formal": np.nan, "formal_marco2005": [0, 1, np.nan, 0, np.nan, np.nan],
-                       "ingreso_laboral": np.nan})
+    """Marzo de 2020: sin P6870 para la mayoría, la tasa marco 2005 queda vacía en vez de salir muy
+    baja.
+    """
+    df = pd.DataFrame(
+        {
+            "anio": 2020,
+            "mes": [2, 2, 2, 3, 3, 3],
+            "fex": [100.0, 100.0, 1.0, 100.0, 100.0, 100.0],
+            "pet": 1,
+            "fuerza_trabajo": 1,
+            "ocupado": 1,
+            "desocupado": 0,
+            "inactivo": 0,
+            "formal": np.nan,
+            "formal_marco2005": [0, 1, np.nan, 0, np.nan, np.nan],
+            "ingreso_laboral": np.nan,
+        }
+    )
     mes = dd.geih.indicadores(df, anual=False).set_index("mes")["tasa_informalidad_marco2005"]
-    assert mes[2] == pytest.approx(100 * 100 / 201)          # le falta al 0,5 %: se da
+    assert mes[2] == pytest.approx(100 * 100 / 201)  # le falta al 0,5 %: se da
     assert pd.isna(mes[3])
-    assert pd.isna(dd.geih.indicadores(df)["tasa_informalidad_marco2005"].item())    # y el año tampoco
+    # Y el año tampoco
+    assert pd.isna(dd.geih.indicadores(df)["tasa_informalidad_marco2005"].item())
 
 
 def test_tabla_averages_months(geih_root):
@@ -364,17 +511,23 @@ def test_cache_roundtrip(geih_root, tmp_path, monkeypatch):
 
 
 def test_cache_del_mes_cambia_con_el_codigo_que_lee(geih_root, monkeypatch, request):
-    """Si cambia la lectura (_io, load_month, CORE_RAW...), la caché de cada mes no se reutiliza: no hay que acordarse
+    """Si cambia la lectura (_io, load_month, CORE_RAW...), la caché de cada mes no se reutiliza:
+    no hay que acordarse
     de subir una versión a mano."""
     from dane_data.geih import loader
 
-    request.addfinalizer(loader._firma_lectura.cache_clear)   # no dejar la firma alterada para otras pruebas
+    # No dejar la firma alterada para otras pruebas
+    request.addfinalizer(loader._firma_lectura.cache_clear)
     mes = dd.geih.find_months(2016, raiz=geih_root)[0]
     loader._firma_lectura.cache_clear()
     antes = loader._cache_path(mes, "core", None)
 
     original = loader.inspect.getsource
-    monkeypatch.setattr(loader.inspect, "getsource", lambda o: original(o) + ("# cambio" if o is loader._io else ""))
+    monkeypatch.setattr(
+        loader.inspect,
+        "getsource",
+        lambda o: original(o) + ("# cambio" if o is loader._io else ""),
+    )
     loader._firma_lectura.cache_clear()
     assert loader._cache_path(mes, "core", None) != antes
 
@@ -385,13 +538,19 @@ def test_cache_del_mes_cambia_con_el_codigo_que_lee(geih_root, monkeypatch, requ
 
 
 def test_cache_del_mes_ignora_columnas_que_no_cambian_la_lectura(geih_root):
-    """Pedir en ``columnas`` una variable de CORE_RAW o una que no está en los archivos no crea otra caché del mes."""
+    """Pedir en ``columnas`` una variable de CORE_RAW o una que no está en los archivos no crea
+    otra caché del mes.
+    """
     from dane_data.geih import loader
 
     mes = dd.geih.find_months(2025, raiz=geih_root)[0]
     core = loader._cache_path(mes, "core", None)
     assert loader._cache_path(mes, ["smlv", "ingreso laboral", "OCI"], None) == core
-    assert loader._cache_path(mes, ["p5000"], None) == loader._cache_path(mes, ["P5000", "smlv"], None) != core
+    assert (
+        loader._cache_path(mes, ["p5000"], None)
+        == loader._cache_path(mes, ["P5000", "smlv"], None)
+        != core
+    )
 
 
 def test_un_solo_nombre_sin_lista(geih_root, eam_root):
@@ -400,13 +559,27 @@ def test_un_solo_nombre_sin_lista(geih_root, eam_root):
     assert dd.geih.filtrar(df, {"sexo": "Mujer"}).equals(dd.geih.filtrar(df, {"sexo": ["Mujer"]}))
     assert len(dd.geih.filtrar(df, {"sexo": "Mujer"})) > 0
     assert len(dd.geih.filtrar(df, {"anio": 2016})) == len(df)
-    uno = dd.geih.load(2016, raiz=geih_root, cache=False, columnas="P6050", modulos="caracteristicas",
-                       armonizar=False)
-    lista = dd.geih.load(2016, raiz=geih_root, cache=False, columnas=["P6050"], modulos=["caracteristicas"],
-                         armonizar=False)
+    uno = dd.geih.load(
+        2016,
+        raiz=geih_root,
+        cache=False,
+        columnas="P6050",
+        modulos="caracteristicas",
+        armonizar=False,
+    )
+    lista = dd.geih.load(
+        2016,
+        raiz=geih_root,
+        cache=False,
+        columnas=["P6050"],
+        modulos=["caracteristicas"],
+        armonizar=False,
+    )
     assert "P6050" in uno.columns
     pd.testing.assert_frame_equal(uno, lista)
-    assert "prodbr2" in dd.eam.load(2016, raiz=eam_root, columnas="prodbr2", armonizar=False).columns
+    assert (
+        "prodbr2" in dd.eam.load(2016, raiz=eam_root, columnas="prodbr2", armonizar=False).columns
+    )
     eam = dd.eam.load(2016, raiz=eam_root)
     assert "valagri_real" in dd.eam.deflactar(eam, "valagri", pd.Series({2016: 100.0})).columns
 
@@ -418,11 +591,16 @@ def test_exportar_una_sola_variable(geih_root, tmp_path, monkeypatch):
     assert list(pd.read_csv(ruta, encoding="utf-8-sig").columns) == ["anio", "mes", "fex"]
     # Para un Excel con coma decimal (configuración regional de Colombia)
     dd.geih.exportar(2016, ruta, variables="fex", raiz=geih_root, sep=";", decimal=",")
-    assert ruta.read_text(encoding="utf-8-sig").splitlines()[:2] == ["anio;mes;fex", "2016;1;100,5"]
+    assert ruta.read_text(encoding="utf-8-sig").splitlines()[:2] == [
+        "anio;mes;fex",
+        "2016;1;100,5",
+    ]
 
 
 def test_cache_interrumpida_no_deja_parquet_a_medias(geih_root, tmp_path, monkeypatch):
-    """Si falla la escritura, no queda ni el parquet (a medias) ni el temporal, y load funciona igual."""
+    """Si falla la escritura, no queda ni el parquet (a medias) ni el temporal, y load funciona
+    igual.
+    """
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
     original = pd.DataFrame.to_parquet
     temporales = []
@@ -442,12 +620,17 @@ def test_cache_interrumpida_no_deja_parquet_a_medias(geih_root, tmp_path, monkey
     monkeypatch.setattr(pd.DataFrame, "to_parquet", original)
     dd.geih.serie_indicadores(2016, raiz=geih_root)
     dd.geih.serie_indicadores(2016, raiz=geih_root, filtros={"sexo": ["Mujer"]})
-    (tmp_path / "cache" / "geih" / "huerfano.parquet.ab12.tmp").write_bytes(b"x")  # de una versión anterior
+    # De una versión anterior
+    (tmp_path / "cache" / "geih" / "huerfano.parquet.ab12.tmp").write_bytes(b"x")
     # (sin contar el marcador de la limpieza automática)
-    archivos = [f for f in (tmp_path / "cache").rglob("*") if f.is_file() and f.name != ".ultima_limpieza"]
-    assert len(archivos) == 4                           # 1 mes (load) + 2 años (serie) + el huérfano
+    archivos = [
+        f for f in (tmp_path / "cache").rglob("*") if f.is_file() and f.name != ".ultima_limpieza"
+    ]
+    assert len(archivos) == 4  # 1 mes (load) + 2 años (serie) + el huérfano
     assert dd.geih.clear_cache() == 4
-    assert not [f for f in (tmp_path / "cache").rglob("*") if f.is_file() and f.name != ".ultima_limpieza"]
+    assert not [
+        f for f in (tmp_path / "cache").rglob("*") if f.is_file() and f.name != ".ultima_limpieza"
+    ]
 
 
 def test_cache_corrupta_se_regenera(geih_root, tmp_path, monkeypatch):
@@ -457,8 +640,10 @@ def test_cache_corrupta_se_regenera(geih_root, tmp_path, monkeypatch):
     for f in (tmp_path / "cache").rglob("*.parquet"):
         f.write_bytes(b"no es parquet")
     pd.testing.assert_frame_equal(dd.geih.load(2016, raiz=geih_root), a)
-    pd.testing.assert_frame_equal(dd.geih.serie_indicadores(2016, raiz=geih_root),
-                                  dd.geih.indicadores(dd.geih.load(2016, raiz=geih_root, cache=False)))
+    pd.testing.assert_frame_equal(
+        dd.geih.serie_indicadores(2016, raiz=geih_root),
+        dd.geih.indicadores(dd.geih.load(2016, raiz=geih_root, cache=False)),
+    )
     assert all(pd.read_parquet(f) is not None for f in (tmp_path / "cache").rglob("*.parquet"))
 
 
@@ -468,8 +653,13 @@ def test_cache_temporales_con_nombre_unico(tmp_path, monkeypatch):
 
     nombres = []
     original = pd.DataFrame.to_parquet
-    monkeypatch.setattr(pd.DataFrame, "to_parquet",
-                        lambda self, ruta, *a, **k: nombres.append(Path(ruta).name) or original(self, ruta, *a, **k))
+    monkeypatch.setattr(
+        pd.DataFrame,
+        "to_parquet",
+        lambda self, ruta, *a, **k: (
+            nombres.append(Path(ruta).name) or original(self, ruta, *a, **k)
+        ),
+    )
     for _ in range(2):
         _guardar_parquet(pd.DataFrame({"x": [1]}), tmp_path / "c" / "a.parquet")
     assert len(set(nombres)) == 2
@@ -479,28 +669,43 @@ def test_cache_temporales_con_nombre_unico(tmp_path, monkeypatch):
 @pytest.mark.parametrize("dropna", [True, False])
 @pytest.mark.parametrize("anual", [True, False])
 @pytest.mark.parametrize("por", dd.geih.POR_PRECALCULADOS)
-def test_serie_indicadores_igual_a_indicadores(geih_root, tmp_path, monkeypatch, por, anual, dropna):
+def test_serie_indicadores_igual_a_indicadores(
+    geih_root, tmp_path, monkeypatch, por, anual, dropna
+):
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
     df = dd.geih.load([2016, 2025], raiz=geih_root, cache=False)
     esperado = dd.geih.indicadores(df, por=por, anual=anual, dropna=dropna)
-    serie = dd.geih.serie_indicadores([2016, 2025], por=por, anual=anual, raiz=geih_root, dropna=dropna)
+    serie = dd.geih.serie_indicadores(
+        [2016, 2025], por=por, anual=anual, raiz=geih_root, dropna=dropna
+    )
     pd.testing.assert_frame_equal(serie, esperado)
 
 
 @pytest.mark.parametrize("por", [None, "sexo"])
 def test_trimestre_movil_igual_a_juntar_los_tres_meses(geih_root, por):
-    """Lo que hace el DANE: los microdatos de los tres meses juntos, con el factor de expansión dividido por 3."""
+    """Lo que hace el DANE: los microdatos de los tres meses juntos, con el factor de expansión
+    dividido por 3.
+    """
     enero = dd.geih.load(2025, meses=1, raiz=geih_root, cache=False)
-    paso = np.linspace(0.5, 1.5, len(enero))  # otro peso por persona: las tasas cambian de un mes a otro
-    tres = pd.concat([enero, enero.assign(mes=2, fex=enero["fex"] * paso), enero.assign(mes=3, fex=enero["fex"] * paso[::-1])],
-                     ignore_index=True)
-    tres.attrs = {}                                                       # que cuente 3 meses, no los 2 de load
+    # Otro peso por persona: las tasas cambian de un mes a otro
+    paso = np.linspace(0.5, 1.5, len(enero))
+    tres = pd.concat(
+        [
+            enero,
+            enero.assign(mes=2, fex=enero["fex"] * paso),
+            enero.assign(mes=3, fex=enero["fex"] * paso[::-1]),
+        ],
+        ignore_index=True,
+    )
+    tres.attrs = {}  # que cuente 3 meses, no los 2 de load
     movil = dd.geih.trimestre_movil(dd.geih.indicadores(tres, por=por, anual=False))
     esperado = dd.geih.indicadores(tres, por=por, anual=True)
+    # fmt: off
     columnas = ["pet", "fuerza_trabajo", "ocupados", "desocupados", "inactivos", "tgp", "to", "td",
                 "tasa_informalidad", "n_muestra"]
+    # fmt: on
     mensual = dd.geih.indicadores(tres, por=por, anual=False)
-    assert mensual["td"].nunique() > 1                                    # si no, promediar las tasas también pasaría
+    assert mensual["td"].nunique() > 1  # si no, promediar las tasas también pasaría
     marzo = movil[movil["mes"] == 3].reset_index(drop=True)
     pd.testing.assert_frame_equal(marzo[columnas], esperado[columnas], check_dtype=False)
     assert movil.loc[movil["mes"] < 3, "td"].isna().all() and movil["ingreso_mediano"].isna().all()
@@ -509,36 +714,62 @@ def test_trimestre_movil_igual_a_juntar_los_tres_meses(geih_root, por):
 
 
 def test_serie_frecuencias_conserva_las_categorias(geih_root, tmp_path, monkeypatch):
-    """Con pandas 2, agrupar por varias llaves con dropna=False quitaba el orden del nivel educativo en un año, y al
+    """Con pandas 2, agrupar por varias llaves con dropna=False quitaba el orden del nivel
+    educativo en un año, y al
     juntar los años pandas avisaba que el resultado dejaría de ser categórico."""
     import warnings
 
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
     with warnings.catch_warnings():
         warnings.simplefilter("error", FutureWarning)
-        f = dd.geih.serie_frecuencias([2021, 2025], por=["sexo", "nivel_educativo"], raiz=geih_root)
+        f = dd.geih.serie_frecuencias(
+            [2021, 2025], por=["sexo", "nivel_educativo"], raiz=geih_root
+        )
     assert f["nivel_educativo"].dtype == dd.geih.CATEGORIAS["nivel_educativo"]
 
 
 @pytest.mark.parametrize("estadistico", ["media", "mediana"])
 def test_media_por_grupo_sin_ningun_valor(estadistico):
-    """Sin nadie con la variable (ingreso_laboral en 2007) la tabla sale vacía; antes fallaba con un TypeError."""
-    df = pd.DataFrame({"anio": 2007, "mes": 1, "sexo": ["Hombre", "Mujer"], "ingreso": np.nan, "fex": [1.0, 2.0]})
+    """Sin nadie con la variable (ingreso_laboral en 2007) la tabla sale vacía; antes fallaba con
+    un TypeError.
+    """
+    df = pd.DataFrame(
+        {"anio": 2007, "mes": 1, "sexo": ["Hombre", "Mujer"], "ingreso": np.nan, "fex": [1.0, 2.0]}
+    )
     assert dd.tabla(df, por="sexo", variable="ingreso", estadistico=estadistico).empty
-    f = df.assign(peso=df["fex"], n_muestra=1).dropna(subset=["ingreso"])   # lo que da serie_frecuencias
-    assert dd.geih.tabla_de_frecuencias(f, variable="ingreso", por="sexo", estadistico=estadistico).empty
+    # Lo que da serie_frecuencias
+    f = df.assign(peso=df["fex"], n_muestra=1).dropna(subset=["ingreso"])
+    assert dd.geih.tabla_de_frecuencias(
+        f, variable="ingreso", por="sexo", estadistico=estadistico
+    ).empty
 
 
 def test_trimestre_movil_no_cruza_el_cambio_de_marco():
-    """Enero y febrero de 2022 juntarían la PET de 12+ del censo 2005 (2021) con la de 15+ del CNPV 2018; en el
-    empalme, 2019 y 2020 son del mismo marco y el trimestre sí sigue. Una serie con meses repetidos es un error claro."""
+    """Enero y febrero de 2022 juntarían la PET de 12+ del censo 2005 (2021) con la de 15+ del CNPV
+    2018; en el empalme, 2019 y 2020 son del mismo marco y el trimestre sí sigue. Una serie con
+    meses repetidos es un error claro.
+    """
     meses = [(2021, 10), (2021, 11), (2021, 12), (2022, 1), (2022, 2), (2022, 3)]
-    serie = pd.DataFrame([{"anio": a, "mes": m, "pet": 100.0, "fuerza_trabajo": 60.0, "ocupados": 54.0,
-                           "desocupados": 6.0, "inactivos": 40.0, "tasa_informalidad": np.nan,
-                           "tasa_informalidad_marco2005": 50.0, "n_muestra": 10} for a, m in meses])
+    serie = pd.DataFrame(
+        [
+            {
+                "anio": a,
+                "mes": m,
+                "pet": 100.0,
+                "fuerza_trabajo": 60.0,
+                "ocupados": 54.0,
+                "desocupados": 6.0,
+                "inactivos": 40.0,
+                "tasa_informalidad": np.nan,
+                "tasa_informalidad_marco2005": 50.0,
+                "n_muestra": 10,
+            }
+            for a, m in meses
+        ]
+    )
     td = dd.geih.trimestre_movil(serie).set_index(["anio", "mes"])["td"]
     assert td.isna().tolist() == [True, True, False, True, True, False]
-    empalme = serie.assign(anio=serie["anio"] - 2)                       # 2019-10 a 2020-03
+    empalme = serie.assign(anio=serie["anio"] - 2)  # 2019-10 a 2020-03
     assert dd.geih.trimestre_movil(empalme, empalme=True)["td"].notna().sum() == 4
     with pytest.raises(ValueError, match="repetidos"):
         dd.geih.trimestre_movil(pd.concat([serie, serie]))
@@ -546,8 +777,9 @@ def test_trimestre_movil_no_cruza_el_cambio_de_marco():
 
 def test_serie_indicadores_sin_grupo_vacio(geih_root, tmp_path, monkeypatch):
     """
-    Por defecto serie_indicadores e indicadores dejan fuera la fila de nivel educativo vacío (en los datos reales, los
-    menores fuera de la PET); con dropna=False la conservan para que los grupos sumen el total.
+    Por defecto serie_indicadores e indicadores dejan fuera la fila de nivel educativo vacío (en
+    los datos reales, los menores fuera de la PET); con dropna=False la conservan para que los
+    grupos sumen el total.
     """
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
     mod = sys.modules["dane_data.geih.agregados"]
@@ -562,18 +794,24 @@ def test_serie_indicadores_sin_grupo_vacio(geih_root, tmp_path, monkeypatch):
     df = sin_educacion(2016, raiz=geih_root, cache=False)
     con_vacio = dd.geih.indicadores(df, por="nivel_educativo", dropna=False)
     assert con_vacio["nivel_educativo"].isna().sum() == 1
-    assert con_vacio["n_muestra"].sum() == len(df)                  # los grupos suman el total
+    assert con_vacio["n_muestra"].sum() == len(df)  # los grupos suman el total
     serie = dd.geih.serie_indicadores(2016, por="nivel_educativo", raiz=geih_root)
     assert serie["nivel_educativo"].notna().all() and len(serie) == len(con_vacio) - 1
-    pd.testing.assert_frame_equal(serie, dd.geih.indicadores(df, por="nivel_educativo"))  # el mismo valor por defecto
+    # El mismo valor por defecto
+    pd.testing.assert_frame_equal(serie, dd.geih.indicadores(df, por="nivel_educativo"))
     pd.testing.assert_frame_equal(
-        dd.geih.serie_indicadores(2016, por="nivel_educativo", raiz=geih_root, dropna=False), con_vacio)
+        dd.geih.serie_indicadores(2016, por="nivel_educativo", raiz=geih_root, dropna=False),
+        con_vacio,
+    )
 
 
 def test_serie_indicadores_usa_cache_y_se_invalida(geih_root, tmp_path, monkeypatch):
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
     a = dd.geih.serie_indicadores(2016, raiz=geih_root)
-    assert len(list((tmp_path / "cache" / "geih" / "indicadores").glob("principal_2016_*.parquet"))) == 1
+    assert (
+        len(list((tmp_path / "cache" / "geih" / "indicadores").glob("principal_2016_*.parquet")))
+        == 1
+    )
 
     mod = sys.modules["dane_data.geih.agregados"]
     llamadas = []
@@ -596,16 +834,21 @@ def test_serie_indicadores_por_no_precalculado(geih_root):
 def test_serie_indicadores_con_filtros_y_meses(geih_root, tmp_path, monkeypatch):
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
     filtros = {"sexo": ["Mujer"], "edad": (20, 60)}
-    df = dd.geih.filtrar(dd.geih.load([2016, 2025], meses=[1], raiz=geih_root, cache=False), filtros)
+    df = dd.geih.filtrar(
+        dd.geih.load([2016, 2025], meses=[1], raiz=geih_root, cache=False), filtros
+    )
     for por, anual in (("zona", True), (None, False)):
         esperado = dd.geih.indicadores(df, por=por, anual=anual, dropna=True)
-        serie = dd.geih.serie_indicadores([2016, 2025], por=por, anual=anual, raiz=geih_root, filtros=filtros,
-                                          meses=[1])
+        serie = dd.geih.serie_indicadores(
+            [2016, 2025], por=por, anual=anual, raiz=geih_root, filtros=filtros, meses=[1]
+        )
         pd.testing.assert_frame_equal(serie, esperado)
 
 
 def test_filtro_con_un_valor_que_no_es_categoria_falla(geih_root, tmp_path, monkeypatch):
-    """«mujer» por «Mujer» daba una tabla vacía sin explicación, también en las serie_* (y la guardaba en la caché)."""
+    """«mujer» por «Mujer» daba una tabla vacía sin explicación, también en las serie_* (y la
+    guardaba en la caché).
+    """
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
     df = dd.geih.load(2016, raiz=geih_root, cache=False)
     with pytest.raises(ValueError, match="sexo no tiene 'mujer'. Opciones: Hombre, Mujer"):
@@ -613,14 +856,17 @@ def test_filtro_con_un_valor_que_no_es_categoria_falla(geih_root, tmp_path, monk
     for _ in range(2):  # la segunda vez tampoco sale de la caché
         with pytest.raises(ValueError, match="sexo no tiene 'mujer'"):
             dd.geih.serie_indicadores(2016, raiz=geih_root, filtros={"sexo": "mujer"})
-    assert len(dd.geih.filtrar(df, {"sexo": ["Mujer", np.nan]}))  # un vacío no es un error de escritura
+    # Un vacío no es un error de escritura
+    assert len(dd.geih.filtrar(df, {"sexo": ["Mujer", np.nan]}))
 
 
 def test_errores_en_espanol_con_lo_que_falta(geih_root, tmp_path, monkeypatch):
     """Antes eran KeyError de pandas ('pet') o un «descárguelo» para el mes 13."""
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
     df = dd.geih.load(2016, raiz=geih_root, cache=False, variables=["fex", "sexo", "ocupado"])
-    with pytest.raises(ValueError, match=r"Faltan columnas: 'pet', 'fuerza_trabajo'.*VARIABLES_INDICADORES"):
+    with pytest.raises(
+        ValueError, match=r"Faltan columnas: 'pet', 'fuerza_trabajo'.*VARIABLES_INDICADORES"
+    ):
         dd.geih.indicadores(df)
     with pytest.raises(ValueError, match=r"'Sexo' \(¿quiso decir 'sexo'\?\)"):
         dd.tabla(df, por="Sexo")
@@ -631,21 +877,26 @@ def test_errores_en_espanol_con_lo_que_falta(geih_root, tmp_path, monkeypatch):
 
 
 def test_porcentaje_con_grupo_exterior_vacio(geih_root, tmp_path, monkeypatch):
-    """Las personas sin posición ocupacional (NaN: no ocupadas) también suman 100 % dentro de su grupo."""
+    """Las personas sin posición ocupacional (NaN: no ocupadas) también suman 100 % dentro de su
+    grupo.
+    """
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
     df = dd.geih.load(2016, raiz=geih_root, cache=False)
     assert df["posicion_ocupacional"].isna().any()
     por = ["posicion_ocupacional", "sexo"]
     t = dd.tabla(df, por=por, estadistico="porcentaje")
     assert t["porcentaje"].notna().all()
-    assert t.groupby("posicion_ocupacional", dropna=False, observed=True)["porcentaje"].sum().tolist() == \
-        pytest.approx([100.0] * t["posicion_ocupacional"].nunique(dropna=False))
+    assert t.groupby("posicion_ocupacional", dropna=False, observed=True)[
+        "porcentaje"
+    ].sum().tolist() == pytest.approx([100.0] * t["posicion_ocupacional"].nunique(dropna=False))
     s = dd.geih.serie_tabla(2016, por=por, estadistico="porcentaje", raiz=geih_root)
     pd.testing.assert_frame_equal(s, t, check_dtype=False, rtol=1e-9)
 
 
 def test_serie_promedia_sobre_los_meses_cargados(geih_root, tmp_path, monkeypatch):
-    """Un mes sin nadie en el grupo filtrado cuenta como 0 en el promedio mensual, no se descarta."""
+    """Un mes sin nadie en el grupo filtrado cuenta como 0 en el promedio mensual, no se
+    descarta.
+    """
     import shutil
 
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
@@ -656,13 +907,14 @@ def test_serie_promedia_sobre_los_meses_cargados(geih_root, tmp_path, monkeypatc
     filtros = {"zona": ["Rural (centros poblados y disperso)"]}
 
     t = dd.geih.serie_tabla(2016, filtros=filtros, raiz=geih_root)
-    assert t["total"].item() == pytest.approx(300.25 / 2)          # enero 300,25 y febrero 0
+    assert t["total"].item() == pytest.approx(300.25 / 2)  # enero 300,25 y febrero 0
     ind = dd.geih.serie_indicadores(2016, filtros=filtros, raiz=geih_root)
     assert ind["pet"].item() == pytest.approx(300.25 / 2)
     # Filtrar por mes sí cambia los meses del promedio
     t = dd.geih.serie_tabla(2016, filtros={**filtros, "mes": [1]}, raiz=geih_root)
     assert t["total"].item() == pytest.approx(300.25)
-    # Con microdatos, filtrar anota los meses cargados: lo mismo que serie_* (también dos filtrar seguidos)
+    # Con microdatos, filtrar anota los meses cargados: lo mismo que serie_* (también dos filtrar
+    # seguidos)
     micro = dd.geih.load(2016, raiz=geih_root, cache=False)
     df = dd.geih.filtrar(micro, filtros)
     assert dd.tabla(df)["total"].item() == pytest.approx(300.25 / 2)
@@ -672,13 +924,15 @@ def test_serie_promedia_sobre_los_meses_cargados(geih_root, tmp_path, monkeypatc
     # Elegir meses con df[...] (un trimestre, por ejemplo) sí cuenta solo los que quedan
     rural = micro[micro["zona"] == filtros["zona"][0]]
     assert dd.tabla(rural)["total"].item() == pytest.approx(300.25)
-    # También después de filtrar: la anotación no pasa al subconjunto (antes se dividía por 2 meses)
+    # También después de filtrar: la anotación no pasa al subconjunto (antes se dividía por 2
+    # meses)
     mujeres = dd.geih.filtrar(micro, {"sexo": ["Mujer"]})
     enero = mujeres[mujeres["mes"] == 1]
     esperado = dd.tabla(micro[(micro["sexo"] == "Mujer") & (micro["mes"] == 1)])["total"].item()
     assert dd.tabla(enero)["total"].item() == pytest.approx(esperado)
     assert dd.geih.indicadores(enero)["pet"].item() == pytest.approx(
-        dd.geih.indicadores(micro[(micro["sexo"] == "Mujer") & (micro["mes"] == 1)])["pet"].item())
+        dd.geih.indicadores(micro[(micro["sexo"] == "Mujer") & (micro["mes"] == 1)])["pet"].item()
+    )
     assert dd.geih.filtrar(enero, filtros).attrs["meses_por_anio"] == {2016: 1}
 
 
@@ -687,31 +941,48 @@ def test_serie_cache_distingue_rango_de_lista(geih_root, tmp_path, monkeypatch):
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
     for filtro in ((10, 60), [10, 60]):
         filtros = {"edad": filtro}
-        esperado = dd.geih.indicadores(dd.geih.filtrar(dd.geih.load(2016, raiz=geih_root, cache=False), filtros))
-        pd.testing.assert_frame_equal(dd.geih.serie_indicadores(2016, raiz=geih_root, filtros=filtros), esperado)
-        esperado = dd.tabla(dd.geih.filtrar(dd.geih.load(2016, raiz=geih_root, cache=False), filtros), por="sexo")
-        pd.testing.assert_frame_equal(dd.geih.serie_tabla(2016, por="sexo", raiz=geih_root, filtros=filtros),
-                                      esperado, check_dtype=False, rtol=1e-9)
+        esperado = dd.geih.indicadores(
+            dd.geih.filtrar(dd.geih.load(2016, raiz=geih_root, cache=False), filtros)
+        )
+        pd.testing.assert_frame_equal(
+            dd.geih.serie_indicadores(2016, raiz=geih_root, filtros=filtros), esperado
+        )
+        esperado = dd.tabla(
+            dd.geih.filtrar(dd.geih.load(2016, raiz=geih_root, cache=False), filtros), por="sexo"
+        )
+        pd.testing.assert_frame_equal(
+            dd.geih.serie_tabla(2016, por="sexo", raiz=geih_root, filtros=filtros),
+            esperado,
+            check_dtype=False,
+            rtol=1e-9,
+        )
 
 
-@pytest.mark.parametrize("pedido", [
-    dict(por=["anio", "sexo"]),
-    dict(por=["sexo", "nivel_educativo"], estadistico="porcentaje"),
-    dict(por="zona", estadistico="porcentaje", poblacion="ocupado"),
-    dict(por="sexo", variable="ingreso_laboral", estadistico="media"),
-    dict(por="zona", variable="edad", estadistico="mediana", filtros={"edad": (10, 60)}),
-    dict(por=None, variable="edad", estadistico="mediana", poblacion="pet"),
-    dict(por=["anio", "posicion_ocupacional"], estadistico="porcentaje", dropna=True),
-    dict(por="departamento", filtros={"sexo": ["Mujer"]}, meses=[1]),
-])
+@pytest.mark.parametrize(
+    "pedido",
+    [
+        dict(por=["anio", "sexo"]),
+        dict(por=["sexo", "nivel_educativo"], estadistico="porcentaje"),
+        dict(por="zona", estadistico="porcentaje", poblacion="ocupado"),
+        dict(por="sexo", variable="ingreso_laboral", estadistico="media"),
+        dict(por="zona", variable="edad", estadistico="mediana", filtros={"edad": (10, 60)}),
+        dict(por=None, variable="edad", estadistico="mediana", poblacion="pet"),
+        dict(por=["anio", "posicion_ocupacional"], estadistico="porcentaje", dropna=True),
+        dict(por="departamento", filtros={"sexo": ["Mujer"]}, meses=[1]),
+    ],
+)
 def test_serie_tabla_igual_a_tabla(geih_root, tmp_path, monkeypatch, pedido):
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
     df = dd.geih.load([2016, 2025], meses=pedido.get("meses"), raiz=geih_root, cache=False)
     df = dd.geih.filtrar(df, pedido.get("filtros"), pedido.get("poblacion"))
     if pedido.get("dropna"):
         df = df.dropna(subset=pedido["por"])
-    esperado = dd.tabla(df, por=pedido.get("por"), variable=pedido.get("variable"),
-                        estadistico=pedido.get("estadistico", "total"))
+    esperado = dd.tabla(
+        df,
+        por=pedido.get("por"),
+        variable=pedido.get("variable"),
+        estadistico=pedido.get("estadistico", "total"),
+    )
     serie = dd.geih.serie_tabla([2016, 2025], raiz=geih_root, **pedido)
     pd.testing.assert_frame_equal(serie, esperado, check_dtype=False, rtol=1e-9)
 
@@ -726,9 +997,16 @@ def test_serie_frecuencias_variable_que_no_existe_algunos_anios(geih_root, tmp_p
 
 def test_exportar_mes_a_mes(geih_root, tmp_path):
     ruta = tmp_path / "salida" / "ocupados.csv"
-    filas = dd.geih.exportar([2016, 2025], ruta, variables=["fex", "sexo", "ingreso_laboral"], poblacion="ocupado",
-                             raiz=geih_root)
-    esperado = dd.geih.filtrar(dd.geih.load([2016, 2025], raiz=geih_root, cache=False), poblacion="ocupado")
+    filas = dd.geih.exportar(
+        [2016, 2025],
+        ruta,
+        variables=["fex", "sexo", "ingreso_laboral"],
+        poblacion="ocupado",
+        raiz=geih_root,
+    )
+    esperado = dd.geih.filtrar(
+        dd.geih.load([2016, 2025], raiz=geih_root, cache=False), poblacion="ocupado"
+    )
     leido = pd.read_csv(ruta, encoding="utf-8-sig")
     assert filas == len(esperado) == len(leido)
     assert list(leido.columns) == ["anio", "mes", "fex", "sexo", "ingreso_laboral"]
@@ -741,9 +1019,12 @@ def test_exportar_sin_variables_escribe_todas_las_armonizadas(geih_root, tmp_pat
     """Sin ``variables`` no se recorta a las columnas de los filtros."""
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
     ruta = tmp_path / "ocupados.csv"
-    filas = dd.geih.exportar([2016, 2025], ruta, poblacion="ocupado", filtros={"sexo": ["Mujer"]}, raiz=geih_root)
-    esperado = dd.geih.filtrar(dd.geih.load([2016, 2025], raiz=geih_root, cache=False), {"sexo": ["Mujer"]},
-                               "ocupado")
+    filas = dd.geih.exportar(
+        [2016, 2025], ruta, poblacion="ocupado", filtros={"sexo": ["Mujer"]}, raiz=geih_root
+    )
+    esperado = dd.geih.filtrar(
+        dd.geih.load([2016, 2025], raiz=geih_root, cache=False), {"sexo": ["Mujer"]}, "ocupado"
+    )
     leido = pd.read_csv(ruta, encoding="utf-8-sig")
     assert filas == len(esperado) == len(leido)
     assert list(leido.columns) == [c for c in esperado.columns if c == c.lower()]
@@ -762,7 +1043,9 @@ REAL = Path(os.environ.get("DANE_DATA_TEST_GEIH", dd.get_path("geih")))
 
 
 @pytest.mark.skipif(not (REAL / "datos_csv" / "2025").is_dir(), reason="sin datos GEIH reales")
-@pytest.mark.parametrize("anio,mes,td", [(2016, 1, 11.9), (2019, 1, 12.8), (2021, 1, 17.3), (2025, 1, 11.6)])
+@pytest.mark.parametrize(
+    "anio,mes,td", [(2016, 1, 11.9), (2019, 1, 12.8), (2021, 1, 17.3), (2025, 1, 11.6)]
+)
 def test_real_td_matches_dane(anio, mes, td):
     df = dd.geih.load(anio, meses=mes, raiz=REAL)
     assert dd.geih.indicadores(df)["td"].item() == pytest.approx(td, abs=0.15)
@@ -774,20 +1057,32 @@ PUBLICADO = pd.read_csv(Path(__file__).parent / "datos" / "dane_publicado.csv", 
 
 def _disponibles_reales(empalme: bool) -> tuple[Path, pd.DataFrame]:
     root = REAL_EMPALME if empalme else REAL
-    av = dd.geih.available(empalme=empalme, raiz=root) if (root / "datos_csv").is_dir() else pd.DataFrame()
+    av = (
+        dd.geih.available(empalme=empalme, raiz=root)
+        if (root / "datos_csv").is_dir()
+        else pd.DataFrame()
+    )
     if av.empty:
         pytest.skip(f"sin datos GEIH reales en {root}")
     return root, av
 
 
 # grupo del CSV -> desagregación de serie_indicadores
-GRUPOS_PUBLICADOS = {"total": (None, None), "urbano": ("zona", "Urbano (cabecera)"),
-                     "hombres": ("sexo", "Hombre"), "mujeres": ("sexo", "Mujer")}
-# Diferencias que vienen de los microdatos del ANDA y no tienen arreglo (ver README): no se comparan.
+GRUPOS_PUBLICADOS = {
+    "total": (None, None),
+    "urbano": ("zona", "Urbano (cabecera)"),
+    "hombres": ("sexo", "Hombre"),
+    "mujeres": ("sexo", "Mujer"),
+}
+# Diferencias que vienen de los microdatos del ANDA y no tienen arreglo (ver README): no se
+# comparan.
 SIN_COMPARAR = {
-    # Putumayo sin características (Mocoa no se encuestó en abril ni mayo); los totales sí coinciden
-    ("empalme", "hombres", 2017, 4), ("empalme", "mujeres", 2017, 4),
-    ("empalme", "hombres", 2017, 5), ("empalme", "mujeres", 2017, 5),
+    # Putumayo sin características (Mocoa no se encuestó en abril ni mayo); los totales sí
+    # coinciden
+    ("empalme", "hombres", 2017, 4),
+    ("empalme", "mujeres", 2017, 4),
+    ("empalme", "hombres", 2017, 5),
+    ("empalme", "mujeres", 2017, 5),
 }
 
 
@@ -821,40 +1116,71 @@ def test_real_coincide_con_lo_publicado(empalme):
         if grupo == "total":
             calculados = set(zip(mensual["anio"], mensual["mes"]))
             for a, ms, falta in zip(av["anio"], av["mes"], av["faltantes"]):
-                if a in anios_grupo and (a, ms) not in calculados and ((pub["anio"] == a) & (pub["mes"] == ms)).any():
-                    problemas.append(f"{a}-{ms:02d}: no se pudo calcular (falta {falta or 'todo: el mes se leyó vacío'})")
+                if (
+                    a in anios_grupo
+                    and (a, ms) not in calculados
+                    and ((pub["anio"] == a) & (pub["mes"] == ms)).any()
+                ):
+                    problemas.append(
+                        f"{a}-{ms:02d}: no se pudo calcular (falta "
+                        f"{falta or 'todo: el mes se leyó vacío'})"
+                    )
         for _, r in mensual.merge(pub, on=["anio", "mes"], suffixes=("", "_dane")).iterrows():
             if (r["serie"], grupo, r["anio"], r["mes"]) in SIN_COMPARAR:
                 continue
             fecha = f"{int(r['anio'])}-{int(r['mes']):02d}{nombre}"
             for tasa in ("td", "tgp", "to"):
                 if not abs(r[tasa] - r[f"{tasa}_dane"]) <= 0.01:
-                    problemas.append(f"{fecha}: {tasa.upper()} {r[tasa]:.2f}, el DANE publica {r[f'{tasa}_dane']:.2f}")
+                    problemas.append(
+                        f"{fecha}: {tasa.upper()} {r[tasa]:.2f}, el DANE publica "
+                        f"{r[f'{tasa}_dane']:.2f}"
+                    )
             if not abs(r["ocupados"] / (1000 * r["ocupados_dane"]) - 1) <= 1e-4:
-                problemas.append(f"{fecha}: {r['ocupados'] / 1e3:,.0f} mil ocupados, el DANE publica "
-                                 f"{r['ocupados_dane']:,.0f} mil")
+                problemas.append(
+                    f"{fecha}: {r['ocupados'] / 1e3:,.0f} mil ocupados, el DANE publica "
+                    f"{r['ocupados_dane']:,.0f} mil"
+                )
 
-        completos = [a for a in anios_grupo if (mensual["anio"] == a).sum() == 12 and (pub["anio"] == a).sum() == 12]
+        completos = [
+            a
+            for a in anios_grupo
+            if (mensual["anio"] == a).sum() == 12 and (pub["anio"] == a).sum() == 12
+        ]
         if completos:
-            niveles = pub[pub["anio"].isin(completos)].groupby("anio")[["pet", "ocupados", "desocupados"]].mean()
+            niveles = (
+                pub[pub["anio"].isin(completos)]
+                .groupby("anio")[["pet", "ocupados", "desocupados"]]
+                .mean()
+            )
             fuerza = niveles["ocupados"] + niveles["desocupados"]
-            dane = pd.DataFrame({"td": 100 * niveles["desocupados"] / fuerza, "tgp": 100 * fuerza / niveles["pet"],
-                                 "to": 100 * niveles["ocupados"] / niveles["pet"]})
+            dane = pd.DataFrame(
+                {
+                    "td": 100 * niveles["desocupados"] / fuerza,
+                    "tgp": 100 * fuerza / niveles["pet"],
+                    "to": 100 * niveles["ocupados"] / niveles["pet"],
+                }
+            )
             anual = _serie_grupo(completos, grupo, True, empalme, root).set_index("anio")
             for a in completos:
                 for tasa in ("td", "tgp", "to"):
                     if not abs(anual.at[a, tasa] - dane.at[a, tasa]) <= 0.01:
-                        problemas.append(f"{a} anual{nombre}: {tasa.upper()} {anual.at[a, tasa]:.2f}, con las cifras "
-                                         f"mensuales del DANE da {dane.at[a, tasa]:.2f}")
-    assert not problemas, f"{len(problemas)} diferencia(s) con lo publicado por el DANE:\n" + \
-        "\n".join(sorted(problemas))
+                        problemas.append(
+                            f"{a} anual{nombre}: {tasa.upper()} {anual.at[a, tasa]:.2f}, con las "
+                            f"cifras mensuales del DANE da {dane.at[a, tasa]:.2f}"
+                        )
+    assert not problemas, (
+        f"{len(problemas)} diferencia(s) con lo publicado por el DANE:\n"
+        + "\n".join(sorted(problemas))
+    )
 
 
 # Cambios de metodología: la PET cambia de golpe y es correcto.
 QUIEBRES_PET = {
-    False: {(2020, 1): "2020 viene con proyecciones CNPV 2018 y PET de 15 años o más",
-            (2021, 1): "2021 vuelve al marco 2005 (PET 12+ urbano, 10+ rural)",
-            (2022, 1): "rediseño 2022: marco 2018 y PET de 15 años o más"},
+    False: {
+        (2020, 1): "2020 viene con proyecciones CNPV 2018 y PET de 15 años o más",
+        (2021, 1): "2021 vuelve al marco 2005 (PET 12+ urbano, 10+ rural)",
+        (2022, 1): "rediseño 2022: marco 2018 y PET de 15 años o más",
+    },
     True: {},
 }
 CHOQUES = {(2020, 4): "inicio de la pandemia"}  # saltos reales en las tasas
@@ -867,14 +1193,22 @@ def test_real_serie_mensual_sin_saltos(empalme):
     cambio de más de 1 % delata un factor de expansión dañado o una PET con otra definición.
     """
     root, av = _disponibles_reales(empalme)
-    m = dd.geih.serie_indicadores(sorted(av.anio.unique()), anual=False, empalme=empalme, raiz=root)
+    m = dd.geih.serie_indicadores(
+        sorted(av.anio.unique()), anual=False, empalme=empalme, raiz=root
+    )
 
     problemas = []
-    faltan = set(zip(av.loc[av.completo, "anio"], av.loc[av.completo, "mes"])) - set(zip(m.anio, m.mes))
-    problemas += [f"{a}-{ms:02d}: mes completo en disco sin filas en la serie" for a, ms in sorted(faltan)]
+    faltan = set(zip(av.loc[av.completo, "anio"], av.loc[av.completo, "mes"])) - set(
+        zip(m.anio, m.mes)
+    )
+    problemas += [
+        f"{a}-{ms:02d}: mes completo en disco sin filas en la serie" for a, ms in sorted(faltan)
+    ]
     validos = (m["pet"] > 0) & m[["td", "tgp", "to"]].notna().all(axis=1)
-    problemas += [f"{a}-{ms:02d}: sin población expandida o tasas vacías (¿fex dañado?)"
-                  for a, ms in zip(m.loc[~validos, "anio"], m.loc[~validos, "mes"])]
+    problemas += [
+        f"{a}-{ms:02d}: sin población expandida o tasas vacías (¿fex dañado?)"
+        for a, ms in zip(m.loc[~validos, "anio"], m.loc[~validos, "mes"])
+    ]
 
     m = m[validos].sort_values(["anio", "mes"]).reset_index(drop=True)
     indice = m["anio"] * 12 + m["mes"]
@@ -888,8 +1222,10 @@ def test_real_serie_mensual_sin_saltos(empalme):
             salto = ahora[tasa] - antes[tasa]
             if abs(salto) > 5 and (a, ms) not in CHOQUES:
                 problemas.append(f"{a}-{ms:02d}: {tasa.upper()} salta {salto:+.1f} p.p.")
-    assert not problemas, f"{len(problemas)} problema(s) en la serie {'empalme' if empalme else 'principal'}:\n" + \
-        "\n".join(sorted(problemas))
+    assert not problemas, (
+        f"{len(problemas)} problema(s) en la serie {'empalme' if empalme else 'principal'}:\n"
+        + "\n".join(sorted(problemas))
+    )
 
 
 def test_anios_y_meses_de_numpy(geih_root, tmp_path, monkeypatch):
@@ -902,35 +1238,42 @@ def test_anios_y_meses_de_numpy(geih_root, tmp_path, monkeypatch):
     t = dd.geih.serie_tabla(np.int64(2016), meses=np.int64(1), raiz=geih_root)
     assert t["total"].item() == pytest.approx(dd.tabla(df)["total"].item())
     # Un mes como texto es ese mes: "12" no es enero y febrero
-    assert dd.geih.load(2016, meses="1", raiz=geih_root, cache=False)["mes"].unique().tolist() == [1]
+    assert dd.geih.load(2016, meses="1", raiz=geih_root, cache=False)["mes"].unique().tolist() == [
+        1
+    ]
     with pytest.raises(FileNotFoundError):
         dd.geih.load(2025, meses="12", raiz=geih_root, cache=False, incluir_incompletos=True)
 
 
 def test_cache_sin_usar_se_borra_sola(geih_root, tmp_path, monkeypatch):
-    """Cada combinación de filtros o columnas crea archivos: lo que no se usa en 90 días se borra solo."""
+    """Cada combinación de filtros o columnas crea archivos: lo que no se usa en 90 días se borra
+    solo.
+    """
     import os
     import time
 
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
     carpeta = tmp_path / "cache" / "geih" / "indicadores"
     carpeta.mkdir(parents=True)
-    viejo, reciente = carpeta / "principal_2016_viejo.parquet", carpeta / "principal_2016_reciente.parquet"
+    viejo, reciente = (
+        carpeta / "principal_2016_viejo.parquet",
+        carpeta / "principal_2016_reciente.parquet",
+    )
     for f, dias in ((viejo, 100), (reciente, 10)):
         f.write_bytes(b"x")
         os.utime(f, (time.time() - dias * 86400,) * 2)
 
-    dd.geih.load(2016, raiz=geih_root)                       # escribe la caché del mes: limpia
+    dd.geih.load(2016, raiz=geih_root)  # escribe la caché del mes: limpia
     assert not viejo.exists() and reciente.exists()
     (mes,) = (tmp_path / "cache" / "geih").glob("2016_01_*.parquet")
 
-    otro = carpeta / "principal_2016_otro.parquet"           # la limpieza se hace como mucho una vez al día
+    otro = carpeta / "principal_2016_otro.parquet"  # la limpieza se hace como mucho una vez al día
     otro.write_bytes(b"x")
     os.utime(otro, (time.time() - 100 * 86400,) * 2)
     dd.geih.load(2016, raiz=geih_root, variables=["fex", "sexo"])
     assert otro.exists()
 
-    os.utime(mes, (time.time() - 100 * 86400,) * 2)          # leerla la marca como usada
+    os.utime(mes, (time.time() - 100 * 86400,) * 2)  # leerla la marca como usada
     dd.geih.load(2016, raiz=geih_root)
     assert time.time() - mes.stat().st_mtime < 60
     assert dd.geih.clear_cache(dias=30) == 1 and not otro.exists() and mes.exists()
@@ -940,7 +1283,9 @@ def _informalidad(**filas):
     """Ocupados con las preguntas de la medición del DANE; lo que no se indica queda vacío."""
     from dane_data.geih.loader import COLUMNAS_INFORMALIDAD
 
-    df = pd.DataFrame([{c: np.nan for c in COLUMNAS_INFORMALIDAD} | f for f in filas.values()], index=list(filas))
+    df = pd.DataFrame(
+        [{c: np.nan for c in COLUMNAS_INFORMALIDAD} | f for f in filas.values()], index=list(filas)
+    )
     return df.assign(anio=df.get("anio", 2025)).fillna({"anio": 2025})
 
 
@@ -954,35 +1299,94 @@ def test_formal_como_el_codigo_del_dane():
         "familiar sin remuneración": (dict(P6430=6), 0),
         "familiar sin remuneración en el gobierno": (dict(P6430=6, RAMA2D_R4=84), 0),
         "otro": (dict(P6430=8), 0),
-        "asalariado con salud y pensión pagadas por la empresa": (dict(P6430=1, **salud_y_pension), 1),
+        "asalariado con salud y pensión pagadas por la empresa": (
+            dict(P6430=1, **salud_y_pension),
+            1,
+        ),
         "jornalero (7) con salud y pensión": (dict(P6430=7, **salud_y_pension), 1),
-        "asalariado en el régimen subsidiado": (dict(P6430=1, **{**salud_y_pension, "P6100": 3}), 0),
+        "asalariado en el régimen subsidiado": (
+            dict(P6430=1, **{**salud_y_pension, "P6100": 3}),
+            0,
+        ),
         "asalariado beneficiario en salud": (dict(P6430=1, **{**salud_y_pension, "P6110": 5}), 0),
-        "asalariado que paga solo su pensión": (dict(P6430=1, **{**salud_y_pension, "P6940": 2}), 0),
+        "asalariado que paga solo su pensión": (
+            dict(P6430=1, **{**salud_y_pension, "P6940": 2}),
+            0,
+        ),
         "asalariado en el fondo subsidiado": (dict(P6430=1, **{**salud_y_pension, "P6930": 4}), 0),
         "asalariado ya pensionado": (dict(P6430=1, P6100=1, P6110=4, P6920=3), 1),
-        "asalariado que no sabe su régimen, contrato escrito": (dict(P6430=1, P6100=9, P6450=2, P6920=3), 1),
-        "asalariado que no sabe su régimen, contrato verbal": (dict(P6430=1, P6100=9, P6450=1, P6920=3), 0),
+        "asalariado que no sabe su régimen, contrato escrito": (
+            dict(P6430=1, P6100=9, P6450=2, P6920=3),
+            1,
+        ),
+        "asalariado que no sabe su régimen, contrato verbal": (
+            dict(P6430=1, P6100=9, P6450=1, P6920=3),
+            0,
+        ),
         "asalariado en la administración pública": (dict(P6430=1, RAMA2D_R4=84), 1),
         "empleada doméstica con salud y pensión": (dict(P6430=3, **salud_y_pension), 1),
         "empleada doméstica sin pensión": (dict(P6430=3, P6100=1, P6110=1, P6920=2), 0),
         "cuenta propia sin negocio, registrado": (dict(P6430=4, P6765=1, P3065=1), 1),
-        "cuenta propia sin negocio, con contabilidad": (dict(P6430=4, P6765=3, P3065=2, P3066=1), 1),
-        "cuenta propia sin negocio, sin contabilidad": (dict(P6430=4, P6765=1, P3065=2, P3066=2), 0),
-        "cuenta propia que no sabe, profesional (2310)": (dict(P6430=4, P6765=1, P3065=9, P3066=9, OFICIO_C8=2310), 0),
-        "cuenta propia que no sabe, directivo (1120)": (dict(P6430=4, P6765=1, P3065=9, P3066=9, OFICIO_C8=1120), 1),
-        "cuenta propia que no sabe, oficio 0 (0000)": (dict(P6430=4, P6765=1, P3065=9, P3066=9, OFICIO_C8=0), 1),
-        "cuenta propia que no sabe, oficio con decimales": (dict(P6430=4, P6765=1, P3065=9, P3066=9, OFICIO_C8=1120.5),
-                                                            None),
-        "patrón que no sabe, 6 o más personas": (dict(P6430=5, P6765=1, P3065=9, P3066=9, P3069=4), 1),
-        "patrón que no sabe, hasta 5 personas": (dict(P6430=5, P6765=1, P3065=9, P3066=9, P3069=3), 0),
-        "negocio registrado y renovado el año pasado": (dict(P6430=4, P6765=7, P3067=1, P3067S1=1, P3067S2=2024), 1),
-        "negocio registrado, renovado hace tres años": (dict(P6430=4, P6765=7, P3067=1, P3067S1=1, P3067S2=2022), 0),
-        "negocio registrado sin renovar, con contabilidad": (dict(P6430=5, P6765=7, P3067=1, P3067S1=2, P6775=1), 1),
-        "negocio sin registro, contabilidad y gastos separados": (dict(P6430=4, P6765=7, P3067=2, P6775=1, P3068=1), 1),
-        "negocio sin registro, contabilidad sin separar gastos": (dict(P6430=4, P6765=7, P3067=2, P6775=1, P3068=2), 0),
-        "negocio sin registro, «no aplica» (3, desde 2023)": (dict(P6430=4, P6765=7, P3067=2, P6775=1, P3068=3), 0),
-        "patrón en un organismo extraterritorial": (dict(P6430=5, P6765=7, P3067=2, P6775=2, RAMA2D_R4=99), 1),
+        "cuenta propia sin negocio, con contabilidad": (
+            dict(P6430=4, P6765=3, P3065=2, P3066=1),
+            1,
+        ),
+        "cuenta propia sin negocio, sin contabilidad": (
+            dict(P6430=4, P6765=1, P3065=2, P3066=2),
+            0,
+        ),
+        "cuenta propia que no sabe, profesional (2310)": (
+            dict(P6430=4, P6765=1, P3065=9, P3066=9, OFICIO_C8=2310),
+            0,
+        ),
+        "cuenta propia que no sabe, directivo (1120)": (
+            dict(P6430=4, P6765=1, P3065=9, P3066=9, OFICIO_C8=1120),
+            1,
+        ),
+        "cuenta propia que no sabe, oficio 0 (0000)": (
+            dict(P6430=4, P6765=1, P3065=9, P3066=9, OFICIO_C8=0),
+            1,
+        ),
+        "cuenta propia que no sabe, oficio con decimales": (
+            dict(P6430=4, P6765=1, P3065=9, P3066=9, OFICIO_C8=1120.5),
+            None,
+        ),
+        "patrón que no sabe, 6 o más personas": (
+            dict(P6430=5, P6765=1, P3065=9, P3066=9, P3069=4),
+            1,
+        ),
+        "patrón que no sabe, hasta 5 personas": (
+            dict(P6430=5, P6765=1, P3065=9, P3066=9, P3069=3),
+            0,
+        ),
+        "negocio registrado y renovado el año pasado": (
+            dict(P6430=4, P6765=7, P3067=1, P3067S1=1, P3067S2=2024),
+            1,
+        ),
+        "negocio registrado, renovado hace tres años": (
+            dict(P6430=4, P6765=7, P3067=1, P3067S1=1, P3067S2=2022),
+            0,
+        ),
+        "negocio registrado sin renovar, con contabilidad": (
+            dict(P6430=5, P6765=7, P3067=1, P3067S1=2, P6775=1),
+            1,
+        ),
+        "negocio sin registro, contabilidad y gastos separados": (
+            dict(P6430=4, P6765=7, P3067=2, P6775=1, P3068=1),
+            1,
+        ),
+        "negocio sin registro, contabilidad sin separar gastos": (
+            dict(P6430=4, P6765=7, P3067=2, P6775=1, P3068=2),
+            0,
+        ),
+        "negocio sin registro, «no aplica» (3, desde 2023)": (
+            dict(P6430=4, P6765=7, P3067=2, P6775=1, P3068=3),
+            0,
+        ),
+        "patrón en un organismo extraterritorial": (
+            dict(P6430=5, P6765=7, P3067=2, P6775=2, RAMA2D_R4=99),
+            1,
+        ),
         "asalariado de 2021 (sin las preguntas)": (dict(P6430=2, anio=2021), None),
     }
     df = _informalidad(**{k: v for k, (v, _) in casos.items()})
@@ -991,7 +1395,9 @@ def test_formal_como_el_codigo_del_dane():
     pd.testing.assert_series_equal(obtenido, esperado, check_names=False)
 
 
-INFORMALIDAD_PUBLICADA = pd.read_csv(Path(__file__).parent / "datos" / "dane_informalidad.csv", comment="#")
+INFORMALIDAD_PUBLICADA = pd.read_csv(
+    Path(__file__).parent / "datos" / "dane_informalidad.csv", comment="#"
+)
 
 
 def test_real_informalidad_coincide_con_lo_publicado():
@@ -1001,15 +1407,20 @@ def test_real_informalidad_coincide_con_lo_publicado():
     if not anios:
         pytest.skip("ningún año descargado tiene cifras de informalidad publicadas")
     res = dd.geih.serie_indicadores(anios, anual=False, raiz=root).merge(
-        INFORMALIDAD_PUBLICADA, on=["anio", "mes"], suffixes=("", "_dane"))
+        INFORMALIDAD_PUBLICADA, on=["anio", "mes"], suffixes=("", "_dane")
+    )
     assert len(res)
     informales = res["tasa_informalidad"] * res["ocupados"] / 100
-    malos = res.loc[~((informales / (1000 * res["informales"]) - 1).abs() <= 1e-4), ["anio", "mes"]]
+    malos = res.loc[
+        ~((informales / (1000 * res["informales"]) - 1).abs() <= 1e-4), ["anio", "mes"]
+    ]
     assert malos.empty, f"informales distintos de los publicados en {malos.values.tolist()}"
 
 
 def test_formal_marco2005_como_lo_publicaba_el_dane():
-    """La medición anterior: empresas de hasta 5 personas (P6870 1 a 3), salvo gobierno, «otro» y profesionales."""
+    """La medición anterior: empresas de hasta 5 personas (P6870 1 a 3), salvo gobierno, «otro» y
+    profesionales.
+    """
     from dane_data.geih.loader import _formal_marco2005
 
     casos = {
@@ -1033,23 +1444,33 @@ def test_formal_marco2005_como_lo_publicaba_el_dane():
         "sin tamaño de empresa (marzo de 2020)": (dict(P6430=1, OFICIO=33), None),
         "2022 (ya no se publica)": (dict(P6430=1, P6870=1, OFICIO=33, anio=2022), None),
     }
-    df = pd.DataFrame([{"P6430": np.nan, "P6870": np.nan, "OFICIO": np.nan, "anio": 2016} | v for v, _ in casos.values()],
-                      index=list(casos))
+    df = pd.DataFrame(
+        [
+            {"P6430": np.nan, "P6870": np.nan, "OFICIO": np.nan, "anio": 2016} | v
+            for v, _ in casos.values()
+        ],
+        index=list(casos),
+    )
     esperado = pd.Series({k: e for k, (_, e) in casos.items()}, dtype="float64")
     pd.testing.assert_series_equal(_formal_marco2005(df, df["anio"]), esperado, check_names=False)
 
 
-INFORMALIDAD_2005 = pd.read_csv(Path(__file__).parent / "datos" / "dane_informalidad_marco2005.csv", comment="#")
+INFORMALIDAD_2005 = pd.read_csv(
+    Path(__file__).parent / "datos" / "dane_informalidad_marco2005.csv", comment="#"
+)
 # AREA de cada dominio en que el DANE publicaba la medición anterior
 CIUDADES_2005 = {"13 ciudades": [11, 5, 76, 8, 68, 17, 52, 66, 54, 73, 23, 13, 50]}
-CIUDADES_2005["23 ciudades"] = CIUDADES_2005["13 ciudades"] + [15, 18, 19, 20, 27, 41, 44, 47, 63, 70]
+# fmt: off
+CIUDADES_2005["23 ciudades"] = CIUDADES_2005["13 ciudades"] + [15, 18, 19, 20, 27, 41, 44, 47, 63,
+              70]
+# fmt: on
 
 
 def test_real_informalidad_marco2005_coincide_con_lo_publicado():
     """
-    Informales de cada trimestre móvil de 2007–2019 y 2021 en 13 y 23 ciudades = los del anexo de octubre a
-    diciembre de 2021. 2020 no se compara: sus microdatos en el ANDA vienen con el CNPV 2018 y el anexo usa el
-    censo 2005.
+    Informales de cada trimestre móvil de 2007–2019 y 2021 en 13 y 23 ciudades = los del anexo de
+    octubre a diciembre de 2021. 2020 no se compara: sus microdatos en el ANDA vienen con el CNPV
+    2018 y el anexo usa el censo 2005.
     """
     root, av = _disponibles_reales(empalme=False)
     anios = sorted(set(av["anio"]) & set(range(2007, 2022)) - {2020})
@@ -1058,11 +1479,18 @@ def test_real_informalidad_marco2005_coincide_con_lo_publicado():
     malos = []
     for dominio, areas in CIUDADES_2005.items():
         m = dd.geih.serie_indicadores(anios, anual=False, filtros={"AREA": areas}, raiz=root)
-        m = m.set_index(["anio", "mes"]).reindex(pd.MultiIndex.from_product([range(2007, 2022), range(1, 13)],
-                                                                           names=["anio", "mes"]))
-        informales = (m["tasa_informalidad_marco2005"] * m["ocupados"] / 100).rolling(3).mean() / 1e3
-        pub = INFORMALIDAD_2005[INFORMALIDAD_2005["dominio"] == dominio].set_index(["anio", "mes"])["informales"]
+        m = m.set_index(["anio", "mes"]).reindex(
+            pd.MultiIndex.from_product([range(2007, 2022), range(1, 13)], names=["anio", "mes"])
+        )
+        informales = (m["tasa_informalidad_marco2005"] * m["ocupados"] / 100).rolling(
+            3
+        ).mean() / 1e3
+        pub = INFORMALIDAD_2005[INFORMALIDAD_2005["dominio"] == dominio].set_index(
+            ["anio", "mes"]
+        )["informales"]
         d = (informales.reindex(pub.index) / pub - 1).dropna()
         assert len(d) > 0
-        malos += [f"{dominio} {a}-{mes:02d}: {x:+.2e}" for (a, mes), x in d.items() if abs(x) > 1e-4]
+        malos += [
+            f"{dominio} {a}-{mes:02d}: {x:+.2e}" for (a, mes), x in d.items() if abs(x) > 1e-4
+        ]
     assert not malos, malos

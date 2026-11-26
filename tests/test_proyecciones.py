@@ -7,14 +7,25 @@ import pytest
 import dane_data as dd
 
 
-@pytest.mark.parametrize("anio, total", [(1950, 13_570_943), (1985, 30_419_892), (2005, 41_671_878),
-                                         (2018, 48_258_494), (2025, 53_057_212), (2070, 50_592_097)])
+@pytest.mark.parametrize(
+    "anio, total",
+    [
+        (1950, 13_570_943),
+        (1985, 30_419_892),
+        (2005, 41_671_878),
+        (2018, 48_258_494),
+        (2025, 53_057_212),
+        (2070, 50_592_097),
+    ],
+)
 def test_totales_del_dane(anio, total):
     assert dd.poblacion(anio)["poblacion"].tolist() == [total]
 
 
 def test_empalmes_sin_saltos():
-    """Los años en que cambia de archivo del DANE (1985, 1993, 2005, 2018, 2046, 2051) no saltan."""
+    """Los años en que cambia de archivo del DANE (1985, 1993, 2005, 2018, 2046, 2051) no
+    saltan.
+    """
     serie = dd.poblacion().set_index("anio")["poblacion"]
     variacion = serie.pct_change().abs().dropna()
     assert variacion.max() < 0.03
@@ -30,7 +41,14 @@ def test_departamentos_suman_el_total():
 
 def test_desagregaciones_suman_el_total():
     total = dd.poblacion(2020)["poblacion"].iloc[0]
-    for por in ("sexo", "area", "edad", "dpto", ["sexo", "area"], ["departamento", "sexo", "edad"]):
+    for por in (
+        "sexo",
+        "area",
+        "edad",
+        "dpto",
+        ["sexo", "area"],
+        ["departamento", "sexo", "edad"],
+    ):
         assert dd.poblacion(2020, por=por)["poblacion"].sum() == total
 
 
@@ -69,8 +87,16 @@ def test_area_sin_partir_sale_como_total():
     assert dd.poblacion(2060, por="area")["area"].tolist() == ["Total"]
 
 
-@pytest.mark.parametrize("kw", [dict(por="municipio"), dict(sexo="Otro"), dict(area="Rural"),
-                                dict(departamento="Narnia"), dict(departamento=2)])
+@pytest.mark.parametrize(
+    "kw",
+    [
+        dict(por="municipio"),
+        dict(sexo="Otro"),
+        dict(area="Rural"),
+        dict(departamento="Narnia"),
+        dict(departamento=2),
+    ],
+)
 def test_argumentos_invalidos(kw):
     with pytest.raises(ValueError):
         dd.poblacion(2020, **kw)

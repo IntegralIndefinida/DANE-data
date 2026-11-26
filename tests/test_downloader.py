@@ -12,15 +12,32 @@ from dane_data.eam.downloader import EAM_TIC_CATALOGS, EAMDownloader
 from dane_data.ecv.downloader import ECV_KNOWN_FILES, ECVDownloader
 from dane_data.eevv.downloader import EEVV_KNOWN_FILES, EEVVDownloader
 from dane_data.emicron.downloader import EMICRON_KNOWN_FILES, EMICRONDownloader
-from dane_data.geih.downloader import MARCADOR, GEIHDownloader, faltantes_mes, is_target_csv, mes_completo
+from dane_data.geih.downloader import (
+    MARCADOR,
+    GEIHDownloader,
+    faltantes_mes,
+    is_target_csv,
+    mes_completo,
+)
 from dane_data.pobreza.downloader import POBREZA_KNOWN_FILES, PobrezaDownloader
 
 CAR = "DIRECTORIO;SECUENCIA_P;ORDEN;P6040;FEX_C18\n1;1;1;30;10\n"
 MOD = "DIRECTORIO;SECUENCIA_P;ORDEN;FEX_C18\n1;1;1;10\n"
-TODOS = ("vivienda", "caracteristicas", "fuerza_trabajo", "ocupados", "desocupados", "inactivos",
-         "otras_formas_trabajo", "otros_ingresos", "migracion")
-NOMBRES_MESES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre",
-                 "Octubre", "Noviembre", "Diciembre"]
+TODOS = (
+    "vivienda",
+    "caracteristicas",
+    "fuerza_trabajo",
+    "ocupados",
+    "desocupados",
+    "inactivos",
+    "otras_formas_trabajo",
+    "otros_ingresos",
+    "migracion",
+)
+# fmt: off
+NOMBRES_MESES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto",
+                 "Septiembre", "Octubre", "Noviembre", "Diciembre"]
+# fmt: on
 
 
 def _zip(files: dict) -> bytes:
@@ -34,18 +51,30 @@ def _zip(files: dict) -> bytes:
 def _mes_2024(nested_name="CSV 13.zip"):
     """Paquete mensual 2022+: parte de los CSV viene en un ZIP anidado con nombre raro."""
     nested = _zip({"Fuerza de trabajo.CSV": MOD, "No ocupados.CSV": MOD})
-    return _zip({
-        "Características generales, seguridad social en salud y educación.CSV": CAR,
-        "Ocupados.CSV": MOD, "Datos del hogar y la vivienda.CSV": MOD, "Otras formas de trabajo.CSV": MOD,
-        nested_name: nested, "DTA.zip": _zip({"x.dta": "no"}),
-    })
+    return _zip(
+        {
+            "Características generales, seguridad social en salud y educación.CSV": CAR,
+            "Ocupados.CSV": MOD,
+            "Datos del hogar y la vivienda.CSV": MOD,
+            "Otras formas de trabajo.CSV": MOD,
+            nested_name: nested,
+            "DTA.zip": _zip({"x.dta": "no"}),
+        }
+    )
 
 
 def _mes_2024_con(**archivos):
-    """Paquete mensual 2022+ completo, sin ZIP anidado, con ``archivos`` cambiados (None: no lo trae)."""
-    base = {"Características generales, seguridad social en salud y educación.CSV": CAR, "Ocupados.CSV": MOD,
-            "Datos del hogar y la vivienda.CSV": MOD, "Otras formas de trabajo.CSV": MOD,
-            "Fuerza de trabajo.CSV": MOD, "No ocupados.CSV": MOD}
+    """Paquete mensual 2022+ completo, sin ZIP anidado, con ``archivos`` cambiados (None: no lo
+    trae).
+    """
+    base = {
+        "Características generales, seguridad social en salud y educación.CSV": CAR,
+        "Ocupados.CSV": MOD,
+        "Datos del hogar y la vivienda.CSV": MOD,
+        "Otras formas de trabajo.CSV": MOD,
+        "Fuerza de trabajo.CSV": MOD,
+        "No ocupados.CSV": MOD,
+    }
     return _zip({k: v for k, v in {**base, **archivos}.items() if v is not None})
 
 
@@ -74,7 +103,7 @@ def test_nested_zip_is_flattened(tmp_path, nombre):
     dl = FakeDownloader({"Marzo 2024.zip": _mes_2024(nombre)}, base_dir=tmp_path, keep_zips=False)
     dl.process_year("2024", "819")
     mes = tmp_path / "datos_csv" / "2024" / "Marzo 2024"
-    assert (mes / "No ocupados.CSV").exists()            # ya no queda en una subcarpeta
+    assert (mes / "No ocupados.CSV").exists()  # ya no queda en una subcarpeta
     assert not [d for d in mes.iterdir() if d.is_dir()]
     assert (mes / MARCADOR).exists()
     assert not (tmp_path / "raw_zips" / "2024" / "Marzo 2024.zip").exists()  # keep_zips=False
@@ -84,7 +113,7 @@ def test_skip_uses_marker_then_reextracts_incomplete_legacy(tmp_path):
     dl = FakeDownloader({"Marzo 2024.zip": _mes_2024()}, base_dir=tmp_path)
     dl.process_year("2024", "819")
     dl.process_year("2024", "819")
-    assert dl.descargas == ["Marzo 2024.zip"]           # la segunda vez se salta
+    assert dl.descargas == ["Marzo 2024.zip"]  # la segunda vez se salta
 
     # Carpeta "heredada" (sin marcador) con 5 CSV pero sin No ocupados: el viejo
     # conteo de archivos la daba por buena; ahora se vuelve a extraer.
@@ -98,7 +127,9 @@ def test_skip_uses_marker_then_reextracts_incomplete_legacy(tmp_path):
 
 
 def test_extraccion_interrumpida_no_deja_archivos_a_medias(tmp_path, monkeypatch):
-    """Si la copia se corta, no queda el archivo con su nombre final (ni el .part) ni el marcador."""
+    """Si la copia se corta, no queda el archivo con su nombre final (ni el .part) ni el
+    marcador.
+    """
     import dane_data._hooks as hooks
 
     original = hooks.shutil.copyfileobj
@@ -134,45 +165,79 @@ def test_archivo_truncado_se_vuelve_a_extraer(tmp_path):
 
 def test_empalme_con_un_mes_ilegible_no_escribe_marcador(tmp_path):
     """Un ZIP mensual dañado dentro del paquete anual: el año no queda como completo."""
-    mes = _zip({"Características generales (personas).CSV": CAR, "Ocupados.CSV": MOD,
-                "Fuerza de trabajo.CSV": MOD, "Desocupados.CSV": MOD})
-    danado = _zip({f"{i}. {m}.zip": (b"no es un zip" if m == "Marzo" else mes)
-                   for i, m in enumerate(NOMBRES_MESES, start=1)})
+    mes = _zip(
+        {
+            "Características generales (personas).CSV": CAR,
+            "Ocupados.CSV": MOD,
+            "Fuerza de trabajo.CSV": MOD,
+            "Desocupados.CSV": MOD,
+        }
+    )
+    danado = _zip(
+        {
+            f"{i}. {m}.zip": (b"no es un zip" if m == "Marzo" else mes)
+            for i, m in enumerate(NOMBRES_MESES, start=1)
+        }
+    )
     modulos = ("caracteristicas", "ocupados", "fuerza_trabajo", "desocupados")
-    dl = FakeDownloader({"GEIH_Empalme_2016.zip": danado}, base_dir=tmp_path, is_empalme=True, modules=modulos)
+    dl = FakeDownloader(
+        {"GEIH_Empalme_2016.zip": danado}, base_dir=tmp_path, is_empalme=True, modules=modulos
+    )
     dl.process_year("2016", "757")
     anio = tmp_path / "datos_csv" / "2016"
     assert (anio / "1. Enero" / "Ocupados.CSV").exists()
     assert not (anio / MARCADOR).exists()
 
-    # El ZIP con el mes dañado se borró (keep_zips=True por defecto): si no, se reutilizaría para siempre
+    # El ZIP con el mes dañado se borró (keep_zips=True por defecto): si no, se reutilizaría para
+    # siempre
     assert not (tmp_path / "raw_zips" / "2016" / "GEIH_Empalme_2016.zip").exists()
-    dl.paquetes["GEIH_Empalme_2016.zip"] = _zip({f"{i}. {m}.zip": mes for i, m in enumerate(NOMBRES_MESES, start=1)})
-    dl.process_year("2016", "757")                      # se vuelve a intentar
+    dl.paquetes["GEIH_Empalme_2016.zip"] = _zip(
+        {f"{i}. {m}.zip": mes for i, m in enumerate(NOMBRES_MESES, start=1)}
+    )
+    dl.process_year("2016", "757")  # se vuelve a intentar
     assert len(dl.descargas) == 2
     assert (anio / "3. Marzo" / "Ocupados.CSV").exists() and (anio / MARCADOR).exists()
 
 
 def test_empalme_forzar_sin_un_mes_conserva_lo_anterior(tmp_path):
-    """Con forzar, un paquete anual nuevo al que le falta un mes no borra ese mes de lo extraído antes."""
-    mes = _zip({"Características generales (personas).CSV": CAR, "Ocupados.CSV": MOD,
-                "Fuerza de trabajo.CSV": MOD, "Desocupados.CSV": MOD})
-    anual = lambda sin="": _zip({f"{i}. {m}.zip": mes for i, m in enumerate(NOMBRES_MESES, start=1) if m != sin})  # noqa: E731
+    """Con forzar, un paquete anual nuevo al que le falta un mes no borra ese mes de lo extraído
+    antes.
+    """
+    mes = _zip(
+        {
+            "Características generales (personas).CSV": CAR,
+            "Ocupados.CSV": MOD,
+            "Fuerza de trabajo.CSV": MOD,
+            "Desocupados.CSV": MOD,
+        }
+    )
+
+    def anual(sin=""):
+        return _zip(
+            {f"{i}. {m}.zip": mes for i, m in enumerate(NOMBRES_MESES, start=1) if m != sin}
+        )
+
     modulos = ("caracteristicas", "ocupados", "fuerza_trabajo", "desocupados")
-    dl = FakeDownloader({"GEIH_Empalme_2016.zip": anual()}, base_dir=tmp_path, is_empalme=True, modules=modulos)
+    dl = FakeDownloader(
+        {"GEIH_Empalme_2016.zip": anual()}, base_dir=tmp_path, is_empalme=True, modules=modulos
+    )
     dl.process_year("2016", "757")
     assert dl.fallidos == []
     dl.paquetes["GEIH_Empalme_2016.zip"] = anual(sin="Marzo")
     dl.forzar = True
     dl.process_year("2016", "757")
-    assert dl.fallidos == ["El ZIP del DANE para Empalme 2016 no trae: Marzo (todo el mes). Se conserva lo extraído antes."]
+    assert dl.fallidos == [
+        "El ZIP del DANE para Empalme 2016 no trae: Marzo (todo el mes). Se conserva lo extraído "
+        "antes."
+    ]
     assert (tmp_path / "datos_csv" / "2016" / "3. Marzo" / "Ocupados.CSV").exists()
 
 
 def test_marcador_registra_modulos(tmp_path):
     """Una descarga previa de solo Características no impide completar el mes después."""
-    FakeDownloader({"Marzo 2024.zip": _mes_2024()}, base_dir=tmp_path,
-                   modules=("caracteristicas",)).process_year("2024", "819")
+    FakeDownloader(
+        {"Marzo 2024.zip": _mes_2024()}, base_dir=tmp_path, modules=("caracteristicas",)
+    ).process_year("2024", "819")
     mes = tmp_path / "datos_csv" / "2024" / "Marzo 2024"
     assert "ocupados" in faltantes_mes(mes, TODOS)
 
@@ -180,58 +245,89 @@ def test_marcador_registra_modulos(tmp_path):
     dl.process_year("2024", "819")
     assert dl.descargas == ["Marzo 2024.zip"]
     assert faltantes_mes(mes, TODOS) == []
-    dl.process_year("2024", "819")                      # ahora sí se salta
+    dl.process_year("2024", "819")  # ahora sí se salta
     assert dl.descargas == ["Marzo 2024.zip"]
 
 
 def test_modulos_nuevos_salen_del_zip_guardado(tmp_path):
-    """Un mes extraído sin otros_ingresos ni migracion los saca del ZIP guardado; si el ZIP se borró, se salta."""
+    """Un mes extraído sin otros_ingresos ni migracion los saca del ZIP guardado; si el ZIP se
+    borró, se salta.
+    """
     paquete = _mes_2024_con(**{"Otros ingresos e impuestos.CSV": MOD, "Migración.CSV": MOD})
     antes = tuple(m for m in TODOS if m not in ("otros_ingresos", "migracion"))
     for guardado in (True, False):
         raiz = tmp_path / str(guardado)
-        FakeDownloader({"Marzo 2024.zip": paquete}, base_dir=raiz, keep_zips=guardado,
-                       modules=antes).process_year("2024", "819")
+        FakeDownloader(
+            {"Marzo 2024.zip": paquete}, base_dir=raiz, keep_zips=guardado, modules=antes
+        ).process_year("2024", "819")
         mes = raiz / "datos_csv" / "2024" / "Marzo 2024"
         assert not (mes / "Migración.CSV").exists()
         dl = FakeDownloader({"Marzo 2024.zip": paquete}, base_dir=raiz)
         dl.process_year("2024", "819")
-        assert (mes / "Migración.CSV").exists() == (mes / "Otros ingresos e impuestos.CSV").exists() == guardado
-        assert dl.descargas == (["Marzo 2024.zip"] if guardado else [])  # el download_file real reutiliza el ZIP
+        assert (
+            (mes / "Migración.CSV").exists()
+            == (mes / "Otros ingresos e impuestos.CSV").exists()
+            == guardado
+        )
+        # El download_file real reutiliza el ZIP
+        assert dl.descargas == (["Marzo 2024.zip"] if guardado else [])
         dl.process_year("2024", "819")
-        assert len(dl.descargas) == guardado and dl.fallidos == []          # la segunda vez se salta
+        assert len(dl.descargas) == guardado and dl.fallidos == []  # la segunda vez se salta
 
 
-@pytest.mark.parametrize("nombre", ["10.Octubre/Desoucpados.CSV", "10.Octubre/Inativos.CSV",
-                                    "11.Noviembre/Fuerzo de trabajo.CSV"])
+@pytest.mark.parametrize(
+    "nombre",
+    [
+        "10.Octubre/Desoucpados.CSV",
+        "10.Octubre/Inativos.CSV",
+        "11.Noviembre/Fuerzo de trabajo.CSV",
+    ],
+)
 def test_erratas_de_2020_se_extraen(nombre):
     """El DANE escribió mal estos nombres en octubre y noviembre de 2020; antes no se extraían."""
     assert is_target_csv(nombre)
 
 
-@pytest.mark.parametrize("nombre, modulos, esperado", [
-    ("No ocupados.CSV", ["desocupados"], True),       # desde 2022 trae desocupados e inactivos: antes no salía
-    ("No ocupado.CSV", ["inactivos"], True),
-    ("Desocupados.CSV", ["ocupados"], False),         # antes «ocupados» también sacaba los desocupados
-    ("Cabecera - Ocupados (3).csv", ["ocupados"], True),
-    ("Resto - Inactivos.csv", ["desocupados"], False),
-    ("Tipo de investigacion.CSV", list(dd.geih.DEFAULT_MODULES), False),
-])
+@pytest.mark.parametrize(
+    "nombre, modulos, esperado",
+    [
+        (
+            "No ocupados.CSV",
+            ["desocupados"],
+            True,
+        ),  # desde 2022 trae desocupados e inactivos: antes no salía
+        ("No ocupado.CSV", ["inactivos"], True),
+        (
+            "Desocupados.CSV",
+            ["ocupados"],
+            False,
+        ),  # antes «ocupados» también sacaba los desocupados
+        ("Cabecera - Ocupados (3).csv", ["ocupados"], True),
+        ("Resto - Inactivos.csv", ["desocupados"], False),
+        ("Tipo de investigacion.CSV", list(dd.geih.DEFAULT_MODULES), False),
+    ],
+)
 def test_modulos_del_archivo_como_al_cargar(nombre, modulos, esperado):
-    """El descargador reconoce los módulos con classify_file, la misma lista de nombres que usa el cargador."""
+    """El descargador reconoce los módulos con classify_file, la misma lista de nombres que usa el
+    cargador.
+    """
     assert is_target_csv(nombre, modulos) is esperado
 
 
 def test_marcador_solo_si_el_mes_quedo_completo(tmp_path):
-    """Un ZIP al que le falta un módulo no deja marcador: la próxima descarga lo vuelve a revisar y avisar."""
-    dl = FakeDownloader({"Marzo 2024.zip": _mes_2024_con(**{"No ocupados.CSV": None})}, base_dir=tmp_path)
+    """Un ZIP al que le falta un módulo no deja marcador: la próxima descarga lo vuelve a revisar y
+    avisar.
+    """
+    dl = FakeDownloader(
+        {"Marzo 2024.zip": _mes_2024_con(**{"No ocupados.CSV": None})}, base_dir=tmp_path
+    )
     dl.process_year("2024", "819")
     mes = tmp_path / "datos_csv" / "2024" / "Marzo 2024"
     assert dl.fallidos == ["El ZIP del DANE para Marzo 2024 (2024) no trae: desocupados."]
     assert not (mes / MARCADOR).exists()
     dl.fallidos = []
     dl.process_year("2024", "819")
-    assert len(dl.fallidos) == 1                        # no se salta como si estuviera completo
+    assert len(dl.fallidos) == 1  # no se salta como si estuviera completo
 
     # Los marcadores de 0.3.1 se escribían aunque faltara algo: no cuentan
     viejo = {"zip": "Marzo 2024.zip", "csv_extraidos": 5, "modulos": sorted(TODOS)}
@@ -240,14 +336,26 @@ def test_marcador_solo_si_el_mes_quedo_completo(tmp_path):
 
 
 def test_empalme_sin_un_modulo_se_informa(tmp_path):
-    """Como en la serie principal, un mes del empalme sin un módulo pedido queda en la lista de fallos."""
-    archivos = {"Características generales (personas).CSV": CAR, "Ocupados.CSV": MOD,
-                "Fuerza de trabajo.CSV": MOD, "Desocupados.CSV": MOD}
+    """Como en la serie principal, un mes del empalme sin un módulo pedido queda en la lista de
+    fallos.
+    """
+    archivos = {
+        "Características generales (personas).CSV": CAR,
+        "Ocupados.CSV": MOD,
+        "Fuerza de trabajo.CSV": MOD,
+        "Desocupados.CSV": MOD,
+    }
     sin_ocupados = _zip({k: v for k, v in archivos.items() if k != "Ocupados.CSV"})
-    paquete = _zip({f"{i}. {m}.zip": (sin_ocupados if m == "Marzo" else _zip(archivos))
-                    for i, m in enumerate(NOMBRES_MESES, start=1)})
+    paquete = _zip(
+        {
+            f"{i}. {m}.zip": (sin_ocupados if m == "Marzo" else _zip(archivos))
+            for i, m in enumerate(NOMBRES_MESES, start=1)
+        }
+    )
     modulos = ("caracteristicas", "ocupados", "fuerza_trabajo", "desocupados")
-    dl = FakeDownloader({"GEIH_Empalme_2016.zip": paquete}, base_dir=tmp_path, is_empalme=True, modules=modulos)
+    dl = FakeDownloader(
+        {"GEIH_Empalme_2016.zip": paquete}, base_dir=tmp_path, is_empalme=True, modules=modulos
+    )
     dl.process_year("2016", "757")
     assert dl.fallidos == ["El ZIP del DANE para Empalme 2016 no trae: 3. Marzo: ocupados."]
     assert not (tmp_path / "datos_csv" / "2016" / MARCADOR).exists()
@@ -257,7 +365,9 @@ def test_marcador_antiguo_sin_modulos_no_cuenta(tmp_path):
     """Los marcadores anteriores no dicen qué módulos se extrajeron: se revisan los archivos."""
     mes = tmp_path / "Marzo 2024"
     mes.mkdir()
-    (mes / MARCADOR).write_text(json.dumps({"zip": "Marzo 2024.zip", "csv_extraidos": 1}), encoding="utf-8")
+    (mes / MARCADOR).write_text(
+        json.dumps({"zip": "Marzo 2024.zip", "csv_extraidos": 1}), encoding="utf-8"
+    )
     assert not mes_completo(mes, TODOS)
 
 
@@ -266,22 +376,37 @@ def test_flags_in_caracteristicas_count_as_complete(tmp_path):
     mes = tmp_path / "1.Enero"
     mes.mkdir()
     (mes / "Características generales (personas).CSV").write_text(
-        "DIRECTORIO,SECUENCIA_P,ORDEN,OCI,DSI,INI,FEX_C\n1,1,1,1,,,10\n", encoding="utf-8")
+        "DIRECTORIO,SECUENCIA_P,ORDEN,OCI,DSI,INI,FEX_C\n1,1,1,1,,,10\n", encoding="utf-8"
+    )
     (mes / "Ocupados.CSV").write_text("DIRECTORIO,SECUENCIA_P,ORDEN\n1,1,1\n", encoding="utf-8")
-    (mes / "Fuerza de trabajo.CSV").write_text("DIRECTORIO,SECUENCIA_P,ORDEN\n1,1,1\n", encoding="utf-8")
+    (mes / "Fuerza de trabajo.CSV").write_text(
+        "DIRECTORIO,SECUENCIA_P,ORDEN\n1,1,1\n", encoding="utf-8"
+    )
     pedidos = ("caracteristicas", "fuerza_trabajo", "ocupados", "desocupados", "inactivos")
     assert mes_completo(mes, pedidos)
     assert faltantes_mes(mes, TODOS) == ["otras", "vivienda"]  # esos sí se pidieron y no están
 
 
 def test_empalme_month_zips_keep_their_folder(tmp_path):
-    mes = _zip({"Características generales (personas).CSV": CAR, "Ocupados.CSV": MOD,
-                "Fuerza de trabajo.CSV": MOD, "Desocupados.CSV": MOD})
+    mes = _zip(
+        {
+            "Características generales (personas).CSV": CAR,
+            "Ocupados.CSV": MOD,
+            "Fuerza de trabajo.CSV": MOD,
+            "Desocupados.CSV": MOD,
+        }
+    )
+    # fmt: off
     anual = _zip({f"{i}. {m}.zip": mes for i, m in enumerate(
         ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre",
          "Octubre", "Noviembre", "Diciembre"], start=1)})
-    dl = FakeDownloader({"GEIH_Empalme_2016.zip": anual}, base_dir=tmp_path, is_empalme=True,
-                        modules=("caracteristicas", "ocupados", "fuerza_trabajo", "desocupados"))
+    # fmt: on
+    dl = FakeDownloader(
+        {"GEIH_Empalme_2016.zip": anual},
+        base_dir=tmp_path,
+        is_empalme=True,
+        modules=("caracteristicas", "ocupados", "fuerza_trabajo", "desocupados"),
+    )
     dl.process_year("2016", "757")
     anio = tmp_path / "datos_csv" / "2016"
     assert (anio / "1. Enero" / "Ocupados.CSV").exists()
@@ -291,7 +416,10 @@ def test_empalme_month_zips_keep_their_folder(tmp_path):
 
 
 class FakeANDA(FakeDownloader):
-    """Lista todos los formatos del catálogo, como /get-microdata, y filtra los CSV igual que el real."""
+    """Lista todos los formatos del catálogo, como /get-microdata, y filtra los CSV igual que el
+    real.
+    """
+
     get_csv_download_links = GEIHDownloader.get_csv_download_links
 
     def _enlaces(self, catalog_id):
@@ -306,31 +434,68 @@ def _dta(**cols) -> bytes:
 
 
 def test_csv_danados_se_bajan_en_otro_formato(tmp_path):
-    """2011 (factor sin punto decimal) se baja en TXT; septiembre de 2021 (CSV con espacios), en Stata."""
-    mes_txt = _zip({"03_txt/Cabecera - Caracteristicas generales (Personas).txt":
-                    "DIRECTORIO\tSECUENCIA_P\tORDEN\tOCI\tDSI\tPETI\tfex_c_2011\n1\t1\t1\t1\t\t1\t84.9491032387525\n",
-                    "03_txt/Resto - Caracteristicas generales (Personas).txt":
-                    "DIRECTORIO\tSECUENCIA_P\tORDEN\tOCI\tDSI\tPETI\tfex_c_2011\n",
-                    "03_txt/Cabecera - Otros ingresos.txt": "x\n"})
-    dl = FakeANDA({"Marzo_csv.zip": _zip({"Cabecera - Caracteristicas generales (Personas).csv": "roto"}),
-                   "Marzo_txt.zip": mes_txt, "Marzo.zip": b"spss", "total_2011_c_txt.zip": b"anual"},
-                  base_dir=tmp_path, modules=("caracteristicas",))
+    """2011 (factor sin punto decimal) se baja en TXT; septiembre de 2021 (CSV con espacios), en
+    Stata.
+    """
+    mes_txt = _zip(
+        {
+            "03_txt/Cabecera - Caracteristicas generales (Personas).txt": (
+                "DIRECTORIO\tSECUENCIA_P\tORDEN\tOCI\tDSI\tPETI\tfex_c_2011\n"
+                "1\t1\t1\t1\t\t1\t84.9491032387525\n"
+            ),
+            "03_txt/Resto - Caracteristicas generales (Personas).txt": (
+                "DIRECTORIO\tSECUENCIA_P\tORDEN\tOCI\tDSI\tPETI\tfex_c_2011\n"
+            ),
+            "03_txt/Cabecera - Otros ingresos.txt": "x\n",
+        }
+    )
+    dl = FakeANDA(
+        {
+            "Marzo_csv.zip": _zip({"Cabecera - Caracteristicas generales (Personas).csv": "roto"}),
+            "Marzo_txt.zip": mes_txt,
+            "Marzo.zip": b"spss",
+            "total_2011_c_txt.zip": b"anual",
+        },
+        base_dir=tmp_path,
+        modules=("caracteristicas",),
+    )
     dl.process_year("2011", "182")
     assert dl.descargas == ["Marzo_txt.zip"]
-    assert dl.paginas == 1                               # la página del catálogo se pide una sola vez
-    assert sorted(f.name for f in (tmp_path / "datos_csv" / "2011" / "Marzo_txt").glob("*.txt")) == [
-        "Cabecera - Caracteristicas generales (Personas).txt", "Resto - Caracteristicas generales (Personas).txt"]
+    assert dl.paginas == 1  # la página del catálogo se pide una sola vez
+    assert sorted(
+        f.name for f in (tmp_path / "datos_csv" / "2011" / "Marzo_txt").glob("*.txt")
+    ) == [
+        "Cabecera - Caracteristicas generales (Personas).txt",
+        "Resto - Caracteristicas generales (Personas).txt",
+    ]
     assert dd.geih.load(2011, raiz=tmp_path, cache=False)["fex"].tolist() == [84.9491032387525]
 
-    car = _dta(DIRECTORIO=[1], SECUENCIA_P=[1], ORDEN=[1], OCI=[1], DSI=[0], PETI=[1], fex_c_2011=[250.5])
-    dl = FakeANDA({"Agosto.csv.zip": _zip({"Características generales (personas).CSV": CAR}),
-                   "Septiembre.csv (2) (1).zip": _zip({"Características generales (personas).csv": "A B\n1 2\n"}),
-                   "Septiembre.spss(2).zip": b"spss",
-                   "Septiembre.zip": _zip({"Septiembre.dta/╡rea - Características generales (Personas).dta": car})},
-                  base_dir=tmp_path, modules=("caracteristicas",))
+    car = _dta(
+        DIRECTORIO=[1], SECUENCIA_P=[1], ORDEN=[1], OCI=[1], DSI=[0], PETI=[1], fex_c_2011=[250.5]
+    )
+    dl = FakeANDA(
+        {
+            "Agosto.csv.zip": _zip({"Características generales (personas).CSV": CAR}),
+            "Septiembre.csv (2) (1).zip": _zip(
+                {"Características generales (personas).csv": "A B\n1 2\n"}
+            ),
+            "Septiembre.spss(2).zip": b"spss",
+            "Septiembre.zip": _zip(
+                {"Septiembre.dta/╡rea - Características generales (Personas).dta": car}
+            ),
+        },
+        base_dir=tmp_path,
+        modules=("caracteristicas",),
+    )
     dl.process_year("2021", "701")
     assert sorted(dl.descargas) == ["Agosto.csv.zip", "Septiembre.zip"]
-    assert (tmp_path / "datos_csv" / "2021" / "Septiembre" / "Area - Características generales (Personas).dta").exists()
+    assert (
+        tmp_path
+        / "datos_csv"
+        / "2021"
+        / "Septiembre"
+        / "Area - Características generales (Personas).dta"
+    ).exists()
 
 
 class _CatalogosFijos:
@@ -357,13 +522,14 @@ def test_anios_vacios_o_desconocidos(tmp_path, clase):
     dl = clase(base_dir=tmp_path)
     dl.procesados = []
     dl.run_pipeline(target_years=[])
-    assert dl.procesados == []                          # lista vacía: ningún año, no todos
+    assert dl.procesados == []  # lista vacía: ningún año, no todos
     fallidos = dl.run_pipeline(target_years=[2024, 2030])
     assert dl.procesados == ["2024"]
     assert len(fallidos) == 1 and "2030" in fallidos[0]  # un año que no está no es un éxito
     dl.run_pipeline(target_years=None)
     assert dl.procesados == ["2024", "2023", "2024"]
-    # Un generador se recorre una sola vez: no puede quedar vacío entre la revisión de catálogos y la descarga
+    # Un generador se recorre una sola vez: no puede quedar vacío entre la revisión de catálogos y
+    # la descarga
     dl.run_pipeline(target_years=(a for a in [2023]))
     assert dl.procesados[-1:] == ["2023"] and len(dl.procesados) == 4
 
@@ -421,7 +587,7 @@ def test_zip_danado_en_disco_se_vuelve_a_descargar(tmp_path, sin_pausas_eam, cla
     assert dl.session.pedidos == 1 and zipfile.is_zipfile(destino)
 
     dl.session = _Sesion()
-    assert dl.download_file("u", destino)              # ahora sí está bien: no se pide de nuevo
+    assert dl.download_file("u", destino)  # ahora sí está bien: no se pide de nuevo
     assert dl.session.pedidos == 0
 
 
@@ -430,7 +596,9 @@ def test_respuesta_que_no_es_zip_se_reintenta(tmp_path, sin_pausas_eam, clase):
     """Sin content-length, una página de error o un corte no se notan por el tamaño."""
     dl = clase(base_dir=tmp_path)
     destino = tmp_path / "Enero.zip"
-    dl.session = _Sesion(_Respuesta(b"<html>error</html>"), _Respuesta(_zip({"a.csv": "x"}), con_tamano=True))
+    dl.session = _Sesion(
+        _Respuesta(b"<html>error</html>"), _Respuesta(_zip({"a.csv": "x"}), con_tamano=True)
+    )
     assert dl.download_file("u", destino)
     assert dl.session.pedidos == 2 and zipfile.is_zipfile(destino)
     assert not list(tmp_path.glob("*.part"))
@@ -455,7 +623,9 @@ def test_zip_que_falla_al_extraer_se_borra(tmp_path, sin_pausas_eam):
     zip_path.write_bytes(_zip_crc_malo())
     assert zipfile.is_zipfile(zip_path)
     errores = []
-    GEIHDownloader(base_dir=tmp_path).extract_requested_modules(zip_path, tmp_path / "mes", errores=errores)
+    GEIHDownloader(base_dir=tmp_path).extract_requested_modules(
+        zip_path, tmp_path / "mes", errores=errores
+    )
     assert errores and not zip_path.exists()
 
     zip_path.write_bytes(_zip_crc_malo())
@@ -488,34 +658,43 @@ class _ANDA:
         self.pedidos.append((url, params))
         if self.falla:
             raise OSError("sin conexión")
-        clave = url.split("microdatos.dane.gov.co")[-1] + (f"?page={params['page']}" if params else "")
+        clave = url.split("microdatos.dane.gov.co")[-1] + (
+            f"?page={params['page']}" if params else ""
+        )
         return self.rutas.get(clave, _Pagina(estado=404))
 
 
 def _busqueda(*titulos):
-    return _Pagina("".join(f'<a href="/index.php/catalog/{cid}">{t}</a>' for cid, t in titulos)
-                   + '<a href="/index.php/catalog/search?page=2">siguiente</a>')
+    return _Pagina(
+        "".join(f'<a href="/index.php/catalog/{cid}">{t}</a>' for cid, t in titulos)
+        + '<a href="/index.php/catalog/search?page=2">siguiente</a>'
+    )
 
 
 def _modal(*archivos):
-    return _Pagina("".join(f"<a onclick=\"mostrarModal('{n}', '{u}')\">{n}</a>" for n, u in archivos))
+    return _Pagina(
+        "".join(f"<a onclick=\"mostrarModal('{n}', '{u}')\">{n}</a>" for n, u in archivos)
+    )
 
 
 def test_descubrir_catalogos_geih(tmp_path):
     from dane_data.geih.downloader import KNOWN_CATALOGS
 
     dl = GEIHDownloader(base_dir=tmp_path)
-    dl.session = _ANDA({
-        "/index.php/catalog/search?page=1": _busqueda(
-            ("999", "Gran Encuesta Integrada de Hogares - GEIH - 2027"),
-            ("993", "GEIH 2023 - Anexo de módulos"),             # no reemplaza al catálogo verificado
-            ("998", "GEIH 2024 - San Andrés"),                   # módulo satélite: no cuenta
-            ("997", "GEIH Empalme 2015 Marco 2018"),             # empalme: no es la serie principal
-            ("996", "Encuesta de Calidad de Vida 2024"),          # otra encuesta
-            ("991", "<span>GEIH</span> - 2028"),                  # etiquetas dentro del enlace
-            ("990", "GEIH - M&oacute;dulo de Formaci&oacute;n - 2029")),   # entidades HTML: satélite
-        "/index.php/catalog/search?page=2": _busqueda(),          # sin más resultados: para
-    })
+    dl.session = _ANDA(
+        {
+            "/index.php/catalog/search?page=1": _busqueda(
+                ("999", "Gran Encuesta Integrada de Hogares - GEIH - 2027"),
+                ("993", "GEIH 2023 - Anexo de módulos"),  # no reemplaza al catálogo verificado
+                ("998", "GEIH 2024 - San Andrés"),  # módulo satélite: no cuenta
+                ("997", "GEIH Empalme 2015 Marco 2018"),  # empalme: no es la serie principal
+                ("996", "Encuesta de Calidad de Vida 2024"),  # otra encuesta
+                ("991", "<span>GEIH</span> - 2028"),  # etiquetas dentro del enlace
+                ("990", "GEIH - M&oacute;dulo de Formaci&oacute;n - 2029"),
+            ),  # entidades HTML: satélite
+            "/index.php/catalog/search?page=2": _busqueda(),  # sin más resultados: para
+        }
+    )
     cat = dl.discover_catalogs()
     assert cat["2027"] == "999" and cat["2028"] == "991" and "2029" not in cat
     assert cat["2024"] == KNOWN_CATALOGS["2024"]
@@ -525,13 +704,15 @@ def test_descubrir_catalogos_geih(tmp_path):
 
 @pytest.mark.parametrize("clase", [GEIHDownloader, EAMDownloader])
 def test_sin_busqueda_si_los_anios_estan_verificados(tmp_path, clase):
-    """Con todos los años pedidos en el catálogo verificado, la búsqueda del ANDA no cambiaría nada: no se hace."""
+    """Con todos los años pedidos en el catálogo verificado, la búsqueda del ANDA no cambiaría
+    nada: no se hace.
+    """
     dl, procesados = clase(base_dir=tmp_path), []
     dl.session = _ANDA({})
     dl.process_year = lambda anio, *a, **k: procesados.append(anio)
     dl.run_pipeline(target_years=[2024])
     assert procesados == ["2024"] and dl.session.pedidos == []
-    dl.run_pipeline(target_years=[2099])                     # un año sin catálogo verificado sí se busca
+    dl.run_pipeline(target_years=[2099])  # un año sin catálogo verificado sí se busca
     assert dl.session.pedidos
 
 
@@ -539,48 +720,77 @@ def test_descubrir_catalogos_empalme_y_sin_conexion(tmp_path):
     from dane_data.geih.downloader import EMPALME_CATALOGS, KNOWN_CATALOGS
 
     dl = GEIHDownloader(base_dir=tmp_path, is_empalme=True)
-    dl.session = _ANDA({"/index.php/catalog/search?page=1": _busqueda(("995", "GEIH Empalme 2019"),
-                                                                      ("992", "GEIH Empalme 2009"),
-                                                                      ("994", "GEIH 2019"))})
-    assert dl.discover_catalogs() == {**EMPALME_CATALOGS, "2009": "992"}   # 2019 sigue con el verificado
+    dl.session = _ANDA(
+        {
+            "/index.php/catalog/search?page=1": _busqueda(
+                ("995", "GEIH Empalme 2019"), ("992", "GEIH Empalme 2009"), ("994", "GEIH 2019")
+            )
+        }
+    )
+    # 2019 sigue con el verificado
+    assert dl.discover_catalogs() == {**EMPALME_CATALOGS, "2009": "992"}
 
     dl = GEIHDownloader(base_dir=tmp_path)
-    dl.session = _ANDA({}, falla=True)                       # sin internet: los catálogos conocidos
+    dl.session = _ANDA({}, falla=True)  # sin internet: los catálogos conocidos
     assert dl.discover_catalogs() == KNOWN_CATALOGS
 
 
 def test_enlaces_de_microdatos_por_epoca(tmp_path):
     dl = GEIHDownloader(base_dir=tmp_path)
-    dl.session = _ANDA({
-        # 2007–2021: un ZIP por formato; se toman los CSV (y se quitan los repetidos)
-        "/index.php/catalog/1/get-microdata": _modal(("Enero.csv.zip", "u/1"), ("Enero.sav.zip", "u/2"),
-                                                     ("Enero.csv.zip", "u/1"), ("Febrero.csv.zip", "u/3"),
-                                                     ("Marzo.csv.zip", "https://otro.example/m.zip"),
-                                                     ("Abril.csv.zip", "http://microdatos.dane.gov.co/a.zip")),
-        # 2022+: un ZIP por mes con todos los formatos; fuera los de apoyo
-        "/index.php/catalog/2/get-microdata": _modal(("Ene_2024.zip", "u/4"), ("FEX_2024.zip", "u/5"),
-                                                     ("Proyecciones.zip", "u/6"), ("Diccionario.pdf", "u/7")),
-        "/index.php/catalog/3/get-microdata": _Pagina("<html>sin enlaces</html>"),
-    })
+    dl.session = _ANDA(
+        {
+            # 2007–2021: un ZIP por formato; se toman los CSV (y se quitan los repetidos)
+            "/index.php/catalog/1/get-microdata": _modal(
+                ("Enero.csv.zip", "u/1"),
+                ("Enero.sav.zip", "u/2"),
+                ("Enero.csv.zip", "u/1"),
+                ("Febrero.csv.zip", "u/3"),
+                ("Marzo.csv.zip", "https://otro.example/m.zip"),
+                ("Abril.csv.zip", "http://microdatos.dane.gov.co/a.zip"),
+            ),
+            # 2022+: un ZIP por mes con todos los formatos; fuera los de apoyo
+            "/index.php/catalog/2/get-microdata": _modal(
+                ("Ene_2024.zip", "u/4"),
+                ("FEX_2024.zip", "u/5"),
+                ("Proyecciones.zip", "u/6"),
+                ("Diccionario.pdf", "u/7"),
+            ),
+            "/index.php/catalog/3/get-microdata": _Pagina("<html>sin enlaces</html>"),
+        }
+    )
     anda = "https://microdatos.dane.gov.co/"
     # Los relativos se completan; los de otro sitio o sin https se ignoran
-    assert dl.get_csv_download_links("1") == [{"name": "Enero.csv.zip", "url": anda + "u/1"},
-                                              {"name": "Febrero.csv.zip", "url": anda + "u/3"}]
+    assert dl.get_csv_download_links("1") == [
+        {"name": "Enero.csv.zip", "url": anda + "u/1"},
+        {"name": "Febrero.csv.zip", "url": anda + "u/3"},
+    ]
     assert dl.get_csv_download_links("2") == [{"name": "Ene_2024.zip", "url": anda + "u/4"}]
     assert dl.get_csv_download_links("3") == []
-    assert dl.get_csv_download_links("4") == []             # HTTP 404
+    assert dl.get_csv_download_links("4") == []  # HTTP 404
 
 
 def test_descubrir_catalogos_eam(tmp_path):
     from dane_data.eam.downloader import EAM_KNOWN_CATALOGS
 
     dl = EAMDownloader(base_dir=tmp_path)
-    dl.session = _ANDA({"/index.php/catalog/888/get-microdata": _modal(
-        ("EAM_2025.zip", "https://microdatos.dane.gov.co/x/1"), ("EAM_TIC_2025.zip", "u/2"),
-        ("EAM_2024_nueva.zip", "https://microdatos.dane.gov.co/x/3"),   # no reemplaza al verificado
-        ("Ficha metodológica 2027.pdf", "https://microdatos.dane.gov.co/x/4"),   # no es un ZIP
-        ("EAM_2026.zip", "https://otro.example/x.zip"))})       # fuera del ANDA: se ignora
-    cat = dl.discover_catalogs()                            # los demás catálogos dan 404: se avisa y sigue
+    dl.session = _ANDA(
+        {
+            "/index.php/catalog/888/get-microdata": _modal(
+                ("EAM_2025.zip", "https://microdatos.dane.gov.co/x/1"),
+                ("EAM_TIC_2025.zip", "u/2"),
+                (
+                    "EAM_2024_nueva.zip",
+                    "https://microdatos.dane.gov.co/x/3",
+                ),  # no reemplaza al verificado
+                (
+                    "Ficha metodológica 2027.pdf",
+                    "https://microdatos.dane.gov.co/x/4",
+                ),  # no es un ZIP
+                ("EAM_2026.zip", "https://otro.example/x.zip"),
+            )
+        }
+    )  # fuera del ANDA: se ignora
+    cat = dl.discover_catalogs()  # los demás catálogos dan 404: se avisa y sigue
     assert cat["2025"] == ("888", "EAM_2025.zip", "https://microdatos.dane.gov.co/x/1")
     assert "2026" not in cat and "2027" not in cat
     assert {k: v for k, v in cat.items() if k != "2025"} == EAM_KNOWN_CATALOGS
@@ -594,7 +804,7 @@ def test_descarga_cancelada_no_deja_nada(tmp_path, sin_pausas_eam, clase):
         def iter_content(self, chunk_size):
             yield from (self.cuerpo[:10], self.cuerpo[10:])
 
-    pedidos = iter([False, True])                           # cancelar después del primer trozo
+    pedidos = iter([False, True])  # cancelar después del primer trozo
     dl = clase(base_dir=tmp_path, should_stop=lambda: next(pedidos))
     dl.session = _Sesion(Trozos(_zip({"a.csv": "x" * 100})))
     with pytest.raises(DownloadCancelled):
@@ -604,7 +814,10 @@ def test_descarga_cancelada_no_deja_nada(tmp_path, sin_pausas_eam, clase):
 
 @pytest.mark.parametrize("clase", [GEIHDownloader, EAMDownloader])
 def test_interrupcion_no_deja_temporales(tmp_path, sin_pausas_eam, clase):
-    """El botón Detener de la app (StopException de Streamlit) o Ctrl+C no dejan el .part en disco."""
+    """El botón Detener de la app (StopException de Streamlit) o Ctrl+C no dejan el .part en
+    disco.
+    """
+
     def detener():
         raise KeyboardInterrupt
 
@@ -640,20 +853,29 @@ class FakeEAMDownloader(EAMDownloader):
 
 
 def test_eam_extrae_solo_el_formato_preferido(tmp_path):
-    for i, (contenido, esperado) in enumerate((({"a.dta": b"x", "a.txt": "x\n", "a.csv": "x\n"}, ["a.csv"]),
-                                               ({"b.dta": b"x", "b.txt": "x\n"}, ["b.txt"]))):
+    for i, (contenido, esperado) in enumerate(
+        (
+            ({"a.dta": b"x", "a.txt": "x\n", "a.csv": "x\n"}, ["a.csv"]),
+            ({"b.dta": b"x", "b.txt": "x\n"}, ["b.txt"]),
+        )
+    ):
         zip_path = tmp_path / f"{i}.zip"
         zip_path.write_bytes(_zip(contenido))
-        archivos = EAMDownloader(base_dir=tmp_path).extract_preferred_format(zip_path, tmp_path / str(i))
+        archivos = EAMDownloader(base_dir=tmp_path).extract_preferred_format(
+            zip_path, tmp_path / str(i)
+        )
         assert [f.name for f in archivos] == esperado
         assert [f.name for f in (tmp_path / str(i)).iterdir()] == esperado
 
 
 def test_eam_stata_se_usa_tal_cual_con_sus_codigos(tmp_path):
-    """El .dta de 2024 no se convierte: el cargador lo lee con los códigos, no con las etiquetas de valor."""
+    """El .dta de 2024 no se convierte: el cargador lo lee con los códigos, no con las etiquetas de
+    valor.
+    """
     dta = io.BytesIO()
     pd.DataFrame({"nordest": [10], "dpto": [5], "ciiu4": [1011], "valagri": [80.0]}).to_stata(
-        dta, write_index=False, value_labels={"dpto": {5: "ANTIOQUIA (etiqueta)"}})
+        dta, write_index=False, value_labels={"dpto": {5: "ANTIOQUIA (etiqueta)"}}
+    )
     zip_path = tmp_path / "EAM_2024.zip"
     zip_path.write_bytes(_zip({"EAM_2024.dta": dta.getvalue()}))
     destino = tmp_path / "datos" / "2024"
@@ -662,19 +884,23 @@ def test_eam_stata_se_usa_tal_cual_con_sus_codigos(tmp_path):
     assert sorted(f.name for f in destino.iterdir()) == ["EAM_2024.dta"]
 
     eam = dd.eam.load(2024, raiz=tmp_path)
-    assert eam["departamento"].tolist() == ["Antioquia"]     # del código 5, no de la etiqueta
+    assert eam["departamento"].tolist() == ["Antioquia"]  # del código 5, no de la etiqueta
     assert eam["valagri"].tolist() == [80.0]
 
     # Un TXT convertido por una versión anterior, junto al .dta, se sigue usando
-    (destino / "EAM_2024.txt").write_text("nordest\tdpto\tciiu4\tvalagri\n10\t11\t1011\t80\n", encoding="utf-8")
+    (destino / "EAM_2024.txt").write_text(
+        "nordest\tdpto\tciiu4\tvalagri\n10\t11\t1011\t80\n", encoding="utf-8"
+    )
     assert dd.eam.find_files(2024, raiz=tmp_path)[2024].suffix == ".txt"
 
 
 def test_eam_tic_en_anio_ya_descargado(tmp_path):
     """Pedir el módulo TIC de un año que ya tiene los datos principales sí lo descarga."""
     _, _, tic_url = EAM_TIC_CATALOGS["2015"]
-    paquetes = {"principal": _zip({"EAM_2015.csv": "nordest;valagri\n1;10\n"}),
-                tic_url: _zip({"EAM_TIC_2015.csv": "nordest;usa_internet\n1;1\n"})}
+    paquetes = {
+        "principal": _zip({"EAM_2015.csv": "nordest;valagri\n1;10\n"}),
+        tic_url: _zip({"EAM_TIC_2015.csv": "nordest;usa_internet\n1;1\n"}),
+    }
     dl = FakeEAMDownloader(paquetes, base_dir=tmp_path)
     dl.process_year("2015", "491", "EAM_2015.zip", "principal")
     assert dl.descargas == ["principal"]
@@ -683,15 +909,17 @@ def test_eam_tic_en_anio_ya_descargado(tmp_path):
     dl.process_year("2015", "491", "EAM_2015.zip", "principal")
     assert dl.descargas == ["principal", tic_url]
     assert (tmp_path / "datos" / "2015" / "TIC" / "EAM_TIC_2015.csv").exists()
-    dl.process_year("2015", "491", "EAM_2015.zip", "principal")   # ya está todo: no descarga
+    dl.process_year("2015", "491", "EAM_2015.zip", "principal")  # ya está todo: no descarga
     assert dl.descargas == ["principal", tic_url]
 
 
 def test_eam_borra_los_zip_si_se_pide(tmp_path, sin_pausas_eam):
     """Con keep_zips=False se borran los ZIP de un año extraído bien, también el del módulo TIC."""
     _, tic_nombre, tic_url = EAM_TIC_CATALOGS["2015"]
-    paquetes = {"principal": _zip({"EAM_2015.csv": "nordest;valagri\n1;10\n"}),
-                tic_url: _zip({"EAM_TIC_2015.csv": "nordest;usa_internet\n1;1\n"})}
+    paquetes = {
+        "principal": _zip({"EAM_2015.csv": "nordest;valagri\n1;10\n"}),
+        tic_url: _zip({"EAM_TIC_2015.csv": "nordest;usa_internet\n1;1\n"}),
+    }
     dl = FakeEAMDownloader(paquetes, base_dir=tmp_path, keep_zips=False, include_tic=True)
     dl.fallidos = []
     dl.process_year("2015", "491", "EAM_2015.zip", "principal")
@@ -703,6 +931,7 @@ def test_eam_borra_los_zip_si_se_pide(tmp_path, sin_pausas_eam):
 
 def test_descarga_fallida_se_informa(tmp_path, sin_pausas_eam, caplog):
     """Un ZIP que no se pudo bajar no termina en «exitosamente»: run_pipeline lo devuelve."""
+
     class Falla(FakeDownloader):
         def download_file(self, url, dest_path, max_retries=3):
             return url != "Abril 2024.zip" and super().download_file(url, dest_path, max_retries)
@@ -716,29 +945,35 @@ def test_descarga_fallida_se_informa(tmp_path, sin_pausas_eam, caplog):
     assert fallidos == ["2024: no se pudo descargar Abril 2024.zip."]
     assert "exitosamente" not in caplog.text and "1 problema(s)" in caplog.text
     dl.paquetes.pop("Abril 2024.zip")
-    assert dl.run_pipeline([2024]) == []                      # sin errores, la lista vuelve vacía
+    assert dl.run_pipeline([2024]) == []  # sin errores, la lista vuelve vacía
 
     sin_enlaces = Falla({}, base_dir=tmp_path / "otra")
-    assert sin_enlaces.run_pipeline([2024]) == ["2024: no se encontraron enlaces de microdatos en el ANDA "
-                                                "(catálogo 819)."]
+    assert sin_enlaces.run_pipeline([2024]) == [
+        "2024: no se encontraron enlaces de microdatos en el ANDA (catálogo 819)."
+    ]
 
     class FallaEAM(FakeEAMDownloader):
         def discover_catalogs(self):
-            return {"2015": ("491", "EAM_2015.zip", "principal"), "2016": ("491", "EAM_2016.zip", "vacio")}
+            return {
+                "2015": ("491", "EAM_2015.zip", "principal"),
+                "2016": ("491", "EAM_2016.zip", "vacio"),
+            }
 
         def download_file(self, url, dest_path, max_retries=3):
             return url in self.paquetes and super().download_file(url, dest_path, max_retries)
 
     eam = FallaEAM({"vacio": _zip({"LEAME.pdf": "sin datos"})}, base_dir=tmp_path / "eam")
-    assert eam.run_pipeline() == ["2015: no se pudo descargar EAM_2015.zip.",
-                                  "2016: no se pudo extraer un archivo CSV, TXT o Stata de EAM_2016.zip."]
+    assert eam.run_pipeline() == [
+        "2015: no se pudo descargar EAM_2015.zip.",
+        "2016: no se pudo extraer un archivo CSV, TXT o Stata de EAM_2016.zip.",
+    ]
 
 
 def test_temporales_no_chocan_con_otra_descarga(tmp_path, sin_pausas_eam):
     """El temporal de otra sesión que baja el mismo archivo no se pisa ni se mueve."""
     dl = EAMDownloader(base_dir=tmp_path)
     destino = tmp_path / "Enero.zip"
-    ajeno = tmp_path / "Enero.zip.part"                   # el nombre fijo de antes
+    ajeno = tmp_path / "Enero.zip.part"  # el nombre fijo de antes
     ajeno.write_bytes(b"otra descarga a medias")
     dl.session = _Sesion(_Respuesta(_zip({"a.csv": "x"})))
     assert dl.download_file("u", destino)
@@ -747,13 +982,18 @@ def test_temporales_no_chocan_con_otra_descarga(tmp_path, sin_pausas_eam):
 
 
 def test_temporales_abandonados_se_borran(tmp_path, sin_pausas_eam):
-    """El temporal de un proceso que se mató (cerrar la ventana) se borra; el de una descarga en curso no."""
+    """El temporal de un proceso que se mató (cerrar la ventana) se borra; el de una descarga en
+    curso no.
+    """
     import os
     import time
 
     dl = EAMDownloader(base_dir=tmp_path)
     destino = tmp_path / "Enero [1].zip"
-    viejo, en_curso = tmp_path / "Enero [1].zip.0123456789ab.part", tmp_path / "Enero [1].zip.ba9876543210.part"
+    viejo, en_curso = (
+        tmp_path / "Enero [1].zip.0123456789ab.part",
+        tmp_path / "Enero [1].zip.ba9876543210.part",
+    )
     viejo.write_bytes(b"cortado hace dos dias")
     en_curso.write_bytes(b"otra sesion")
     hace_dos_dias = time.time() - 2 * 86400
@@ -772,7 +1012,7 @@ def test_forzar_vuelve_a_bajar_y_reemplaza(tmp_path, sin_pausas_eam):
     nuevo = MOD.replace(";10\n", ";20\n")
     dl.paquetes["Marzo 2024.zip"] = _mes_2024_con(**{"Ocupados.CSV": nuevo})
     dl.process_year("2024", "819")
-    assert dl.descargas == ["Marzo 2024.zip"]               # sin forzar, se salta
+    assert dl.descargas == ["Marzo 2024.zip"]  # sin forzar, se salta
 
     dl.forzar = True
     dl.process_year("2024", "819")
@@ -781,7 +1021,9 @@ def test_forzar_vuelve_a_bajar_y_reemplaza(tmp_path, sin_pausas_eam):
     assert not (mes / "Ocupados (version vieja).CSV").exists()
     assert (mes / MARCADOR).exists()
 
-    eam = FakeEAMDownloader({"u": _zip({"EAM_2015.csv": "nordest;valagri\n1;10\n"})}, base_dir=tmp_path / "eam")
+    eam = FakeEAMDownloader(
+        {"u": _zip({"EAM_2015.csv": "nordest;valagri\n1;10\n"})}, base_dir=tmp_path / "eam"
+    )
     eam.process_year("2015", "491", "EAM_2015.zip", "u")
     eam.paquetes["u"] = _zip({"EAM_2015.txt": "nordest\tvalagri\n1\t30\n"})
     eam.process_year("2015", "491", "EAM_2015.zip", "u")
@@ -802,12 +1044,18 @@ def test_forzar_vuelve_a_bajar_y_reemplaza(tmp_path, sin_pausas_eam):
 
 
 def test_forzar_con_menos_modulos_conserva_los_demas(tmp_path):
-    """forzar con solo Ocupados reemplaza ese módulo y deja Características, Vivienda... como estaban."""
+    """forzar con solo Ocupados reemplaza ese módulo y deja Características, Vivienda... como
+    estaban.
+    """
     FakeDownloader({"Marzo 2024.zip": _mes_2024()}, base_dir=tmp_path).process_year("2024", "819")
     mes = tmp_path / "datos_csv" / "2024" / "Marzo 2024"
     nuevo = MOD.replace(";10\n", ";20\n")
-    dl = FakeDownloader({"Marzo 2024.zip": _mes_2024_con(**{"Ocupados.CSV": nuevo})}, base_dir=tmp_path,
-                        modules=["ocupados"], forzar=True)
+    dl = FakeDownloader(
+        {"Marzo 2024.zip": _mes_2024_con(**{"Ocupados.CSV": nuevo})},
+        base_dir=tmp_path,
+        modules=["ocupados"],
+        forzar=True,
+    )
     dl.process_year("2024", "819")
     assert dl.fallidos == []
     assert (mes / "Ocupados.CSV").read_text() == nuevo
@@ -815,34 +1063,48 @@ def test_forzar_con_menos_modulos_conserva_los_demas(tmp_path):
 
 
 def test_forzar_que_falla_conserva_lo_anterior(tmp_path):
-    """Si el ZIP nuevo no trae un módulo, ninguno o está dañado, lo que ya estaba completo no se borra."""
+    """Si el ZIP nuevo no trae un módulo, ninguno o está dañado, lo que ya estaba completo no se
+    borra.
+    """
     dl = FakeDownloader({"Marzo 2024.zip": _mes_2024()}, base_dir=tmp_path)
     dl.process_year("2024", "819")
     mes = tmp_path / "datos_csv" / "2024" / "Marzo 2024"
     antes = sorted(f.name for f in mes.iterdir())
     dl.forzar = True
-    for paquete in (_mes_2024_con(**{"Ocupados.CSV": None}), _zip({"LEAME.pdf": "x"}), _zip_crc_malo()):
+    for paquete in (
+        _mes_2024_con(**{"Ocupados.CSV": None}),
+        _zip({"LEAME.pdf": "x"}),
+        _zip_crc_malo(),
+    ):
         dl.paquetes["Marzo 2024.zip"] = paquete
         dl.fallidos = []
         dl.process_year("2024", "819")
         assert len(dl.fallidos) == 1 and dl.fallidos[0].endswith("Se conserva lo extraído antes.")
-        assert sorted(f.name for f in mes.iterdir()) == antes and (mes / "Ocupados.CSV").read_text() == MOD
+        assert (
+            sorted(f.name for f in mes.iterdir()) == antes
+            and (mes / "Ocupados.CSV").read_text() == MOD
+        )
         assert mes_completo(mes, TODOS)
     assert not list((tmp_path / "raw_zips").glob("extraccion-*"))
 
 
 def test_eam_extraccion_que_falla_no_deja_nada_ni_borra_lo_anterior(tmp_path, sin_pausas_eam):
-    """Un CSV que falla a mitad del ZIP no deja el año a medias, y con forzar lo de antes se conserva."""
+    """Un CSV que falla a mitad del ZIP no deja el año a medias, y con forzar lo de antes se
+    conserva.
+    """
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_STORED) as z:
         z.writestr("EAM_2015.csv", "nordest;valagri\n1;10\n")
         z.writestr("EAM_2015_anexo.csv", MOD)
-    malo = buf.getvalue().replace(MOD.encode(), MOD.replace("1", "2").encode())     # CRC malo en el segundo
+    # CRC malo en el segundo
+    malo = buf.getvalue().replace(MOD.encode(), MOD.replace("1", "2").encode())
     eam = FakeEAMDownloader({"u": malo}, base_dir=tmp_path)
     eam.process_year("2015", "491", "EAM_2015.zip", "u")
     anio = tmp_path / "datos" / "2015"
-    assert eam.fallidos == ["2015: no se pudo extraer un archivo CSV, TXT o Stata de EAM_2015.zip."]
-    assert not list(anio.iterdir())                     # el primero tampoco: el año parecería completo
+    assert eam.fallidos == [
+        "2015: no se pudo extraer un archivo CSV, TXT o Stata de EAM_2015.zip."
+    ]
+    assert not list(anio.iterdir())  # el primero tampoco: el año parecería completo
 
     bueno = "nordest;valagri\n1;30\n"
     eam.paquetes["u"] = _zip({"EAM_2015.csv": bueno})
@@ -851,18 +1113,25 @@ def test_eam_extraccion_que_falla_no_deja_nada_ni_borra_lo_anterior(tmp_path, si
     for paquete in (malo, _zip({"LEAME.pdf": "sin datos"})):
         eam.paquetes["u"] = paquete
         eam.process_year("2015", "491", "EAM_2015.zip", "u")
-        assert len(eam.fallidos) == 1 and eam.fallidos.pop().endswith("Se conserva lo extraído antes.")
-        assert [f.name for f in anio.iterdir()] == ["EAM_2015.csv"] and (anio / "EAM_2015.csv").read_text() == bueno
+        assert len(eam.fallidos) == 1 and eam.fallidos.pop().endswith(
+            "Se conserva lo extraído antes."
+        )
+        assert [f.name for f in anio.iterdir()] == ["EAM_2015.csv"] and (
+            anio / "EAM_2015.csv"
+        ).read_text() == bueno
     assert not list((tmp_path / "raw_zips").glob("extraccion-*"))
 
 
 def test_mes_sin_resto_queda_incompleto(geih_root):
-    """2007–2021: sin «Resto - Ocupados», los ocupados rurales serían no ocupados y la TD saldría mal."""
+    """2007–2021: sin «Resto - Ocupados», los ocupados rurales serían no ocupados y la TD saldría
+    mal.
+    """
     mes = geih_root / "datos_csv" / "2016" / "Enero"
     (mes / "Resto - Ocupados.csv").unlink()
     (m,) = dd.geih.find_months(2016, raiz=geih_root)
     assert m.faltantes == ["Resto - Ocupados"] and not m.completo
-    assert faltantes_mes(mes, ["ocupados"]) == ["Resto - Ocupados"]      # el descargador lo vuelve a extraer
+    # El descargador lo vuelve a extraer
+    assert faltantes_mes(mes, ["ocupados"]) == ["Resto - Ocupados"]
     assert faltantes_mes(mes, ["caracteristicas"]) == []
     # Inactivos no hace falta: la PET sale de Fuerza de trabajo
     (mes / "Cabecera - Inactivos.csv").unlink()
@@ -871,14 +1140,20 @@ def test_mes_sin_resto_queda_incompleto(geih_root):
     # Solo el archivo de Área (subconjunto de Cabecera) tampoco basta
     for f in mes.glob("*Fuerza de trabajo.csv"):
         f.unlink()
-    (mes / "Area - Fuerza de trabajo.csv").write_text("Directorio;Secuencia_p;Orden;Fex_c_2011\n", encoding="utf-8")
+    (mes / "Area - Fuerza de trabajo.csv").write_text(
+        "Directorio;Secuencia_p;Orden;Fex_c_2011\n", encoding="utf-8"
+    )
     (m,) = dd.geih.find_months(2016, raiz=geih_root)
-    assert m.faltantes == ["Cabecera - Fuerza de trabajo", "Resto - Fuerza de trabajo", "Resto - Ocupados"]
+    assert m.faltantes == [
+        "Cabecera - Fuerza de trabajo",
+        "Resto - Fuerza de trabajo",
+        "Resto - Ocupados",
+    ]
 
 
-# ---------------------------------------------------------------------------------------------------- #
+# --------------------------------------------------------------------------- #
 # Estadísticas Vitales
-# ---------------------------------------------------------------------------------------------------- #
+# --------------------------------------------------------------------------- #
 class FakeEEVVDownloader(EEVVDownloader):
     pausa = 0
 
@@ -929,19 +1204,31 @@ def test_eevv_prefiere_txt_a_spss(tmp_path):
     paquete = _zip_eevv({"Defun1979.txt": "ANO\n1979\n", "Defun1979.sav": "spss"})
     dl, fallidos = _baja_eevv(tmp_path, {_url_eevv(1979, "defunciones"): paquete}, [1979])
     assert fallidos == []
-    assert [f.name for f in (tmp_path / "datos" / "defunciones" / "1979").iterdir()] == ["Defun1979.txt"]
+    assert [f.name for f in (tmp_path / "datos" / "defunciones" / "1979").iterdir()] == [
+        "Defun1979.txt"
+    ]
 
 
 def test_eevv_prefiere_csv_a_stata(tmp_path):
-    paquete = _zip_eevv({"nac2020.csv": "ANO\n2020\n", "nac2020.dta": "stata", "nac2020.sav": "spss"})
+    paquete = _zip_eevv(
+        {"nac2020.csv": "ANO\n2020\n", "nac2020.dta": "stata", "nac2020.sav": "spss"}
+    )
     _baja_eevv(tmp_path, {_url_eevv(2020, "nacimientos"): paquete}, [2020], tipos=("nacimientos",))
-    assert [f.name for f in (tmp_path / "datos" / "nacimientos" / "2020").iterdir()] == ["nac2020.csv"]
+    assert [f.name for f in (tmp_path / "datos" / "nacimientos" / "2020").iterdir()] == [
+        "nac2020.csv"
+    ]
 
 
 def test_eevv_zip_de_varios_anios_con_zip_anidado(tmp_path):
-    """Nacidos.zip (2008–2011) trae un ZIP por año: se baja una vez y cada año queda en su carpeta."""
-    paquete = _zip_eevv({f"Nacidos/nac{a}.zip": {f"nac{a}.csv": f"ANO\n{a}\n", f"nac{a}.dta": "x"}
-                         for a in range(2008, 2012)})
+    """Nacidos.zip (2008–2011) trae un ZIP por año: se baja una vez y cada año queda en su
+    carpeta.
+    """
+    paquete = _zip_eevv(
+        {
+            f"Nacidos/nac{a}.zip": {f"nac{a}.csv": f"ANO\n{a}\n", f"nac{a}.dta": "x"}
+            for a in range(2008, 2012)
+        }
+    )
     url = _url_eevv(2008, "nacimientos")
     dl, fallidos = _baja_eevv(tmp_path, {url: paquete}, [2009, 2010], tipos=("nacimientos",))
     assert fallidos == []
@@ -953,9 +1240,16 @@ def test_eevv_zip_de_varios_anios_con_zip_anidado(tmp_path):
 
 
 def test_eevv_txt_de_varios_anios_sin_anidar(tmp_path):
-    paquete = _zip_eevv({"Defunciones txt/Defun_2012.txt": "ANO\n2012\n", "Defunciones txt/Defun_2013.txt": "ANO\n2013\n"})
+    paquete = _zip_eevv(
+        {
+            "Defunciones txt/Defun_2012.txt": "ANO\n2012\n",
+            "Defunciones txt/Defun_2013.txt": "ANO\n2013\n",
+        }
+    )
     _baja_eevv(tmp_path, {_url_eevv(2013, "defunciones"): paquete}, [2013])
-    assert [f.name for f in (tmp_path / "datos" / "defunciones" / "2013").iterdir()] == ["Defun_2013.txt"]
+    assert [f.name for f in (tmp_path / "datos" / "defunciones" / "2013").iterdir()] == [
+        "Defun_2013.txt"
+    ]
 
 
 def test_eevv_incremental_y_forzar(tmp_path):
@@ -968,13 +1262,23 @@ def test_eevv_incremental_y_forzar(tmp_path):
     paquetes[url] = _zip_eevv({"fetal2020_corregido.csv": "ANO\n2020\n"})
     dl, _ = _baja_eevv(tmp_path, paquetes, [2020], tipos=("fetales",), forzar=True)
     assert dl.descargas == [url]
-    assert [f.name for f in (tmp_path / "datos" / "fetales" / "2020").iterdir()] == ["fetal2020_corregido.csv"]
+    assert [f.name for f in (tmp_path / "datos" / "fetales" / "2020").iterdir()] == [
+        "fetal2020_corregido.csv"
+    ]
 
 
 def test_eevv_forzar_conserva_lo_anterior_si_falla(tmp_path):
     url = _url_eevv(2020, "fetales")
-    _baja_eevv(tmp_path, {url: _zip_eevv({"fetal2020.csv": "ANO\n2020\n"})}, [2020], tipos=("fetales",))
-    _, fallidos = _baja_eevv(tmp_path, {url: _zip_eevv({"fetal2020.sav": "spss"})}, [2020], tipos=("fetales",), forzar=True)
+    _baja_eevv(
+        tmp_path, {url: _zip_eevv({"fetal2020.csv": "ANO\n2020\n"})}, [2020], tipos=("fetales",)
+    )
+    _, fallidos = _baja_eevv(
+        tmp_path,
+        {url: _zip_eevv({"fetal2020.sav": "spss"})},
+        [2020],
+        tipos=("fetales",),
+        forzar=True,
+    )
     assert len(fallidos) == 1 and "fetales 2020" in fallidos[0] and "Se conserva" in fallidos[0]
     assert (tmp_path / "datos" / "fetales" / "2020" / "fetal2020.csv").exists()
 
@@ -987,14 +1291,20 @@ def test_eevv_reporta_fallos_y_sigue(tmp_path):
 
 
 def test_eevv_zip_danado_no_es_excepcion(tmp_path):
-    _, fallidos = _baja_eevv(tmp_path, {_url_eevv(2020, "fetales"): b"esto no es un zip"}, [2020], tipos=("fetales",))
+    _, fallidos = _baja_eevv(
+        tmp_path, {_url_eevv(2020, "fetales"): b"esto no es un zip"}, [2020], tipos=("fetales",)
+    )
     assert len(fallidos) == 1 and "fetales 2020" in fallidos[0]
 
 
 def test_eevv_borrar_zip_al_terminar_su_ultimo_anio(tmp_path):
-    paquete = _zip_eevv({f"Fetales/fetal{a}.zip": {f"fetal{a}.csv": "ANO\n1\n"} for a in (2017, 2018)})
+    paquete = _zip_eevv(
+        {f"Fetales/fetal{a}.zip": {f"fetal{a}.csv": "ANO\n1\n"} for a in (2017, 2018)}
+    )
     url = _url_eevv(2017, "fetales")
-    _, fallidos = _baja_eevv(tmp_path, {url: paquete}, [2017, 2018], tipos=("fetales",), keep_zips=False)
+    _, fallidos = _baja_eevv(
+        tmp_path, {url: paquete}, [2017, 2018], tipos=("fetales",), keep_zips=False
+    )
     assert fallidos == []
     assert not (tmp_path / "raw_zips" / "652" / "Fetales.zip").exists()
     assert (tmp_path / "datos" / "fetales" / "2018" / "fetal2018.csv").exists()
@@ -1008,7 +1318,11 @@ def test_eevv_anio_sin_archivos_es_un_fallo(tmp_path):
 
 def test_eevv_cancelar(tmp_path):
     url = _url_eevv(2020, "fetales")
-    dl = FakeEEVVDownloader({url: _zip_eevv({"fetal2020.csv": "ANO\n1\n"})}, base_dir=tmp_path, should_stop=lambda: True)
+    dl = FakeEEVVDownloader(
+        {url: _zip_eevv({"fetal2020.csv": "ANO\n1\n"})},
+        base_dir=tmp_path,
+        should_stop=lambda: True,
+    )
     with pytest.raises(dd.DownloadCancelled):
         dl.run_pipeline(target_years=[2020], tipos=("fetales",))
 
@@ -1020,16 +1334,20 @@ def test_eevv_download_valida_tipos(tmp_path):
 
 def test_eevv_available(tmp_path):
     url = _url_eevv(2020, "fetales")
-    _baja_eevv(tmp_path, {url: _zip_eevv({"fetal2020.csv": "ANO\n2020\n"})}, [2020], tipos=("fetales",))
+    _baja_eevv(
+        tmp_path, {url: _zip_eevv({"fetal2020.csv": "ANO\n2020\n"})}, [2020], tipos=("fetales",)
+    )
     tabla = dd.eevv.available(raiz=tmp_path)
-    assert tabla[["tipo", "anio", "archivo"]].values.tolist() == [["fetales", 2020, "fetal2020.csv"]]
+    assert tabla[["tipo", "anio", "archivo"]].values.tolist() == [
+        ["fetales", 2020, "fetal2020.csv"]
+    ]
     assert list(dd.eevv.find_files(2020, tipo="fetales", raiz=tmp_path)) == [2020]
     assert dd.eevv.find_files(2020, tipo="nacimientos", raiz=tmp_path) == {}
 
 
-# ---------------------------------------------------------------------------------------------------- #
+# --------------------------------------------------------------------------- #
 # ECV
-# ---------------------------------------------------------------------------------------------------- #
+# --------------------------------------------------------------------------- #
 class FakeECVDownloader(ECVDownloader):
     pausa = 0
 
@@ -1060,18 +1378,33 @@ def test_ecv_tabla_cubre_2018_a_2025():
         assert {m for a, m in ECV_KNOWN_FILES if a == anio} >= set(dd.ecv.MODULOS)
     assert {a for a, m in ECV_KNOWN_FILES if m == "factores"} == {2018}
     assert ECV_KNOWN_FILES[2020, "complementaria"] == (
-        "679", "Base_complementaria.zip", "https://microdatos.dane.gov.co/index.php/catalog/679/download/20574")
-    assert len({url for _, _, url in ECV_KNOWN_FILES.values()}) == len(ECV_KNOWN_FILES)  # sin números repetidos
+        "679",
+        "Base_complementaria.zip",
+        "https://microdatos.dane.gov.co/index.php/catalog/679/download/20574",
+    )
+    # Sin números repetidos
+    assert len({url for _, _, url in ECV_KNOWN_FILES.values()}) == len(ECV_KNOWN_FILES)
     assert ECV_KNOWN_FILES[2018, "vivienda"] == (
-        "607", "Datos de la vivienda.zip", "https://microdatos.dane.gov.co/index.php/catalog/607/download/11195")
-    assert ECV_KNOWN_FILES[2023, "salud"][1:] == ("Salud_ajustada.zip", "https://microdatos.dane.gov.co/index.php/catalog/827/download/23480")
+        "607",
+        "Datos de la vivienda.zip",
+        "https://microdatos.dane.gov.co/index.php/catalog/607/download/11195",
+    )
+    assert ECV_KNOWN_FILES[2023, "salud"][1:] == (
+        "Salud_ajustada.zip",
+        "https://microdatos.dane.gov.co/index.php/catalog/827/download/23480",
+    )
     assert ECV_KNOWN_FILES[2025, "fuerza_trabajo"][2].endswith("/catalog/905/download/24627")
     assert dd.ecv.ANIOS_DISPONIBLES == list(range(2018, 2026))
 
 
 def test_ecv_prefiere_csv_y_entra_a_la_subcarpeta(tmp_path):
-    paquete = _zip_eevv({"DBF-ECV-Salud-2025/Salud.csv": "DIRECTORIO\n1\n", "DBF-ECV-Salud-2025/Salud.DTA": "x",
-                         "DBF-ECV-Salud-2025/Salud.sav": "x"})
+    paquete = _zip_eevv(
+        {
+            "DBF-ECV-Salud-2025/Salud.csv": "DIRECTORIO\n1\n",
+            "DBF-ECV-Salud-2025/Salud.DTA": "x",
+            "DBF-ECV-Salud-2025/Salud.sav": "x",
+        }
+    )
     _, fallidos = _baja_ecv(tmp_path, {_url_ecv(2025, "salud"): paquete}, [2025])
     assert fallidos == []
     assert [f.name for f in (tmp_path / "datos" / "2025" / "salud").iterdir()] == ["Salud.csv"]
@@ -1084,12 +1417,23 @@ def test_ecv_usa_stata_si_no_hay_csv(tmp_path):
 
 
 def test_ecv_2018_baja_tambien_los_factores(tmp_path):
-    paquetes = {_url_ecv(2018, "salud"): _zip_eevv({"Salud.csv": "DIRECTORIO\n1\n"}),
-                _url_ecv(2018, "factores"): _zip_eevv({"Factores de expansi\u00f3n 2018 basados en el CNPV 2018.csv": "DIRECTORIO;FEX_C\n1;2\n"})}
+    paquetes = {
+        _url_ecv(2018, "salud"): _zip_eevv({"Salud.csv": "DIRECTORIO\n1\n"}),
+        _url_ecv(2018, "factores"): _zip_eevv(
+            {
+                "Factores de expansi\u00f3n 2018 basados en el CNPV 2018.csv": (
+                    "DIRECTORIO;FEX_C\n1;2\n"
+                )
+            }
+        ),
+    }
     dl, fallidos = _baja_ecv(tmp_path, paquetes, [2018])
     assert fallidos == []
     assert sorted(dl.descargas) == sorted(paquetes)
-    assert dd.ecv.available(raiz=tmp_path)[["anio", "modulo"]].values.tolist() == [[2018, "salud"], [2018, "factores"]]
+    assert dd.ecv.available(raiz=tmp_path)[["anio", "modulo"]].values.tolist() == [
+        [2018, "salud"],
+        [2018, "factores"],
+    ]
     _, fallidos = _baja_ecv(tmp_path, paquetes, [2019])  # en los demás años no hay factores aparte
     assert len(fallidos) == 1 and "salud 2019" in fallidos[0]
 
@@ -1104,7 +1448,9 @@ def test_ecv_incremental_y_forzar(tmp_path):
     paquetes[url] = _zip_eevv({"Salud corregida.csv": "DIRECTORIO\n1\n"})
     dl, _ = _baja_ecv(tmp_path, paquetes, [2019], forzar=True)
     assert dl.descargas == [url]
-    assert [f.name for f in (tmp_path / "datos" / "2019" / "salud").iterdir()] == ["Salud corregida.csv"]
+    assert [f.name for f in (tmp_path / "datos" / "2019" / "salud").iterdir()] == [
+        "Salud corregida.csv"
+    ]
 
 
 def test_ecv_forzar_conserva_lo_anterior_si_falla(tmp_path):
@@ -1116,16 +1462,26 @@ def test_ecv_forzar_conserva_lo_anterior_si_falla(tmp_path):
 
 
 def test_ecv_reporta_fallos_y_sigue(tmp_path):
-    bueno = {_url_ecv(2021, "salud"): _zip_eevv({"Salud.csv": "DIRECTORIO\n1\n"}), _url_ecv(2021, "tic"): b"no es un zip"}
+    bueno = {
+        _url_ecv(2021, "salud"): _zip_eevv({"Salud.csv": "DIRECTORIO\n1\n"}),
+        _url_ecv(2021, "tic"): b"no es un zip",
+    }
     _, fallidos = _baja_ecv(tmp_path, bueno, [2020, 2021], modulos=("salud", "tic"))
     # 2020 también pide la base complementaria del IPM, que estos paquetes no traen
-    assert sorted(f.split(":")[0] for f in fallidos) == ["complementaria 2020", "salud 2020", "tic 2020", "tic 2021"]
+    assert sorted(f.split(":")[0] for f in fallidos) == [
+        "complementaria 2020",
+        "salud 2020",
+        "tic 2020",
+        "tic 2021",
+    ]
     assert (tmp_path / "datos" / "2021" / "salud" / "Salud.csv").exists()
 
 
 def test_ecv_borra_los_zip_si_se_pide(tmp_path):
     url = _url_ecv(2022, "salud")
-    _, fallidos = _baja_ecv(tmp_path, {url: _zip_eevv({"Salud.csv": "DIRECTORIO\n1\n"})}, [2022], keep_zips=False)
+    _, fallidos = _baja_ecv(
+        tmp_path, {url: _zip_eevv({"Salud.csv": "DIRECTORIO\n1\n"})}, [2022], keep_zips=False
+    )
     assert fallidos == []
     assert not (tmp_path / "raw_zips" / "793" / "Salud.zip").exists()
     assert (tmp_path / "datos" / "2022" / "salud" / "Salud.csv").exists()
@@ -1146,14 +1502,18 @@ def test_ecv_cancelar(tmp_path):
 def test_ecv_download_valida_modulos(tmp_path):
     with pytest.raises(ValueError, match="Módulo desconocido 'gastos'"):
         dd.ecv.download(2020, modulos=["salud", "gastos"], raiz=tmp_path)
-    with pytest.raises(ValueError, match="Módulo desconocido 'factores'"):  # interno: va solo con 2018
+    with pytest.raises(
+        ValueError, match="Módulo desconocido 'factores'"
+    ):  # interno: va solo con 2018
         dd.ecv.download(2018, modulos="factores", raiz=tmp_path)
     with pytest.raises(ValueError, match="Módulo desconocido"):
         dd.ecv.find_files(2020, modulo="gastos", raiz=tmp_path)
 
 
 def test_ecv_available_y_find_files(tmp_path):
-    _baja_ecv(tmp_path, {_url_ecv(2020, "salud"): _zip_eevv({"Salud.csv": "DIRECTORIO\n1\n"})}, [2020])
+    _baja_ecv(
+        tmp_path, {_url_ecv(2020, "salud"): _zip_eevv({"Salud.csv": "DIRECTORIO\n1\n"})}, [2020]
+    )
     tabla = dd.ecv.available(raiz=tmp_path)
     assert tabla[["anio", "modulo", "archivo"]].values.tolist() == [[2020, "salud", "Salud.csv"]]
     assert list(dd.ecv.find_files(2020, modulo="salud", raiz=tmp_path)) == [2020]
@@ -1162,7 +1522,9 @@ def test_ecv_available_y_find_files(tmp_path):
 
 
 def _zip_deflate64(nombre: str, datos: bytes, crc: int | None = None) -> bytes:
-    """Un ZIP con un miembro en Deflate64 (método 9), como Educación 2021 de la ECV: zipfile no sabe escribirlo."""
+    """Un ZIP con un miembro en Deflate64 (método 9), como Educación 2021 de la ECV: zipfile no
+    sabe escribirlo.
+    """
     import struct
     import zlib
 
@@ -1172,22 +1534,58 @@ def _zip_deflate64(nombre: str, datos: bytes, crc: int | None = None) -> bytes:
     comprimido = deflater.deflate(datos) + deflater.flush()
     crc = zlib.crc32(datos) if crc is None else crc
     n = nombre.encode()
-    local = struct.pack("<4s5H3L2H", b"PK\x03\x04", 20, 0, 9, 0, 0, crc, len(comprimido), len(datos), len(n), 0) + n
-    central = struct.pack("<4s6H3L5H2L", b"PK\x01\x02", 20, 20, 0, 9, 0, 0, crc, len(comprimido), len(datos), len(n),
-                          0, 0, 0, 0, 0, 0) + n
-    fin = struct.pack("<4s4H2LH", b"PK\x05\x06", 0, 0, 1, 1, len(central), len(local) + len(comprimido), 0)
+    local = (
+        struct.pack(
+            "<4s5H3L2H", b"PK\x03\x04", 20, 0, 9, 0, 0, crc, len(comprimido), len(datos), len(n), 0
+        )
+        + n
+    )
+    central = (
+        struct.pack(
+            "<4s6H3L5H2L",
+            b"PK\x01\x02",
+            20,
+            20,
+            0,
+            9,
+            0,
+            0,
+            crc,
+            len(comprimido),
+            len(datos),
+            len(n),
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+        )
+        + n
+    )
+    fin = struct.pack(
+        "<4s4H2LH", b"PK\x05\x06", 0, 0, 1, 1, len(central), len(local) + len(comprimido), 0
+    )
     return local + comprimido + central + fin
 
 
 def test_ecv_extrae_zip_en_deflate64(tmp_path):
     csv = ("DIRECTORIO;SECUENCIA_P\n" + "".join(f"{i};1\n" for i in range(5000))).encode()
     url = _url_ecv(2021, "educacion")
-    _, fallidos = _baja_ecv(tmp_path, {url: _zip_deflate64("Educación.csv", csv)}, [2021], modulos=("educacion",))
+    _, fallidos = _baja_ecv(
+        tmp_path, {url: _zip_deflate64("Educación.csv", csv)}, [2021], modulos=("educacion",)
+    )
     assert fallidos == []
     assert (tmp_path / "datos" / "2021" / "educacion" / "Educación.csv").read_bytes() == csv
-    _, fallidos = _baja_ecv(tmp_path, {url: _zip_deflate64("Educación.csv", csv, crc=1)}, [2021], modulos=("educacion",),
-                            forzar=True)
-    assert len(fallidos) == 1 and "educacion 2021" in fallidos[0]  # un CRC distinto no deja un archivo dañado
+    _, fallidos = _baja_ecv(
+        tmp_path,
+        {url: _zip_deflate64("Educación.csv", csv, crc=1)},
+        [2021],
+        modulos=("educacion",),
+        forzar=True,
+    )
+    # Un CRC distinto no deja un archivo dañado
+    assert len(fallidos) == 1 and "educacion 2021" in fallidos[0]
 
 
 def test_ecv_extraer_falla_si_dos_archivos_quedan_con_el_mismo_nombre(tmp_path):
@@ -1200,27 +1598,39 @@ def test_ecv_extraer_falla_si_dos_archivos_quedan_con_el_mismo_nombre(tmp_path):
     assert not (tmp_path / "datos" / "2025" / "vivienda").exists()
 
 
-# Los 90 números de descarga de la tabla fija se copiaron a mano del ANDA: un número equivocado bajaría un ZIP válido de
-# otro capítulo. Esta prueba los compara con las páginas get-microdata; usa la red, así que corre solo con
-# DANE_DATA_TEST_RED=1.
-@pytest.mark.skipif(not __import__("os").environ.get("DANE_DATA_TEST_RED"), reason="usa la red: DANE_DATA_TEST_RED=1")
+# Los 90 números de descarga de la tabla fija se copiaron a mano del ANDA: un número equivocado
+# bajaría un ZIP válido de otro capítulo. Esta prueba los compara con las páginas get-microdata;
+# usa la red, así que corre solo con DANE_DATA_TEST_RED=1.
+@pytest.mark.skipif(
+    not __import__("os").environ.get("DANE_DATA_TEST_RED"),
+    reason="usa la red: DANE_DATA_TEST_RED=1",
+)
 @pytest.mark.parametrize("catalogo", sorted({c for c, _, _ in ECV_KNOWN_FILES.values()}))
 def test_red_ecv_tabla_fija_igual_al_anda(catalogo, tmp_path):
     publicados = GEIHDownloader(base_dir=tmp_path)._enlaces(catalogo)
     assert publicados, f"sin respuesta del catálogo {catalogo}"
     for (anio, modulo), (cat, nombre, url) in ECV_KNOWN_FILES.items():
         if cat == catalogo:
-            assert publicados.get(url, "").strip() == nombre, (anio, modulo, nombre, publicados.get(url))
+            assert publicados.get(url, "").strip() == nombre, (
+                anio,
+                modulo,
+                nombre,
+                publicados.get(url),
+            )
 
 
 def _zip_deflate_danado(ruta):
-    """ZIP con encabezados sanos y el Deflate del miembro dañado: zipfile lanza zlib.error al leerlo."""
+    """ZIP con encabezados sanos y el Deflate del miembro dañado: zipfile lanza zlib.error al
+    leerlo.
+    """
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
-        z.writestr("Datos 2025.csv", "DIRECTORIO,X\n" + "".join(f"{i},{i * 7}\n" for i in range(5000)))
+        z.writestr(
+            "Datos 2025.csv", "DIRECTORIO,X\n" + "".join(f"{i},{i * 7}\n" for i in range(5000))
+        )
     b = bytearray(buf.getvalue())
     i = b.index(b"Datos 2025.csv") + len("Datos 2025.csv")
-    b[i:i + 8] = b"\xff" * 8
+    b[i : i + 8] = b"\xff" * 8
     ruta.write_bytes(bytes(b))
 
 
@@ -1235,9 +1645,9 @@ def test_extraer_con_deflate_danado_falla_sin_detener_la_descarga(tmp_path, encu
     assert not carpeta.exists()
 
 
-# ---------------------------------------------------------------------------------------------------- #
+# --------------------------------------------------------------------------- #
 # EMICRON
-# ---------------------------------------------------------------------------------------------------- #
+# --------------------------------------------------------------------------- #
 class FakeEMICRONDownloader(EMICRONDownloader):
     pausa = 0
 
@@ -1258,10 +1668,19 @@ def _url_emicron(anio, modulo):
     return EMICRON_KNOWN_FILES[anio, modulo][2]
 
 
-def _paquetes_emicron(anio, modulos, contenido="DIRECTORIO,SECUENCIA_P,SECUENCIA_ENCUESTA\n1,1,1\n"):
-    """Un ZIP por módulo, como los del ANDA: el CSV (a veces en una carpeta) con su Stata y su SPSS."""
-    return {_url_emicron(anio, m): _zip_eevv({f"Modulo {m}/{m} {anio}.csv": contenido, f"{m}.dta": "x", f"{m}.sav": "x"})
-            for m in modulos if (anio, m) in EMICRON_KNOWN_FILES}
+def _paquetes_emicron(
+    anio, modulos, contenido="DIRECTORIO,SECUENCIA_P,SECUENCIA_ENCUESTA\n1,1,1\n"
+):
+    """Un ZIP por módulo, como los del ANDA: el CSV (a veces en una carpeta) con su Stata y su
+    SPSS.
+    """
+    return {
+        _url_emicron(anio, m): _zip_eevv(
+            {f"Modulo {m}/{m} {anio}.csv": contenido, f"{m}.dta": "x", f"{m}.sav": "x"}
+        )
+        for m in modulos
+        if (anio, m) in EMICRON_KNOWN_FILES
+    }
 
 
 def _baja_emicron(tmp_path, paquetes, anios, modulos=None, **kw):
@@ -1289,8 +1708,14 @@ def test_emicron_extrae_el_csv_con_el_nombre_del_modulo(tmp_path):
     dl, fallidos = _baja_emicron(tmp_path, paquetes, [2024], modulos=["ventas"])
     assert fallidos == []
     # Siempre la identificación y los factores; tic no se pidió
-    assert sorted(f.name for f in (tmp_path / "datos" / "2024").iterdir()) == ["fex_dpto.csv", "identificacion.csv", "ventas.csv"]
-    assert (tmp_path / "datos" / "2024" / "ventas.csv").read_text() == "DIRECTORIO,SECUENCIA_P,SECUENCIA_ENCUESTA\n1,1,1\n"
+    assert sorted(f.name for f in (tmp_path / "datos" / "2024").iterdir()) == [
+        "fex_dpto.csv",
+        "identificacion.csv",
+        "ventas.csv",
+    ]
+    assert (
+        tmp_path / "datos" / "2024" / "ventas.csv"
+    ).read_text() == "DIRECTORIO,SECUENCIA_P,SECUENCIA_ENCUESTA\n1,1,1\n"
     assert (tmp_path / "raw_zips" / "2024" / EMICRON_KNOWN_FILES[2024, "ventas"][1]).exists()
 
 
@@ -1309,18 +1734,33 @@ def test_emicron_incremental_y_forzar(tmp_path):
 def test_emicron_forzar_que_falla_conserva_lo_anterior(tmp_path):
     url = _url_emicron(2025, "identificacion")
     _baja_emicron(tmp_path, _paquetes_emicron(2025, ["identificacion"]), [2025], modulos=[])
-    _, fallidos = _baja_emicron(tmp_path, {url: _zip_eevv({"x.sav": "spss"})}, [2025], modulos=[], forzar=True)
-    assert len(fallidos) == 1 and "2025 identificacion" in fallidos[0] and "Se conserva" in fallidos[0]
-    assert (tmp_path / "datos" / "2025" / "identificacion.csv").read_text().startswith("DIRECTORIO")
+    _, fallidos = _baja_emicron(
+        tmp_path, {url: _zip_eevv({"x.sav": "spss"})}, [2025], modulos=[], forzar=True
+    )
+    assert (
+        len(fallidos) == 1
+        and "2025 identificacion" in fallidos[0]
+        and "Se conserva" in fallidos[0]
+    )
+    assert (
+        (tmp_path / "datos" / "2025" / "identificacion.csv").read_text().startswith("DIRECTORIO")
+    )
 
 
 def test_emicron_fallos_se_informan_y_sigue(tmp_path):
     paquetes = _paquetes_emicron(2025, ["identificacion"])
     paquetes[_url_emicron(2025, "ventas")] = b"esto no es un zip"
-    paquetes[_url_emicron(2025, "tic")] = _zip_eevv({"a.csv": "x", "b.csv": "y"})  # dos CSV: ¿cuál?
-    _, fallidos = _baja_emicron(tmp_path, paquetes, [2025, 2018], modulos=["ventas", "tic", "costos"])
-    assert sorted(f.split(":")[0] for f in fallidos) == ["2025 costos", "2025 tic", "2025 ventas",
-                                                         "Años sin catálogo de la EMICRON en el ANDA"]
+    # Dos CSV: ¿cuál?
+    paquetes[_url_emicron(2025, "tic")] = _zip_eevv({"a.csv": "x", "b.csv": "y"})
+    _, fallidos = _baja_emicron(
+        tmp_path, paquetes, [2025, 2018], modulos=["ventas", "tic", "costos"]
+    )
+    assert sorted(f.split(":")[0] for f in fallidos) == [
+        "2025 costos",
+        "2025 tic",
+        "2025 ventas",
+        "Años sin catálogo de la EMICRON en el ANDA",
+    ]
     assert (tmp_path / "datos" / "2025" / "identificacion.csv").exists()
 
 
@@ -1332,14 +1772,18 @@ def test_emicron_modulo_que_no_existe_ese_anio_es_un_aviso(tmp_path, caplog):
 
 
 def test_emicron_borra_los_zip_si_se_pide(tmp_path):
-    _, fallidos = _baja_emicron(tmp_path, _paquetes_emicron(2025, ["identificacion"]), [2025], modulos=[], keep_zips=False)
+    _, fallidos = _baja_emicron(
+        tmp_path, _paquetes_emicron(2025, ["identificacion"]), [2025], modulos=[], keep_zips=False
+    )
     assert fallidos == []
     assert not any((tmp_path / "raw_zips").rglob("*.zip"))
     assert (tmp_path / "datos" / "2025" / "identificacion.csv").exists()
 
 
 def test_emicron_cancelar(tmp_path):
-    dl = FakeEMICRONDownloader(_paquetes_emicron(2025, ["identificacion"]), base_dir=tmp_path, should_stop=lambda: True)
+    dl = FakeEMICRONDownloader(
+        _paquetes_emicron(2025, ["identificacion"]), base_dir=tmp_path, should_stop=lambda: True
+    )
     with pytest.raises(dd.DownloadCancelled):
         dl.run_pipeline(target_years=[2025], modulos=[])
 
@@ -1350,17 +1794,21 @@ def test_emicron_download_valida_modulos(tmp_path):
 
 
 def test_emicron_available(tmp_path):
-    _baja_emicron(tmp_path, _paquetes_emicron(2025, ["identificacion", "ventas"]), [2025], modulos=["ventas"])
+    _baja_emicron(
+        tmp_path, _paquetes_emicron(2025, ["identificacion", "ventas"]), [2025], modulos=["ventas"]
+    )
     (tmp_path / "datos" / "2019").mkdir()
     (tmp_path / "datos" / "2019" / "ventas.csv").write_text("x")  # sin identificación: no cuenta
     tabla = dd.emicron.available(raiz=tmp_path)
-    assert tabla[["anio", "modulo", "archivo"]].values.tolist() == [[2025, "identificacion", "identificacion.csv"],
-                                                                  [2025, "ventas", "ventas.csv"]]
+    assert tabla[["anio", "modulo", "archivo"]].values.tolist() == [
+        [2025, "identificacion", "identificacion.csv"],
+        [2025, "ventas", "ventas.csv"],
+    ]
     assert list(dd.emicron.find_files(2025, raiz=tmp_path)[2025]) == ["identificacion", "ventas"]
     assert dd.emicron.find_files(2019, raiz=tmp_path) == {}
 
 
-# ---------------------------------------------------------------------------------------------------- #
+# --------------------------------------------------------------------------- #
 # Pobreza monetaria
 
 HOG = "Directorio;Secuencia_p;Mes;Ingpcug\n1;1;1;100,5\n"
@@ -1401,12 +1849,18 @@ def test_pobreza_tabla_cubre_la_serie():
     assert POBREZA_KNOWN_FILES[2018, "hogares"][2].endswith("/catalog/608/download/11190")
     # Desde 2023, un solo ZIP con los dos archivos
     assert POBREZA_KNOWN_FILES[2025, "hogares"] == POBREZA_KNOWN_FILES[2025, "personas"]
-    assert POBREZA_KNOWN_FILES["empalme", "empalme_2012_2020"][2].endswith("/catalog/842/download/23713")
+    assert POBREZA_KNOWN_FILES["empalme", "empalme_2012_2020"][2].endswith(
+        "/catalog/842/download/23713"
+    )
 
 
 def test_pobreza_prefiere_csv_y_renombra(tmp_path):
-    paquete = _zip_eevv({"Hogares 2018.sav": "spss", "Hogares 2018.csv": HOG, "Hogares 2018.dta": "stata"})
-    dl, fallidos = _baja_pob(tmp_path, {_url_pob(2018, "hogares"): paquete}, [2018], archivos=("hogares",))
+    paquete = _zip_eevv(
+        {"Hogares 2018.sav": "spss", "Hogares 2018.csv": HOG, "Hogares 2018.dta": "stata"}
+    )
+    dl, fallidos = _baja_pob(
+        tmp_path, {_url_pob(2018, "hogares"): paquete}, [2018], archivos=("hogares",)
+    )
     assert fallidos == []
     carpeta = tmp_path / "datos" / "2018"
     assert sorted(f.name for f in carpeta.iterdir()) == ["hogares.csv", "origen.json"]
@@ -1422,29 +1876,51 @@ def test_pobreza_txt_si_no_hay_csv(tmp_path):
 
 
 def test_pobreza_zip_conjunto_se_baja_una_vez(tmp_path):
-    """Desde 2023 hogares, personas (y víctimas, que no se usa) vienen en un solo ZIP, a veces en una carpeta."""
-    paquete = _zip_eevv({"BD/Hogares.csv": HOG, "BD/Personas.csv": PER, "BD/Victimas.csv": "x", "BD/Hogares.dta": "s"})
-    dl, fallidos = _baja_pob(tmp_path, {_url_pob(2024, "hogares"): paquete}, [2024], keep_zips=False)
+    """Desde 2023 hogares, personas (y víctimas, que no se usa) vienen en un solo ZIP, a veces en
+    una carpeta.
+    """
+    paquete = _zip_eevv(
+        {
+            "BD/Hogares.csv": HOG,
+            "BD/Personas.csv": PER,
+            "BD/Victimas.csv": "x",
+            "BD/Hogares.dta": "s",
+        }
+    )
+    dl, fallidos = _baja_pob(
+        tmp_path, {_url_pob(2024, "hogares"): paquete}, [2024], keep_zips=False
+    )
     assert fallidos == []
     assert dl.descargas == [_url_pob(2024, "hogares")]
     carpeta = tmp_path / "datos" / "2024"
-    assert (carpeta / "hogares.csv").read_text() == HOG and (carpeta / "personas.csv").read_text() == PER
-    assert not list((tmp_path / "raw_zips").rglob("*.zip"))  # keep_zips=False, después del último archivo
+    assert (carpeta / "hogares.csv").read_text() == HOG and (
+        carpeta / "personas.csv"
+    ).read_text() == PER
+    # Keep_zips=False, después del último archivo
+    assert not list((tmp_path / "raw_zips").rglob("*.zip"))
 
 
 def test_pobreza_falla_si_el_zip_no_trae_el_archivo_o_trae_dos(tmp_path):
     url = _url_pob(2019, "hogares")
-    _, fallidos = _baja_pob(tmp_path, {url: _zip_eevv({"otra cosa.csv": HOG})}, [2019], archivos=("hogares",))
+    _, fallidos = _baja_pob(
+        tmp_path, {url: _zip_eevv({"otra cosa.csv": HOG})}, [2019], archivos=("hogares",)
+    )
     assert len(fallidos) == 1 and "otra cosa.csv" in fallidos[0]
-    _, fallidos = _baja_pob(tmp_path, {url: _zip_eevv({"Hogares.csv": HOG, "a/Hogares.csv": HOG})}, [2019],
-                            archivos=("hogares",))
+    _, fallidos = _baja_pob(
+        tmp_path,
+        {url: _zip_eevv({"Hogares.csv": HOG, "a/Hogares.csv": HOG})},
+        [2019],
+        archivos=("hogares",),
+    )
     assert len(fallidos) == 1 and "2 candidatos" in fallidos[0]
     assert not (tmp_path / "datos" / "2019" / "hogares.csv").exists()
 
 
 def test_pobreza_un_archivo_no_borra_el_otro_y_es_incremental(tmp_path):
-    paquetes = {_url_pob(2020, "hogares"): _zip_eevv({"Hogares.csv": HOG}),
-                _url_pob(2020, "personas"): _zip_eevv({"Personas.csv": PER})}
+    paquetes = {
+        _url_pob(2020, "hogares"): _zip_eevv({"Hogares.csv": HOG}),
+        _url_pob(2020, "personas"): _zip_eevv({"Personas.csv": PER}),
+    }
     _baja_pob(tmp_path, paquetes, [2020], archivos=("personas",))
     _baja_pob(tmp_path, paquetes, [2020], archivos=("hogares",))
     carpeta = tmp_path / "datos" / "2020"
@@ -1459,8 +1935,16 @@ def test_pobreza_un_archivo_no_borra_el_otro_y_es_incremental(tmp_path):
 def test_pobreza_forzar_cambia_de_formato(tmp_path):
     url = _url_pob(2013, "hogares")
     _baja_pob(tmp_path, {url: _zip_eevv({"hogares_2013.txt": HOG})}, [2013], archivos=("hogares",))
-    _baja_pob(tmp_path, {url: _zip_eevv({"hogares_2013.csv": HOG})}, [2013], archivos=("hogares",), forzar=True)
-    assert sorted(f.name for f in (tmp_path / "datos" / "2013").glob("hogares.*")) == ["hogares.csv"]
+    _baja_pob(
+        tmp_path,
+        {url: _zip_eevv({"hogares_2013.csv": HOG})},
+        [2013],
+        archivos=("hogares",),
+        forzar=True,
+    )
+    assert sorted(f.name for f in (tmp_path / "datos" / "2013").glob("hogares.*")) == [
+        "hogares.csv"
+    ]
 
 
 def test_pobreza_anio_desconocido_y_lista_vacia(tmp_path):
@@ -1471,18 +1955,28 @@ def test_pobreza_anio_desconocido_y_lista_vacia(tmp_path):
 
 
 def test_pobreza_empalme_en_su_carpeta(tmp_path):
+    carpeta = "Empalme de la medición de Pobreza y Desigualdad (2012-2020)"
     paquetes = {
-        _url_pob("empalme", "empalme_2012_2020"): _zip_eevv({
-            "Empalme de la medición de Pobreza y Desigualdad (2012-2020)/Empalme 2012-2020.csv": "a;b\n1;2\n",
-            "Empalme de la medición de Pobreza y Desigualdad (2012-2020)/Empalme 2012-2020.sav": "spss"}),
+        _url_pob("empalme", "empalme_2012_2020"): _zip_eevv(
+            {
+                f"{carpeta}/Empalme 2012-2020.csv": "a;b\n1;2\n",
+                f"{carpeta}/Empalme 2012-2020.sav": "spss",
+            }
+        ),
         _url_pob("empalme", "hogares_empalmado_2021"): _zip_eevv({"Hogares_empalmado.csv": HOG}),
-        _url_pob("empalme", "hogares_empalmado_dpto_2021"): _zip_eevv({"hogares_empalmado_dpto.csv": HOG}),
+        _url_pob("empalme", "hogares_empalmado_dpto_2021"): _zip_eevv(
+            {"hogares_empalmado_dpto.csv": HOG}
+        ),
         _url_pob("empalme", "lineas_2012_2018"): _zip_eevv({"lineas_2012_2018.csv": "a\n1\n"}),
     }
     dl, fallidos = _baja_pob(tmp_path, paquetes, [], empalme=True)
     assert fallidos == []
     assert sorted(f.name for f in (tmp_path / "datos" / "empalme").glob("*.csv")) == [
-        "empalme_2012_2020.csv", "hogares_empalmado_2021.csv", "hogares_empalmado_dpto_2021.csv", "lineas_2012_2018.csv"]
+        "empalme_2012_2020.csv",
+        "hogares_empalmado_2021.csv",
+        "hogares_empalmado_dpto_2021.csv",
+        "lineas_2012_2018.csv",
+    ]
 
 
 def test_pobreza_download_valida_archivos(tmp_path):
@@ -1491,18 +1985,33 @@ def test_pobreza_download_valida_archivos(tmp_path):
 
 
 def test_pobreza_conserva_el_zip_si_falla(tmp_path):
-    """Con keep_zips=False, el ZIP solo se borra si todo lo suyo se extrajo: si no, sirve para reintentar."""
+    """Con keep_zips=False, el ZIP solo se borra si todo lo suyo se extrajo: si no, sirve para
+    reintentar.
+    """
     url = _url_pob(2019, "hogares")
-    _, fallidos = _baja_pob(tmp_path, {url: _zip_eevv({"otra cosa.csv": HOG})}, [2019], archivos=("hogares",),
-                            keep_zips=False)
+    _, fallidos = _baja_pob(
+        tmp_path,
+        {url: _zip_eevv({"otra cosa.csv": HOG})},
+        [2019],
+        archivos=("hogares",),
+        keep_zips=False,
+    )
     assert len(fallidos) == 1
     assert list((tmp_path / "raw_zips").rglob("*.zip"))  # no se pudo extraer: se conserva
     # Con forzar, si la descarga nueva falla, el ZIP de antes no se borra
     zip_viejo = tmp_path / "raw_zips" / "684" / "Hogaresd.zip"
     zip_viejo.write_bytes(_zip_eevv({"Hogares.csv": HOG}))
-    _, fallidos = _baja_pob(tmp_path, {}, [2019], archivos=("hogares",), keep_zips=False, forzar=True)
+    _, fallidos = _baja_pob(
+        tmp_path, {}, [2019], archivos=("hogares",), keep_zips=False, forzar=True
+    )
     assert len(fallidos) == 1 and zip_viejo.exists()
     # Si todo sale bien, se borra
-    _, fallidos = _baja_pob(tmp_path, {url: _zip_eevv({"Hogares.csv": HOG})}, [2019], archivos=("hogares",),
-                            keep_zips=False, forzar=True)
+    _, fallidos = _baja_pob(
+        tmp_path,
+        {url: _zip_eevv({"Hogares.csv": HOG})},
+        [2019],
+        archivos=("hogares",),
+        keep_zips=False,
+        forzar=True,
+    )
     assert fallidos == [] and not zip_viejo.exists()

@@ -10,9 +10,11 @@ from dane_data.cli import main as cli_main
 
 
 def test_crecimiento_no_salta_anios():
-    res = pd.DataFrame({"anio": [2014, 2015, 2018, 2019], "valor_agregado": [100.0, 110.0, 200.0, 220.0]})
+    res = pd.DataFrame(
+        {"anio": [2014, 2015, 2018, 2019], "valor_agregado": [100.0, 110.0, 200.0, 220.0]}
+    )
     crec = dd.eam.crecimiento(res, "valor_agregado")["crec_valor_agregado"]
-    assert crec.isna().tolist() == [True, False, True, False]      # 2018 no sigue a 2017
+    assert crec.isna().tolist() == [True, False, True, False]  # 2018 no sigue a 2017
     assert crec.dropna().tolist() == pytest.approx([10.0, 10.0])
     por = pd.concat([res.assign(sector="A"), res.iloc[[0, 1]].assign(sector="B")])
     crec = dd.eam.crecimiento(por, "valor_agregado", por="sector")
@@ -20,9 +22,12 @@ def test_crecimiento_no_salta_anios():
 
 
 def test_deflactar_repetido_o_dos_veces():
-    eam = pd.DataFrame({"anio": [2023, 2024], "valagri": [100.0, 110.0], "prodbr2": [200.0, 220.0]})
+    eam = pd.DataFrame(
+        {"anio": [2023, 2024], "valagri": [100.0, 110.0], "prodbr2": [200.0, 220.0]}
+    )
     ipp = pd.Series({2023: 100.0, 2024: 110.0})
-    d = dd.eam.deflactar(dd.eam.deflactar(eam, ["valagri"], ipp), ["prodbr2"], ipp)   # antes: error de sufijos
+    # Antes: error de sufijos
+    d = dd.eam.deflactar(dd.eam.deflactar(eam, ["valagri"], ipp), ["prodbr2"], ipp)
     assert len(d) == 2 and d["prodbr2_real"].tolist() == pytest.approx([200.0, 200.0])
     assert [c for c in d.columns if c.startswith("deflactor")] == ["deflactor"]
     repetido = pd.DataFrame({"anio": [2023, 2023, 2024], "deflactor": [100.0, 101.0, 110.0]})
@@ -44,27 +49,36 @@ def test_eam_load_harmonizes(eam_root):
     assert sorted(eam["anio"].unique()) == [1992, 2016, 2024]
     assert all(c == c.lower() for c in eam.columns)
     r = eam.set_index(["anio", "nordest"])
-    assert r.loc[(1992, 10), "ciiu_rev"] == 2 and r.loc[(1992, 10), "sector"] == "Alimentos, bebidas y tabaco"
+    assert (
+        r.loc[(1992, 10), "ciiu_rev"] == 2
+        and r.loc[(1992, 10), "sector"] == "Alimentos, bebidas y tabaco"
+    )
     assert r.loc[(1992, 20), "division"] == "38"  # código publicado a 2 dígitos
     assert r.loc[(2016, 30), "sector"] == "Bebidas"  # "110" = grupo de 3 dígitos
     assert r.loc[(2024, 10), "ciiu"] == "1011"  # 1011.0 de Stata -> "1011"
     assert r.loc[(2024, 10), "departamento"] == "Antioquia"
     assert not any(c.startswith("ciiu") and c not in ("ciiu", "ciiu_rev") for c in eam.columns)
-    assert set(eam.columns) - set(dd.eam.CORE) == set(dd.eam.ETIQUETAS) - set(dd.eam.CORE)  # armonizadas documentadas
+    # Armonizadas documentadas
+    assert set(eam.columns) - set(dd.eam.CORE) == set(dd.eam.ETIQUETAS) - set(dd.eam.CORE)
 
 
 def test_eam_microagregacion(tmp_path):
-    """Grupos con los mismos montos, departamento y CIIU, aunque difieran las ventas; no los que solo coinciden en ceros."""
+    """Grupos con los mismos montos, departamento y CIIU, aunque difieran las ventas; no los que
+    solo coinciden en ceros.
+    """
     archivo = tmp_path / "datos" / "2024" / "EAM_2024.csv"
     archivo.parent.mkdir(parents=True)
     archivo.write_text(
         "nordemp;nordest;dpto;ciiu4;valagri;prodbr2;pertotal;valorven\n"
-        "1;10;5;1104;100,5;200;30;150\n2;11;5;1104;100,5;200;30;151\n3;12;5;1104;100,5;200;30;150\n"
-        "4;13;8;1104;100,5;200;30;150\n"            # mismo monto en otro departamento: no es del grupo
+        "1;10;5;1104;100,5;200;30;150\n"
+        "2;11;5;1104;100,5;200;30;151\n"
+        "3;12;5;1104;100,5;200;30;150\n"
+        "4;13;8;1104;100,5;200;30;150\n"  # mismo monto en otro departamento: no es del grupo
         "5;14;5;1011;7;9;2;8\n6;15;5;1011;7;9;2;8\n"  # otro grupo
         "7;16;5;1011;0;0;0;0\n8;17;5;1011;0;0;0;0\n"  # sin datos
         "9;18;5;1011;7;9;3;8\n",
-        encoding="utf-8")
+        encoding="utf-8",
+    )
     eam = dd.eam.load(raiz=tmp_path).set_index("nordest")
     assert eam.loc[eam["microagregado"]].index.tolist() == [10, 11, 12, 14, 15]
     grupo = eam["grupo_microagregacion"]
@@ -78,7 +92,10 @@ def test_eam_panel_microagregados(eam_root):
     with pytest.warns(UserWarning, match="1 de 3 establecimientos"):
         dd.eam.panel(eam)
     sin = dd.eam.panel(eam, excluir_microagregados=True)
-    assert (10, 2016) not in sin.index and (10, 2024) in sin.index      # se quita el registro, no la planta
+    assert (10, 2016) not in sin.index and (
+        10,
+        2024,
+    ) in sin.index  # se quita el registro, no la planta
     with pytest.warns(UserWarning):
         assert len(dd.eam.panel(eam, balanceado=True)) == 3
     # sin su registro de 2016, la planta 10 ya no está en todos los años
@@ -106,17 +123,26 @@ def test_eam_resumen_sin_por(eam_root):
 
 
 def test_eam_resumen_con_vacios():
-    """Prestaciones vacías no borran los salarios; un grupo o una variable sin datos queda vacío, no en 0."""
-    eam = pd.DataFrame({"anio": [2024, 2024, 2024], "nordest": [1, 2, 3], "sector": ["A", "A", "B"],
-                        "valagri": [100.0, 100.0, np.nan], "salpeyte": [30.0, 30.0, np.nan],
-                        "prespyte": [10.0, np.nan, np.nan]})
+    """Prestaciones vacías no borran los salarios; un grupo o una variable sin datos queda vacío,
+    no en 0.
+    """
+    eam = pd.DataFrame(
+        {
+            "anio": [2024, 2024, 2024],
+            "nordest": [1, 2, 3],
+            "sector": ["A", "A", "B"],
+            "valagri": [100.0, 100.0, np.nan],
+            "salpeyte": [30.0, 30.0, np.nan],
+            "prespyte": [10.0, np.nan, np.nan],
+        }
+    )
     r = dd.eam.resumen(eam, por="sector").set_index("sector")
-    assert r.loc["A", "remuneraciones"] == 70                  # antes 40: se perdían los 30 de la planta 2
+    assert r.loc["A", "remuneraciones"] == 70  # antes 40: se perdían los 30 de la planta 2
     assert r.loc["A", "participacion_laboral"] == pytest.approx(35)
     assert pd.isna(r.loc["B", "remuneraciones"]) and pd.isna(r.loc["B", "valor_agregado"])
     assert r.loc["B", "establecimientos"] == 1
     sin_prestaciones = dd.eam.resumen(eam.drop(columns="prespyte"), por="sector")
-    assert sin_prestaciones["remuneraciones"].isna().all()     # antes 0
+    assert sin_prestaciones["remuneraciones"].isna().all()  # antes 0
     assert sin_prestaciones["participacion_laboral"].isna().all()
 
 
@@ -135,15 +161,19 @@ def test_eam_deflactar(eam_root):
     assert d.loc[d.anio.eq(2024), "valagri_real"].item() == pytest.approx(60)
     with pytest.warns(UserWarning, match="no encontraron deflactor") as avisos:
         dd.eam.deflactar(eam, ["valagri"], defl.drop(1992))
-    assert avisos[0].filename == __file__                   # apunta a la línea del usuario, no a la librería
+    assert avisos[0].filename == __file__  # apunta a la línea del usuario, no a la librería
 
 
 def test_nombres_de_los_parametros(geih_root):
-    """``years`` en todas las funciones, también en las serie_*, que pedían ``anios``; los demás, solo en español."""
+    """``years`` en todas las funciones, también en las serie_*, que pedían ``anios``; los demás,
+    solo en español.
+    """
     serie = dd.geih.serie_indicadores(years=2016, raiz=geih_root)
     pd.testing.assert_frame_equal(serie, dd.geih.serie_indicadores(2016, raiz=geih_root))
     assert len(dd.geih.load(years=2016, meses=1, raiz=geih_root, cache=False))
-    with pytest.raises(TypeError, match="months"):  # los nombres en inglés de antes ya no se aceptan
+    with pytest.raises(
+        TypeError, match="months"
+    ):  # los nombres en inglés de antes ya no se aceptan
         dd.geih.load(2016, months=1, raiz=geih_root, cache=False)
 
 
@@ -158,7 +188,9 @@ def test_columna_casi_toda_con_la_marca_de_vacio(tmp_path):
 
 
 def test_texto_que_se_pierde_al_convertir_se_avisa(tmp_path, caplog):
-    """Hasta 1 % de texto en una columna numérica queda vacío: se avisa, salvo la marca de vacío "."."""
+    """Hasta 1 % de texto en una columna numérica queda vacío: se avisa, salvo la marca de vacío
+    ".".
+    """
     from dane_data._io import read_table
 
     archivo = tmp_path / "2016" / "Enero" / "Ocupados.csv"
@@ -167,7 +199,8 @@ def test_texto_que_se_pierde_al_convertir_se_avisa(tmp_path, caplog):
     archivo.write_text("CODIGO;OTRO\n" + "\n".join(filas) + "\nA1;.\n", encoding="utf-8")
     with caplog.at_level("WARNING", logger="dane_data"):
         df = read_table(archivo)
-    assert df["CODIGO"].isna().sum() == 1 and df["OTRO"].isna().sum() == 1   # las dos quedan numéricas
+    # Las dos quedan numéricas
+    assert df["CODIGO"].isna().sum() == 1 and df["OTRO"].isna().sum() == 1
     assert len(caplog.records) == 1
     assert "2016/Enero/Ocupados.csv: CODIGO" in caplog.text and "'A1'" in caplog.text
 
@@ -177,8 +210,12 @@ def test_coma_de_miles_y_punto_decimal(tmp_path):
     from dane_data._io import read_table
 
     archivo = tmp_path / "Ocupados.CSV"
-    archivo.write_text("DIRECTORIO;P6030S3;P6120;P7500S1A1;FEX_C_2011\n"
-                       "6,000,013;1,971;96,000;98;1030.3000973\n6,000,014;1,989;;1,200,000;99.5\n", encoding="latin-1")
+    archivo.write_text(
+        "DIRECTORIO;P6030S3;P6120;P7500S1A1;FEX_C_2011\n"
+        "6,000,013;1,971;96,000;98;1030.3000973\n"
+        "6,000,014;1,989;;1,200,000;99.5\n",
+        encoding="latin-1",
+    )
     df = read_table(archivo)
     assert df["DIRECTORIO"].tolist() == [6000013, 6000014]
     assert df["P6030S3"].tolist() == [1971, 1989]
@@ -188,29 +225,49 @@ def test_coma_de_miles_y_punto_decimal(tmp_path):
 
 
 def test_coma_decimal_minoritaria_no_se_pierde(tmp_path):
-    """EAM 1998: casi todo entero, pero las plantas anonimizadas por promedio traen coma decimal."""
+    """EAM 1998: casi todo entero, pero las plantas anonimizadas por promedio traen coma
+    decimal.
+    """
     filas = [f"{i};{i};5;3111;1998;100;60;40;10;8;10;2" for i in range(1, 301)]
-    filas += ["301;301;5;3111;1998;83779570,6666667;42797617,3333333;40981953,3333333;10;8;10;2",
-              "302;302;5;3111;1998;100;60;-2746,5;10;8;10;2"]
-    encabezado = "nordemp;nordest;dpto;ciiu2;periodo;prodbr2;consin2;valagri;pertotal;pperytem;salpeyte;prespyte\n"
+    filas += [
+        "301;301;5;3111;1998;83779570,6666667;42797617,3333333;40981953,3333333;10;8;10;2",
+        "302;302;5;3111;1998;100;60;-2746,5;10;8;10;2",
+    ]
+    encabezado = (
+        "nordemp;nordest;dpto;ciiu2;periodo;prodbr2;consin2;valagri;pertotal;pperytem;salpeyte;"
+        "prespyte\n"
+    )
     (tmp_path / "datos" / "1998").mkdir(parents=True)
-    (tmp_path / "datos" / "1998" / "EAM_1998.csv").write_text(encabezado + "\n".join(filas) + "\n", encoding="utf-8")
+    (tmp_path / "datos" / "1998" / "EAM_1998.csv").write_text(
+        encabezado + "\n".join(filas) + "\n", encoding="utf-8"
+    )
     eam = dd.eam.load(1998, raiz=tmp_path)
     assert eam["valagri"].notna().all()
     assert eam["valagri"].sum() == pytest.approx(300 * 40 + 40981953.3333333 - 2746.5)
 
 
 def test_tabla_conserva_las_categorias_ordenadas():
-    """Con varias llaves y un grupo vacío, el groupby de pandas 2 dejaba el nivel educativo sin orden."""
+    """Con varias llaves y un grupo vacío, el groupby de pandas 2 dejaba el nivel educativo sin
+    orden.
+    """
     orden = pd.CategoricalDtype(["Ninguno", "Primaria", "Superior"], ordered=True)
-    df = pd.DataFrame({"anio": 2016, "mes": 1, "fex": 1.0, "y": [1.0, 2.0, 3.0],
-                       "nivel": pd.Series(["Primaria", None, "Ninguno"], dtype=orden)})
+    df = pd.DataFrame(
+        {
+            "anio": 2016,
+            "mes": 1,
+            "fex": 1.0,
+            "y": [1.0, 2.0, 3.0],
+            "nivel": pd.Series(["Primaria", None, "Ninguno"], dtype=orden),
+        }
+    )
     for kw in ({}, {"variable": "y", "estadistico": "media"}):
         assert dd.tabla(df, por=["anio", "nivel"], **kw)["nivel"].dtype == orden
 
 
 def test_tabla_avisa_un_estadistico_mal_escrito():
-    """Un estadístico mal escrito se nombra en el error, en vez de pedir una variable para media o mediana."""
+    """Un estadístico mal escrito se nombra en el error, en vez de pedir una variable para media o
+    mediana.
+    """
     df = pd.DataFrame({"anio": 2024, "mes": 1, "sexo": ["Mujer", "Hombre"], "fex": [1.0, 2.0]})
     with pytest.raises(ValueError, match="estadistico debe ser"):
         dd.tabla(df, por="sexo", estadistico="totales")
@@ -231,7 +288,8 @@ def test_diccionario_y_busqueda():
     assert dd.diccionario("eam")["VALAGRI"]["etiqueta"] == "Valor agregado"
     eam = dd.buscar_variable("", "eam").set_index("variable")
     assert eam.loc["sector", "origen"] == "dane-data" and eam.loc["sector", "ddi"] == "armonizada"
-    assert eam.loc["VALAGRI", "ddi"] == "2024" and "valagri" not in eam.index  # las de CORE ya están en el DDI
+    # Las de CORE ya están en el DDI
+    assert eam.loc["VALAGRI", "ddi"] == "2024" and "valagri" not in eam.index
 
 
 def test_config_persistence(tmp_path, monkeypatch):
@@ -247,8 +305,11 @@ def test_config_persistence(tmp_path, monkeypatch):
 
 
 def test_cli_estado(capsys, geih_root, eam_root, monkeypatch):
-    monkeypatch.setattr(dd.config, "_session", {"geih": geih_root, "geih_empalme": geih_root / "no",
-                                                "eam": eam_root})
+    monkeypatch.setattr(
+        dd.config,
+        "_session",
+        {"geih": geih_root, "geih_empalme": geih_root / "no", "eam": eam_root},
+    )
     assert cli_main(["estado"]) == 0
     out = capsys.readouterr().out
     assert "GEIH principal" in out and "EAM: 3 años (1992–2024)" in out
@@ -274,17 +335,22 @@ def descargador_falso(monkeypatch, tmp_path):
     _DescargadorFalso.creados = []
     monkeypatch.setattr(dd.geih, "GEIHDownloader", _DescargadorFalso)
     monkeypatch.setattr(dd.eam, "EAMDownloader", _DescargadorFalso)
-    monkeypatch.setattr(dd.config, "_session", {"geih": tmp_path / "g", "geih_empalme": tmp_path / "e",
-                                                "eam": tmp_path / "eam"})
+    monkeypatch.setattr(
+        dd.config,
+        "_session",
+        {"geih": tmp_path / "g", "geih_empalme": tmp_path / "e", "eam": tmp_path / "eam"},
+    )
     return _DescargadorFalso.creados
 
 
 def test_cli_descargar_geih_y_eam(descargador_falso, tmp_path):
+    # fmt: off
     assert cli_main(["descargar", "geih", "--anios", "2024", "2025", "--modulos", "ocupados",
                      "--empalme", "--limite", "1", "--borrar-zips"]) == 0
+    # fmt: on
     dl = descargador_falso[-1]
     assert dl.anios == [2024, 2025] and dl.extra == {"limit_files": 1}
-    assert dl.kw["base_dir"] == tmp_path / "e"              # empalme: su propia carpeta
+    assert dl.kw["base_dir"] == tmp_path / "e"  # empalme: su propia carpeta
     assert dl.kw["modules"] == ["ocupados"] and dl.kw["is_empalme"] and not dl.kw["keep_zips"]
 
     assert cli_main(["descargar", "eam", "--tic"]) == 0
@@ -296,14 +362,20 @@ def test_cli_descargar_geih_y_eam(descargador_falso, tmp_path):
 
 
 def test_download_expande_la_carpeta_personal(descargador_falso, monkeypatch, tmp_path):
-    """raiz="~/..." se descarga donde load lo busca, no en una carpeta llamada "~" dentro de la actual."""
+    """raiz="~/..." se descarga donde load lo busca, no en una carpeta llamada "~" dentro de la
+    actual.
+    """
     monkeypatch.setattr(dd.eevv, "EEVVDownloader", _DescargadorFalso)
     monkeypatch.setenv("HOME", str(tmp_path))
-    monkeypatch.setenv("USERPROFILE", str(tmp_path))       # Windows
+    monkeypatch.setenv("USERPROFILE", str(tmp_path))  # Windows
     dd.geih.download(2024, raiz="~/geih")
     dd.eam.download(2024, raiz="~/eam")
     dd.eevv.download(2024, raiz="~/eevv")
-    assert [dl.kw["base_dir"] for dl in descargador_falso] == [tmp_path / "geih", tmp_path / "eam", tmp_path / "eevv"]
+    assert [dl.kw["base_dir"] for dl in descargador_falso] == [
+        tmp_path / "geih",
+        tmp_path / "eam",
+        tmp_path / "eevv",
+    ]
 
 
 def test_cli_descarga_con_fallas_sale_con_error(descargador_falso, monkeypatch):
@@ -313,7 +385,9 @@ def test_cli_descarga_con_fallas_sale_con_error(descargador_falso, monkeypatch):
 
 
 def test_cli_en_espanol_y_sin_subcomando(descargador_falso, capsys, monkeypatch, tmp_path):
-    """argparse escribía en inglés; sin subcomando era un error, y --modulos mezclaba los nombres de tres encuestas."""
+    """argparse escribía en inglés; sin subcomando era un error, y --modulos mezclaba los nombres
+    de tres encuestas.
+    """
     assert cli_main([]) == 0
     assert "uso: dane-data" in capsys.readouterr().out
     with pytest.raises(SystemExit):
@@ -327,12 +401,19 @@ def test_cli_en_espanol_y_sin_subcomando(descargador_falso, capsys, monkeypatch,
     assert "Para empezar:  dane-data descargar geih" in capsys.readouterr().out
 
 
-@pytest.mark.parametrize("argv", [["descargar", "eam", "--modulos", "ocupados"], ["descargar", "eam", "--empalme"],
-                                  ["descargar", "eam", "--limite", "1"], ["descargar", "geih", "--tic"]])
+@pytest.mark.parametrize(
+    "argv",
+    [
+        ["descargar", "eam", "--modulos", "ocupados"],
+        ["descargar", "eam", "--empalme"],
+        ["descargar", "eam", "--limite", "1"],
+        ["descargar", "geih", "--tic"],
+    ],
+)
 def test_cli_descargar_opciones_de_otra_encuesta(descargador_falso, capsys, argv):
     assert cli_main(argv) == 2
     assert "no aplica" in capsys.readouterr().err
-    assert not descargador_falso                            # no descargó nada
+    assert not descargador_falso  # no descargó nada
 
 
 def test_cli_config_carpeta_vacia(config_aislada, capsys):
@@ -340,10 +421,14 @@ def test_cli_config_carpeta_vacia(config_aislada, capsys):
     assert "vacía" in capsys.readouterr().err and not config_aislada.exists()
 
 
-@pytest.mark.parametrize("valor, esperado", [("", None), ("relativa/conf", None), ("/srv/conf", "/srv/conf")])
+@pytest.mark.parametrize(
+    "valor, esperado", [("", None), ("relativa/conf", None), ("/srv/conf", "/srv/conf")]
+)
 def test_variables_xdg_vacias_o_relativas_se_ignoran(monkeypatch, valor, esperado):
     monkeypatch.setenv("XDG_CONFIG_HOME", valor)
-    assert dd.config._carpeta_xdg("XDG_CONFIG_HOME", ".config") == Path(esperado or Path.home() / ".config")
+    assert dd.config._carpeta_xdg("XDG_CONFIG_HOME", ".config") == Path(
+        esperado or Path.home() / ".config"
+    )
     monkeypatch.delenv("XDG_CONFIG_HOME")
     assert dd.config._carpeta_xdg("XDG_CONFIG_HOME", ".config") == Path.home() / ".config"
 
@@ -353,13 +438,18 @@ def test_carpeta_relativa_se_guarda_completa(config_aislada, monkeypatch, tmp_pa
     monkeypatch.chdir(tmp_path)
     dd.set_paths(geih="misdatos", eam="../otra/eam", guardar=True)
     guardado = json.loads(config_aislada.read_text(encoding="utf-8"))
-    assert guardado == {"geih": str(tmp_path / "misdatos"), "eam": str(tmp_path.parent / "otra" / "eam")}
+    assert guardado == {
+        "geih": str(tmp_path / "misdatos"),
+        "eam": str(tmp_path.parent / "otra" / "eam"),
+    }
     assert dd.get_path("geih") == tmp_path / "misdatos"
 
 
 def test_cli_config_avisa_variable_de_entorno(config_aislada, capsys, monkeypatch, tmp_path):
     monkeypatch.setenv("DANE_DATA_EAM", str(tmp_path / "env"))
-    assert cli_main(["config", "--eam", str(tmp_path / "eam"), "--geih", str(tmp_path / "geih")]) == 0
+    assert (
+        cli_main(["config", "--eam", str(tmp_path / "eam"), "--geih", str(tmp_path / "geih")]) == 0
+    )
     out = capsys.readouterr().out
     assert "DANE_DATA_EAM" in out and "DANE_DATA_GEIH " not in out
 
@@ -371,7 +461,7 @@ def test_download_un_anio_y_carpeta_explicita(descargador_falso, tmp_path):
     assert descargador_falso[-1].anios == [2024]
     assert descargador_falso[-1].kw["base_dir"] == tmp_path / "g"
     dd.eam.download("2015", raiz=tmp_path / "otra")
-    assert descargador_falso[-1].anios == [2015]                # un año en texto queda como número
+    assert descargador_falso[-1].anios == [2015]  # un año en texto queda como número
     assert descargador_falso[-1].kw["base_dir"] == tmp_path / "otra"
 
 
@@ -381,12 +471,16 @@ def test_cli_config_guarda_las_rutas(capsys, monkeypatch, tmp_path):
     monkeypatch.setattr(dd.config, "_session", {})
     for var in ("DANE_DATA_GEIH", "DANE_DATA_GEIH_EMPALME", "DANE_DATA_EAM"):
         monkeypatch.delenv(var, raising=False)
-    assert cli_main(["config", "--geih", str(tmp_path / "geih"), "--eam", str(tmp_path / "eam")]) == 0
+    assert (
+        cli_main(["config", "--geih", str(tmp_path / "geih"), "--eam", str(tmp_path / "eam")]) == 0
+    )
     guardado = json.loads(archivo.read_text(encoding="utf-8"))
-    assert Path(guardado["geih"]) == tmp_path / "geih" and Path(guardado["eam"]) == tmp_path / "eam"
+    assert (
+        Path(guardado["geih"]) == tmp_path / "geih" and Path(guardado["eam"]) == tmp_path / "eam"
+    )
     assert str(archivo) in capsys.readouterr().out
     monkeypatch.setattr(dd.config, "_session", {})
-    assert dd.get_path("geih") == tmp_path / "geih"         # una sesión nueva lee el archivo
+    assert dd.get_path("geih") == tmp_path / "geih"  # una sesión nueva lee el archivo
 
 
 @pytest.fixture
@@ -400,13 +494,15 @@ def config_aislada(monkeypatch, tmp_path):
 
 
 def test_set_paths_guarda_solo_lo_pedido(config_aislada, tmp_path):
-    dd.set_paths(eam=tmp_path / "solo_sesion")                 # sin guardar: solo esta sesión
+    dd.set_paths(eam=tmp_path / "solo_sesion")  # sin guardar: solo esta sesión
     dd.set_paths(geih=tmp_path / "geih", guardar=True)
-    assert json.loads(config_aislada.read_text(encoding="utf-8")) == {"geih": str(tmp_path / "geih")}
+    assert json.loads(config_aislada.read_text(encoding="utf-8")) == {
+        "geih": str(tmp_path / "geih")
+    }
     assert not list(config_aislada.parent.glob("*.tmp"))
     with pytest.raises(ValueError, match="vacía"):
         dd.set_paths(eam="  ", guardar=True)
-    assert dd.get_path("eam") == tmp_path / "solo_sesion"     # el error no cambió nada
+    assert dd.get_path("eam") == tmp_path / "solo_sesion"  # el error no cambió nada
 
 
 def test_config_que_no_es_un_objeto(config_aislada):
@@ -441,24 +537,32 @@ def test_cli_app_lanza_streamlit(monkeypatch, capsys, interrumpir):
 
     # Streamlit no hace falta (el proceso es falso): así la prueba corre también sin el extra [app]
     original = importlib.util.find_spec
-    monkeypatch.setattr(importlib.util, "find_spec", lambda nombre, *a: object() if nombre == "streamlit"
-                        else original(nombre, *a))
+    monkeypatch.setattr(
+        importlib.util,
+        "find_spec",
+        lambda nombre, *a: object() if nombre == "streamlit" else original(nombre, *a),
+    )
     procesos = []
-    monkeypatch.setattr(cli.subprocess, "Popen",
-                        lambda cmd, cwd=None: procesos.append(_ProcesoFalso(cmd, cwd, interrumpir)) or procesos[-1])
+    monkeypatch.setattr(
+        cli.subprocess,
+        "Popen",
+        lambda cmd, cwd=None: (
+            procesos.append(_ProcesoFalso(cmd, cwd, interrumpir)) or procesos[-1]
+        ),
+    )
     monkeypatch.setattr(cli, "_puerto_libre", lambda p: p + 1)
     assert cli_main(["app", "--no-browser", "--port", "8600"]) == 0
     p = procesos[0]
     assert p.cmd[1:4] == ["-m", "streamlit", "run"] and p.cmd[4].endswith("Inicio.py")
     assert p.cmd[p.cmd.index("--server.port") + 1] == "8601"
     assert p.cmd[p.cmd.index("--server.address") + 1] == "localhost"
-    assert Path(p.cwd).name == "app"                        # para que lea app/.streamlit/config.toml
-    assert p.terminado == interrumpir                       # Ctrl+C cierra Streamlit
+    assert Path(p.cwd).name == "app"  # para que lea app/.streamlit/config.toml
+    assert p.terminado == interrumpir  # Ctrl+C cierra Streamlit
     out = capsys.readouterr().out
     assert "http://localhost:8601" in out and "sin contraseña" not in out
 
     assert cli_main(["app", "--no-browser", "--address", "0.0.0.0"]) == 0
-    assert "sin contraseña" in capsys.readouterr().out      # compartida en la red: se avisa
+    assert "sin contraseña" in capsys.readouterr().out  # compartida en la red: se avisa
 
 
 def test_cli_ctrl_c_devuelve_130(monkeypatch, capsys):
@@ -476,7 +580,9 @@ def test_python_m_dane_data():
     import subprocess
     import sys
 
-    r = subprocess.run([sys.executable, "-m", "dane_data", "--help"], capture_output=True, text=True, timeout=60)
+    r = subprocess.run(
+        [sys.executable, "-m", "dane_data", "--help"], capture_output=True, text=True, timeout=60
+    )
     assert r.returncode == 0 and "dane-data" in r.stdout and "descargar" in r.stdout
 
 
@@ -484,6 +590,7 @@ def test_puerto_libre_salta_ocupado():
     import socket
 
     from dane_data.cli import _puerto_libre
+
     with socket.socket() as s:
         s.bind(("127.0.0.1", 0))
         s.listen()
@@ -497,9 +604,18 @@ def test_abre_navegador_cuando_responde(monkeypatch):
     import threading
 
     from dane_data import cli
-    srv = http.server.HTTPServer(("127.0.0.1", 0), type("H", (http.server.BaseHTTPRequestHandler,), {
-        "do_GET": lambda self: (self.send_response(200), self.end_headers()),
-        "log_message": lambda *a: None}))
+
+    srv = http.server.HTTPServer(
+        ("127.0.0.1", 0),
+        type(
+            "H",
+            (http.server.BaseHTTPRequestHandler,),
+            {
+                "do_GET": lambda self: (self.send_response(200), self.end_headers()),
+                "log_message": lambda *a: None,
+            },
+        ),
+    )
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     abiertos = []
     monkeypatch.setattr(cli.webbrowser, "open", abiertos.append)
@@ -523,34 +639,55 @@ def test_cli_app_sin_streamlit(monkeypatch, capsys):
     import importlib.util
 
     original = importlib.util.find_spec
-    monkeypatch.setattr(importlib.util, "find_spec", lambda nombre, *a: None if nombre == "streamlit"
-                        else original(nombre, *a))
-    monkeypatch.setattr("dane_data.cli.subprocess.Popen", lambda *a, **k: pytest.fail("no debía arrancar"))
+    monkeypatch.setattr(
+        importlib.util,
+        "find_spec",
+        lambda nombre, *a: None if nombre == "streamlit" else original(nombre, *a),
+    )
+    monkeypatch.setattr(
+        "dane_data.cli.subprocess.Popen", lambda *a, **k: pytest.fail("no debía arrancar")
+    )
     assert cli_main(["app", "--no-browser"]) == 1
     assert 'pip install "dane-data[app]"' in capsys.readouterr().err
 
 
 def test_tabla_deja_fuera_las_filas_sin_peso():
-    """Un peso vacío no es cero: la fila no cuenta ni en total ni en n_muestra (la EMICRON 2025 no tiene fex_dpto)."""
-    df = pd.DataFrame({"anio": [2024, 2024, 2025], "sexo": ["Mujer", "Hombre", "Mujer"], "x": [1.0, 3.0, 5.0],
-                       "fex": [10.0, 30.0, None]})
+    """Un peso vacío no es cero: la fila no cuenta ni en total ni en n_muestra (la EMICRON 2025 no
+    tiene fex_dpto).
+    """
+    df = pd.DataFrame(
+        {
+            "anio": [2024, 2024, 2025],
+            "sexo": ["Mujer", "Hombre", "Mujer"],
+            "x": [1.0, 3.0, 5.0],
+            "fex": [10.0, 30.0, None],
+        }
+    )
     with pytest.warns(UserWarning, match="Sin fex: se dejan fuera 1 de 2025"):
         r = dd.tabla(df, por=["anio", "sexo"])
-    assert r[["anio", "sexo", "total", "n_muestra"]].values.tolist() == [[2024, "Hombre", 30.0, 1], [2024, "Mujer", 10.0, 1]]
+    assert r[["anio", "sexo", "total", "n_muestra"]].values.tolist() == [
+        [2024, "Hombre", 30.0, 1],
+        [2024, "Mujer", 10.0, 1],
+    ]
     with pytest.warns(UserWarning):
         assert dd.tabla(df, variable="x", estadistico="media")["n_muestra"].iloc[0] == 2
-    df["fex"] = df["fex"].astype(object).where(df["fex"].notna(), "")  # texto vacío: igual de vacío
+    # Texto vacío: igual de vacío
+    df["fex"] = df["fex"].astype(object).where(df["fex"].notna(), "")
     with pytest.warns(UserWarning):
         assert dd.tabla(df)["total"].iloc[0] == 40.0
     with pytest.raises(ValueError, match="Falta el factor departamental de 2024") as error:
         dd.tabla(df.assign(fex_dpto=None), peso="fex_dpto")
     assert "2025 no trae factor departamental" in str(error.value)
-    with pytest.raises(ValueError, match="^Ninguna fila tiene fex.$"):  # otros pesos: sin explicaciones de la EMICRON
+    with pytest.raises(
+        ValueError, match="^Ninguna fila tiene fex.$"
+    ):  # otros pesos: sin explicaciones de la EMICRON
         dd.tabla(df.assign(fex=None))
 
 
 def test_tabla_sin_peso_conserva_el_divisor_de_meses():
-    """El peso se calcula antes de quitar las filas sin peso: el promedio mensual sigue dividiendo por los meses anotados."""
+    """El peso se calcula antes de quitar las filas sin peso: el promedio mensual sigue dividiendo
+    por los meses anotados.
+    """
     df = pd.DataFrame({"anio": 2024, "mes": [1, 2, 3], "fex": [30.0, 60.0, None]})
     df.attrs["meses_por_anio"], df.attrs["meses_por_anio_filas"] = {2024: 3}, 3
     with pytest.warns(UserWarning):
@@ -558,13 +695,19 @@ def test_tabla_sin_peso_conserva_el_divisor_de_meses():
 
 
 REAL_EAM = Path(__import__("os").environ.get("DANE_DATA_TEST_EAM", dd.get_path("eam")))
-# Diferencias del archivo del ANDA con lo publicado que no se explican (README, «Diferencias con la documentación del DANE»,
-# EAM): 2011 frente a la serie 1956–2011 «con mezcla de combustibles» (montos y personal permanente) y los 41 establecimientos
-# que faltan en 1992
-EAM_SIN_COMPARAR = {(2011, "produccion_bruta"), (2011, "consumo_intermedio"), (2011, "valor_agregado"),
-                    (2011, "personal_total"), (1992, "establecimientos")}
-# Totales del capítulo 4 por categoría: propietarios, permanentes, temporales directos y por agencias (mujeres y hombres).
-# pertotal suma además a los aprendices de la Ley 789 de 2002, que el DANE dejó fuera del total publicado en 2004–2014
+# Diferencias del archivo del ANDA con lo publicado que no se explican (README, «Diferencias con la
+# documentación del DANE», EAM): 2011 frente a la serie 1956–2011 «con mezcla de combustibles»
+# (montos y personal permanente) y los 41 establecimientos que faltan en 1992
+EAM_SIN_COMPARAR = {
+    (2011, "produccion_bruta"),
+    (2011, "consumo_intermedio"),
+    (2011, "valor_agregado"),
+    (2011, "personal_total"),
+    (1992, "establecimientos"),
+}
+# Totales del capítulo 4 por categoría: propietarios, permanentes, temporales directos y por
+# agencias (mujeres y hombres). pertotal suma además a los aprendices de la Ley 789 de 2002, que el
+# DANE dejó fuera del total publicado en 2004–2014
 EAM_CATEGORIAS_PERSONAL = [f"c4r4c{i}t" for i in range(1, 9)]
 EAM_SIN_APRENDICES = range(2004, 2015)
 
@@ -572,9 +715,10 @@ EAM_SIN_APRENDICES = range(2004, 2015)
 @pytest.mark.skipif(not (REAL_EAM / "datos").is_dir(), reason="sin datos reales de la EAM")
 def test_real_eam_coincide_con_lo_publicado():
     """
-    Los totales nacionales de dd.eam.resumen frente a la serie histórica 1992–2011 y los anexos 2015–2024 del DANE
-    (tests/datos/dane_eam_publicado.csv): montos y establecimientos a menos de 0,05 %, personal a menos de 0,15 %. En
-    2004–2011 el personal publicado es la suma de las cuatro categorías, sin los aprendices que pertotal sí cuenta.
+    Los totales nacionales de dd.eam.resumen frente a la serie histórica 1992–2011 y los anexos
+    2015–2024 del DANE (tests/datos/dane_eam_publicado.csv): montos y establecimientos a menos de
+    0,05 %, personal a menos de 0,15 %. En 2004–2011 el personal publicado es la suma de las cuatro
+    categorías, sin los aprendices que pertotal sí cuenta.
     """
     pub = pd.read_csv(Path(__file__).parent / "datos" / "dane_eam_publicado.csv")
     anios = sorted(set(pub["anio"]) & set(dd.eam.available(raiz=REAL_EAM)["anio"]))
@@ -586,8 +730,15 @@ def test_real_eam_coincide_con_lo_publicado():
     años = res.index.isin(EAM_SIN_APRENDICES)
     res.loc[años, "personal_total"] = sin_aprendices[res.index[años]]
     res = res.reset_index()
-    m = pub.merge(res.melt(id_vars="anio", value_vars=sorted(set(pub["variable"])), var_name="variable", value_name="micro"),
-                  on=["anio", "variable"])
+    m = pub.merge(
+        res.melt(
+            id_vars="anio",
+            value_vars=sorted(set(pub["variable"])),
+            var_name="variable",
+            value_name="micro",
+        ),
+        on=["anio", "variable"],
+    )
     m = m[[(a, v) not in EAM_SIN_COMPARAR for a, v in zip(m["anio"], m["variable"])]]
     tolerancia = np.where(m["variable"] == "personal_total", 0.0015, 0.0005)
     distintas = m[(m["micro"] / m["valor"] - 1).abs() > tolerancia]

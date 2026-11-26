@@ -41,21 +41,23 @@ def sniff(path: Path) -> tuple[str, str]:
     return sep, encoding
 
 
-def _coerce_numeric(df: pd.DataFrame, origen: str | None = None, miles: bool = False) -> pd.DataFrame:
+def _coerce_numeric(
+    df: pd.DataFrame, origen: str | None = None, miles: bool = False
+) -> pd.DataFrame:
     """
-    Convierte a número las columnas de texto que en realidad son numéricas:
-    celdas en blanco escritas como ``" "`` o ``"."`` y coma decimal (``"71,22"``), o coma de miles si ``miles``
+    Convierte a número las columnas de texto que en realidad son numéricas: celdas en blanco
+    escritas como ``" "`` o ``"."`` y coma decimal (``"71,22"``), o coma de miles si ``miles``
     (``"6,000,013"``, ver ``_coma_de_miles``).
 
-    Una columna con hasta 1 % de valores de texto se convierte igual; esos valores quedan vacíos y se
-    avisa en el registro (``origen`` es el archivo, para el mensaje).
+    Una columna con hasta 1 % de valores de texto se convierte igual; esos valores quedan vacíos y
+    se avisa en el registro (``origen`` es el archivo, para el mensaje).
     """
     for col in df.columns:
         s = df[col]
         if not (pd.api.types.is_object_dtype(s) or pd.api.types.is_string_dtype(s)):
             continue
-        # "." es la marca de vacío de Stata y SAS (RAMA4D_D_R4 de 2022+; P3373S3, P3382S3 y P3384S3 desde 2024, donde
-        # es casi toda la columna y antes la dejaba como texto)
+        # "." es la marca de vacío de Stata y SAS (RAMA4D_D_R4 de 2022+; P3373S3, P3382S3 y P3384S3
+        # desde 2024, donde es casi toda la columna y antes la dejaba como texto)
         s = s.astype("string").str.strip().replace(["", "."], pd.NA)
         nonnull = s.notna().sum()
         if nonnull == 0:
@@ -73,8 +75,10 @@ def _coerce_numeric(df: pd.DataFrame, origen: str | None = None, miles: bool = F
             perdidos = s.notna() & converted.isna()
             if perdidos.any():
                 ejemplos = ", ".join(repr(v) for v in s[perdidos].unique()[:3])
-                log.warning(f"{origen or 'Archivo'}: {col} es numérica salvo {perdidos.sum()} valor(es) de texto, "
-                            f"que quedan vacíos ({ejemplos}).")
+                log.warning(
+                    f"{origen or 'Archivo'}: {col} es numérica salvo {perdidos.sum()} valor(es) "
+                    f"de texto, que quedan vacíos ({ejemplos})."
+                )
             if converted.notna().all() and (converted % 1 == 0).all():
                 converted = converted.astype("int64")
             df[col] = converted
@@ -120,13 +124,19 @@ def _stata(path: Path) -> Path | io.BytesIO:
     entero = lambda b: int.from_bytes(b, "big" if orden == ">" else "little")  # noqa: E731
     nvar, nobs = entero(datos[4:6]), entero(datos[6:10])
     inicio = 4 + 2 + 4 + 81 + 18  # versión…, nvar, nobs, etiqueta de los datos, fecha
-    tipos = [_TIPOS_STATA_110.get(t, t - 127) for t in datos[inicio:inicio + nvar]]
-    # Nombres (33), orden (2 por variable + 2), formatos (12), etiquetas de valor (33) y de variable (81)
+    tipos = [_TIPOS_STATA_110.get(t, t - 127) for t in datos[inicio : inicio + nvar]]
+    # Nombres (33), orden (2 por variable + 2), formatos (12), etiquetas de valor (33) y de
+    # variable (81)
     pos = inicio + nvar + 2 * (nvar + 1) + nvar * (33 + 12 + 33 + 81)
     while datos[pos]:  # campos de expansión: tipo (1 byte) y largo (4) hasta un tipo 0
-        pos += 5 + entero(datos[pos + 1:pos + 5])
+        pos += 5 + entero(datos[pos + 1 : pos + 5])
     pos += 5
-    dtype = lambda ts: np.dtype([(f"v{i}", orden + _NUMPY_STATA.get(t, f"S{t}")) for i, t in enumerate(ts)])  # noqa: E731
+
+    def dtype(ts):
+        return np.dtype(
+            [(f"v{i}", orden + _NUMPY_STATA.get(t, f"S{t}")) for i, t in enumerate(ts)]
+        )
+
     filas = np.frombuffer(datos, dtype(tipos), count=nobs, offset=pos)
     fin = pos + filas.nbytes
 
@@ -145,12 +155,14 @@ def _stata(path: Path) -> Path | io.BytesIO:
                 faltante, faltante_ancho = _ENSANCHAR_STATA[t][1], _ENSANCHAR_STATA[t][3]
                 anchas[f"v{i}"][filas[f"v{i}"] == faltante] = faltante_ancho
         filas = anchas
-    encabezado = bytes([111]) + datos[1:inicio] + bytes(nuevos) + datos[inicio + nvar:pos]
+    encabezado = bytes([111]) + datos[1:inicio] + bytes(nuevos) + datos[inicio + nvar : pos]
     return io.BytesIO(encabezado + filas.tobytes() + datos[fin:])
 
 
 def columnas(path: Path, case: str = "upper") -> list[str]:
-    """Nombres de columna normalizados de un archivo del DANE (texto o Stata), sin leer los datos."""
+    """Nombres de columna normalizados de un archivo del DANE (texto o Stata), sin leer los
+    datos.
+    """
     path = Path(path)
     if path.suffix.lower() == ".dta":
         with pd.read_stata(_stata(path), iterator=True) as reader:
@@ -160,24 +172,28 @@ def columnas(path: Path, case: str = "upper") -> list[str]:
         return normalize_columns(fh.readline().rstrip("\r\n").split(sep), case)
 
 
-# GEIH de septiembre a diciembre de 2017 (catálogo 458): el CSV del ANDA escribe las celdas vacías como el mayor
-# double redondeado a 15 cifras, que se pasa del máximo y pandas lo lee como infinito. Es un vacío (ver README,
-# "Diferencias con la documentación del DANE").
+# GEIH de septiembre a diciembre de 2017 (catálogo 458): el CSV del ANDA escribe las celdas vacías
+# como el mayor double redondeado a 15 cifras, que se pasa del máximo y pandas lo lee como
+# infinito. Es un vacío (ver README, "Diferencias con la documentación del DANE").
 _VACIO_DBL_MAX = "1.79769313486232e+308"
 
 
 def _coma_de_miles(path: Path, sep: str) -> bool:
     """
-    Si el archivo usa la coma para los miles y el punto para los decimales, como la GEIH de noviembre de 2021
-    (``6,000,013``, ``1030.3000973``; ver README, "Diferencias con la documentación del DANE"). Lo delata un número
-    con dos o más grupos ``,ddd``: la coma decimal de los demás archivos nunca se ve así.
+    Si el archivo usa la coma para los miles y el punto para los decimales, como la GEIH de
+    noviembre de 2021 (``6,000,013``, ``1030.3000973``; ver README, "Diferencias con la
+    documentación del DANE"). Lo delata un número con dos o más grupos ``,ddd``: la coma decimal de
+    los demás archivos nunca se ve así.
     """
     if sep == ",":
         return False
     with open(path, "rb") as fh:
         muestra = fh.read(64_000).decode("latin-1")
     s = re.escape(sep)
-    return re.search(rf"(?:^|{s})-?\d{{1,3}}(?:,\d{{3}}){{2,}}(?:\.\d+)?(?={s}|\r?$)", muestra, re.M) is not None
+    return (
+        re.search(rf"(?:^|{s})-?\d{{1,3}}(?:,\d{{3}}){{2,}}(?:\.\d+)?(?={s}|\r?$)", muestra, re.M)
+        is not None
+    )
 
 
 def read_table(

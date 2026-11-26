@@ -1,4 +1,6 @@
-"""Medición de Pobreza Monetaria y Desigualdad: ingreso de la unidad de gasto, líneas de pobreza y quién es pobre."""
+"""Medición de Pobreza Monetaria y Desigualdad: ingreso de la unidad de gasto, líneas de pobreza y
+quién es pobre.
+"""
 
 from __future__ import annotations
 
@@ -7,8 +9,20 @@ from typing import Iterable
 from .agregados import clear_cache, serie_indicadores
 from .downloader import ARCHIVOS, ARCHIVOS_EMPALME, POBREZA_KNOWN_FILES, PobrezaDownloader
 from .indicadores import GLOSARIO, indicadores
-from .loader import (CATEGORIAS, CORE, DOMINIOS, ETIQUETAS, GRUPOS_DOMINIO, METODOLOGIAS, TRECE_CIUDADES, _root,
-                     available, find_files, harmonize, load)
+from .loader import (
+    CATEGORIAS,
+    CORE,
+    DOMINIOS,
+    ETIQUETAS,
+    GRUPOS_DOMINIO,
+    METODOLOGIAS,
+    TRECE_CIUDADES,
+    _root,
+    available,
+    find_files,
+    harmonize,
+    load,
+)
 from .union import VARIABLES_GEIH, unir_geih
 from ..stats import _enteros, _opciones
 
@@ -28,21 +42,22 @@ def download(
     """
     Descarga los microdatos de la Medición de Pobreza Monetaria y Desigualdad del ANDA del DANE.
 
-    Cada año queda en ``<carpeta>/datos/<año>/hogares.<ext>`` y ``personas.<ext>``. Es incremental: lo ya extraído se
-    salta.
+    Cada año queda en ``<carpeta>/datos/<año>/hogares.<ext>`` y ``personas.<ext>``. Es incremental:
+    lo ya extraído se salta.
 
     Parámetros
     ----------
     years
-        Año o lista de años (2012–2025). ``None`` descarga toda la serie (unos 1,4 GB de ZIP); una lista vacía, ninguno.
-        Los años que no están en el ANDA quedan en la lista que se devuelve.
+        Año o lista de años (2012–2025). ``None`` descarga toda la serie (unos 1,4 GB de ZIP); una
+        lista vacía, ninguno. Los años que no están en el ANDA quedan en la lista que se devuelve.
     archivos
-        ``"hogares"`` (el ingreso per cápita, las líneas de pobreza y quién es pobre: lo que necesitan los
-        indicadores), ``"personas"`` (los componentes del ingreso de cada persona), o los dos (``None``, por defecto).
+        ``"hogares"`` (el ingreso per cápita, las líneas de pobreza y quién es pobre: lo que
+        necesitan los indicadores), ``"personas"`` (los componentes del ingreso de cada persona), o
+        los dos (``None``, por defecto).
     empalme
-        Bajar también, a ``<carpeta>/datos/empalme/``, los archivos para comparar 2012–2021 con las cifras del marco
-        2018: el factor de empalme 2012–2020, los hogares empalmados de 2021 y las líneas actualizadas de 2012–2018.
-        Se bajan una sola vez, cualquiera que sea ``years``.
+        Bajar también, a ``<carpeta>/datos/empalme/``, los archivos para comparar 2012–2021 con las
+        cifras del marco 2018: el factor de empalme 2012–2020, los hogares empalmados de 2021 y las
+        líneas actualizadas de 2012–2018. Se bajan una sola vez, cualquiera que sea ``years``.
     raiz
         Carpeta de destino. Por defecto, la de ``dd.get_path("pobreza")``.
     borrar_zips
@@ -52,13 +67,14 @@ def download(
     detener
         Función sin argumentos; si devuelve True, la descarga se detiene con ``DownloadCancelled``.
     forzar
-        Volver a bajar y extraer aunque ya esté en disco, por ejemplo si el DANE corrigió los archivos. Lo extraído
-        antes se reemplaza solo si el ZIP nuevo se extrajo bien.
+        Volver a bajar y extraer aunque ya esté en disco, por ejemplo si el DANE corrigió los
+        archivos. Lo extraído antes se reemplaza solo si el ZIP nuevo se extrajo bien.
 
     Devuelve
     --------
     list[str]
-        Lo que no se pudo descargar o extraer, con el archivo, el año y el motivo; vacía si todo salió bien.
+        Lo que no se pudo descargar o extraer, con el archivo, el año y el motivo; vacía si todo
+        salió bien.
 
     Lanza
     -----
@@ -69,8 +85,9 @@ def download(
 
     Notas
     -----
-    Desde 2023 el DANE publica hogares y personas en un solo ZIP (unos 120 MB): pedir solo ``"hogares"`` lo baja
-    entero. El ZIP queda en ``<carpeta>/raw_zips/`` salvo con ``borrar_zips``.
+    Desde 2023 el DANE publica hogares y personas en un solo ZIP (unos 120 MB): pedir solo
+    ``"hogares"`` lo baja entero. El ZIP queda en ``<carpeta>/raw_zips/`` salvo con
+    ``borrar_zips``.
 
     Ejemplos
     --------
@@ -80,13 +97,36 @@ def download(
     """
     years = _enteros(years)
     archivos = _opciones(archivos, ARCHIVOS, "Archivo")
-    dl = PobrezaDownloader(base_dir=_root(raiz), keep_zips=not borrar_zips, progress=progreso,
-                           should_stop=detener, forzar=forzar)
+    dl = PobrezaDownloader(
+        base_dir=_root(raiz),
+        keep_zips=not borrar_zips,
+        progress=progreso,
+        should_stop=detener,
+        forzar=forzar,
+    )
     return dl.run_pipeline(target_years=years, archivos=tuple(archivos), empalme=empalme)
 
 
 __all__ = [
-    "download", "available", "find_files", "load", "harmonize", "ARCHIVOS", "ARCHIVOS_EMPALME", "ANIOS_DISPONIBLES",
-    "indicadores", "serie_indicadores", "clear_cache", "unir_geih", "VARIABLES_GEIH", "CORE", "ETIQUETAS", "CATEGORIAS", "DOMINIOS", "GRUPOS_DOMINIO", "TRECE_CIUDADES", "METODOLOGIAS",
+    "download",
+    "available",
+    "find_files",
+    "load",
+    "harmonize",
+    "ARCHIVOS",
+    "ARCHIVOS_EMPALME",
+    "ANIOS_DISPONIBLES",
+    "indicadores",
+    "serie_indicadores",
+    "clear_cache",
+    "unir_geih",
+    "VARIABLES_GEIH",
+    "CORE",
+    "ETIQUETAS",
+    "CATEGORIAS",
+    "DOMINIOS",
+    "GRUPOS_DOMINIO",
+    "TRECE_CIUDADES",
+    "METODOLOGIAS",
     "GLOSARIO",
 ]

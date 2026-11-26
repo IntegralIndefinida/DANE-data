@@ -1,19 +1,22 @@
 """
 Carga y armonización de la Encuesta Nacional de Calidad de Vida (ECV) ya descargada.
 
-Un capítulo del cuestionario por carpeta, en ``<raíz>/datos/<año>/<módulo>/``. El DANE publica cada capítulo en CSV
-(``;``, coma decimal), Stata y SPSS; se usa el CSV y, si no está, el Stata.
+Un capítulo del cuestionario por carpeta, en ``<raíz>/datos/<año>/<módulo>/``. El DANE publica cada
+capítulo en CSV (``;``, coma decimal), Stata y SPSS; se usa el CSV y, si no está, el Stata.
 
-Cada capítulo es una tabla de viviendas, de hogares o de personas. Las llaves, según la *Estructura de la base de datos*
-del DANE:
+Cada capítulo es una tabla de viviendas, de hogares o de personas. Las llaves, según la *Estructura
+de la base de datos* del DANE:
 
 * vivienda: ``DIRECTORIO``.
-* hogar: ``DIRECTORIO`` y ``SECUENCIA_ENCUESTA`` (el número del hogar en la vivienda; ``SECUENCIA_P`` es siempre 1).
-* persona: ``DIRECTORIO``, ``SECUENCIA_P`` (el hogar) y ``SECUENCIA_ENCUESTA`` (la persona en el hogar, igual a ``ORDEN``).
+* hogar: ``DIRECTORIO`` y ``SECUENCIA_ENCUESTA`` (el número del hogar en la vivienda;
+  ``SECUENCIA_P`` es siempre 1).
+* persona: ``DIRECTORIO``, ``SECUENCIA_P`` (el hogar) y ``SECUENCIA_ENCUESTA`` (la persona en el
+  hogar, igual a ``ORDEN``).
 
-``load`` lleva todas las tablas a las mismas llaves: en las de hogar, el número del hogar queda en ``SECUENCIA_P``, como
-en las de personas. El factor de expansión ``FEX_C`` es el mismo en todas las tablas de una vivienda. En 2018 se
-reemplaza por el del CNPV 2018, que el DANE publicó aparte y que usa la serie oficial 2018–2025.
+``load`` lleva todas las tablas a las mismas llaves: en las de hogar, el número del hogar queda en
+``SECUENCIA_P``, como en las de personas. El factor de expansión ``FEX_C`` es el mismo en todas las
+tablas de una vivienda. En 2018 se reemplaza por el del CNPV 2018, que el DANE publicó aparte y que
+usa la serie oficial 2018–2025.
 """
 
 from __future__ import annotations
@@ -31,48 +34,142 @@ from ..stats import _avisar, _enteros
 from ..eevv.loader import _categoria, _unir
 from ..referencias import DEPARTAMENTOS
 
-# Capítulos que se descargan y se cargan: los que usan las variables armonizadas, los indicadores y el IPM
-MODULOS = ("vivienda", "servicios", "tenencia", "condiciones", "caracteristicas", "salud", "primera_infancia",
-           "educacion", "fuerza_trabajo", "tic", "trabajo_infantil")
-# Los factores de expansión de 2018 basados en el CNPV 2018, que el DANE publicó aparte: no son un capítulo
+# Capítulos que se descargan y se cargan: los que usan las variables armonizadas, los indicadores y
+# el IPM
+# fmt: off
+MODULOS = ("vivienda", "servicios", "tenencia", "condiciones", "caracteristicas", "salud",
+           "primera_infancia", "educacion", "fuerza_trabajo", "tic", "trabajo_infantil")
+# fmt: on
+# Los factores de expansión de 2018 basados en el CNPV 2018, que el DANE publicó aparte: no son un
+# capítulo
 _FACTORES = "factores"
-# La base complementaria del IPM 2020 (catálogo del IPM, no de la ECV): estrategias de estudio en casa de cada niño que
-# estudia, con las que el DANE armó la inasistencia escolar de 2020 («integra información del SIMAT»)
+# La base complementaria del IPM 2020 (catálogo del IPM, no de la ECV): estrategias de estudio en
+# casa de cada niño que estudia, con las que el DANE armó la inasistencia escolar de 2020 («integra
+# información del SIMAT»)
 _COMPLEMENTARIA = "complementaria"
 _INTERNOS = (_FACTORES, _COMPLEMENTARIA)
 EXTENSIONES = (".csv", ".dta")
 
-UNIDADES = {"vivienda": "vivienda", "servicios": "hogar", "tenencia": "hogar", "condiciones": "hogar",
-            **{m: "persona" for m in ("caracteristicas", "salud", "primera_infancia", "educacion", "fuerza_trabajo",
-                                      "tic", "trabajo_infantil")}}
+UNIDADES = {
+    "vivienda": "vivienda",
+    "servicios": "hogar",
+    "tenencia": "hogar",
+    "condiciones": "hogar",
+    **{
+        m: "persona"
+        for m in (
+            "caracteristicas",
+            "salud",
+            "primera_infancia",
+            "educacion",
+            "fuerza_trabajo",
+            "tic",
+            "trabajo_infantil",
+        )
+    },
+}
 KEYS_HOGAR = ["DIRECTORIO", "SECUENCIA_P"]
 KEYS_PERSONA = ["DIRECTORIO", "SECUENCIA_P", "SECUENCIA_ENCUESTA"]
-_BASE = {"persona": "caracteristicas", "hogar": "servicios"}  # el capítulo que trae a todas las personas u hogares
-# De la vivienda se toma siempre la geografía. El departamento es DPTO en 2018 y P1_DEPARTAMENTO desde 2019.
+# El capítulo que trae a todas las personas u hogares
+_BASE = {"persona": "caracteristicas", "hogar": "servicios"}
+# De la vivienda se toma siempre la geografía. El departamento es DPTO en 2018 y P1_DEPARTAMENTO
+# desde 2019.
 _GEOGRAFIA = ["CLASE", "REGION", "P1_DEPARTAMENTO", "DPTO", "P1_MUNICIPIO"]
-_ARMONIZAR = ["P6020", "P6040", "P6051", "P6080"]  # sexo, edad, parentesco y etnia, de Características
+# Sexo, edad, parentesco y etnia, de Características
+_ARMONIZAR = ["P6020", "P6040", "P6051", "P6080"]
 
 _AREAS = {1: "Cabecera", 2: "Centros poblados y rural disperso"}
-_REGIONES = {1: "Caribe", 2: "Oriental", 3: "Central", 4: "Pacífica", 5: "Bogotá D.C.", 6: "Antioquia",
-             7: "Valle del Cauca", 8: "San Andrés", 9: "Orinoquía-Amazonía"}
-# Región de cada departamento, para los años que no traen REGION (tomada de 2018 y 2025, que sí la traen). Pacífica es
-# sin el Valle del Cauca, y la parte rural de Bogotá va en Oriental.
-_REGION_DPTO = {5: 6, 8: 1, 11: 5, 13: 1, 15: 2, 17: 3, 18: 3, 19: 4, 20: 1, 23: 1, 25: 2, 27: 4, 41: 3, 44: 1, 47: 1,
-                50: 2, 52: 4, 54: 2, 63: 3, 66: 3, 68: 2, 70: 1, 73: 3, 76: 7, 81: 9, 85: 9, 86: 9, 88: 8, 91: 9,
-                94: 9, 95: 9, 97: 9, 99: 9}
+_REGIONES = {
+    1: "Caribe",
+    2: "Oriental",
+    3: "Central",
+    4: "Pacífica",
+    5: "Bogotá D.C.",
+    6: "Antioquia",
+    7: "Valle del Cauca",
+    8: "San Andrés",
+    9: "Orinoquía-Amazonía",
+}
+# Región de cada departamento, para los años que no traen REGION (tomada de 2018 y 2025, que sí la
+# traen). Pacífica es sin el Valle del Cauca, y la parte rural de Bogotá va en Oriental.
+_REGION_DPTO = {
+    5: 6,
+    8: 1,
+    11: 5,
+    13: 1,
+    15: 2,
+    17: 3,
+    18: 3,
+    19: 4,
+    20: 1,
+    23: 1,
+    25: 2,
+    27: 4,
+    41: 3,
+    44: 1,
+    47: 1,
+    50: 2,
+    52: 4,
+    54: 2,
+    63: 3,
+    66: 3,
+    68: 2,
+    70: 1,
+    73: 3,
+    76: 7,
+    81: 9,
+    85: 9,
+    86: 9,
+    88: 8,
+    91: 9,
+    94: 9,
+    95: 9,
+    97: 9,
+    99: 9,
+}
 _SEXO = {1: "Hombre", 2: "Mujer"}
-_PARENTESCO = {1: "Jefe(a) del hogar", 2: "Pareja o cónyuge", 3: "Hijo(a) o hijastro(a)", 4: "Nieto(a)",
-               5: "Padre, madre, padrastro o madrastra", 6: "Suegro(a)", 7: "Hermano(a) o hermanastro(a)",
-               8: "Yerno o nuera", 9: "Otro pariente", 10: "Empleado(a) del servicio doméstico",
-               11: "Pariente del servicio doméstico", 12: "Trabajador(a)", 13: "Pensionista", 14: "Otro no pariente"}
-_ETNIA = {1: "Indígena", 2: "Gitano(a) o Rom", 3: "Raizal", 4: "Palenquero(a)",
-          5: "Negro(a), mulato(a), afrodescendiente", 6: "Ningún grupo étnico"}
+_PARENTESCO = {
+    1: "Jefe(a) del hogar",
+    2: "Pareja o cónyuge",
+    3: "Hijo(a) o hijastro(a)",
+    4: "Nieto(a)",
+    5: "Padre, madre, padrastro o madrastra",
+    6: "Suegro(a)",
+    7: "Hermano(a) o hermanastro(a)",
+    8: "Yerno o nuera",
+    9: "Otro pariente",
+    10: "Empleado(a) del servicio doméstico",
+    11: "Pariente del servicio doméstico",
+    12: "Trabajador(a)",
+    13: "Pensionista",
+    14: "Otro no pariente",
+}
+_ETNIA = {
+    1: "Indígena",
+    2: "Gitano(a) o Rom",
+    3: "Raizal",
+    4: "Palenquero(a)",
+    5: "Negro(a), mulato(a), afrodescendiente",
+    6: "Ningún grupo étnico",
+}
 _REGIMEN = {1: "Contributivo", 2: "Especial", 3: "Subsidiado", 9: "No sabe"}
-_TENENCIA = {1: "Propia, totalmente pagada", 2: "Propia, la están pagando", 3: "En arriendo o subarriendo",
-             4: "Usufructo (con permiso, sin pago)", 5: "Posesión sin título (ocupante de hecho)", 6: "Propiedad colectiva"}
-# Servicios de la vivienda (P8520Sx, Datos de la vivienda) y del hogar: (columna armonizada, variable del DANE)
-_SERVICIOS = (("energia", "P8520S1"), ("acueducto", "P8520S5"), ("alcantarillado", "P8520S3"),
-              ("recoleccion_basuras", "P8520S4"), ("gas_natural", "P5666"))
+_TENENCIA = {
+    1: "Propia, totalmente pagada",
+    2: "Propia, la están pagando",
+    3: "En arriendo o subarriendo",
+    4: "Usufructo (con permiso, sin pago)",
+    5: "Posesión sin título (ocupante de hecho)",
+    6: "Propiedad colectiva",
+}
+# Servicios de la vivienda (P8520Sx, Datos de la vivienda) y del hogar: (columna armonizada,
+# variable del DANE)
+_SERVICIOS = (
+    ("energia", "P8520S1"),
+    ("acueducto", "P8520S5"),
+    ("alcantarillado", "P8520S3"),
+    ("recoleccion_basuras", "P8520S4"),
+    ("gas_natural", "P5666"),
+)
 
 # Tipos fijos: así se conservan al unir años con pd.concat
 CATEGORIAS = {
@@ -89,11 +186,14 @@ _COMUNES = {
     "anio": "Año de la encuesta",
     "fex": "Factor de expansión (FEX_C; en 2018, el del CNPV 2018)",
     "area": "Cabecera o centros poblados y rural disperso (CLASE)",
-    "region": "Región de la ECV (REGION): Caribe, Oriental, Central, Pacífica (sin el Valle), Bogotá D.C., Antioquia, "
-              "Valle del Cauca, San Andrés u Orinoquía-Amazonía",
+    "region": (
+        "Región de la ECV (REGION): Caribe, Oriental, Central, Pacífica (sin el Valle), Bogotá "
+        "D.C., Antioquia, Valle del Cauca, San Andrés u Orinoquía-Amazonía"
+    ),
     "departamento": "Departamento (P1_DEPARTAMENTO; DPTO en 2018)",
 }
-# Del hogar y de la vivienda: están en la tabla de hogares y, repetidas en cada miembro, en la de personas
+# Del hogar y de la vivienda: están en la tabla de hogares y, repetidas en cada miembro, en la de
+# personas
 _DEL_HOGAR = {
     "energia": "La vivienda tiene energía eléctrica (P8520S1; capítulo vivienda)",
     "acueducto": "La vivienda tiene acueducto (P8520S5; vivienda)",
@@ -101,25 +201,40 @@ _DEL_HOGAR = {
     "recoleccion_basuras": "La vivienda tiene recolección de basuras (P8520S4; vivienda)",
     "gas_natural": "El hogar tiene gas natural conectado a red pública (P5666; servicios)",
     "internet_hogar": "El hogar tiene conexión a internet (P1075; condiciones)",
-    "tenencia_vivienda": "La vivienda que ocupa el hogar es propia, en arriendo, etc. (P5095; tenencia)",
+    "tenencia_vivienda": (
+        "La vivienda que ocupa el hogar es propia, en arriendo, etc. (P5095; tenencia)"
+    ),
     "se_considera_pobre": "El jefe o el cónyuge se considera pobre (P5230; condiciones)",
 }
-# Variables armonizadas de cada nivel y su contenido. Las que dependen de un capítulo aparecen si se carga.
+# Variables armonizadas de cada nivel y su contenido. Las que dependen de un capítulo aparecen si
+# se carga.
 ETIQUETAS = {
-    "persona": {**_COMUNES, "sexo": "Sexo al nacer (P6020)", "edad": "Años cumplidos (P6040)",
-                "parentesco": "Parentesco con el jefe o la jefa del hogar (P6051)",
-                "etnia": "Autorreconocimiento étnico (P6080)",
-                "afiliado_salud": "Afiliado(a) al sistema de seguridad social en salud (P6090; salud). «No sabe» cuenta "
-                                  "como no afiliado, como en el DANE",
-                "regimen_salud": "Régimen de los afiliados: contributivo, especial o subsidiado (P6100; salud)",
-                "asiste": "Actualmente estudia (P8586; educación, 5 años y más)",
-                "anios_educacion": "Años de educación aprobados, de primero de primaria en adelante (educación, 5 años y "
-                                   "más). Se cuentan como en el DANE; vea la guía",
-                "usa_computador": "Usa computador de escritorio, portátil o tableta (P1910, P1911, P1912; tic, 5 años y "
-                                  "más)",
-                "usa_internet": "Usa internet en cualquier lugar (P1084; tic)",
-                "usa_celular": "Tiene o usa teléfono celular (P1082, P5504; tic)",
-                **_DEL_HOGAR},
+    "persona": {
+        **_COMUNES,
+        "sexo": "Sexo al nacer (P6020)",
+        "edad": "Años cumplidos (P6040)",
+        "parentesco": "Parentesco con el jefe o la jefa del hogar (P6051)",
+        "etnia": "Autorreconocimiento étnico (P6080)",
+        "afiliado_salud": (
+            "Afiliado(a) al sistema de seguridad social en salud (P6090; salud). «No sabe» cuenta "
+            "como no afiliado, como en el DANE"
+        ),
+        "regimen_salud": (
+            "Régimen de los afiliados: contributivo, especial o subsidiado (P6100; salud)"
+        ),
+        "asiste": "Actualmente estudia (P8586; educación, 5 años y más)",
+        "anios_educacion": (
+            "Años de educación aprobados, de primero de primaria en adelante (educación, 5 años y "
+            "más). Se cuentan como en el DANE; vea la guía"
+        ),
+        "usa_computador": (
+            "Usa computador de escritorio, portátil o tableta (P1910, P1911, P1912; tic, 5 años y "
+            "más)"
+        ),
+        "usa_internet": "Usa internet en cualquier lugar (P1084; tic)",
+        "usa_celular": "Tiene o usa teléfono celular (P1082, P5504; tic)",
+        **_DEL_HOGAR,
+    },
     "hogar": {**_COMUNES, **_DEL_HOGAR},
 }
 NIVELES = tuple(ETIQUETAS)
@@ -135,7 +250,9 @@ def _modulo_valido(modulo: str) -> str:
     return modulo
 
 
-def find_files(years: Iterable[int] | int | None = None, modulo: str = "caracteristicas", raiz=None) -> dict[int, Path]:
+def find_files(
+    years: Iterable[int] | int | None = None, modulo: str = "caracteristicas", raiz=None
+) -> dict[int, Path]:
     """
     Archivo de datos de un capítulo en cada año descargado.
 
@@ -172,7 +289,9 @@ def find_files(years: Iterable[int] | int | None = None, modulo: str = "caracter
     out = {}
     for carpeta in sorted(p for p in base.iterdir() if p.is_dir() and p.name.isdigit()):
         anio = int(carpeta.name)
-        if (years is None or anio in years) and (archivos := archivos_datos(carpeta / modulo, EXTENSIONES)):
+        if (years is None or anio in years) and (
+            archivos := archivos_datos(carpeta / modulo, EXTENSIONES)
+        ):
             out[anio] = max(archivos, key=lambda f: (f.suffix.lower() != ".dta", f.stat().st_size))
     return out
 
@@ -189,8 +308,9 @@ def available(raiz=None) -> pd.DataFrame:
     Devuelve
     --------
     pandas.DataFrame
-        Una fila por año y capítulo: ``anio``, ``modulo``, ``archivo`` y ``tamano_mb``. En 2018 aparecen también los
-        ``factores`` de expansión basados en el CNPV 2018, y en 2020 la base ``complementaria`` del IPM.
+        Una fila por año y capítulo: ``anio``, ``modulo``, ``archivo`` y ``tamano_mb``. En 2018
+        aparecen también los ``factores`` de expansión basados en el CNPV 2018, y en 2020 la base
+        ``complementaria`` del IPM.
 
     Véase también
     -------------
@@ -204,8 +324,16 @@ def available(raiz=None) -> pd.DataFrame:
     0  2025  vivienda  Datos de la vivienda.CSV       10.2
     1  2025  servicios  Servicios del hogar.CSV       20.9
     """
-    filas = [{"anio": anio, "modulo": modulo, "archivo": f.name, "tamano_mb": round(f.stat().st_size / 1e6, 1)}
-             for modulo in (*MODULOS, *_INTERNOS) for anio, f in find_files(modulo=modulo, raiz=raiz).items()]
+    filas = [
+        {
+            "anio": anio,
+            "modulo": modulo,
+            "archivo": f.name,
+            "tamano_mb": round(f.stat().st_size / 1e6, 1),
+        }
+        for modulo in (*MODULOS, *_INTERNOS)
+        for anio, f in find_files(modulo=modulo, raiz=raiz).items()
+    ]
     tabla = pd.DataFrame(filas, columns=["anio", "modulo", "archivo", "tamano_mb"])
     return tabla.sort_values("anio", kind="stable").reset_index(drop=True)
 
@@ -221,31 +349,47 @@ def _modulos_validos(modulos, nivel: str) -> tuple[str, ...]:
         if m not in MODULOS:
             raise ValueError(f"Módulo desconocido {m!r}. Opciones: {list(MODULOS)}")
         if nivel == "hogar" and UNIDADES[m] == "persona":
-            raise ValueError(f"{m!r} es un capítulo de personas: cárguelo con nivel=\"persona\".")
+            raise ValueError(f'{m!r} es un capítulo de personas: cárguelo con nivel="persona".')
     # La base primero y la vivienda al final: su geografía se agrega aparte
     return tuple(dict.fromkeys([_BASE[nivel], *modulos]))
 
 
-# Las variables de la base complementaria de 2020 (P1075 y P1077Sx también están en Condiciones de vida)
-_COLUMNAS_COMPLEMENTARIA = ("ESTRATEGIAS", "EST_RADIO", "EST_TELEVISION", "EST_PLATAFORMAS", "EST_GUIAS", "EST_VISITA",
-                            "EST_LLAMADA", "ESCUCHA_RADIO", "P1077S7", "P1077S8", "CELULAR_INTELIGENTE", "P5305", "CELULAR")
+# Las variables de la base complementaria de 2020 (P1075 y P1077Sx también están en Condiciones de
+# vida)
+# fmt: off
+_COLUMNAS_COMPLEMENTARIA = ("ESTRATEGIAS", "EST_RADIO", "EST_TELEVISION", "EST_PLATAFORMAS",
+                            "EST_GUIAS", "EST_VISITA", "EST_LLAMADA", "ESCUCHA_RADIO", "P1077S7",
+                            "P1077S8", "CELULAR_INTELIGENTE", "P5305", "CELULAR")
+# fmt: on
 
 
 def _aviso_faltan(faltan: dict[str, list[int]]) -> str:
-    """El aviso de ``load`` (y de ``serie_indicadores``) para los capítulos ``{capítulo: años}`` que no están en disco."""
-    return ("ECV: faltan capítulos descargados, que quedan vacíos: "
-            + "; ".join(f"{m} en {', '.join(map(str, a))}" for m, a in faltan.items())
-            + ". Bájelos con dd.ecv.download(años, modulos=[...]).")
+    """El aviso de ``load`` (y de ``serie_indicadores``) para los capítulos ``{capítulo: años}``
+    que no están en disco.
+    """
+    return (
+        "ECV: faltan capítulos descargados, que quedan vacíos: "
+        + "; ".join(f"{m} en {', '.join(map(str, a))}" for m, a in faltan.items())
+        + ". Bájelos con dd.ecv.download(años, modulos=[...])."
+    )
 
 
 def _leer(ruta: Path, modulo: str, columnas) -> pd.DataFrame:
-    """Un capítulo con las llaves de ``load``: en las tablas de hogar, el número del hogar pasa a ``SECUENCIA_P``."""
+    """Un capítulo con las llaves de ``load``: en las tablas de hogar, el número del hogar pasa a
+    ``SECUENCIA_P``.
+    """
     unidad = UNIDADES.get(modulo, "vivienda")
-    llaves = {"vivienda": ["DIRECTORIO"], "hogar": ["DIRECTORIO", "SECUENCIA_ENCUESTA"], "persona": KEYS_PERSONA}[unidad]
+    llaves = {
+        "vivienda": ["DIRECTORIO"],
+        "hogar": ["DIRECTORIO", "SECUENCIA_ENCUESTA"],
+        "persona": KEYS_PERSONA,
+    }[unidad]
     pedir = None if columnas is None else [*llaves, "FEX_C", *columnas]
     df = read_table(ruta, columns=pedir)
     if unidad == "hogar":
-        df = df.drop(columns=["SECUENCIA_P", "ORDEN"], errors="ignore").rename(columns={"SECUENCIA_ENCUESTA": "SECUENCIA_P"})
+        df = df.drop(columns=["SECUENCIA_P", "ORDEN"], errors="ignore").rename(
+            columns={"SECUENCIA_ENCUESTA": "SECUENCIA_P"}
+        )
     elif unidad == "vivienda":
         df = df.drop(columns=["SECUENCIA_P", "SECUENCIA_ENCUESTA", "ORDEN"], errors="ignore")
     return df
@@ -254,20 +398,37 @@ def _leer(ruta: Path, modulo: str, columnas) -> pd.DataFrame:
 def _unir_capitulo(base: pd.DataFrame, otro: pd.DataFrame, llaves: list[str]) -> pd.DataFrame:
     """Agrega a ``base`` las columnas nuevas de ``otro`` (el factor y las llaves no se repiten)."""
     nuevas = [c for c in otro.columns if c not in base.columns and c != "FEX_C"]
-    return base.merge(otro[llaves + nuevas], on=llaves, how="left", validate="many_to_one" if llaves != KEYS_PERSONA
-                      else "one_to_one") if nuevas else base
+    return (
+        base.merge(
+            otro[llaves + nuevas],
+            on=llaves,
+            how="left",
+            validate="many_to_one" if llaves != KEYS_PERSONA else "one_to_one",
+        )
+        if nuevas
+        else base
+    )
 
 
 def _factores_2018(df: pd.DataFrame, raiz) -> pd.DataFrame:
-    """En 2018, el FEX_C del CNPV 2018 (por vivienda) en lugar del de los capítulos, que queda en FEX_C_ORIGINAL."""
+    """En 2018, el FEX_C del CNPV 2018 (por vivienda) en lugar del de los capítulos, que queda en
+    FEX_C_ORIGINAL.
+    """
     archivo = find_files(2018, modulo=_FACTORES, raiz=raiz).get(2018)
     if archivo is None:
-        _avisar("ECV 2018: faltan los factores de expansión basados en el CNPV 2018, así que se usa el FEX_C de "
-                "los capítulos y los totales no son los de la serie oficial. Bájelos con dd.ecv.download(2018).",
-                UserWarning)
+        _avisar(
+            "ECV 2018: faltan los factores de expansión basados en el CNPV 2018, así que se usa "
+            "el FEX_C de los capítulos y los totales no son los de la serie oficial. Bájelos con "
+            "dd.ecv.download(2018).",
+            UserWarning,
+        )
         return df
-    factores = read_table(archivo, columns=["DIRECTORIO", "FEX_C"]).rename(columns={"FEX_C": "_FEX_CNPV"})
-    df = df.rename(columns={"FEX_C": "FEX_C_ORIGINAL"}).merge(factores, on="DIRECTORIO", how="left", validate="many_to_one")
+    factores = read_table(archivo, columns=["DIRECTORIO", "FEX_C"]).rename(
+        columns={"FEX_C": "_FEX_CNPV"}
+    )
+    df = df.rename(columns={"FEX_C": "FEX_C_ORIGINAL"}).merge(
+        factores, on="DIRECTORIO", how="left", validate="many_to_one"
+    )
     return df.rename(columns={"_FEX_CNPV": "FEX_C"})
 
 
@@ -287,20 +448,28 @@ def _si(df: pd.DataFrame, columna: str, si=(1,)) -> pd.Series:
 
 def anios_educacion(df: pd.DataFrame) -> pd.Series:
     """
-    Años de educación aprobados, como los cuenta el DANE en la ECV (Cuadro 18 de la serie y el IPM).
+    Años de educación aprobados, como los cuenta el DANE en la ECV (Cuadro 18 de la serie y el
+    IPM).
 
-    Se cuenta desde primero de primaria. Quien no estudia: el grado aprobado de primaria, secundaria o media (P8587S1;
-    la media va de 10 a 13, con la normal) o, en la educación superior, 11 más los años aprobados en ella (P6211).
-    Quien estudia: el grado anterior al que cursa (P1088S1) o, en la superior, 11 más los años aprobados (P6216).
-    Ninguno y preescolar son 0. Vacía para quien no tiene el capítulo de educación (menores de 5 años).
+    Se cuenta desde primero de primaria. Quien no estudia: el grado aprobado de primaria,
+    secundaria o media (P8587S1; la media va de 10 a 13, con la normal) o, en la educación
+    superior, 11 más los años aprobados en ella (P6211). Quien estudia: el grado anterior al que
+    cursa (P1088S1) o, en la superior, 11 más los años aprobados (P6216). Ninguno y preescolar son
+    0. Vacía para quien no tiene el capítulo de educación (menores de 5 años).
     """
     estudia = _num(df, "P8586").eq(1)
     nivel, grado = _num(df, "P8587"), _num(df, "P8587S1")
-    no_estudia = np.select([nivel.isin([1, 2]), nivel.between(3, 5), nivel >= 6],
-                           [0, grado, 11 + _num(df, "P6211").fillna(0)], np.nan)
+    no_estudia = np.select(
+        [nivel.isin([1, 2]), nivel.between(3, 5), nivel >= 6],
+        [0, grado, 11 + _num(df, "P6211").fillna(0)],
+        np.nan,
+    )
     matricula, cursa = _num(df, "P1088"), _num(df, "P1088S1")
-    estudiante = np.select([matricula.eq(1), matricula.between(2, 4), matricula >= 5],
-                           [0, cursa - 1, 11 + _num(df, "P6216").fillna(0)], np.nan)
+    estudiante = np.select(
+        [matricula.eq(1), matricula.between(2, 4), matricula >= 5],
+        [0, cursa - 1, 11 + _num(df, "P6216").fillna(0)],
+        np.nan,
+    )
     return pd.Series(np.where(estudia, estudiante, no_estudia), index=df.index, dtype="float64")
 
 
@@ -313,15 +482,22 @@ def _por_capitulo(df: pd.DataFrame) -> dict[str, pd.Series]:
     if "P6090" in df:
         nuevas["afiliado_salud"] = _si(df, "P6090")
         if "P6100" in df:
-            nuevas["regimen_salud"] = _categorica(df["P6100"].where(_num(df, "P6090").eq(1)), _REGIMEN, "regimen_salud")
+            nuevas["regimen_salud"] = _categorica(
+                df["P6100"].where(_num(df, "P6090").eq(1)), _REGIMEN, "regimen_salud"
+            )
     if "P8586" in df:
         nuevas["asiste"] = _si(df, "P8586")
     if all(c in df for c in _EDUCACION):
         nuevas["anios_educacion"] = anios_educacion(df)
     if usos := [c for c in ("P1910", "P1911", "P1912") if c in df]:
-        frecuencias = pd.concat([_num(df, c) for c in usos], axis=1)  # 1 a 4: con alguna frecuencia; 5: no lo usa
-        nuevas["usa_computador"] = frecuencias.isin([1, 2, 3, 4]).any(axis=1).astype("boolean").mask(
-            frecuencias.isna().all(axis=1))
+        # 1 a 4: con alguna frecuencia; 5: no lo usa
+        frecuencias = pd.concat([_num(df, c) for c in usos], axis=1)
+        nuevas["usa_computador"] = (
+            frecuencias.isin([1, 2, 3, 4])
+            .any(axis=1)
+            .astype("boolean")
+            .mask(frecuencias.isna().all(axis=1))
+        )
     if "P1084" in df:
         nuevas["usa_internet"] = _si(df, "P1084", si=(1, 2, 3, 4))
     if "P1082" in df:
@@ -343,18 +519,20 @@ def _por_capitulo(df: pd.DataFrame) -> dict[str, pd.Series]:
 
 def harmonize(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Agrega las variables armonizadas (en minúscula) a una tabla de la ECV con las variables originales del DANE.
+    Agrega las variables armonizadas (en minúscula) a una tabla de la ECV con las variables
+    originales del DANE.
 
-    Las que se pueden calcular con las columnas que hay (``dd.ecv.ETIQUETAS``): ``fex``, ``area``, ``region`` y
-    ``departamento`` con la geografía de la vivienda; ``sexo``, ``edad``, ``parentesco`` y ``etnia`` con Características;
-    y las de los demás capítulos si están sus columnas, como ``afiliado_salud`` (Salud) o ``anios_educacion``
-    (Educación). ``load`` la llama sola; sirve para una tabla leída por fuera de ``load``.
+    Las que se pueden calcular con las columnas que hay (``dd.ecv.ETIQUETAS``): ``fex``, ``area``,
+    ``region`` y ``departamento`` con la geografía de la vivienda; ``sexo``, ``edad``,
+    ``parentesco`` y ``etnia`` con Características; y las de los demás capítulos si están sus
+    columnas, como ``afiliado_salud`` (Salud) o ``anios_educacion`` (Educación). ``load`` la llama
+    sola; sirve para una tabla leída por fuera de ``load``.
 
     Parámetros
     ----------
     df
-        Tabla con las variables originales en MAYÚSCULA (``CLASE``, ``REGION``, ``P1_DEPARTAMENTO`` o ``DPTO``,
-        ``FEX_C``, ``P6020``, ``P6040``, ...).
+        Tabla con las variables originales en MAYÚSCULA (``CLASE``, ``REGION``, ``P1_DEPARTAMENTO``
+        o ``DPTO``, ``FEX_C``, ``P6020``, ``P6040``, ...).
 
     Devuelve
     --------
@@ -366,7 +544,9 @@ def harmonize(df: pd.DataFrame) -> pd.DataFrame:
     --------
     >>> import pandas as pd
     >>> import dane_data as dd
-    >>> crudo = pd.DataFrame({"CLASE": [1, 2], "P1_DEPARTAMENTO": [11, 11], "FEX_C": [10.5, 3.0], "P6020": [2, 1]})
+    >>> crudo = pd.DataFrame(
+    ...     {"CLASE": [1, 2], "P1_DEPARTAMENTO": [11, 11], "FEX_C": [10.5, 3.0], "P6020": [2, 1]}
+    ... )
     >>> dd.ecv.harmonize(crudo)[["area", "region", "departamento", "sexo"]]
                                     area       region departamento    sexo
     0                           Cabecera  Bogotá D.C.  Bogotá D.C.   Mujer
@@ -377,13 +557,18 @@ def harmonize(df: pd.DataFrame) -> pd.DataFrame:
         nuevas["fex"] = pd.to_numeric(df["FEX_C"], errors="coerce")
     if "CLASE" in df:
         nuevas["area"] = _categorica(df["CLASE"], _AREAS, "area")
-    dpto = next((pd.to_numeric(df[c], errors="coerce") for c in ("P1_DEPARTAMENTO", "DPTO") if c in df), None)
+    dpto = next(
+        (pd.to_numeric(df[c], errors="coerce") for c in ("P1_DEPARTAMENTO", "DPTO") if c in df),
+        None,
+    )
     if "REGION" in df:
         nuevas["region"] = _categorica(df["REGION"], _REGIONES, "region")
     elif dpto is not None:
         codigo = dpto.map(_REGION_DPTO)
         if "CLASE" in df:  # la parte rural de Bogotá es de la región Oriental
-            codigo = codigo.mask(dpto.eq(11) & pd.to_numeric(df["CLASE"], errors="coerce").eq(2), 2)
+            codigo = codigo.mask(
+                dpto.eq(11) & pd.to_numeric(df["CLASE"], errors="coerce").eq(2), 2
+            )
         nuevas["region"] = _categorica(codigo, _REGIONES, "region")
     if dpto is not None:
         nuevas["departamento"] = dpto.map(DEPARTAMENTOS).astype(CATEGORIAS["departamento"])
@@ -408,7 +593,8 @@ def load(
     progreso=None,
 ) -> pd.DataFrame:
     """
-    Carga la ECV descargada: una fila por persona (o por hogar), con los capítulos pedidos unidos por sus llaves.
+    Carga la ECV descargada: una fila por persona (o por hogar), con los capítulos pedidos unidos
+    por sus llaves.
 
     Parámetros
     ----------
@@ -418,11 +604,11 @@ def load(
         Capítulos de ``dd.ecv.MODULOS`` que se agregan. Siempre va el que trae a todas las personas
         (``caracteristicas``) o a todos los hogares (``servicios``), y la geografía de la vivienda.
     nivel
-        ``"persona"`` o ``"hogar"``. Con ``"hogar"`` solo se pueden pedir capítulos de hogar (``servicios``,
-        ``tenencia``, ``condiciones``) y la ``vivienda``.
+        ``"persona"`` o ``"hogar"``. Con ``"hogar"`` solo se pueden pedir capítulos de hogar
+        (``servicios``, ``tenencia``, ``condiciones``) y la ``vivienda``.
     columnas
-        Variables originales que se leen de cada capítulo, además de las llaves y de las que necesitan las
-        armonizadas. ``None`` para todas.
+        Variables originales que se leen de cada capítulo, además de las llaves y de las que
+        necesitan las armonizadas. ``None`` para todas.
     raiz
         Carpeta raíz. Por defecto, la configurada (``dd.get_path("ecv")``).
     progreso
@@ -431,21 +617,23 @@ def load(
     Devuelve
     --------
     pandas.DataFrame
-        Las llaves ``DIRECTORIO``, ``SECUENCIA_P`` (el hogar) y, con personas, ``SECUENCIA_ENCUESTA``; las variables
-        originales en MAYÚSCULA y las armonizadas en minúscula (``dd.ecv.ETIQUETAS[nivel]``).
+        Las llaves ``DIRECTORIO``, ``SECUENCIA_P`` (el hogar) y, con personas,
+        ``SECUENCIA_ENCUESTA``; las variables originales en MAYÚSCULA y las armonizadas en
+        minúscula (``dd.ecv.ETIQUETAS[nivel]``).
 
     Lanza
     -----
     ValueError
-        Si un capítulo o el nivel no existen, o si se pide un capítulo de personas con ``nivel="hogar"``.
+        Si un capítulo o el nivel no existen, o si se pide un capítulo de personas con
+        ``nivel="hogar"``.
     FileNotFoundError
         Si no hay ningún año descargado del capítulo base.
 
     Notas
     -----
-    Un capítulo que falta en un año descargado deja sus columnas vacías en ese año y avisa. Los capítulos de personas
-    no son de todas las personas (Educación es de 5 años y más, Fuerza de trabajo de 12 y más, etc.): las demás quedan
-    con sus columnas vacías.
+    Un capítulo que falta en un año descargado deja sus columnas vacías en ese año y avisa. Los
+    capítulos de personas no son de todas las personas (Educación es de 5 años y más, Fuerza de
+    trabajo de 12 y más, etc.): las demás quedan con sus columnas vacías.
 
     Ejemplos
     --------
@@ -457,8 +645,10 @@ def load(
     columnas = None if columnas is None else [*dict.fromkeys([*columnas, *_ARMONIZAR])]
     bases = find_files(years, modulo=modulos[0], raiz=raiz)
     if not bases:
-        raise FileNotFoundError(f"No hay {modulos[0]} de la ECV para años={years} en {_root(raiz)}. "
-                                "Descárguela con dane_data.ecv.download(...) o revise dane_data.set_paths(...).")
+        raise FileNotFoundError(
+            f"No hay {modulos[0]} de la ECV para años={years} en {_root(raiz)}. Descárguela con "
+            "dane_data.ecv.download(...) o revise dane_data.set_paths(...)."
+        )
     faltan: dict[str, list[int]] = {}
     partes = []
     for i, (anio, ruta) in enumerate(sorted(bases.items())):
@@ -470,25 +660,51 @@ def load(
             if (otro := find_files(anio, modulo=modulo, raiz=raiz).get(anio)) is None:
                 faltan.setdefault(modulo, []).append(anio)
                 continue
-            df = _unir_capitulo(df, _leer(otro, modulo, columnas), llaves if UNIDADES[modulo] == nivel else KEYS_HOGAR)
+            df = _unir_capitulo(
+                df,
+                _leer(otro, modulo, columnas),
+                llaves if UNIDADES[modulo] == nivel else KEYS_HOGAR,
+            )
         vivienda = find_files(anio, modulo="vivienda", raiz=raiz).get(anio)
         if vivienda is None:
             faltan.setdefault("vivienda", []).append(anio)
         else:
-            cols_viv = None if "vivienda" in modulos and columnas is None else [*_GEOGRAFIA, *(columnas or [])]
+            cols_viv = (
+                None
+                if "vivienda" in modulos and columnas is None
+                else [*_GEOGRAFIA, *(columnas or [])]
+            )
             df = _unir_capitulo(df, _leer(vivienda, "vivienda", cols_viv), ["DIRECTORIO"])
         if anio == 2018:
             df = _factores_2018(df, raiz)
-        if anio == 2020 and nivel == "persona" and (columnas is None and "educacion" in modulos
-                                                     or columnas is not None and set(columnas) & set(_COLUMNAS_COMPLEMENTARIA)):
-            if (complementaria := find_files(2020, modulo=_COMPLEMENTARIA, raiz=raiz).get(2020)) is None:
+        if (
+            anio == 2020
+            and nivel == "persona"
+            and (
+                columnas is None
+                and "educacion" in modulos
+                or columnas is not None
+                and set(columnas) & set(_COLUMNAS_COMPLEMENTARIA)
+            )
+        ):
+            if (
+                complementaria := find_files(2020, modulo=_COMPLEMENTARIA, raiz=raiz).get(2020)
+            ) is None:
                 faltan.setdefault(_COMPLEMENTARIA, []).append(2020)
             else:
-                pedidas = None if columnas is None else ["DIRECTORIO", "SECUENCIA_P", "ORDEN", *columnas]
-                extra = read_table(complementaria, columns=pedidas).rename(columns={"ORDEN": "SECUENCIA_ENCUESTA"})
+                pedidas = (
+                    None if columnas is None else ["DIRECTORIO", "SECUENCIA_P", "ORDEN", *columnas]
+                )
+                extra = read_table(complementaria, columns=pedidas).rename(
+                    columns={"ORDEN": "SECUENCIA_ENCUESTA"}
+                )
                 df = _unir_capitulo(df, extra, KEYS_PERSONA)
         # concat y no assign: tras unir varios capítulos, insertar una columna fragmenta la tabla
-        partes.append(harmonize(pd.concat([df, pd.Series(np.int16(anio), index=df.index, name="anio")], axis=1)))
+        partes.append(
+            harmonize(
+                pd.concat([df, pd.Series(np.int16(anio), index=df.index, name="anio")], axis=1)
+            )
+        )
     if faltan:
         _avisar(_aviso_faltan(faltan), UserWarning)
     if progreso:

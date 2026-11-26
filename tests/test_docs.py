@@ -1,6 +1,6 @@
 """
-La documentación: la referencia cubre toda la API pública, los ejemplos de los docstrings funcionan y los
-enlaces {dd} de la guía existen.
+La documentación: la referencia cubre toda la API pública, los ejemplos de los docstrings funcionan
+y los enlaces {dd} de la guía existen.
 """
 
 import doctest
@@ -18,15 +18,18 @@ API = Path(__file__).parent.parent / "docs" / "api"
 
 
 @pytest.mark.skipif(not API.is_dir(), reason="sin docs/ (por ejemplo, desde el sdist)")
-@pytest.mark.parametrize("modulo, pagina, prefijo", [
-    (dd, "general.md", "dd."),
-    (dd.geih, "geih.md", ""),
-    (dd.eam, "eam.md", ""),
-    (dd.eevv, "eevv.md", ""),
-    (dd.emicron, "emicron.md", ""),
-    (dd.ecv, "ecv.md", ""),
-    (dd.pobreza, "pobreza.md", ""),
-])
+@pytest.mark.parametrize(
+    "modulo, pagina, prefijo",
+    [
+        (dd, "general.md", "dd."),
+        (dd.geih, "geih.md", ""),
+        (dd.eam, "eam.md", ""),
+        (dd.eevv, "eevv.md", ""),
+        (dd.emicron, "emicron.md", ""),
+        (dd.ecv, "ecv.md", ""),
+        (dd.pobreza, "pobreza.md", ""),
+    ],
+)
 def test_referencia_cubre_all(modulo, pagina, prefijo):
     texto = (API / pagina).read_text(encoding="utf-8")
     assert f".. currentmodule:: {modulo.__name__}\n" in texto
@@ -45,24 +48,51 @@ def test_referencia_cubre_all(modulo, pagina, prefijo):
 
 
 # Los ejemplos que necesitan los microdatos llevan `# doctest: +SKIP`; los demás se ejecutan aquí.
-@pytest.mark.parametrize("modulo", [
-    "dane_data.config", "dane_data.stats", "dane_data.referencias", "dane_data._hooks", "dane_data.proyecciones",
-    "dane_data.geih", "dane_data.geih.loader", "dane_data.geih.indicadores", "dane_data.geih.agregados",
-    "dane_data.eam", "dane_data.eam.loader", "dane_data.eam.indicadores",
-    "dane_data.eevv", "dane_data.eevv.loader", "dane_data.eevv.indicadores", "dane_data.eevv.agregados",
-    "dane_data.emicron", "dane_data.emicron.loader", "dane_data.emicron.indicadores",
-    "dane_data.ecv", "dane_data.ecv.loader", "dane_data.ecv.downloader", "dane_data.ecv.indicadores",
-    "dane_data.ecv.agregados", "dane_data.ecv.ipm",
-    "dane_data.pobreza", "dane_data.pobreza.loader", "dane_data.pobreza.indicadores",
-    "dane_data.pobreza.agregados", "dane_data.pobreza.union",
-])
+@pytest.mark.parametrize(
+    "modulo",
+    [
+        "dane_data.config",
+        "dane_data.stats",
+        "dane_data.referencias",
+        "dane_data._hooks",
+        "dane_data.proyecciones",
+        "dane_data.geih",
+        "dane_data.geih.loader",
+        "dane_data.geih.indicadores",
+        "dane_data.geih.agregados",
+        "dane_data.eam",
+        "dane_data.eam.loader",
+        "dane_data.eam.indicadores",
+        "dane_data.eevv",
+        "dane_data.eevv.loader",
+        "dane_data.eevv.indicadores",
+        "dane_data.eevv.agregados",
+        "dane_data.emicron",
+        "dane_data.emicron.loader",
+        "dane_data.emicron.indicadores",
+        "dane_data.ecv",
+        "dane_data.ecv.loader",
+        "dane_data.ecv.downloader",
+        "dane_data.ecv.indicadores",
+        "dane_data.ecv.agregados",
+        "dane_data.ecv.ipm",
+        "dane_data.pobreza",
+        "dane_data.pobreza.loader",
+        "dane_data.pobreza.indicadores",
+        "dane_data.pobreza.agregados",
+        "dane_data.pobreza.union",
+    ],
+)
 def test_ejemplos_de_los_docstrings(modulo):
     mod = importlib.import_module(modulo)
-    resultado = doctest.testmod(mod, optionflags=doctest.NORMALIZE_WHITESPACE | doctest.ELLIPSIS, verbose=False)
+    resultado = doctest.testmod(
+        mod, optionflags=doctest.NORMALIZE_WHITESPACE | doctest.ELLIPSIS, verbose=False
+    )
     assert resultado.failed == 0
 
 
-# Sphinx publica un {dd}`nombre` que ya no existe como texto sin enlace, sin avisar (nitpicky está apagado)
+# Sphinx publica un {dd}`nombre` que ya no existe como texto sin enlace, sin avisar (nitpicky está
+# apagado)
 @pytest.mark.skipif(not API.is_dir(), reason="sin docs/ (por ejemplo, desde el sdist)")
 def test_los_enlaces_dd_de_la_guia_existen():
     docs = API.parent
@@ -72,7 +102,11 @@ def test_los_enlaces_dd_de_la_guia_existen():
             continue
         texto = ruta.read_text(encoding="utf-8")
         if ruta.suffix == ".ipynb":
-            texto = "\n".join("".join(c["source"]) for c in json.loads(texto)["cells"] if c["cell_type"] == "markdown")
+            texto = "\n".join(
+                "".join(c["source"])
+                for c in json.loads(texto)["cells"]
+                if c["cell_type"] == "markdown"
+            )
         for nombre in re.findall(r"\{dd\}`([^`]+)`", texto):
             objeto = dd
             for parte in nombre.removesuffix("()").split("."):
@@ -84,6 +118,8 @@ def test_los_enlaces_dd_de_la_guia_existen():
 
 def test_la_cita_del_readme_es_la_de_citation_cff():
     raiz = Path(__file__).parent.parent
-    titulo = re.search(r'^title: "(.+)"$', (raiz / "CITATION.cff").read_text(encoding="utf-8"), re.M).group(1)
+    titulo = re.search(
+        r'^title: "(.+)"$', (raiz / "CITATION.cff").read_text(encoding="utf-8"), re.M
+    ).group(1)
     for archivo in ("README.md", "docs/citar.md", "src/dane_data/app/paginas/citar.py"):
         assert titulo in (raiz / archivo).read_text(encoding="utf-8"), archivo

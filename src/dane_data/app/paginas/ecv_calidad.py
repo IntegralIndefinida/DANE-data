@@ -1,13 +1,27 @@
 import streamlit as st
 
 import dane_data as dd
-from dane_data.app._ui import (args_py, botones_descarga, codigo, fmt_grande, fmt_num, fmt_pct, indicadores_ecv, ipm_ecv,
-                               rutas_actuales, seleccion_ecv, serie_anual)
+from dane_data.app._ui import (
+    args_py,
+    botones_descarga,
+    codigo,
+    fmt_grande,
+    fmt_num,
+    fmt_pct,
+    indicadores_ecv,
+    ipm_ecv,
+    rutas_actuales,
+    seleccion_ecv,
+    serie_anual,
+)
 
 st.title("Calidad de vida y pobreza multidimensional")
-st.caption("**Encuesta Nacional de Calidad de Vida (ECV) del DANE.** Encuesta anual a unos 90.000 hogares, con un capítulo "
-           "por tema: vivienda, servicios, salud, educación, trabajo, tecnologías. Las cifras se expanden con el factor de "
-           "la encuesta y dan las que publica el DANE.")
+st.caption(
+    "**Encuesta Nacional de Calidad de Vida (ECV) del DANE.** Encuesta anual a unos 90.000 "
+    "hogares, con un capítulo por tema: vivienda, servicios, salud, educación, trabajo, "
+    "tecnologías. Las cifras se expanden con el factor de la encuesta y dan las que publica el "
+    "DANE."
+)
 sel = seleccion_ecv()
 anios = sel["anios"]
 rutas = rutas_actuales()
@@ -34,25 +48,45 @@ INDICADORES = {
     "Personas que usan computador (5 años y más, %)": ("pct_usa_computador", "pct"),
     "Personas que usan celular (5 años y más, %)": ("pct_usa_celular", "pct"),
 }
-DESAGREGAR = {"Total nacional": None, "Área": "area", "Región": "region", "Departamento": "departamento"}
+DESAGREGAR = {
+    "Total nacional": None,
+    "Área": "area",
+    "Región": "region",
+    "Departamento": "departamento",
+}
 PRIVACIONES = {
-    "logro_educativo": "Bajo logro educativo", "analfabetismo": "Analfabetismo",
-    "inasistencia_escolar": "Inasistencia escolar", "rezago_escolar": "Rezago escolar",
-    "atencion_integral": "Barreras a servicios para la primera infancia", "trabajo_infantil": "Trabajo infantil",
-    "desempleo_larga_duracion": "Desempleo de larga duración", "empleo_formal": "Trabajo informal",
-    "aseguramiento_salud": "Sin aseguramiento en salud", "barreras_acceso_salud": "Barreras de acceso a servicios de salud",
-    "acueducto": "Sin acceso a fuente de agua mejorada", "alcantarillado": "Inadecuada eliminación de excretas",
-    "pisos": "Material inadecuado de pisos", "paredes": "Material inadecuado de paredes exteriores",
+    "logro_educativo": "Bajo logro educativo",
+    "analfabetismo": "Analfabetismo",
+    "inasistencia_escolar": "Inasistencia escolar",
+    "rezago_escolar": "Rezago escolar",
+    "atencion_integral": "Barreras a servicios para la primera infancia",
+    "trabajo_infantil": "Trabajo infantil",
+    "desempleo_larga_duracion": "Desempleo de larga duración",
+    "empleo_formal": "Trabajo informal",
+    "aseguramiento_salud": "Sin aseguramiento en salud",
+    "barreras_acceso_salud": "Barreras de acceso a servicios de salud",
+    "acueducto": "Sin acceso a fuente de agua mejorada",
+    "alcantarillado": "Inadecuada eliminación de excretas",
+    "pisos": "Material inadecuado de pisos",
+    "paredes": "Material inadecuado de paredes exteriores",
     "hacinamiento": "Hacinamiento crítico",
 }
 VARIABLES_IPM = {
     "Incidencia (% de personas en pobreza multidimensional)": ("incidencia", "pct"),
     "IPM (incidencia ajustada, de 0 a 1)": ("ipm", "numero"),
     "Intensidad (% de privaciones de los pobres)": ("intensidad", "pct"),
-    **{f"Hogares con privación: {nombre.lower()} (%)": (f"pct_{clave}", "pct") for clave, nombre in PRIVACIONES.items()},
+    **{
+        f"Hogares con privación: {nombre.lower()} (%)": (f"pct_{clave}", "pct")
+        for clave, nombre in PRIVACIONES.items()
+    },
 }
-DESAGREGAR_IPM = {"Total nacional": None, "Área": "area", "Región (como el DANE)": "region_ipm",
-                  "Departamento": "departamento", "Sexo del jefe del hogar": "sexo_jefe"}
+DESAGREGAR_IPM = {
+    "Total nacional": None,
+    "Área": "area",
+    "Región (como el DANE)": "region_ipm",
+    "Departamento": "departamento",
+    "Sexo del jefe del hogar": "sexo_jefe",
+}
 
 vista = st.radio("Vista", ["Indicadores", "Pobreza multidimensional (IPM)"], horizontal=True)
 
@@ -79,13 +113,27 @@ if vista == "Indicadores":
     por = DESAGREGAR[nombre_por]
     res = indicadores_ecv(anios, por, rutas) if por else total
     if columna not in res.columns:
-        st.warning("Faltan los capítulos de la ECV que necesita esta variable: bájelos en Descargar datos.")
+        st.warning(
+            "Faltan los capítulos de la ECV que necesita esta variable: bájelos en Descargar "
+            "datos."
+        )
     else:
-        serie_anual(res, columna, por, tipo_valor, nombre, (f"Por {nombre_por.lower()} · " if por else "") + sel["descripcion"],
-                    "ecv")
+        serie_anual(
+            res,
+            columna,
+            por,
+            tipo_valor,
+            nombre,
+            (f"Por {nombre_por.lower()} · " if por else "") + sel["descripcion"],
+            "ecv",
+        )
     with st.expander("Tabla completa", icon=":material/table:"):
-        st.dataframe(res, hide_index=True, width="stretch",
-                     column_config={"anio": st.column_config.NumberColumn("Año", format="%d")})
+        st.dataframe(
+            res,
+            hide_index=True,
+            width="stretch",
+            column_config={"anio": st.column_config.NumberColumn("Año", format="%d")},
+        )
         botones_descarga(res, f"ecv_{anios[0]}_{anios[-1]}", "ecvind")
     codigo(f"""
 import dane_data as dd
@@ -105,7 +153,11 @@ else:
     st.markdown(f"##### Resumen {int(u['anio'])}")
     k = st.columns(4)
     k[0].metric("Personas en pobreza multidimensional", fmt_pct(u.incidencia))
-    k[1].metric("Intensidad", fmt_pct(u.intensidad), help="Porcentaje promedio de privaciones de las personas pobres.")
+    k[1].metric(
+        "Intensidad",
+        fmt_pct(u.intensidad),
+        help="Porcentaje promedio de privaciones de las personas pobres.",
+    )
     k[2].metric("IPM", fmt_num(u.ipm, 3), help="Incidencia ajustada: incidencia por intensidad.")
     k[3].metric("Personas pobres", fmt_grande(u.personas_pobres))
     st.divider()
@@ -116,18 +168,44 @@ else:
     columna, tipo_valor = VARIABLES_IPM[nombre]
     por = DESAGREGAR_IPM[nombre_por]
     res = ipm_ecv(anios, por, rutas) if por else total
-    serie_anual(res, columna, por, tipo_valor, nombre, (f"Por {nombre_por.lower()} · " if por else "") + sel["descripcion"],
-                "ipm")
-    st.caption("Como el DANE: el total nacional y por área van sin la parte rural de los ocho departamentos de la "
-               "Orinoquía-Amazonía; las regiones y los departamentos, con toda la muestra.")
+    serie_anual(
+        res,
+        columna,
+        por,
+        tipo_valor,
+        nombre,
+        (f"Por {nombre_por.lower()} · " if por else "") + sel["descripcion"],
+        "ipm",
+    )
+    st.caption(
+        "Como el DANE: el total nacional y por área van sin la parte rural de los ocho "
+        "departamentos de la Orinoquía-Amazonía; las regiones y los departamentos, con toda la "
+        "muestra."
+    )
     with st.expander("Las 15 privaciones y sus pesos", icon=":material/menu_book:"):
-        st.markdown("Un hogar es **pobre** si su puntaje, la suma ponderada de sus privaciones, es de **5/15 (33,3 %) o más**, "
-                    "y todas sus personas lo son. Cada dimensión pesa 20 %, repartido por igual entre sus privaciones.")
-        st.dataframe([{"Dimensión": dimension, "Privación": PRIVACIONES[clave], "Peso": fmt_pct(100 * peso)}
-                      for clave, (dimension, peso) in dd.ecv.PRIVACIONES.items()], hide_index=True)
+        st.markdown(
+            "Un hogar es **pobre** si su puntaje, la suma ponderada de sus privaciones, es de "
+            "**5/15 (33,3 %) o más**, y todas sus personas lo son. Cada dimensión pesa 20 %, "
+            "repartido por igual entre sus privaciones."
+        )
+        st.dataframe(
+            [
+                {
+                    "Dimensión": dimension,
+                    "Privación": PRIVACIONES[clave],
+                    "Peso": fmt_pct(100 * peso),
+                }
+                for clave, (dimension, peso) in dd.ecv.PRIVACIONES.items()
+            ],
+            hide_index=True,
+        )
     with st.expander("Tabla completa", icon=":material/table:"):
-        st.dataframe(res, hide_index=True, width="stretch",
-                     column_config={"anio": st.column_config.NumberColumn("Año", format="%d")})
+        st.dataframe(
+            res,
+            hide_index=True,
+            width="stretch",
+            column_config={"anio": st.column_config.NumberColumn("Año", format="%d")},
+        )
         botones_descarga(res, f"ipm_{anios[0]}_{anios[-1]}", "ecvipm")
     codigo(f"""
 import dane_data as dd

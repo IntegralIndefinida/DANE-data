@@ -21,21 +21,47 @@ import openpyxl
 import pandas as pd
 import requests
 
-ANEXO_2021 = "https://www.dane.gov.co/files/investigaciones/boletines/ech/ech/anexo_empleo_dic_21.xlsx"
+ANEXO_2021 = (
+    "https://www.dane.gov.co/files/investigaciones/boletines/ech/ech/anexo_empleo_dic_21.xlsx"
+)
 ANEXO_VIGENTE = "https://www.dane.gov.co/files/operaciones/GEIH/anex-GEIH-{mes}.xlsx"
 SALIDA = Path(__file__).with_name("dane_publicado.csv")
 
-MESES = {"Ene": 1, "Feb": 2, "Mar": 3, "Abr": 4, "May": 5, "Jun": 6, "Jul": 7, "Ago": 8, "Sep": 9, "Oct": 10,
-         "Nov": 11, "Dic": 12}
+MESES = {
+    "Ene": 1,
+    "Feb": 2,
+    "Mar": 3,
+    "Abr": 4,
+    "May": 5,
+    "Jun": 6,
+    "Jul": 7,
+    "Ago": 8,
+    "Sep": 9,
+    "Oct": 10,
+    "Nov": 11,
+    "Dic": 12,
+}
 # Nombre de la fila en cada anexo -> columna del CSV
-FILAS = {"TGP": "tgp", "Tasa Global de Participación (TGP)": "tgp", "TO": "to", "Tasa de Ocupación (TO)": "to",
-         "TD": "td", "Tasa de Desocupación (TD)": "td", "Población en edad de trabajar": "pet",
-         "Población en edad de trabajar (PET)": "pet", "Ocupados": "ocupados", "Población ocupada": "ocupados",
-         "Desocupados": "desocupados", "Población desocupada": "desocupados"}
+FILAS = {
+    "TGP": "tgp",
+    "Tasa Global de Participación (TGP)": "tgp",
+    "TO": "to",
+    "Tasa de Ocupación (TO)": "to",
+    "TD": "td",
+    "Tasa de Desocupación (TD)": "td",
+    "Población en edad de trabajar": "pet",
+    "Población en edad de trabajar (PET)": "pet",
+    "Ocupados": "ocupados",
+    "Población ocupada": "ocupados",
+    "Desocupados": "desocupados",
+    "Población desocupada": "desocupados",
+}
 
 
 def abrir(fuente: str, carpeta: Path) -> Path:
-    """Ruta local del anexo: el archivo dado, o lo descarga de la URL (o del mes del anexo vigente)."""
+    """Ruta local del anexo: el archivo dado, o lo descarga de la URL (o del mes del anexo
+    vigente).
+    """
     if Path(fuente).is_file():
         return Path(fuente)
     url = fuente if fuente.startswith("http") else ANEXO_VIGENTE.format(mes=fuente)
@@ -47,8 +73,14 @@ def abrir(fuente: str, carpeta: Path) -> Path:
 
 
 def leer(archivo: Path, hoja: str, bloque: str = "Total Nacional") -> pd.DataFrame:
-    """Serie mensual de un bloque (``"Total Nacional"``, ``"Total Cabeceras"``...) de una hoja del anexo."""
-    filas = list(openpyxl.load_workbook(archivo, read_only=True, data_only=True)[hoja].iter_rows(values_only=True))
+    """Serie mensual de un bloque (``"Total Nacional"``, ``"Total Cabeceras"``...) de una hoja del
+    anexo.
+    """
+    filas = list(
+        openpyxl.load_workbook(archivo, read_only=True, data_only=True)[hoja].iter_rows(
+            values_only=True
+        )
+    )
     b = next(k for k, r in enumerate(filas) if str(r[0]).strip() == bloque)
     i = next(k for k in range(b, len(filas)) if filas[k][0] == "Concepto")
     # Fila de años (solo en el primer mes de cada año) y fila de meses ("Ene", "Feb"...)
@@ -58,12 +90,14 @@ def leer(archivo: Path, hoja: str, bloque: str = "Total Nacional") -> pd.DataFra
         anios.append(anio)
     meses = [MESES.get(str(v).strip()[:3]) for v in filas[i + 1][1:]]
     datos = {}
-    for r in filas[i + 2:]:
+    for r in filas[i + 2 :]:
         if r[0] is not None and str(r[0]).startswith(("Total", "Fuente")):
             break  # fin del bloque
         clave = FILAS.get(str(r[0]).strip()) if r[0] is not None else None
         if clave and clave not in datos:
-            datos[clave] = [v if isinstance(v, (int, float)) else None for v in r[1:len(anios) + 1]]
+            datos[clave] = [
+                v if isinstance(v, (int, float)) else None for v in r[1 : len(anios) + 1]
+            ]
     df = pd.DataFrame({"anio": anios, "mes": meses, **datos})
     return df.dropna(subset=["anio", "mes", "td"]).astype({"anio": int, "mes": int})
 
@@ -78,25 +112,43 @@ def main() -> None:
         carpeta = Path(tmp)
         viejo = leer(abrir(ANEXO_2021, carpeta), "Tnal mensual")
         vigente = abrir(args.anexo, carpeta)
-        # El anexo vigente también trae cabeceras y sexo por mes; el de 2021 solo en trimestre móvil.
-        nuevos = {"total": leer(vigente, "Total nacional"),
-                  "urbano": leer(vigente, "Total nacional", "Total Cabeceras"),
-                  "hombres": leer(vigente, "Total_nacional_IML_Sexo", "Total Nacional Hombres"),
-                  "mujeres": leer(vigente, "Total_nacional_IML_Sexo", "Total Nacional Mujeres")}
+        # El anexo vigente también trae cabeceras y sexo por mes; el de 2021 solo en trimestre
+        # móvil.
+        nuevos = {
+            "total": leer(vigente, "Total nacional"),
+            "urbano": leer(vigente, "Total nacional", "Total Cabeceras"),
+            "hombres": leer(vigente, "Total_nacional_IML_Sexo", "Total Nacional Hombres"),
+            "mujeres": leer(vigente, "Total_nacional_IML_Sexo", "Total Nacional Mujeres"),
+        }
 
-    partes = [viejo[viejo.anio.between(2007, 2019) | (viejo.anio == 2021)].assign(serie="principal", grupo="total",
-                                                                                 anexo="dic2021")]
+    partes = [
+        viejo[viejo.anio.between(2007, 2019) | (viejo.anio == 2021)].assign(
+            serie="principal", grupo="total", anexo="dic2021"
+        )
+    ]
     nombre = vigente.stem.replace("anex-GEIH-", "")
     for grupo, nuevo in nuevos.items():
-        # Los microdatos de 2020 en el ANDA ya vienen con el CNPV 2018; los de 2021, con el censo 2005.
-        partes += [nuevo[(nuevo.anio == 2020) | (nuevo.anio >= 2022)].assign(serie="principal", grupo=grupo,
-                                                                              anexo=nombre),
-                   nuevo[nuevo.anio.between(2010, 2020)].assign(serie="empalme", grupo=grupo, anexo=nombre)]
-    out = pd.concat(partes)[["serie", "grupo", "anio", "mes", "td", "tgp", "to", "pet", "ocupados", "desocupados",
-                             "anexo"]]
+        # Los microdatos de 2020 en el ANDA ya vienen con el CNPV 2018; los de 2021, con el censo
+        # 2005.
+        partes += [
+            nuevo[(nuevo.anio == 2020) | (nuevo.anio >= 2022)].assign(
+                serie="principal", grupo=grupo, anexo=nombre
+            ),
+            nuevo[nuevo.anio.between(2010, 2020)].assign(
+                serie="empalme", grupo=grupo, anexo=nombre
+            ),
+        ]
+    # fmt: off
+    columnas = ["serie", "grupo", "anio", "mes", "td", "tgp", "to", "pet", "ocupados",
+                "desocupados", "anexo"]
+    # fmt: on
+    out = pd.concat(partes)[columnas]
     orden = {"total": 0, "urbano": 1, "hombres": 2, "mujeres": 3}
-    out = out.sort_values(["serie", "grupo", "anio", "mes"], key=lambda c: c.map(orden) if c.name == "grupo" else c,
-                          ascending=[False, True, True, True])
+    out = out.sort_values(
+        ["serie", "grupo", "anio", "mes"],
+        key=lambda c: c.map(orden) if c.name == "grupo" else c,
+        ascending=[False, True, True, True],
+    )
 
     ultimo = out[out.anexo == nombre]["anio"].max()
     encabezado = f"""\
@@ -108,12 +160,14 @@ def main() -> None:
 #   {ANEXO_VIGENTE.format(mes=nombre)}. grupo total y urbano (cabeceras):
 #   hoja "Total nacional"; hombres y mujeres: hoja "Total_nacional_IML_Sexo" (desde 2010).
 # Los microdatos de 2020 en el ANDA ya vienen con el marco 2018, y los de 2021 todavía con el de 2005.
-"""
+"""  # noqa: E501 (encabezado del CSV generado)
     with open(args.salida, "w", encoding="utf-8") as fh:
         fh.write(encabezado)
         out.to_csv(fh, index=False, float_format="%.6f")
     print(f"{len(out)} filas en {args.salida}")
-    print(out.groupby(["serie", "grupo", "anexo"])["anio"].agg(["min", "max", "count"]).to_string())
+    print(
+        out.groupby(["serie", "grupo", "anexo"])["anio"].agg(["min", "max", "count"]).to_string()
+    )
 
 
 if __name__ == "__main__":

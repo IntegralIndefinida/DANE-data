@@ -1,11 +1,13 @@
 """
-Regenera los diccionarios de las Estadísticas Vitales (``src/dane_data/data/eevv_*_diccionario.json``) desde el DDI del ANDA.
+Regenera los diccionarios de las Estadísticas Vitales
+(``src/dane_data/data/eevv_*_diccionario.json``) desde el DDI del ANDA.
 
     uv run python tests/datos/actualizar_eevv_diccionario.py [ARCHIVO_DDI.xml]
 
-Sin argumento se baja el DDI del catálogo más reciente. Son tres diccionarios porque una misma variable cambia de etiqueta
-según el certificado (``SEXO`` es «del nacido vivo» o «del fallecido»). Se guardan tal como los publica el DANE: lo que
-contradice los datos va en la tabla de diferencias del README.
+Sin argumento se baja el DDI del catálogo más reciente. Son tres diccionarios porque una misma
+variable cambia de etiqueta según el certificado (``SEXO`` es «del nacido vivo» o «del fallecido»).
+Se guardan tal como los publica el DANE: lo que contradice los datos va en la tabla de diferencias
+del README.
 """
 
 from __future__ import annotations
@@ -21,7 +23,11 @@ import requests
 CATALOGO = 915  # 2025
 DDI = "https://microdatos.dane.gov.co/index.php/metadata/export/{c}/ddi"
 SALIDA = Path(__file__).parents[2] / "src" / "dane_data" / "data"
-ARCHIVOS = {"Nacimientos": "nacimientos", "Defuncionesfetales": "fetales", "Defuncionesnofetales": "defunciones"}
+ARCHIVOS = {
+    "Nacimientos": "nacimientos",
+    "Defuncionesfetales": "fetales",
+    "Defuncionesnofetales": "defunciones",
+}
 
 
 def _texto(elemento) -> str:
@@ -55,8 +61,12 @@ def main() -> None:
                 categorias[codigo] = _texto(c.find(q("labl")))
         etiqueta = _texto(v.find(q("labl")))
         pregunta = _texto(v.find(f"{q('qstn')}/{q('qstnLit')}")) or etiqueta
-        diccionarios[tipo][v.get("name", "").upper()] = {"etiqueta": etiqueta, "pregunta": pregunta, "categorias": categorias,
-                                                         "modulos": [f"{nombre}.NSDstat"]}
+        diccionarios[tipo][v.get("name", "").upper()] = {
+            "etiqueta": etiqueta,
+            "pregunta": pregunta,
+            "categorias": categorias,
+            "modulos": [f"{nombre}.NSDstat"],
+        }
     for tipo, d in diccionarios.items():
         if not d:
             raise ValueError(f"El DDI no trae variables de {tipo}")

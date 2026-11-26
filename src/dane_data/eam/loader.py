@@ -38,10 +38,12 @@ from ..referencias import DEPARTAMENTOS
 
 log = logging.getLogger("dane_data.eam")
 
-# Formatos de los archivos de datos: CSV, TXT delimitado (2023) o Stata (2024), todos leídos con _io.read_table
+# Formatos de los archivos de datos: CSV, TXT delimitado (2023) o Stata (2024), todos leídos con
+# _io.read_table
 EXTENSIONES = (".csv", ".txt", ".dta")
 
 # Variables presentes en TODOS los años 1992–2024 (más algunas desde 2000).
+# fmt: off
 VARIABLES_COMUNES = [
     "nordemp", "nordest", "dpto", "periodo",
     "prodbr2", "prodbind", "consin2", "valagri", "valorven", "valorcom",
@@ -49,6 +51,7 @@ VARIABLES_COMUNES = [
     "salarper", "pressper", "salpeyte", "prespyte",
     "activfi", "invebrta", "eelec",
 ]
+# fmt: on
 VARIABLES_DESDE_2000 = ["totalv", "deprecia"]
 CORE = VARIABLES_COMUNES + VARIABLES_DESDE_2000
 
@@ -63,12 +66,19 @@ ETIQUETAS = {
     "valagri": "Valor agregado",
     "valorven": "Ventas totales",
     "valorcom": "Compras de materias primas, materiales y empaques",
-    # Desde 2004 el total del archivo cuenta a los aprendices de la Ley 789 de 2002, que el DANE dejó fuera del total que
-    # publicó en 2004–2014 (README, «Diferencias con la documentación del DANE», EAM)
-    "pertotal": "Personal total (permanente + propietarios + temporal directo + agencias; desde 2004, también aprendices)",
+    # Desde 2004 el total del archivo cuenta a los aprendices de la Ley 789 de 2002, que el DANE
+    # dejó fuera del total que publicó en 2004–2014 (README, «Diferencias con la documentación del
+    # DANE», EAM)
+    "pertotal": (
+        "Personal total (permanente + propietarios + temporal directo + agencias; desde 2004, "
+        "también aprendices)"
+    ),
     "persocu": "Empleados permanentes",
     "persoesc": "Empleados permanentes + propietarios",
-    "pertem3": "Empleados temporales directos (en 2003–2019, menos que el total del formulario: ver diferencias con el DANE)",
+    "pertem3": (
+        "Empleados temporales directos (en 2003–2019, menos que el total del formulario: ver "
+        "diferencias con el DANE)"
+    ),
     "pperytem": "Empleados permanentes y temporales directos",
     "salarper": "Salarios de empleados permanentes",
     "pressper": "Prestaciones de empleados permanentes",
@@ -81,49 +91,93 @@ ETIQUETAS = {
     "deprecia": "Depreciación",
     # Las que agrega harmonize; las de arriba son las de CORE, con el nombre del DANE en minúscula
     "anio": "Año de referencia",
-    "ciiu": "Código CIIU como texto (normalmente 4 dígitos; algunos años lo publican con 2 o 3 por anonimización)",
+    "ciiu": (
+        "Código CIIU como texto (normalmente 4 dígitos; algunos años lo publican con 2 o 3 por "
+        "anonimización)"
+    ),
     "ciiu_rev": "Revisión de la CIIU: 2, 3 o 4, según la variable de origen",
     "division": "Los dos primeros dígitos del código CIIU",
     "sector": "Nombre de la división (de dd.eam.SECTORES)",
     "departamento": "Nombre del departamento",
     "microagregado": "Si los valores del registro son el promedio de un grupo de establecimientos",
-    "grupo_microagregacion": "Número del grupo de microagregación dentro del año (vacío si no está microagregado)",
+    "grupo_microagregacion": (
+        "Número del grupo de microagregación dentro del año (vacío si no está microagregado)"
+    ),
 }
 
 # Nombres de división (2 dígitos) por revisión de la CIIU.
 SECTORES = {
     4: {
-        "10": "Alimentos", "11": "Bebidas", "12": "Tabaco", "13": "Textiles",
-        "14": "Prendas de vestir", "15": "Cuero y calzado", "16": "Madera", "17": "Papel y cartón",
-        "18": "Impresión", "19": "Refinación de petróleo", "20": "Químicos", "21": "Farmacéuticos",
-        "22": "Caucho y plástico", "23": "Minerales no metálicos", "24": "Metalurgia básica",
-        "25": "Productos de metal", "26": "Electrónicos y ópticos", "27": "Equipo eléctrico",
-        "28": "Maquinaria y equipo", "29": "Vehículos automotores", "30": "Otro equipo de transporte",
-        "31": "Muebles", "32": "Otras manufacturas", "33": "Reparación e instalación de maquinaria",
-        "58": "Edición (publicaciones)", "59": "Cine, video y música", "73": "Publicidad",
+        "10": "Alimentos",
+        "11": "Bebidas",
+        "12": "Tabaco",
+        "13": "Textiles",
+        "14": "Prendas de vestir",
+        "15": "Cuero y calzado",
+        "16": "Madera",
+        "17": "Papel y cartón",
+        "18": "Impresión",
+        "19": "Refinación de petróleo",
+        "20": "Químicos",
+        "21": "Farmacéuticos",
+        "22": "Caucho y plástico",
+        "23": "Minerales no metálicos",
+        "24": "Metalurgia básica",
+        "25": "Productos de metal",
+        "26": "Electrónicos y ópticos",
+        "27": "Equipo eléctrico",
+        "28": "Maquinaria y equipo",
+        "29": "Vehículos automotores",
+        "30": "Otro equipo de transporte",
+        "31": "Muebles",
+        "32": "Otras manufacturas",
+        "33": "Reparación e instalación de maquinaria",
+        "58": "Edición (publicaciones)",
+        "59": "Cine, video y música",
+        "73": "Publicidad",
     },
     3: {
-        "15": "Alimentos y bebidas", "16": "Tabaco", "17": "Textiles", "18": "Prendas de vestir",
-        "19": "Cuero y calzado", "20": "Madera", "21": "Papel y cartón", "22": "Edición e impresión",
-        "23": "Refinación de petróleo", "24": "Químicos", "25": "Caucho y plástico",
-        "26": "Minerales no metálicos", "27": "Metalurgia básica", "28": "Productos de metal",
-        "29": "Maquinaria y equipo", "30": "Maquinaria de oficina", "31": "Aparatos eléctricos",
-        "32": "Radio, TV y comunicaciones", "33": "Instrumentos médicos y de precisión",
-        "34": "Vehículos automotores", "35": "Otro equipo de transporte", "36": "Muebles y otras manufacturas",
+        "15": "Alimentos y bebidas",
+        "16": "Tabaco",
+        "17": "Textiles",
+        "18": "Prendas de vestir",
+        "19": "Cuero y calzado",
+        "20": "Madera",
+        "21": "Papel y cartón",
+        "22": "Edición e impresión",
+        "23": "Refinación de petróleo",
+        "24": "Químicos",
+        "25": "Caucho y plástico",
+        "26": "Minerales no metálicos",
+        "27": "Metalurgia básica",
+        "28": "Productos de metal",
+        "29": "Maquinaria y equipo",
+        "30": "Maquinaria de oficina",
+        "31": "Aparatos eléctricos",
+        "32": "Radio, TV y comunicaciones",
+        "33": "Instrumentos médicos y de precisión",
+        "34": "Vehículos automotores",
+        "35": "Otro equipo de transporte",
+        "36": "Muebles y otras manufacturas",
         "37": "Reciclaje",
     },
     2: {
-        "31": "Alimentos, bebidas y tabaco", "32": "Textiles, confecciones y cuero",
-        "33": "Madera y muebles", "34": "Papel e imprentas", "35": "Químicos, petróleo, caucho y plástico",
-        "36": "Minerales no metálicos", "37": "Metálicas básicas", "38": "Productos metálicos y maquinaria",
+        "31": "Alimentos, bebidas y tabaco",
+        "32": "Textiles, confecciones y cuero",
+        "33": "Madera y muebles",
+        "34": "Papel e imprentas",
+        "35": "Químicos, petróleo, caucho y plástico",
+        "36": "Minerales no metálicos",
+        "37": "Metálicas básicas",
+        "38": "Productos metálicos y maquinaria",
         "39": "Otras manufacturas",
     },
 }
 
 _CIIU_COL = re.compile(r"^ciiu(_?\d)?(n\d)?$")
 
-# Lo que no entra en la clave de la microagregación: identificadores, y las ventas, que a veces difieren
-# dentro de un grupo (1 de 541 grupos en 2024).
+# Lo que no entra en la clave de la microagregación: identificadores, y las ventas, que a veces
+# difieren dentro de un grupo (1 de 541 grupos en 2024).
 _FUERA_DE_LA_CLAVE = {"nordemp", "nordest", "dpto", "periodo", "valorven"}
 
 
@@ -149,8 +203,8 @@ def find_files(years: Iterable[int] | int | None = None, raiz=None) -> dict[int,
     Devuelve
     --------
     dict
-        ``{año: ruta}``. Si un año tiene varios archivos se usa el más grande, con CSV o TXT antes que
-        Stata; el módulo TIC se ignora.
+        ``{año: ruta}``. Si un año tiene varios archivos se usa el más grande, con CSV o TXT antes
+        que Stata; el módulo TIC se ignora.
 
     Ejemplos
     --------
@@ -202,8 +256,10 @@ def available(raiz=None) -> pd.DataFrame:
     31  2023  EAM_ANONIMIZADA_2023.txt        9.0
     32  2024  EAM_ANONIMIZADA_2024.txt       14.0
     """
-    rows =[{"anio": y, "archivo": f.name, "tamano_mb": round(f.stat().st_size / 1e6, 1)}
-            for y, f in find_files(raiz=raiz).items()]
+    rows = [
+        {"anio": y, "archivo": f.name, "tamano_mb": round(f.stat().st_size / 1e6, 1)}
+        for y, f in find_files(raiz=raiz).items()
+    ]
     return pd.DataFrame(rows, columns=["anio", "archivo", "tamano_mb"])
 
 
@@ -219,9 +275,10 @@ def _ciiu_rev(colname: str, anio: int) -> int:
 
 def _microagregacion(df: pd.DataFrame) -> tuple[pd.Series, pd.Series]:
     """
-    ``(microagregado, grupo_microagregacion)``. El ANDA reemplaza los valores de grupos de establecimientos
-    del mismo departamento y CIIU por el promedio del grupo (deducido de los datos; el DANE no lo documenta,
-    ver README). Se reconocen porque comparten todos los montos de ``CORE`` que haya, salvo las ventas.
+    ``(microagregado, grupo_microagregacion)``. El ANDA reemplaza los valores de grupos de
+    establecimientos del mismo departamento y CIIU por el promedio del grupo (deducido de los
+    datos; el DANE no lo documenta, ver README). Se reconocen porque comparten todos los montos de
+    ``CORE`` que haya, salvo las ventas.
     """
     montos = [c for c in CORE if c in df.columns and c not in _FUERA_DE_LA_CLAVE]
     if not montos:
@@ -231,10 +288,14 @@ def _microagregacion(df: pd.DataFrame) -> tuple[pd.Series, pd.Series]:
         if c in df.columns:
             clave[f"_{c}"] = df[c]
     n = clave.groupby(list(clave.columns), dropna=False).ngroup()
-    # Establecimientos distintos (un registro repetido no es un grupo) y con algún monto: plantas sin datos
-    # coinciden en ceros sin estar agrupadas.
-    plantas = df["nordest"] if "nordest" in df.columns else pd.Series(range(len(df)), index=df.index)
-    agrupado = (plantas.groupby(n).transform("nunique") > 1) & clave[montos].fillna(0).ne(0).any(axis=1)
+    # Establecimientos distintos (un registro repetido no es un grupo) y con algún monto: plantas
+    # sin datos coinciden en ceros sin estar agrupadas.
+    plantas = (
+        df["nordest"] if "nordest" in df.columns else pd.Series(range(len(df)), index=df.index)
+    )
+    agrupado = (plantas.groupby(n).transform("nunique") > 1) & clave[montos].fillna(0).ne(0).any(
+        axis=1
+    )
     return agrupado, n.where(agrupado).rank(method="dense").astype("Int64")
 
 
@@ -252,11 +313,11 @@ def harmonize(df: pd.DataFrame, anio: int) -> pd.DataFrame:
     Devuelve
     --------
     DataFrame
-        Una copia de ``df`` con ``anio``, ``ciiu`` (texto), ``ciiu_rev`` (2, 3 o 4), ``division`` (los dos
-        primeros dígitos), ``sector`` (nombre de la división, de ``SECTORES``),
-        ``departamento``, ``microagregado`` (True o False) y ``grupo_microagregacion`` (número del grupo
-        dentro del año; vacío si no está microagregado). Las columnas CIIU originales (``ciiu2``,
-        ``ciiu3``, ``ciiu4``...) se reemplazan por ``ciiu``.
+        Una copia de ``df`` con ``anio``, ``ciiu`` (texto), ``ciiu_rev`` (2, 3 o 4), ``division``
+        (los dos primeros dígitos), ``sector`` (nombre de la división, de ``SECTORES``),
+        ``departamento``, ``microagregado`` (True o False) y ``grupo_microagregacion`` (número del
+        grupo dentro del año; vacío si no está microagregado). Las columnas CIIU originales
+        (``ciiu2``, ``ciiu3``, ``ciiu4``...) se reemplazan por ``ciiu``.
 
     Véase también
     -------------
@@ -264,20 +325,21 @@ def harmonize(df: pd.DataFrame, anio: int) -> pd.DataFrame:
 
     Notas
     -----
-    La revisión se deduce de la variable de origen (``ciiu2`` → Rev. 2, ``ciiu3`` → Rev. 3, ``ciiu4`` →
-    Rev. 4). Algunos años publican el código a 2 o 3 dígitos por anonimización; los dos primeros son
-    siempre la división.
+    La revisión se deduce de la variable de origen (``ciiu2`` → Rev. 2, ``ciiu3`` → Rev. 3,
+    ``ciiu4`` → Rev. 4). Algunos años publican el código a 2 o 3 dígitos por anonimización; los dos
+    primeros son siempre la división.
 
     En los demás años, el ANDA anonimiza publicando muchos establecimientos grandes, de cualquier
     actividad, con el código residual de la revisión («otras industrias manufactureras»: 3909 en la
-    Rev. 2, 3699 en la Rev. 3, 3290 en la Rev. 4), así que su ``division`` puede no ser la real. El código
-    se deja como lo publica el ANDA (ver README).
+    Rev. 2, 3699 en la Rev. 3, 3290 en la Rev. 4), así que su ``division`` puede no ser la real. El
+    código se deja como lo publica el ANDA (ver README).
 
-    Además, el ANDA **microagrega**: reemplaza los valores de grupos de establecimientos (casi siempre 3)
-    del mismo departamento y CIIU por el promedio del grupo. ``microagregado`` marca los registros que
-    comparten exactamente todos los montos de ``CORE`` presentes, salvo las ventas (``valorven``), con otro
-    establecimiento del mismo departamento y CIIU. Es una deducción de los datos, que el DANE no ha
-    confirmado. Las sumas no cambian, pero esos valores no son los del establecimiento.
+    Además, el ANDA **microagrega**: reemplaza los valores de grupos de establecimientos (casi
+    siempre 3) del mismo departamento y CIIU por el promedio del grupo. ``microagregado`` marca los
+    registros que comparten exactamente todos los montos de ``CORE`` presentes, salvo las ventas
+    (``valorven``), con otro establecimiento del mismo departamento y CIIU. Es una deducción de los
+    datos, que el DANE no ha confirmado. Las sumas no cambian, pero esos valores no son los del
+    establecimiento.
     """
     df = df.copy()
     ciiu_cols = [c for c in df.columns if _CIIU_COL.match(c)]
@@ -297,9 +359,10 @@ def harmonize(df: pd.DataFrame, anio: int) -> pd.DataFrame:
     df["division"] = df["ciiu"].str[:2]
     rev = df["ciiu_rev"].iloc[0] if len(df) else None
     df["sector"] = df["division"].map(SECTORES.get(rev, {}))
-    # Lo publicado como 3290 (o 3909, 3699) no siempre es esa clase, aunque el DDI la describe como una más: el
-    # ANDA esconde ahí la actividad de establecimientos grandes, y los anexos del DANE muestran muchos menos (ver
-    # README). Se deja así, sin marcarlos ni deducir su actividad, para no deshacer la anonimización.
+    # Lo publicado como 3290 (o 3909, 3699) no siempre es esa clase, aunque el DDI la describe como
+    # una más: el ANDA esconde ahí la actividad de establecimientos grandes, y los anexos del DANE
+    # muestran muchos menos (ver README). Se deja así, sin marcarlos ni deducir su actividad, para
+    # no deshacer la anonimización.
     if "dpto" in df.columns:
         df["departamento"] = pd.to_numeric(df["dpto"], errors="coerce").map(DEPARTAMENTOS)
     else:
@@ -327,8 +390,8 @@ def load(
         ``"core"`` (las de ``CORE``, comparables entre años; por defecto), ``"all"`` o una lista de
         variables extra en minúscula o mayúscula, por ejemplo ``["c3r10c1", "c4r5c1"]``.
     armonizar
-        Agregar ``ciiu``, ``ciiu_rev``, ``division``, ``sector``, ``departamento``, ``microagregado`` y
-        ``grupo_microagregacion``. Si False, solo ``anio``.
+        Agregar ``ciiu``, ``ciiu_rev``, ``division``, ``sector``, ``departamento``,
+        ``microagregado`` y ``grupo_microagregacion``. Si False, solo ``anio``.
     raiz
         Carpeta raíz. Por defecto, la configurada.
     progreso
@@ -355,17 +418,19 @@ def load(
     La CIIU cambia de revisión: Rev. 2 hasta 2000, Rev. 3 en 2001–2011 y Rev. 4 desde 2012. Los
     ``sector`` de revisiones distintas no son comparables sin una correlativa.
 
-    Los totales nacionales y por departamento coinciden con los anexos del DANE, pero la composición por
-    división no: para anonimizar, el ANDA publica la actividad de muchos establecimientos grandes con el
-    código residual (3909, 3699 o 3290), que queda inflado (vea ``harmonize``). Para la composición por
-    sector, use los anexos del DANE. Los registros ``microagregado`` traen el promedio de su grupo: sirven para
-    agregados, no para análisis por establecimiento.
+    Los totales nacionales y por departamento coinciden con los anexos del DANE, pero la
+    composición por división no: para anonimizar, el ANDA publica la actividad de muchos
+    establecimientos grandes con el código residual (3909, 3699 o 3290), que queda inflado (vea
+    ``harmonize``). Para la composición por sector, use los anexos del DANE. Los registros
+    ``microagregado`` traen el promedio de su grupo: sirven para agregados, no para análisis por
+    establecimiento.
 
     Ejemplos
     --------
     >>> import dane_data as dd
     >>> eam = dd.eam.load(range(2022, 2025))  # doctest: +SKIP
-    >>> eam[["anio", "ciiu", "ciiu_rev", "division", "sector", "departamento"]].head(3)  # doctest: +SKIP
+    >>> columnas = ["anio", "ciiu", "ciiu_rev", "division", "sector", "departamento"]
+    >>> eam[columnas].head(3)  # doctest: +SKIP
        anio  ciiu  ciiu_rev division                  sector  departamento
     0  2022  1812         4       18               Impresión   Bogotá D.C.
     1  2022  2392         4       23  Minerales no metálicos  Cundinamarca
@@ -374,15 +439,17 @@ def load(
     files = find_files(years, raiz=raiz)
     if not files:
         raise FileNotFoundError(
-            f"No hay datos EAM para años={years} en {_root(raiz)}. "
-            "Descárguelos con dane_data.eam.download(...) o revise dane_data.set_paths(...)."
+            f"No hay datos EAM para años={years} en {_root(raiz)}. Descárguelos con "
+            "dane_data.eam.download(...) o revise dane_data.set_paths(...)."
         )
     if isinstance(columnas, str) and columnas not in ("core", "all"):
         columnas = [columnas]  # un solo nombre: list("valagri") lo partiría en letras
     if columnas == "all":
         selector = None
     else:
-        wanted = set(CORE) | ({c.lower() for c in columnas} if columnas not in (None, "core") else set())
+        wanted = set(CORE) | (
+            {c.lower() for c in columnas} if columnas not in (None, "core") else set()
+        )
         selector = lambda c: c in wanted or bool(_CIIU_COL.match(c))  # noqa: E731
 
     frames = []

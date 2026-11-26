@@ -13,9 +13,10 @@ generan los descargadores originales:
 
 Prioridad para resolver cada ruta:
   1. ``set_paths(...)`` en la sesión actual.
-  2. Variables de entorno ``DANE_DATA_GEIH``, ``DANE_DATA_GEIH_EMPALME``, ``DANE_DATA_EAM``, ``DANE_DATA_EEVV``,
-     ``DANE_DATA_EMICRON``, ``DANE_DATA_ECV``, ``DANE_DATA_POBREZA``.
-  3. Archivo ``~/.config/dane_data/config.json`` (lo escribe ``set_paths(..., guardar=True)`` y la app).
+  2. Variables de entorno ``DANE_DATA_GEIH``, ``DANE_DATA_GEIH_EMPALME``, ``DANE_DATA_EAM``,
+     ``DANE_DATA_EEVV``, ``DANE_DATA_EMICRON``, ``DANE_DATA_ECV``, ``DANE_DATA_POBREZA``.
+  3. Archivo ``~/.config/dane_data/config.json`` (lo escribe ``set_paths(..., guardar=True)`` y la
+     app).
   4. Valor por defecto bajo ``~/dane_data_datos/``.
 """
 
@@ -28,9 +29,9 @@ from pathlib import Path
 
 def _carpeta_xdg(variable: str, defecto: str) -> Path:
     """
-    La carpeta de una variable XDG (``XDG_CONFIG_HOME``, ``XDG_CACHE_HOME``), o ``~/<defecto>`` si no está
-    definida, está vacía o es relativa: la norma XDG pide ignorar esos valores. Vacía, el archivo de
-    configuración quedaba relativo a la carpeta actual.
+    La carpeta de una variable XDG (``XDG_CONFIG_HOME``, ``XDG_CACHE_HOME``), o ``~/<defecto>`` si
+    no está definida, está vacía o es relativa: la norma XDG pide ignorar esos valores. Vacía, el
+    archivo de configuración quedaba relativo a la carpeta actual.
     """
     valor = os.environ.get(variable, "")
     return Path(valor) if valor and Path(valor).is_absolute() else Path.home() / defecto
@@ -57,7 +58,8 @@ def _read_file() -> dict:
         data = json.loads(CONFIG_FILE.read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return {}
-    return data if isinstance(data, dict) else {}  # un JSON que no es un objeto: como si no existiera
+    # Un JSON que no es un objeto: como si no existiera
+    return data if isinstance(data, dict) else {}
 
 
 def get_path(clave: str) -> Path:
@@ -65,15 +67,16 @@ def get_path(clave: str) -> Path:
     Carpeta raíz de una encuesta o registro.
 
     Se resuelve en este orden: ``set_paths`` en la sesión actual, la variable de entorno
-    (``DANE_DATA_GEIH``, ``DANE_DATA_GEIH_EMPALME``, ``DANE_DATA_EAM``, ``DANE_DATA_EEVV``, ``DANE_DATA_EMICRON``,
-    ``DANE_DATA_ECV`` o ``DANE_DATA_POBREZA``), el archivo
+    (``DANE_DATA_GEIH``, ``DANE_DATA_GEIH_EMPALME``, ``DANE_DATA_EAM``, ``DANE_DATA_EEVV``,
+    ``DANE_DATA_EMICRON``, ``DANE_DATA_ECV`` o ``DANE_DATA_POBREZA``), el archivo
     ``~/.config/dane_data/config.json`` y, si nada de eso existe, ``~/dane_data_datos/``.
 
     Parámetros
     ----------
     clave
-        ``"geih"``, ``"geih_empalme"``, ``"eam"``, ``"eevv"``, ``"emicron"``, ``"ecv"`` o ``"pobreza"``. El factor de
-        empalme de pobreza no tiene clave propia: queda en ``<carpeta de pobreza>/datos/empalme/``.
+        ``"geih"``, ``"geih_empalme"``, ``"eam"``, ``"eevv"``, ``"emicron"``, ``"ecv"`` o
+        ``"pobreza"``. El factor de empalme de pobreza no tiene clave propia: queda en ``<carpeta
+        de pobreza>/datos/empalme/``.
 
     Devuelve
     --------
@@ -109,16 +112,24 @@ def get_path(clave: str) -> Path:
     return default
 
 
-def set_paths(geih=None, geih_empalme=None, eam=None, guardar: bool = False, eevv=None, emicron=None, ecv=None,
-              pobreza=None) -> None:
+def set_paths(
+    geih=None,
+    geih_empalme=None,
+    eam=None,
+    guardar: bool = False,
+    eevv=None,
+    emicron=None,
+    ecv=None,
+    pobreza=None,
+) -> None:
     """
     Fija las carpetas raíz de los datos.
 
-    Cada carpeta es la raíz de una encuesta: la GEIH queda en ``<raíz>/datos_csv/<año>/<mes>/``, la EAM en
-    ``<raíz>/datos/<año>/``, las Estadísticas Vitales en ``<raíz>/datos/<tipo>/<año>/``, la EMICRON en
-    ``<raíz>/datos/<año>/<módulo>.csv``, la ECV en ``<raíz>/datos/<año>/<módulo>/`` y la pobreza monetaria en
-    ``<raíz>/datos/<año>/`` (con el factor de empalme en ``<raíz>/datos/empalme/``). Las carpetas que no se indican
-    no cambian.
+    Cada carpeta es la raíz de una encuesta: la GEIH queda en ``<raíz>/datos_csv/<año>/<mes>/``, la
+    EAM en ``<raíz>/datos/<año>/``, las Estadísticas Vitales en ``<raíz>/datos/<tipo>/<año>/``, la
+    EMICRON en ``<raíz>/datos/<año>/<módulo>.csv``, la ECV en ``<raíz>/datos/<año>/<módulo>/`` y la
+    pobreza monetaria en ``<raíz>/datos/<año>/`` (con el factor de empalme en
+    ``<raíz>/datos/empalme/``). Las carpetas que no se indican no cambian.
 
     Parámetros
     ----------
@@ -129,9 +140,9 @@ def set_paths(geih=None, geih_empalme=None, eam=None, guardar: bool = False, eev
     eam
         Carpeta de la EAM.
     guardar
-        Si True, guarda las carpetas indicadas en esta llamada en ``~/.config/dane_data/config.json``:
-        valen para las próximas sesiones, para la línea de comandos y para la aplicación. Si False, solo
-        para esta sesión.
+        Si True, guarda las carpetas indicadas en esta llamada en
+        ``~/.config/dane_data/config.json``: valen para las próximas sesiones, para la línea de
+        comandos y para la aplicación. Si False, solo para esta sesión.
     eevv
         Carpeta de las Estadísticas Vitales.
     emicron
@@ -148,8 +159,9 @@ def set_paths(geih=None, geih_empalme=None, eam=None, guardar: bool = False, eev
 
     Notas
     -----
-    Una carpeta relativa (``"datos"``) se completa con la carpeta desde donde se ejecuta Python y se guarda
-    completa: así la línea de comandos, la aplicación y otro notebook la encuentran en el mismo lugar.
+    Una carpeta relativa (``"datos"``) se completa con la carpeta desde donde se ejecuta Python y
+    se guarda completa: así la línea de comandos, la aplicación y otro notebook la encuentran en el
+    mismo lugar.
 
     Véase también
     -------------
@@ -161,14 +173,24 @@ def set_paths(geih=None, geih_empalme=None, eam=None, guardar: bool = False, eev
     >>> import dane_data as dd
     >>> dd.set_paths(geih="~/datos/GEIH", eam="~/datos/EAM", guardar=True)  # doctest: +SKIP
     """
-    nuevas = {k: v for k, v in (("geih", geih), ("geih_empalme", geih_empalme), ("eam", eam), ("eevv", eevv),
-                                ("emicron", emicron), ("ecv", ecv), ("pobreza", pobreza))
-              if v is not None}
+    nuevas = {
+        k: v
+        for k, v in (
+            ("geih", geih),
+            ("geih_empalme", geih_empalme),
+            ("eam", eam),
+            ("eevv", eevv),
+            ("emicron", emicron),
+            ("ecv", ecv),
+            ("pobreza", pobreza),
+        )
+        if v is not None
+    }
     if vacias := [k for k, v in nuevas.items() if not str(v).strip()]:
         raise ValueError(f"Carpeta vacía para {', '.join(vacias)}: indique una ruta.")
     for key, val in nuevas.items():
-        # Completa: guardada como "datos", cada proceso la buscaría en su propia carpeta (la app corre
-        # dentro del paquete instalado)
+        # Completa: guardada como "datos", cada proceso la buscaría en su propia carpeta (la app
+        # corre dentro del paquete instalado)
         _session[key] = Path(os.path.abspath(Path(val).expanduser()))
     if guardar:
         # Solo las de esta llamada: las fijadas antes solo para la sesión no se vuelven permanentes
@@ -189,8 +211,8 @@ def show_paths() -> dict[str, str]:
     Devuelve
     --------
     dict
-        ``{"geih": ..., "geih_empalme": ..., "eam": ..., "eevv": ..., "emicron": ..., "ecv": ..., "pobreza": ...}`` con las
-        rutas como texto.
+        ``{"geih": ..., "geih_empalme": ..., "eam": ..., "eevv": ..., "emicron": ..., "ecv": ...,
+        "pobreza": ...}`` con las rutas como texto.
 
     Véase también
     -------------
@@ -200,6 +222,9 @@ def show_paths() -> dict[str, str]:
     --------
     >>> import dane_data as dd
     >>> dd.show_paths()  # doctest: +SKIP
-    {'geih': '/home/ana/datos/GEIH', 'geih_empalme': '/home/ana/dane_data_datos/geih/empalme', 'eam': '/home/ana/datos/EAM', 'eevv': '/home/ana/dane_data_datos/eevv', 'emicron': '/home/ana/dane_data_datos/emicron', 'ecv': '/home/ana/dane_data_datos/ecv', 'pobreza': '/home/ana/dane_data_datos/pobreza'}
+    {'geih': '/home/ana/datos/GEIH', 'geih_empalme': '/home/ana/dane_data_datos/geih/empalme',
+     'eam': '/home/ana/datos/EAM', 'eevv': '/home/ana/dane_data_datos/eevv',
+     'emicron': '/home/ana/dane_data_datos/emicron', 'ecv': '/home/ana/dane_data_datos/ecv',
+     'pobreza': '/home/ana/dane_data_datos/pobreza'}
     """
     return {k: str(get_path(k)) for k in _KEYS}

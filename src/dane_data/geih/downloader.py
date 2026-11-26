@@ -1,10 +1,11 @@
 """
-Descarga y extracción de la GEIH desde el ANDA del DANE: la serie principal (desde 2007) y la serie de empalme
-(2010–2020, con el CNPV 2018).
+Descarga y extracción de la GEIH desde el ANDA del DANE: la serie principal (desde 2007) y la serie
+de empalme (2010–2020, con el CNPV 2018).
 
-De cada mes baja el ZIP del catálogo del año (``KNOWN_CATALOGS``, ``EMPALME_CATALOGS``) y extrae solo los módulos
-pedidos, también de los ZIP anidados. Donde el CSV del ANDA está dañado baja otro formato del mismo catálogo
-(``CSV_DANADOS``). Es incremental: un mes completo (marcador ``.dane_data_ok`` o todos los módulos en disco) se salta.
+De cada mes baja el ZIP del catálogo del año (``KNOWN_CATALOGS``, ``EMPALME_CATALOGS``) y extrae
+solo los módulos pedidos, también de los ZIP anidados. Donde el CSV del ANDA está dañado baja otro
+formato del mismo catálogo (``CSV_DANADOS``). Es incremental: un mes completo (marcador
+``.dane_data_ok`` o todos los módulos en disco) se salta.
 
 Autor original: Luis Ramírez (adaptado para dane-data)
 Licencia: MIT
@@ -20,21 +21,39 @@ import tempfile
 import logging
 from pathlib import Path
 
-from .._hooks import DescargadorANDA, extraer_miembro, sanitize_member_name as _sanitize_comun, ya_extraido
+from .._hooks import (
+    DescargadorANDA,
+    extraer_miembro,
+    sanitize_member_name as _sanitize_comun,
+    ya_extraido,
+)
 from ..stats import _opciones
 from ..referencias import MESES, strip_accents
-from .loader import (EXTENSIONES, _RE_DESOCU, _RE_INACT, _RE_NO_OCU, _pick_files, MesGEIH, classify_file,
-                     month_from_folder)
+from .loader import (
+    EXTENSIONES,
+    _RE_DESOCU,
+    _RE_INACT,
+    _RE_NO_OCU,
+    _pick_files,
+    MesGEIH,
+    classify_file,
+    month_from_folder,
+)
 
 MARCADOR = ".dane_data_ok"  # se escribe tras una extracción exitosa
 
 # Nombre del módulo en el descargador -> nombre en el cargador / en MesGEIH.faltantes
 _MODULO_CARGADOR = {
-    "vivienda": "vivienda", "caracteristicas": "caracteristicas", "fuerza_trabajo": "fuerza",
-    "ocupados": "ocupados", "desocupados": "desocupados", "inactivos": None,  # se deduce de PET
+    "vivienda": "vivienda",
+    "caracteristicas": "caracteristicas",
+    "fuerza_trabajo": "fuerza",
+    "ocupados": "ocupados",
+    "desocupados": "desocupados",
+    "inactivos": None,  # se deduce de PET
     "otras_formas_trabajo": "otras",
     # No se exigen: de marzo a julio de 2020 no viene Otros ingresos, y Migración empieza en 2022
-    "otros_ingresos": None, "migracion": None,
+    "otros_ingresos": None,
+    "migracion": None,
 }
 
 
@@ -46,22 +65,27 @@ def faltantes_mes(month_dir: Path, modules) -> list[str]:
     marcas OCI/DSI vienen dentro de Características, así que la ausencia del
     archivo de Desocupados no cuenta como faltante.
     """
-    files = [f for f in month_dir.rglob("*") if f.is_file() and f.suffix.lower() in EXTENSIONES] if month_dir.is_dir() else []
+    files = (
+        [f for f in month_dir.rglob("*") if f.is_file() and f.suffix.lower() in EXTENSIONES]
+        if month_dir.is_dir()
+        else []
+    )
     if not files:
         return ["todos"]
     mes = MesGEIH(0, 0, month_dir, _pick_files(files))
     pedidos = {_MODULO_CARGADOR[m] for m in modules} - {None}
     falta = set(mes.faltantes)
     falta |= {m for m in pedidos & {"vivienda", "otras"} if m not in mes.archivos}
-    partes = {nombre for modulo, nombre in mes.partes_faltantes() if modulo in pedidos}  # "Resto - Ocupados"
+    # "Resto - Ocupados"
+    partes = {nombre for modulo, nombre in mes.partes_faltantes() if modulo in pedidos}
     return sorted((falta & pedidos) | partes)
 
 
 def _marcador_cubre(dest: Path, modules) -> bool:
     """
-    El marcador existe y lo escribió una extracción completa de todos los ``modules``. En los anteriores no
-    se confía: hasta 0.3.0 no registraban módulos, y en 0.3.1 se escribían aunque faltara un módulo o una
-    parte ("Resto - Ocupados"). Para esos se revisan los archivos.
+    El marcador existe y lo escribió una extracción completa de todos los ``modules``. En los
+    anteriores no se confía: hasta 0.3.0 no registraban módulos, y en 0.3.1 se escribían aunque
+    faltara un módulo o una parte ("Resto - Ocupados"). Para esos se revisan los archivos.
     """
     try:
         data = json.loads((dest / MARCADOR).read_text(encoding="utf-8"))
@@ -78,6 +102,7 @@ def _escribir_marcador(dest: Path, zip_name: str, n: int, modules) -> None:
     dest.mkdir(parents=True, exist_ok=True)
     data = {"zip": zip_name, "csv_extraidos": n, "modulos": sorted(modules), "completo": True}
     (dest / MARCADOR).write_text(json.dumps(data), encoding="utf-8")
+
 
 log = logging.getLogger("dane_data.geih")
 
@@ -120,12 +145,23 @@ EMPALME_CATALOGS = {
     "2020": "764",
 }
 
-# Módulos que se pueden pedir. De qué módulo es cada archivo lo decide classify_file, la misma que usa el cargador:
-# una sola lista de nombres y erratas del DANE para bajar y para leer. Antes había otra aquí, y cada errata nueva
-# había que agregarla en las dos (las de octubre y noviembre de 2020 no estaban en ninguna).
-DEFAULT_MODULES = ("vivienda", "caracteristicas", "fuerza_trabajo", "ocupados", "desocupados", "inactivos",
-                   "otras_formas_trabajo", "otros_ingresos", "migracion")
-_MODULO_DESCARGA = {"fuerza": "fuerza_trabajo", "otras": "otras_formas_trabajo"}  # cargador -> descargador
+# Módulos que se pueden pedir. De qué módulo es cada archivo lo decide classify_file, la misma que
+# usa el cargador: una sola lista de nombres y erratas del DANE para bajar y para leer. Antes había
+# otra aquí, y cada errata nueva había que agregarla en las dos (las de octubre y noviembre de 2020
+# no estaban en ninguna).
+DEFAULT_MODULES = (
+    "vivienda",
+    "caracteristicas",
+    "fuerza_trabajo",
+    "ocupados",
+    "desocupados",
+    "inactivos",
+    "otras_formas_trabajo",
+    "otros_ingresos",
+    "migracion",
+)
+# Cargador -> descargador
+_MODULO_DESCARGA = {"fuerza": "fuerza_trabajo", "otras": "otras_formas_trabajo"}
 
 # CSV del ANDA (serie principal) que no se pueden leer bien: para esos meses se baja otro
 # formato del mismo catálogo. Ver README, "Diferencias con la documentación del DANE".
@@ -133,28 +169,46 @@ _MODULO_DESCARGA = {"fuerza": "fuerza_trabajo", "otras": "otras_formas_trabajo"}
 CSV_DANADOS = {
     "2008": {None: "txt"},  # FEX_C_2011 sin punto decimal ("849.491.032.387.525")
     "2011": {None: "txt"},
-    "2021": {9: "dta"},     # separado por espacios, y el texto libre también los tiene
+    "2021": {9: "dta"},  # separado por espacios, y el texto libre también los tiene
 }
 EXCLUDE_MODULE_PATTERNS = ("tipo de investigacion",)
 
-# Enlaces a un catálogo en las páginas de búsqueda del ANDA: (id, título, que puede traer etiquetas adentro)
-_RE_CATALOGO = re.compile(r"""<a\b[^>]*\bhref=["'][^"']*/catalog/(\d+)["'][^>]*>(.*?)</a>""", re.S | re.I)
-# Títulos de la búsqueda "GEIH" que no son la serie principal: módulos satélite, submuestras territoriales, el empalme...
-_SATELITES = ("san andres", "amazon", "orinoqu", "ciudades intermedias", "infantil", "mti", "mfpt", "formacion",
-              "migracion", "tic", "mtic", "etnia", "empalme", "factores de expansion", "ciiu")
+# Enlaces a un catálogo en las páginas de búsqueda del ANDA: (id, título, que puede traer etiquetas
+# adentro)
+_RE_CATALOGO = re.compile(
+    r"""<a\b[^>]*\bhref=["'][^"']*/catalog/(\d+)["'][^>]*>(.*?)</a>""", re.S | re.I
+)
+# Títulos de la búsqueda "GEIH" que no son la serie principal: módulos satélite, submuestras
+# territoriales, el empalme...
+# fmt: off
+_SATELITES = ("san andres", "amazon", "orinoqu", "ciudades intermedias", "infantil", "mti", "mfpt",
+              "formacion", "migracion", "tic", "mtic", "etnia", "empalme", "factores de expansion",
+              "ciiu")
+# fmt: on
 
 
 def _de_la_serie(titulo: str, empalme: bool) -> bool:
-    """El título de un catálogo (sin tildes y en minúscula) es de la serie de empalme, o de la principal sin satélites."""
+    """El título de un catálogo (sin tildes y en minúscula) es de la serie de empalme, o de la
+    principal sin satélites.
+    """
     if empalme:
         return "geih" in titulo and "empalme" in titulo
-    return ("geih" in titulo or "gran encuesta" in titulo) and not any(s in titulo for s in _SATELITES)
+    return ("geih" in titulo or "gran encuesta" in titulo) and not any(
+        s in titulo for s in _SATELITES
+    )
 
 
 def _formato(nombre: str) -> str | None:
-    """Formato de un ZIP del ANDA según su nombre ("Marzo_txt.zip" -> "txt"); None si no lo dice."""
+    """Formato de un ZIP del ANDA según su nombre ("Marzo_txt.zip" -> "txt"); None si no lo
+    dice.
+    """
     n = strip_accents(nombre)
-    for formato, marcas in (("csv", ("csv",)), ("txt", ("txt",)), ("sav", ("sav", "spss")), ("dta", ("dta",))):
+    for formato, marcas in (
+        ("csv", ("csv",)),
+        ("txt", ("txt",)),
+        ("sav", ("sav", "spss")),
+        ("dta", ("dta",)),
+    ):
         if any(m in n for m in marcas):
             return formato
     return None
@@ -162,9 +216,9 @@ def _formato(nombre: str) -> str | None:
 
 def is_target_csv(filename: str, modules=DEFAULT_MODULES, extensiones=(".csv",)) -> bool:
     """
-    Si ``filename``, un archivo dentro del ZIP, tiene una de las ``extensiones`` y es de uno de los ``modules`` pedidos.
-    El módulo sale de ``classify_file``, como al cargar. Los módulos que no se usan (``EXCLUDE_MODULE_PATTERNS``: tipo
-    de investigación) nunca cuentan.
+    Si ``filename``, un archivo dentro del ZIP, tiene una de las ``extensiones`` y es de uno de los
+    ``modules`` pedidos. El módulo sale de ``classify_file``, como al cargar. Los módulos que no se
+    usan (``EXCLUDE_MODULE_PATTERNS``: tipo de investigación) nunca cuentan.
     """
     if not filename.lower().endswith(tuple(extensiones)):
         return False
@@ -172,17 +226,29 @@ def is_target_csv(filename: str, modules=DEFAULT_MODULES, extensiones=(".csv",))
     if any(ex in n for ex in EXCLUDE_MODULE_PATTERNS):
         return False
     modulo = classify_file(filename)[0]
-    if modulo == "no_ocupados":  # desde 2022, «No ocupados» trae a los desocupados y a los inactivos juntos
+    if (
+        modulo == "no_ocupados"
+    ):  # desde 2022, «No ocupados» trae a los desocupados y a los inactivos juntos
         junto = bool(_RE_NO_OCU.search(n))
-        return (("desocupados" in modules and (junto or bool(_RE_DESOCU.search(n))))
-                or ("inactivos" in modules and (junto or bool(_RE_INACT.search(n)))))
+        return ("desocupados" in modules and (junto or bool(_RE_DESOCU.search(n)))) or (
+            "inactivos" in modules and (junto or bool(_RE_INACT.search(n)))
+        )
     return _MODULO_DESCARGA.get(modulo, modulo) in modules
 
 
 def sanitize_member_name(raw_name: str) -> str:
-    """El de ``_hooks``, más los nombres de la GEIH que la tabla OEM deja con caracteres de dibujo de cajas."""
+    """El de ``_hooks``, más los nombres de la GEIH que la tabla OEM deja con caracteres de dibujo
+    de cajas.
+    """
     clean = _sanitize_comun(raw_name)
-    for bad, good in [("╡rea", "Area"), ("µrea", "Area"), ("CaracterÝsticas", "Caracteristicas"), ("Caracter¡sticas", "Caracteristicas"), ("educaci¾n", "educacion"), ("educaci¢n", "educacion")]:
+    for bad, good in [
+        ("╡rea", "Area"),
+        ("µrea", "Area"),
+        ("CaracterÝsticas", "Caracteristicas"),
+        ("Caracter¡sticas", "Caracteristicas"),
+        ("educaci¾n", "educacion"),
+        ("educaci¢n", "educacion"),
+    ]:
         clean = clean.replace(bad, good)
 
     return clean
@@ -191,8 +257,16 @@ def sanitize_member_name(raw_name: str) -> str:
 class GEIHDownloader(DescargadorANDA):
     log = log
 
-    def __init__(self, base_dir="data", keep_zips=True, is_empalme=False, modules=None,
-                 progress=None, should_stop=None, forzar=False):
+    def __init__(
+        self,
+        base_dir="data",
+        keep_zips=True,
+        is_empalme=False,
+        modules=None,
+        progress=None,
+        should_stop=None,
+        forzar=False,
+    ):
         self.progress = progress
         self.should_stop = should_stop
         self.forzar = forzar
@@ -217,24 +291,34 @@ class GEIHDownloader(DescargadorANDA):
         """Crea la estructura de carpetas local."""
         self.raw_dir.mkdir(parents=True, exist_ok=True)
         self.csv_dir.mkdir(parents=True, exist_ok=True)
-        series_label = "Serie de Empalme (2010-2020)" if self.is_empalme else "Serie Principal (2007-2026)"
-        log.info(f"Directorio base configurado para [{series_label}] en: {self.base_dir.resolve()}")
+        series_label = (
+            "Serie de Empalme (2010-2020)" if self.is_empalme else "Serie Principal (2007-2026)"
+        )
+        log.info(
+            f"Directorio base configurado para [{series_label}] en: {self.base_dir.resolve()}"
+        )
 
     def discover_catalogs(self) -> dict:
         """
-        Catálogos de cada año: los verificados (``KNOWN_CATALOGS``, ``EMPALME_CATALOGS``) y, para los años
-        que no están ahí, los que encuentra la búsqueda del ANDA. Lo descubierto nunca reemplaza a lo
-        verificado: la búsqueda elige por el título, y otro catálogo con un título parecido (un módulo o
-        anexo nuevo) cambiaría en silencio los datos de un año que ya se validó contra el DANE.
+        Catálogos de cada año: los verificados (``KNOWN_CATALOGS``, ``EMPALME_CATALOGS``) y, para
+        los años que no están ahí, los que encuentra la búsqueda del ANDA. Lo descubierto nunca
+        reemplaza a lo verificado: la búsqueda elige por el título, y otro catálogo con un título
+        parecido (un módulo o anexo nuevo) cambiaría en silencio los datos de un año que ya se
+        validó contra el DANE.
         """
-        palabra, verificados = ("Empalme", EMPALME_CATALOGS) if self.is_empalme else ("GEIH", KNOWN_CATALOGS)
+        palabra, verificados = (
+            ("Empalme", EMPALME_CATALOGS) if self.is_empalme else ("GEIH", KNOWN_CATALOGS)
+        )
         log.info(f"Buscando catálogos de la serie {palabra} en el portal del DANE...")
         descubiertos = {}
         for pagina in range(1, 6):
             try:
-                res = self.session.get(f"{self.base_url}/index.php/catalog/search",
-                                       params={"sk": palabra, "ps": 100, "page": pagina},
-                                       headers={"X-Requested-With": "XMLHttpRequest"}, timeout=20)
+                res = self.session.get(
+                    f"{self.base_url}/index.php/catalog/search",
+                    params={"sk": palabra, "ps": 100, "page": pagina},
+                    headers={"X-Requested-With": "XMLHttpRequest"},
+                    timeout=20,
+                )
                 res.raise_for_status()
             except Exception as e:
                 log.warning(f"No se pudo completar la búsqueda en la página {pagina}: {e}")
@@ -243,7 +327,11 @@ class GEIHDownloader(DescargadorANDA):
             for cat_id, titulo in _RE_CATALOGO.findall(res.text):
                 titulo = strip_accents(html.unescape(re.sub(r"<[^>]+>", "", titulo)))
                 anio = re.search(r"\b(200[6-9]|20[1-3]\d)\b", titulo)
-                if anio and _de_la_serie(titulo, self.is_empalme) and anio.group(1) not in descubiertos:
+                if (
+                    anio
+                    and _de_la_serie(titulo, self.is_empalme)
+                    and anio.group(1) not in descubiertos
+                ):
                     descubiertos[anio.group(1)] = cat_id
                     nuevos += 1
             if not nuevos:
@@ -318,38 +406,54 @@ class GEIHDownloader(DescargadorANDA):
                 out.append(alternos[mes])
             else:
                 if mes and formato_de(mes):
-                    log.warning(f"El CSV de {item['name']} ({year}) está dañado y el ANDA no ofrece el formato "
-                                f"{formato_de(mes)}: se baja el CSV.")
+                    log.warning(
+                        f"El CSV de {item['name']} ({year}) está dañado y el ANDA no ofrece el "
+                        f"formato {formato_de(mes)}: se baja el CSV."
+                    )
                 out.append(item)
         return out
 
-    def _extract_from_zip(self, z_obj: zipfile.ZipFile, dest_dir: Path, extensiones=(".csv",),
-                          errores: list | None = None) -> int:
-        """Extrae los módulos pedidos (también de ZIPs anidados); los fallos se anotan en ``errores``."""
+    def _extract_from_zip(
+        self,
+        z_obj: zipfile.ZipFile,
+        dest_dir: Path,
+        extensiones=(".csv",),
+        errores: list | None = None,
+    ) -> int:
+        """Extrae los módulos pedidos (también de ZIPs anidados); los fallos se anotan en
+        ``errores``.
+        """
         count = 0
         for member in z_obj.infolist():
             if member.is_dir():
                 continue
 
-            # Soporte para ZIPs anidados (ej. CSV.zip dentro de paquetes mensuales 2022-2024 o 1. Enero.zip en Empalme)
-            if member.filename.lower().endswith(".zip") and not any(fmt in member.filename.lower() for fmt in ["dta", "sav", "spss"]):
+            # Soporte para ZIPs anidados (ej. CSV.zip dentro de paquetes mensuales 2022-2024 o 1.
+            # Enero.zip en Empalme)
+            if member.filename.lower().endswith(".zip") and not any(
+                fmt in member.filename.lower() for fmt in ["dta", "sav", "spss"]
+            ):
                 try:
-                    # A un archivo temporal, no a memoria: los ZIP mensuales del empalme son grandes
+                    # A un archivo temporal, no a memoria: los ZIP mensuales del empalme son
+                    # grandes
                     with tempfile.TemporaryFile() as nested_tmp:
                         with z_obj.open(member) as src:
                             shutil.copyfileobj(src, nested_tmp, 1 << 20)
                         nested_tmp.seek(0)
                         with zipfile.ZipFile(nested_tmp) as nested_z:
                             inner_stem = Path(member.filename).stem
-                            # Solo el paquete anual del empalme trae un ZIP por mes (ej. "1. Enero.zip"):
-                            # esos van a su subcarpeta. Cualquier otro ZIP anidado ("CSV.zip",
-                            # "CSV 13.zip", "CSV_4.zip"...) se aplana en la carpeta del mes.
+                            # Solo el paquete anual del empalme trae un ZIP por mes (ej. "1.
+                            # Enero.zip"): esos van a su subcarpeta. Cualquier otro ZIP anidado
+                            # ("CSV.zip", "CSV 13.zip", "CSV_4.zip"...) se aplana en la carpeta del
+                            # mes.
                             if self.is_empalme and month_from_folder(inner_stem) is not None:
                                 target_dest = dest_dir / inner_stem
                             else:
                                 target_dest = dest_dir
                             target_dest.mkdir(parents=True, exist_ok=True)
-                            count += self._extract_from_zip(nested_z, target_dest, extensiones, errores)
+                            count += self._extract_from_zip(
+                                nested_z, target_dest, extensiones, errores
+                            )
                 except Exception as e:
                     log.warning(f"Error abriendo ZIP anidado {member.filename}: {e}")
                     if errores is not None:
@@ -365,12 +469,14 @@ class GEIHDownloader(DescargadorANDA):
                 count += 1
         return count
 
-    def extract_requested_modules(self, zip_path: Path, dest_dir: Path, extensiones=(".csv",),
-                                  errores: list | None = None) -> int:
+    def extract_requested_modules(
+        self, zip_path: Path, dest_dir: Path, extensiones=(".csv",), errores: list | None = None
+    ) -> int:
         """
-        Extrae de ``zip_path`` a ``dest_dir`` los archivos de los módulos pedidos con alguna de las ``extensiones``,
-        también de los ZIP anidados (``CSV.zip``, o uno por mes en el empalme). Devuelve cuántos extrajo. Si se pasa
-        ``errores``, se le agregan los fallos (ZIP dañado, ZIP anidado ilegible...).
+        Extrae de ``zip_path`` a ``dest_dir`` los archivos de los módulos pedidos con alguna de las
+        ``extensiones``, también de los ZIP anidados (``CSV.zip``, o uno por mes en el empalme).
+        Devuelve cuántos extrajo. Si se pasa ``errores``, se le agregan los fallos (ZIP dañado, ZIP
+        anidado ilegible...).
         """
         if errores is None:
             errores = []
@@ -385,10 +491,15 @@ class GEIHDownloader(DescargadorANDA):
             with zipfile.ZipFile(zip_path, "r") as z:
                 extracted_count = self._extract_from_zip(z, dest_dir, extensiones, errores)
 
-            log.info(f"  → Extraídos {extracted_count} CSVs de módulos solicitados desde {zip_path.name}")
+            log.info(
+                f"  → Extraídos {extracted_count} CSVs de módulos solicitados desde "
+                f"{zip_path.name}"
+            )
         except zipfile.BadZipFile:
-            log.error(f"El archivo {zip_path.name} está corrupto o no es un ZIP válido; se borra para volver "
-                      "a descargarlo.")
+            log.error(
+                f"El archivo {zip_path.name} está corrupto o no es un ZIP válido; se borra para "
+                "volver a descargarlo."
+            )
             errores.append(f"{zip_path.name}: ZIP dañado")
             zip_path.unlink(missing_ok=True)
         except Exception as e:
@@ -400,12 +511,15 @@ class GEIHDownloader(DescargadorANDA):
     def process_year(self, year: str, catalog_id: str, limit_files: int = None):
         """Descarga y procesa un año específico de la GEIH o de la Serie de Empalme."""
         series_label = f"Empalme Año {year}" if self.is_empalme else f"Año {year}"
-        log.info(f"\n{'='*20} Procesando GEIH {series_label} (Catálogo {catalog_id}) {'='*20}")
+        log.info(f"\n{'=' * 20} Procesando GEIH {series_label} (Catálogo {catalog_id}) {'=' * 20}")
 
         # 1. Obtener lista de archivos a descargar (CSV, u otro formato si el CSV está dañado)
         files = self.get_download_links(year, catalog_id)
         if not files:
-            self._fallo(f"{year}: no se encontraron enlaces de microdatos en el ANDA (catálogo {catalog_id}).")
+            self._fallo(
+                f"{year}: no se encontraron enlaces de microdatos en el ANDA (catálogo "
+                f"{catalog_id})."
+            )
             return
 
         if limit_files and limit_files > 0:
@@ -422,17 +536,27 @@ class GEIHDownloader(DescargadorANDA):
         for item in files:
             self._check_stop()
             self._emit(None, f"{year}: {item['name']}")
-            safe_name = "".join(c for c in item["name"] if c.isalnum() or c in (" ", ".", "_", "-")).strip()
+            safe_name = "".join(
+                c for c in item["name"] if c.isalnum() or c in (" ", ".", "_", "-")
+            ).strip()
             zip_dest = year_raw_dir / safe_name
             month_stem = safe_name.replace(".csv.zip", "").replace(".zip", "").strip()
 
             if self.is_empalme:
                 # En la serie de empalme, el archivo anual empaqueta los 12 meses adentro
-                meses = [d for d in year_csv_dir.iterdir() if d.is_dir() and month_from_folder(d.name)] \
-                    if year_csv_dir.is_dir() else []
-                if not self.forzar and (_marcador_cubre(year_csv_dir, self.modules) or (
-                        len(meses) >= 12 and all(mes_completo(d, self.modules) for d in meses))) \
-                        and not self._reextraer(zip_dest, year_csv_dir):
+                meses = (
+                    [d for d in year_csv_dir.iterdir() if d.is_dir() and month_from_folder(d.name)]
+                    if year_csv_dir.is_dir()
+                    else []
+                )
+                if (
+                    not self.forzar
+                    and (
+                        _marcador_cubre(year_csv_dir, self.modules)
+                        or (len(meses) >= 12 and all(mes_completo(d, self.modules) for d in meses))
+                    )
+                    and not self._reextraer(zip_dest, year_csv_dir)
+                ):
                     log.info(f"Año {year} de Empalme ya está completo. Saltando.")
                     continue
 
@@ -446,12 +570,22 @@ class GEIHDownloader(DescargadorANDA):
                 # Se salta solo si una extracción anterior de estos mismos módulos terminó
                 # (marcador) o, si no, si ya están todos los módulos pedidos. Contar archivos no
                 # basta: así se colaron meses sin "No ocupados" (p. ej. marzo 2024).
-                if not self.forzar and mes_completo(month_csv_dir, self.modules) \
-                        and not self._reextraer(zip_dest, month_csv_dir):
+                if (
+                    not self.forzar
+                    and mes_completo(month_csv_dir, self.modules)
+                    and not self._reextraer(zip_dest, month_csv_dir)
+                ):
                     log.info(f"Mes {month_stem} ({year}) ya está completo. Saltando.")
                     continue
-                if not self.forzar and month_csv_dir.is_dir() and (falta := faltantes_mes(month_csv_dir, self.modules)):
-                    log.warning(f"Mes {month_stem} ({year}) incompleto (falta: {', '.join(falta)}). Se vuelve a extraer.")
+                if (
+                    not self.forzar
+                    and month_csv_dir.is_dir()
+                    and (falta := faltantes_mes(month_csv_dir, self.modules))
+                ):
+                    log.warning(
+                        f"Mes {month_stem} ({year}) incompleto (falta: {', '.join(falta)}). Se "
+                        "vuelve a extraer."
+                    )
                     # Un ZIP ya en disco puede ser el que produjo la extracción incompleta:
                     # se reutiliza (download_file lo salta) y se re-extrae con la lógica corregida.
 
@@ -459,18 +593,27 @@ class GEIHDownloader(DescargadorANDA):
                 if not success:
                     self._fallo(f"{year}: no se pudo descargar {item['name']}.")
                 if success:
-                    self._extraer(zip_dest, month_csv_dir, f"{month_stem} ({year})", item["name"],
-                                  (f".{item.get('formato', 'csv')}",))
+                    self._extraer(
+                        zip_dest,
+                        month_csv_dir,
+                        f"{month_stem} ({year})",
+                        item["name"],
+                        (f".{item.get('formato', 'csv')}",),
+                    )
 
             time.sleep(1)
 
     def _reextraer(self, zip_dest: Path, carpeta: Path) -> bool:
         """
-        Hay un ZIP guardado y no consta que de él se extrajeran todos los módulos pedidos (p. ej. se extrajo antes de
-        que existieran ``otros_ingresos`` y ``migracion``): se vuelve a extraer de él, sin bajar nada.
+        Hay un ZIP guardado y no consta que de él se extrajeran todos los módulos pedidos (p. ej.
+        se extrajo antes de que existieran ``otros_ingresos`` y ``migracion``): se vuelve a extraer
+        de él, sin bajar nada.
         """
         if zip_dest.exists() and not _marcador_cubre(carpeta, self.modules):
-            log.info(f"{carpeta.name}: se extraen del ZIP guardado los módulos pedidos que no se habían extraído.")
+            log.info(
+                f"{carpeta.name}: se extraen del ZIP guardado los módulos pedidos que no se "
+                "habían extraído."
+            )
             return True
         return False
 
@@ -478,27 +621,38 @@ class GEIHDownloader(DescargadorANDA):
         """Lo que falta de los módulos pedidos en un mes, o en el empalme, en cada mes del año."""
         if not self.is_empalme:
             return faltantes_mes(carpeta, self.modules)
-        meses = [d for d in carpeta.iterdir() if d.is_dir() and month_from_folder(d.name)] if carpeta.is_dir() else []
+        meses = (
+            [d for d in carpeta.iterdir() if d.is_dir() and month_from_folder(d.name)]
+            if carpeta.is_dir()
+            else []
+        )
         if not meses:
             return ["todos"]
-        falta = [f"{d.name}: {', '.join(f)}" for d in sorted(meses) if (f := faltantes_mes(d, self.modules))]
-        # Cada año del empalme trae los 12 meses (como pide el salto de process_year): sin esto, con forzar, un
-        # paquete nuevo sin un mes reemplazaba lo de antes y ese mes se perdía
+        falta = [
+            f"{d.name}: {', '.join(f)}"
+            for d in sorted(meses)
+            if (f := faltantes_mes(d, self.modules))
+        ]
+        # Cada año del empalme trae los 12 meses (como pide el salto de process_year): sin esto,
+        # con forzar, un paquete nuevo sin un mes reemplazaba lo de antes y ese mes se perdía
         sin = sorted(set(range(1, 13)) - {month_from_folder(d.name) for d in meses})
         return falta + [f"{MESES[m]} (todo el mes)" for m in sin]
 
-    def _extraer(self, zip_dest: Path, carpeta: Path, etiqueta: str, nombre_zip: str, extensiones=(".csv",)) -> None:
+    def _extraer(
+        self, zip_dest: Path, carpeta: Path, etiqueta: str, nombre_zip: str, extensiones=(".csv",)
+    ) -> None:
         """
-        Extrae los módulos pedidos de ``zip_dest`` en ``carpeta`` (un mes, o un año del empalme) y anota lo
-        que falló. El marcador se escribe solo si no faltó nada: con un mes ilegible o un módulo que el ZIP
-        no trae, la próxima descarga lo vuelve a revisar en vez de saltarlo.
+        Extrae los módulos pedidos de ``zip_dest`` en ``carpeta`` (un mes, o un año del empalme) y
+        anota lo que falló. El marcador se escribe solo si no faltó nada: con un mes ilegible o un
+        módulo que el ZIP no trae, la próxima descarga lo vuelve a revisar en vez de saltarlo.
 
-        Con ``forzar``, lo nuevo se extrae primero aparte, y solo si salió completo reemplaza en ``carpeta``
-        los archivos de los módulos pedidos: los de otros módulos se conservan, y si algo falla queda lo que
-        había. Los viejos de esos módulos se borran aunque el DANE haya cambiado sus nombres.
+        Con ``forzar``, lo nuevo se extrae primero aparte, y solo si salió completo reemplaza en
+        ``carpeta`` los archivos de los módulos pedidos: los de otros módulos se conservan, y si
+        algo falla queda lo que había. Los viejos de esos módulos se borran aunque el DANE haya
+        cambiado sus nombres.
         """
         errores: list[str] = []
-        aparte = self.forzar and carpeta not in self._reemplazadas   # una vez por descarga
+        aparte = self.forzar and carpeta not in self._reemplazadas  # una vez por descarga
         if aparte:
             nueva = Path(tempfile.mkdtemp(prefix="extraccion-", dir=self.raw_dir))
             try:
@@ -515,21 +669,29 @@ class GEIHDownloader(DescargadorANDA):
 
         conserva = " Se conserva lo extraído antes." if aparte and carpeta.is_dir() else ""
         if errores:
-            self._fallo(f"{etiqueta}: extracción con errores ({'; '.join(errores)}). Se borra el ZIP: la próxima "
-                        f"descarga lo vuelve a bajar.{conserva}")
+            self._fallo(
+                f"{etiqueta}: extracción con errores ({'; '.join(errores)}). Se borra el ZIP: la "
+                f"próxima descarga lo vuelve a bajar.{conserva}"
+            )
         elif not n:
-            self._fallo(f"El ZIP del DANE para {etiqueta} no trae ninguno de los módulos pedidos.{conserva}")
+            self._fallo(
+                f"El ZIP del DANE para {etiqueta} no trae ninguno de los módulos "
+                f"pedidos.{conserva}"
+            )
         elif falta:
-            sep = "; " if self.is_empalme else ", "                 # en el empalme, uno por mes
+            sep = "; " if self.is_empalme else ", "  # en el empalme, uno por mes
             self._fallo(f"El ZIP del DANE para {etiqueta} no trae: {sep.join(falta)}.{conserva}")
         else:
             _escribir_marcador(carpeta, nombre_zip, n, self.modules)
-        # Con errores también se borra: si se conservara, la próxima vez se reutilizaría el mismo ZIP
+        # Con errores también se borra: si se conservara, la próxima vez se reutilizaría el mismo
+        # ZIP
         if (errores or not self.keep_zips) and zip_dest.exists():
             zip_dest.unlink()
 
     def _reemplazar(self, nueva: Path, carpeta: Path) -> None:
-        """Cambia en ``carpeta`` los archivos de los módulos pedidos por los extraídos en ``nueva``."""
+        """Cambia en ``carpeta`` los archivos de los módulos pedidos por los extraídos en
+        ``nueva``.
+        """
         if carpeta.is_dir():
             log.info(f"Se reemplaza lo extraído antes en {carpeta.name}.")
         nuevos = set()
@@ -540,14 +702,21 @@ class GEIHDownloader(DescargadorANDA):
                 f.replace(destino)
                 nuevos.add(destino)
         for f in list(carpeta.rglob("*")):
-            if f.is_file() and f not in nuevos and is_target_csv(f.name, self.modules, tuple(EXTENSIONES)):
+            if (
+                f.is_file()
+                and f not in nuevos
+                and is_target_csv(f.name, self.modules, tuple(EXTENSIONES))
+            ):
                 f.unlink()
 
     def run_pipeline(self, target_years=None, limit_files: int = None) -> list[str]:
-        """Descarga todos los años o los seleccionados. Devuelve lo que no se pudo bajar o extraer."""
+        """Descarga todos los años o los seleccionados. Devuelve lo que no se pudo bajar o
+        extraer.
+        """
         verificados = EMPALME_CATALOGS if self.is_empalme else KNOWN_CATALOGS
-        # Si todos los años pedidos tienen catálogo verificado, la búsqueda no cambiaría nada (lo verificado gana)
-        # Una sola pasada: un generador (map, (a for a in ...)) quedaría vacío para lo de abajo
+        # Si todos los años pedidos tienen catálogo verificado, la búsqueda no cambiaría nada (lo
+        # verificado gana) Una sola pasada: un generador (map, (a for a in ...)) quedaría vacío
+        # para lo de abajo
         target_years = None if target_years is None else [str(y) for y in target_years]
         if target_years is not None and set(target_years) <= set(verificados):
             catalogs = dict(verificados)
@@ -557,14 +726,20 @@ class GEIHDownloader(DescargadorANDA):
         years_to_process = sorted(catalogs.keys(), key=lambda y: int(y))
         self.fallidos, self._reemplazadas = [], set()
         if target_years is not None:  # [] es "ningún año", no "todos"
-            # Un fallo y no solo un aviso: si no, pedir un año que no está devolvía "éxito" sin bajar nada
+            # Un fallo y no solo un aviso: si no, pedir un año que no está devolvía "éxito" sin
+            # bajar nada
             if desconocidos := [y for y in target_years if y not in catalogs]:
-                self._fallo(f"Años sin catálogo de la GEIH en el ANDA: {', '.join(desconocidos)}. "
-                            f"Disponibles: {years_to_process[0]}–{years_to_process[-1]}.")
+                self._fallo(
+                    f"Años sin catálogo de la GEIH en el ANDA: {', '.join(desconocidos)}. "
+                    f"Disponibles: {years_to_process[0]}–{years_to_process[-1]}."
+                )
             years_to_process = [y for y in years_to_process if y in target_years]
 
         series_name = "Empalme" if self.is_empalme else "Principal"
-        log.info(f"Iniciando descarga de la serie [{series_name}] para {len(years_to_process)} años: {years_to_process}")
+        log.info(
+            f"Iniciando descarga de la serie [{series_name}] para {len(years_to_process)} años: "
+            f"{years_to_process}"
+        )
 
         for i, year in enumerate(years_to_process):
             self._check_stop()

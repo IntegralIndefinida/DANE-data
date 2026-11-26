@@ -1,4 +1,6 @@
-"""Páginas de la app con el probador de Streamlit (se salta si no está instalado el extra `app`)."""
+"""Páginas de la app con el probador de Streamlit (se salta si no está instalado el extra
+`app`).
+"""
 
 import io
 import json
@@ -37,7 +39,9 @@ def test_descargar_toda_la_serie_eam(tmp_path, monkeypatch):
 def test_descarga_con_fallas_lo_dice(tmp_path, monkeypatch):
     for clave in ("geih", "geih_empalme", "eam"):
         monkeypatch.setitem(dd.config._session, clave, tmp_path / clave)
-    monkeypatch.setattr(dd.eam, "download", lambda anios, **kw: ["2024: no se pudo descargar EAM_2024.zip."])
+    monkeypatch.setattr(
+        dd.eam, "download", lambda anios, **kw: ["2024: no se pudo descargar EAM_2024.zip."]
+    )
     at = AppTest.from_file(str(PAGINAS / "descargar.py")).run()
     at.radio[0].set_value("EAM (industria, anual)").run()
     next(b for b in at.button if b.label.endswith("Descargar")).click().run()
@@ -47,7 +51,9 @@ def test_descarga_con_fallas_lo_dice(tmp_path, monkeypatch):
 
 
 def test_registro_de_descarga_solo_de_esta_sesion(tmp_path, monkeypatch):
-    """En modo aula, las líneas que registra la descarga de otra sesión (otro hilo) no salen en esta."""
+    """En modo aula, las líneas que registra la descarga de otra sesión (otro hilo) no salen en
+    esta.
+    """
     import logging
     import threading
 
@@ -59,7 +65,8 @@ def test_registro_de_descarga_solo_de_esta_sesion(tmp_path, monkeypatch):
     def bajar(anios, **kw):
         log = logging.getLogger("dane_data.eam")
         log.info("línea propia")
-        # Con contexto de Streamlit, como el hilo de otra sesión en el servidor (sin él, Streamlit la descarta)
+        # Con contexto de Streamlit, como el hilo de otra sesión en el servidor (sin él, Streamlit
+        # la descarta)
         otra = add_script_run_ctx(threading.Thread(target=log.info, args=("línea ajena",)))
         otra.start()
         otra.join()
@@ -106,8 +113,11 @@ def test_inicio_rechaza_carpetas_relativas(tmp_path, monkeypatch):
     """La app corre dentro del paquete: "datos" quedaría en site-packages."""
     archivo = tmp_path / "config.json"
     monkeypatch.setattr(dd.config, "CONFIG_FILE", archivo)
-    monkeypatch.setattr(dd.config, "_session", {"geih": tmp_path / "g", "geih_empalme": tmp_path / "e",
-                                                "eam": tmp_path / "eam"})
+    monkeypatch.setattr(
+        dd.config,
+        "_session",
+        {"geih": tmp_path / "g", "geih_empalme": tmp_path / "e", "eam": tmp_path / "eam"},
+    )
     at = AppTest.from_file(str(PAGINAS / "inicio.py"), default_timeout=60).run()
     next(t for t in at.text_input if t.label == "EAM").set_value("datos")
     next(b for b in at.button if b.label == "Guardar").click().run()
@@ -130,11 +140,15 @@ def test_descargar_geih_sin_modulos(tmp_path, monkeypatch):
 
 
 def test_descargar_codigo_equivalente_con_las_opciones(tmp_path, monkeypatch):
-    """El código de «Hacerlo desde Python» hace lo mismo que el botón: módulos elegidos, borrar ZIP, TIC."""
+    """El código de «Hacerlo desde Python» hace lo mismo que el botón: módulos elegidos, borrar
+    ZIP, TIC.
+    """
     for clave in ("geih", "geih_empalme", "eam", "eevv"):
         monkeypatch.setitem(dd.config._session, clave, tmp_path / clave)
     at = AppTest.from_file(str(PAGINAS / "descargar.py")).run()
-    next(m for m in at.multiselect if m.label == "Módulos").set_value(["caracteristicas", "ocupados"]).run()
+    next(m for m in at.multiselect if m.label == "Módulos").set_value(
+        ["caracteristicas", "ocupados"]
+    ).run()
     assert "modulos=['caracteristicas', 'ocupados'], borrar_zips=True)" in at.code[0].value
     at.radio[0].set_value("EAM (industria, anual)").run()
     next(t for t in at.toggle if t.label.startswith("Incluir módulo de TIC")).set_value(True).run()
@@ -153,7 +167,9 @@ def test_eam_anios_no_consecutivos(eam_root, monkeypatch, pagina):
     assert at.select_slider[0].value == (2016, 2024)
 
 
-@pytest.mark.parametrize("pagina, clave", [("eam_industria.py", "eam"), ("eam_microdatos.py", "eamm")])
+@pytest.mark.parametrize(
+    "pagina, clave", [("eam_industria.py", "eam"), ("eam_microdatos.py", "eamm")]
+)
 def test_eam_filtros_sin_establecimientos(eam_root, monkeypatch, pagina, clave):
     """Un sector que no está en el departamento elegido: aviso, no un IndexError."""
     monkeypatch.setitem(dd.config._session, "eam", eam_root)
@@ -175,7 +191,8 @@ def test_mercado_laboral_precalculado_y_con_filtros(geih_root, tmp_path, monkeyp
 
     at = AppTest.from_file(str(PAGINAS / "geih_mercado.py"), default_timeout=60).run()
     assert not at.exception
-    assert list((tmp_path / "cache" / "geih" / "indicadores").glob("*.parquet"))  # tabla precalculada
+    # Tabla precalculada
+    assert list((tmp_path / "cache" / "geih" / "indicadores").glob("*.parquet"))
     assert "serie_indicadores" in at.code[0].value
 
     at.multiselect(key="geih_sexo").set_value(["Mujer"]).run()  # con filtro: también año por año
@@ -184,20 +201,28 @@ def test_mercado_laboral_precalculado_y_con_filtros(geih_root, tmp_path, monkeyp
 
 
 def test_geih_solo_meses_incompletos_lo_dice(tmp_path, monkeypatch):
-    """Si hay meses pero ninguno completo, la página lo explica en vez de pedir un año que no puede elegirse."""
+    """Si hay meses pero ninguno completo, la página lo explica en vez de pedir un año que no puede
+    elegirse.
+    """
     mes = tmp_path / "geih" / "datos_csv" / "2025" / "Febrero 2025"
     mes.mkdir(parents=True)
-    (mes / "Características generales.CSV").write_text("DIRECTORIO;SECUENCIA_P;ORDEN;FEX_C18\n1;1;1;10\n")
+    (mes / "Características generales.CSV").write_text(
+        "DIRECTORIO;SECUENCIA_P;ORDEN;FEX_C18\n1;1;1;10\n"
+    )
     monkeypatch.setitem(dd.config._session, "geih", tmp_path / "geih")
-    monkeypatch.setattr("streamlit.page_link", lambda *a, **k: None)  # fuera de la navegación de Inicio.py
+    # Fuera de la navegación de Inicio.py
+    monkeypatch.setattr("streamlit.page_link", lambda *a, **k: None)
     at = AppTest.from_file(str(PAGINAS / "geih_mercado.py"), default_timeout=60).run()
     assert not at.exception
-    assert any("incompletos" in w.value for w in at.main.warning)  # en la página: en el celular la barra está cerrada
+    # En la página: en el celular la barra está cerrada
+    assert any("incompletos" in w.value for w in at.main.warning)
     assert not any("Elija al menos un año" in i.value for i in at.info)
 
 
 def test_informalidad_vacia_antes_de_2022(geih_root, tmp_path, monkeypatch):
-    """2021 no tiene las preguntas de la medición del DANE: la tasa queda vacía y la página lo explica."""
+    """2021 no tiene las preguntas de la medición del DANE: la tasa queda vacía y la página lo
+    explica.
+    """
     monkeypatch.setitem(dd.config._session, "geih", geih_root)
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
     at = AppTest.from_file(str(PAGINAS / "geih_mercado.py"), default_timeout=60).run()
@@ -205,15 +230,18 @@ def test_informalidad_vacia_antes_de_2022(geih_root, tmp_path, monkeypatch):
     next(s for s in at.selectbox if s.label == "Indicador").set_value("Tasa de informalidad").run()
     assert not at.exception
     assert any("antes de 2022 queda vacía" in i.value for i in at.info)
-    assert at.metric[3].value == "0,0 %"                       # 2025: la asalariada del ejemplo es formal
+    assert at.metric[3].value == "0,0 %"  # 2025: la asalariada del ejemplo es formal
     next(s for s in at.selectbox if s.label == "Indicador").set_value(
-        "Tasa de informalidad (medición anterior, hasta 2021)").run()
+        "Tasa de informalidad (medición anterior, hasta 2021)"
+    ).run()
     assert not at.exception
     assert any("llega hasta 2021" in i.value for i in at.info)
 
 
 def test_con_pocos_anios_la_serie_es_mensual(geih_root, tmp_path, monkeypatch):
-    """Con dos años, la serie anual serían dos puntos casi en línea recta: la página abre en la mensual."""
+    """Con dos años, la serie anual serían dos puntos casi en línea recta: la página abre en la
+    mensual.
+    """
     monkeypatch.setitem(dd.config._session, "geih", geih_root)
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
     at = AppTest.from_file(str(PAGINAS / "geih_mercado.py"), default_timeout=60).run()
@@ -229,21 +257,28 @@ def test_por_departamento_abre_en_trimestre_movil(geih_root, tmp_path, monkeypat
     next(s for s in at.selectbox if s.label == "Desagregar por").set_value("Departamento").run()
     assert not at.exception
     assert next(r for r in at.radio if r.label == "Frecuencia").value == "Trimestre móvil"
-    next(s for s in at.selectbox if s.label == "Indicador").set_value("Ingreso laboral mediano").run()
+    next(s for s in at.selectbox if s.label == "Indicador").set_value(
+        "Ingreso laboral mediano"
+    ).run()
     assert not at.exception
     assert "Trimestre móvil" not in next(r for r in at.radio if r.label == "Frecuencia").options
 
 
 def test_la_frecuencia_elegida_se_mantiene(geih_root, tmp_path, monkeypatch):
-    """La frecuencia elegida no vuelve al defecto al cambiar la desagregación o el indicador; con solo algunos
-    meses no hay trimestre móvil, porque le faltan los dos meses anteriores y la gráfica quedaba vacía."""
+    """La frecuencia elegida no vuelve al defecto al cambiar la desagregación o el indicador; con
+    solo algunos meses no hay trimestre móvil, porque le faltan los dos meses anteriores y la
+    gráfica quedaba vacía.
+    """
     monkeypatch.setitem(dd.config._session, "geih", geih_root)
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
     at = AppTest.from_file(str(PAGINAS / "geih_mercado.py"), default_timeout=60).run()
     frecuencia = lambda: next(r for r in at.radio if r.label == "Frecuencia")  # noqa: E731
     frecuencia().set_value("Anual").run()
-    for etiqueta, valor in (("Desagregar por", "Departamento"), ("Indicador", "Ingreso laboral mediano"),
-                            ("Indicador", "Tasa de desocupación (TD)")):
+    for etiqueta, valor in (
+        ("Desagregar por", "Departamento"),
+        ("Indicador", "Ingreso laboral mediano"),
+        ("Indicador", "Tasa de desocupación (TD)"),
+    ):
         next(s for s in at.selectbox if s.label == etiqueta).set_value(valor).run()
         assert not at.exception and frecuencia().value == "Anual"
     next(t for t in at.toggle if t.label == "Todos los meses").set_value(False).run()
@@ -251,26 +286,34 @@ def test_la_frecuencia_elegida_se_mantiene(geih_root, tmp_path, monkeypatch):
 
 
 def test_total_en_gris_solo_en_tasas_e_ingresos(geih_root, tmp_path, monkeypatch):
-    """En los niveles el total es la suma de los grupos: dibujado, aplastaba sus líneas contra el eje."""
+    """En los niveles el total es la suma de los grupos: dibujado, aplastaba sus líneas contra el
+    eje.
+    """
     monkeypatch.setitem(dd.config._session, "geih", geih_root)
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
     at = AppTest.from_file(str(PAGINAS / "geih_mercado.py"), default_timeout=60).run()
     next(s for s in at.selectbox if s.label == "Desagregar por").set_value("Sexo").run()
-    nombres = lambda: [t.get("name") for t in json.loads(at.get("plotly_chart")[0].proto.spec)["data"]]  # noqa: E731
+
+    def nombres():
+        return [t.get("name") for t in json.loads(at.get("plotly_chart")[0].proto.spec)["data"]]
+
     assert "Total nacional" in nombres()
     next(s for s in at.selectbox if s.label == "Indicador").set_value("Ocupados (personas)").run()
     assert not at.exception and "Total nacional" not in nombres()
 
 
 def test_la_grafica_lleva_titulo_y_fuente(geih_root, tmp_path, monkeypatch):
-    """La imagen que se descarga (botón de la cámara) debe servir sola en una tesis: título, período y fuente."""
+    """La imagen que se descarga (botón de la cámara) debe servir sola en una tesis: título,
+    período y fuente.
+    """
     monkeypatch.setitem(dd.config._session, "geih", geih_root)
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
     at = AppTest.from_file(str(PAGINAS / "geih_mercado.py"), default_timeout=60).run()
     figura = json.loads(at.get("plotly_chart")[0].proto.spec)
     assert "Tasa de desocupación (TD)" in figura["layout"]["title"]["text"]
     assert "Fuente: DANE, GEIH" in figura["layout"]["annotations"][-1]["text"]
-    assert not figura["layout"]["yaxis"].get("title", {}).get("text")      # el título ya dice qué se mide
+    # El título ya dice qué se mide
+    assert not figura["layout"]["yaxis"].get("title", {}).get("text")
     config = json.loads(at.get("plotly_chart")[0].proto.config)
     assert config["toImageButtonOptions"]["scale"] == 3
 
@@ -286,7 +329,9 @@ def test_salario_minimo_sin_formula(geih_root, tmp_path, monkeypatch):
 
 
 def test_anio_sin_salario_minimo_no_cuenta_en_los_tramos(geih_root, tmp_path, monkeypatch):
-    """Un año sin SMLV contaba en el total y no en los tramos: los porcentajes de cada tramo salían más bajos."""
+    """Un año sin SMLV contaba en el total y no en los tramos: los porcentajes de cada tramo salían
+    más bajos.
+    """
     monkeypatch.setitem(dd.config._session, "geih", geih_root)
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
     at = AppTest.from_file(str(PAGINAS / "geih_explorar.py"), default_timeout=60).run()
@@ -300,15 +345,21 @@ def test_anio_sin_salario_minimo_no_cuenta_en_los_tramos(geih_root, tmp_path, mo
 
 
 def test_aviso_si_falta_un_modulo_nuevo(geih_root, tmp_path, monkeypatch):
-    """Datos bajados antes de que dane-data extrajera Migración: se dice cómo bajarla, en vez de una tabla vacía."""
+    """Datos bajados antes de que dane-data extrajera Migración: se dice cómo bajarla, en vez de
+    una tabla vacía.
+    """
     (geih_root / "datos_csv" / "2025" / "Enero 2025" / "Migración.CSV").unlink()
     monkeypatch.setitem(dd.config._session, "geih", geih_root)
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
     at = AppTest.from_file(str(PAGINAS / "geih_explorar.py"), default_timeout=60).run()
     assert not any("Migración" in i.value for i in at.info)
-    next(s for s in at.selectbox if s.label == "Filas").set_value("Lugar de nacimiento (desde 2022)").run()
+    next(s for s in at.selectbox if s.label == "Filas").set_value(
+        "Lugar de nacimiento (desde 2022)"
+    ).run()
     assert not at.exception
-    assert any(i.value.startswith("Los datos de 2025 no traen el módulo Migración") for i in at.info)
+    assert any(
+        i.value.startswith("Los datos de 2025 no traen el módulo Migración") for i in at.info
+    )
 
 
 def test_edad_100_es_100_o_mas(geih_root, tmp_path, monkeypatch):
@@ -324,8 +375,11 @@ def test_edad_100_es_100_o_mas(geih_root, tmp_path, monkeypatch):
 
 
 def test_no_pide_bajar_otros_ingresos_de_2020(geih_root, tmp_path, monkeypatch):
-    """De marzo a julio de 2020 el DANE no publicó Otros ingresos: la página, como load, no pide volver a bajarlo."""
+    """De marzo a julio de 2020 el DANE no publicó Otros ingresos: la página, como load, no pide
+    volver a bajarlo.
+    """
     import shutil
+
     abril = geih_root / "datos_csv" / "2020" / "Abril"
     shutil.copytree(geih_root / "datos_csv" / "2016" / "Enero", abril)
     for f in abril.glob("* - Otros ingresos.csv"):
@@ -334,7 +388,9 @@ def test_no_pide_bajar_otros_ingresos_de_2020(geih_root, tmp_path, monkeypatch):
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
     at = AppTest.from_file(str(PAGINAS / "geih_explorar.py"), default_timeout=60).run()
     at.multiselect(key="exp_anios").set_value([2020]).run()
-    next(s for s in at.selectbox if s.label == "¿Qué quiere calcular?").set_value("Promedio de…").run()
+    next(s for s in at.selectbox if s.label == "¿Qué quiere calcular?").set_value(
+        "Promedio de…"
+    ).run()
     next(s for s in at.selectbox if s.label == "Variable").set_value("Ingreso no laboral").run()
     assert not at.exception
     assert not any("Otros ingresos" in i.value for i in at.info)
@@ -345,7 +401,7 @@ def test_aviso_cuando_los_anios_mezclan_marcos(geih_root, tmp_path, monkeypatch)
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
 
     at = AppTest.from_file(str(PAGINAS / "geih_mercado.py"), default_timeout=60).run()
-    assert at.multiselect(key="geih_anios").value == [2021, 2025]       # censo 2005 y CNPV 2018
+    assert at.multiselect(key="geih_anios").value == [2021, 2025]  # censo 2005 y CNPV 2018
     aviso = [w.value for w in at.warning if "no son comparables" in w.value]
     assert aviso and "2021 usa" in aviso[0] and "2025 usa" in aviso[0]
 
@@ -366,15 +422,20 @@ def test_tablas_y_microdatos_sin_cargar_todos_los_anios(geih_root, tmp_path, mon
     assert any(o.startswith("P6040 ") for o in extra.options)  # las de CORE_RAW también se ofrecen
     extra.set_value(["P5000", "P6040"]).run()
     assert not at.exception
-    assert "columnas=['P5000']" in at.code[0].value             # P6040 ya se lee siempre
+    assert "columnas=['P5000']" in at.code[0].value  # P6040 ya se lee siempre
 
     next(b for b in at.button if b.label == "Exportar a CSV").click().run()
     assert not at.exception
-    exportado = pd.read_csv(next((geih_root / "exportaciones").glob("*.csv")), encoding="utf-8-sig")
-    assert len(exportado) == 2 and "P5000" in exportado.columns  # ocupados de enero 2021 y enero 2025
+    exportado = pd.read_csv(
+        next((geih_root / "exportaciones").glob("*.csv")), encoding="utf-8-sig"
+    )
+    # Ocupados de enero 2021 y enero 2025
+    assert len(exportado) == 2 and "P5000" in exportado.columns
 
     # Otra selección se exporta a otro archivo: no pisa la anterior
-    next(m for m in at.multiselect if m.label == "Columnas").set_value(["anio", "mes", "fex"]).run()
+    next(m for m in at.multiselect if m.label == "Columnas").set_value(
+        ["anio", "mes", "fex"]
+    ).run()
     next(b for b in at.button if b.label == "Exportar a CSV").click().run()
     assert not at.exception
     assert len(list((geih_root / "exportaciones").glob("*.csv"))) == 2
@@ -383,12 +444,16 @@ def test_tablas_y_microdatos_sin_cargar_todos_los_anios(geih_root, tmp_path, mon
     at.toggle(key="exp_excel").set_value(True).run()
     next(b for b in at.button if b.label == "Exportar a CSV").click().run()
     assert not at.exception
-    assert 'sep=\';\', decimal=\',\'' in at.code[-1].value
-    excel = [f for f in (geih_root / "exportaciones").glob("*.csv")
-             if f.read_text(encoding="utf-8-sig").startswith("anio;mes;fex")]
+    assert "sep=';', decimal=','" in at.code[-1].value
+    excel = [
+        f
+        for f in (geih_root / "exportaciones").glob("*.csv")
+        if f.read_text(encoding="utf-8-sig").startswith("anio;mes;fex")
+    ]
     assert len(excel) == 1 and len(list((geih_root / "exportaciones").glob("*.csv"))) == 3
 
-    # Los mismos años de los extremos con otros en medio: otro archivo (el nombre solo trae el primero y el último)
+    # Los mismos años de los extremos con otros en medio: otro archivo (el nombre solo trae el
+    # primero y el último)
     for anios in ([2016, 2025], [2016, 2021, 2025]):
         at.multiselect(key="exp_anios").set_value(anios).run()
         next(b for b in at.button if b.label == "Exportar a CSV").click().run()
@@ -398,9 +463,11 @@ def test_tablas_y_microdatos_sin_cargar_todos_los_anios(geih_root, tmp_path, mon
 
 def _solo_un_mes(load):
     """La app nunca debe pedir más de un mes de microdatos a la vez."""
+
     def envoltura(anios, meses=None, **kw):
         assert meses is not None and len([meses] if isinstance(meses, int) else meses) == 1
         return load(anios, meses=meses, **kw)
+
     return envoltura
 
 
@@ -409,66 +476,111 @@ def test_descargas_se_arman_al_hacer_clic(eam_root, monkeypatch):
     from dane_data.app import _ui
 
     monkeypatch.setitem(dd.config._session, "eam", eam_root)
-    monkeypatch.setattr(pd.DataFrame, "to_excel", lambda *a, **k: pytest.fail("Excel armado sin clic"))
+    monkeypatch.setattr(
+        pd.DataFrame, "to_excel", lambda *a, **k: pytest.fail("Excel armado sin clic")
+    )
     at = AppTest.from_file(str(PAGINAS / "eam_industria.py"), default_timeout=60).run()
     assert not at.exception
     monkeypatch.undo()
-    df = pd.DataFrame({"anio": [2023, 2024], "sector": pd.Categorical(["A", None]),
-                       "n": pd.array([1, None], dtype="Int64")})
+    df = pd.DataFrame(
+        {
+            "anio": [2023, 2024],
+            "sector": pd.Categorical(["A", None]),
+            "n": pd.array([1, None], dtype="Int64"),
+        }
+    )
     assert pd.read_excel(io.BytesIO(_ui._excel(df)))["sector"].tolist() == ["A", np.nan]
     stata = pd.read_stata(io.BytesIO(_ui._stata(df)))
     assert stata["sector"].tolist() == ["A", ""] and stata["n"].tolist()[0] == 1
 
-    # Lo que pasa después de la muestra de 50 filas con que se decide el botón tampoco falla al exportar
-    raro = pd.DataFrame({"mixta": ["a"] * 60 + [1.5], "vacia": [None] * 50 + ["b"] * 11,
-                         "larga": ["c"] * 60 + ["x" * 3000]})
-    _ui._stata(raro.head(50))                           # la muestra con «vacia» toda en None tampoco
+    # Lo que pasa después de la muestra de 50 filas con que se decide el botón tampoco falla al
+    # exportar
+    raro = pd.DataFrame(
+        {
+            "mixta": ["a"] * 60 + [1.5],
+            "vacia": [None] * 50 + ["b"] * 11,
+            "larga": ["c"] * 60 + ["x" * 3000],
+        }
+    )
+    _ui._stata(raro.head(50))  # la muestra con «vacia» toda en None tampoco
     stata = pd.read_stata(io.BytesIO(_ui._stata(raro)))
-    assert stata["mixta"].iloc[-1] == "1.5" and stata["vacia"].iloc[0] == "" and len(stata["larga"].iloc[-1]) == 3000
+    assert (
+        stata["mixta"].iloc[-1] == "1.5"
+        and stata["vacia"].iloc[0] == ""
+        and len(stata["larga"].iloc[-1]) == 3000
+    )
 
 
 def test_variacion_con_coma_decimal_y_cero_en_gris():
     from dane_data.app._ui import variacion
-    assert variacion(54.9, 55.8, 2025, pp=True) == {"delta": "-0,9 p.p. vs 2025", "delta_color": "normal"}
+
+    assert variacion(54.9, 55.8, 2025, pp=True) == {
+        "delta": "-0,9 p.p. vs 2025",
+        "delta_color": "normal",
+    }
     assert variacion(1_750_000, 1_424_000, 2025)["delta"] == "+22,9 % vs 2025"
-    cero = variacion(8.93, 8.96, 2025, pp=True, inversa=True)  # -0,03 redondea a cero: antes «-0.0» en verde
+    # -0,03 redondea a cero: antes «-0.0» en verde
+    cero = variacion(8.93, 8.96, 2025, pp=True, inversa=True)
     assert cero["delta"] == "0,0 p.p. vs 2025" and cero["delta_color"] == "off"
     assert variacion(float("nan"), 1, 2025) == {} == variacion(1, 0, 2025)
 
 
 def test_el_color_sigue_al_grupo(monkeypatch):
-    """Quitar un grupo no cambia el color de los demás (la regla de la skill dataviz), con pocos y con muchos grupos."""
+    """Quitar un grupo no cambia el color de los demás (la regla de la skill dataviz), con pocos y
+    con muchos grupos.
+    """
     from dane_data.app import _ui
+
     monkeypatch.setattr(_ui.st, "session_state", {})
     color = lambda fig: {t.name: t.line.color for t in fig.data}  # noqa: E731
-    d = pd.DataFrame({"anio": [2025, 2026] * 3, "v": range(6), "g": ["Antioquia"] * 2 + ["Atlántico"] * 2 + ["Bogotá"] * 2})
+    d = pd.DataFrame(
+        {
+            "anio": [2025, 2026] * 3,
+            "v": range(6),
+            "g": ["Antioquia"] * 2 + ["Atlántico"] * 2 + ["Bogotá"] * 2,
+        }
+    )
     categorias = lambda nombres: pd.Series(pd.Categorical([], categories=nombres))  # noqa: E731
     pocos = categorias(["Antioquia", "Atlántico", "Bogotá"])
-    assert color(_ui.linea(d[d.g != "Antioquia"], "anio", "v", color="g", todos=pocos))["Atlántico"] == _ui.PALETA[1]
-    muchos = categorias(["Antioquia", "Atlántico", "Bogotá"] + [f"Dpto {i}" for i in range(30)])  # los recuerda la sesión
+    assert (
+        color(_ui.linea(d[d.g != "Antioquia"], "anio", "v", color="g", todos=pocos))["Atlántico"]
+        == _ui.PALETA[1]
+    )
+    # Los recuerda la sesión
+    muchos = categorias(["Antioquia", "Atlántico", "Bogotá"] + [f"Dpto {i}" for i in range(30)])
     antes = color(_ui.linea(d, "anio", "v", color="g", todos=muchos))
     despues = color(_ui.linea(d[d.g != "Antioquia"], "anio", "v", color="g", todos=muchos))
     assert despues == {k: v for k, v in antes.items() if k != "Antioquia"}
-    nuevo = color(_ui.linea(d.replace({"Antioquia": "Dpto 7"}), "anio", "v", color="g", todos=muchos))
-    assert nuevo["Dpto 7"] == antes["Antioquia"]                   # el color que quedó libre
+    nuevo = color(
+        _ui.linea(d.replace({"Antioquia": "Dpto 7"}), "anio", "v", color="g", todos=muchos)
+    )
+    assert nuevo["Dpto 7"] == antes["Antioquia"]  # el color que quedó libre
 
 
 def test_grupos_ordenados_en_un_solo_tono():
-    """Edades y años van de claro a oscuro; «Sin información» en gris; con más de seis, la paleta de siempre."""
+    """Edades y años van de claro a oscuro; «Sin información» en gris; con más de seis, la paleta
+    de siempre.
+    """
     from dane_data.app import _ui
+
     niveles = ["Ninguno", "Primaria", "Secundaria", "Superior", "Sin información"]
     s = pd.Series(pd.Categorical(niveles, categories=niveles, ordered=True))
     df = pd.DataFrame({"x": [1] * 5, "v": range(5), "nivel": s})
     tonos = {t.name: t.marker.color for t in _ui.barras(df, "x", "v", color="nivel").data}
     assert [tonos[n] for n in niveles] == _ui._rampa(4) + [_ui.GRIS]
-    anios = pd.DataFrame({"x": ["a", "a"], "v": [1, 2], "anio": [2025, 2026]})  # números: también tienen orden
-    assert [t.marker.color for t in _ui.barras(anios, "x", "v", color="anio").data] == [_ui.RAMPA[0], _ui.RAMPA[-1]]
+    # Números: también tienen orden
+    anios = pd.DataFrame({"x": ["a", "a"], "v": [1, 2], "anio": [2025, 2026]})
+    assert [t.marker.color for t in _ui.barras(anios, "x", "v", color="anio").data] == [
+        _ui.RAMPA[0],
+        _ui.RAMPA[-1],
+    ]
     ocho = pd.DataFrame({"x": [1] * 8, "v": range(8), "anio": range(2018, 2026)})
     assert [t.marker.color for t in _ui.barras(ocho, "x", "v", color="anio").data] == _ui.PALETA
 
 
 def test_lineas_con_el_rango_de_los_datos_y_barras_desde_cero():
     from dane_data.app import _ui
+
     df = pd.DataFrame({"t": [1, 2, 3], "v": [63.9, 64.5, 64.2]})
     assert _ui.linea(df, "t", "v", pct=True).layout.yaxis.rangemode == "normal"
     assert _ui.barras(df, "t", "v", pct=True).layout.yaxis.rangemode == "tozero"
@@ -476,6 +588,7 @@ def test_lineas_con_el_rango_de_los_datos_y_barras_desde_cero():
 
 def test_marcadores_solo_con_pocos_puntos():
     from dane_data.app import _ui
+
     serie = lambda n: pd.DataFrame({"t": range(n), "v": range(n)})  # noqa: E731
     assert _ui.linea(serie(_ui.MAX_PUNTOS), "t", "v").data[0].mode == "lines+markers"
     assert _ui.linea(serie(_ui.MAX_PUNTOS + 1), "t", "v").data[0].mode == "lines"
@@ -483,10 +596,16 @@ def test_marcadores_solo_con_pocos_puntos():
 
 def test_recuadro_de_las_barras_sin_nombres_internos():
     from dane_data.app import _ui
+
     df = pd.DataFrame({"sexo": ["Hombre", "Mujer"], "porcentaje": [58.4567, 41.5433]})
     for horizontal in (False, True):
-        plantilla = _ui.barras(df, x="sexo", y="porcentaje", pct=True, horizontal=horizontal).data[0].hovertemplate
-        assert "=" not in plantilla and ":,.1f} %" in plantilla      # antes «sexo=%{x}<br>porcentaje=%{y}»
+        plantilla = (
+            _ui.barras(df, x="sexo", y="porcentaje", pct=True, horizontal=horizontal)
+            .data[0]
+            .hovertemplate
+        )
+        # Antes «sexo=%{x}<br>porcentaje=%{y}»
+        assert "=" not in plantilla and ":,.1f} %" in plantilla
 
 
 def test_tabla_pivote_conserva_el_orden_de_las_categorias(geih_root, tmp_path, monkeypatch):
@@ -494,7 +613,7 @@ def test_tabla_pivote_conserva_el_orden_de_las_categorias(geih_root, tmp_path, m
     monkeypatch.setitem(dd.config._session, "geih", geih_root)
     monkeypatch.setattr(dd.config, "CACHE_DIR", tmp_path / "cache")
     at = AppTest.from_file(str(PAGINAS / "geih_explorar.py"), default_timeout=60).run()
-    at.radio[0].set_value(at.radio[0].options[0]).run()            # toda la población
+    at.radio[0].set_value(at.radio[0].options[0]).run()  # toda la población
     next(s for s in at.selectbox if s.label == "Filas").set_value("Nivel educativo").run()
     next(s for s in at.selectbox if s.label == "Columnas / comparar por").set_value("Sexo").run()
     assert not at.exception
@@ -507,12 +626,16 @@ def test_eam_por_defecto_los_ultimos_10_anios(tmp_path, monkeypatch):
     for anio in range(2013, 2025):
         archivo = tmp_path / "datos" / str(anio) / f"EAM_{anio}.csv"
         archivo.parent.mkdir(parents=True)
-        archivo.write_text("nordemp;nordest;dpto;ciiu4;PRODBR2;CONSIN2;VALAGRI;PERTOTAL;PPERYTEM;SALPEYTE;PRESPYTE\n"
-                           f"1;10;5;1011;200;120;{anio};12;10;20;4\n", encoding="utf-8")
+        archivo.write_text(
+            "nordemp;nordest;dpto;ciiu4;PRODBR2;CONSIN2;VALAGRI;PERTOTAL;PPERYTEM;SALPEYTE;"
+            "PRESPYTE\n"
+            f"1;10;5;1011;200;120;{anio};12;10;20;4\n",
+            encoding="utf-8",
+        )
     monkeypatch.setitem(dd.config._session, "eam", tmp_path)
     at = AppTest.from_file(str(PAGINAS / "eam_industria.py"), default_timeout=60).run()
     assert not at.exception
-    assert at.select_slider[0].value == (2015, 2024)              # antes (2014, 2024): 11 años
+    assert at.select_slider[0].value == (2015, 2024)  # antes (2014, 2024): 11 años
 
 
 # --------------------------------------------------------------------------- #
@@ -546,8 +669,13 @@ def test_novedades_desde_la_version_instalada():
     assert "0.3.1" not in texto and "todavía no salió" not in texto
     docs = act.URL_DOCS
     assert "`dd.geih.serie_indicadores()`" in texto
-    assert f"[variables]({docs}guia/variables.html)" in texto and f"[la guía]({docs}guia/datos.html)" in texto
-    assert f"({docs}guia/eam.html#microagregación)" in texto and "(https://www.dane.gov.co)" in texto
+    assert (
+        f"[variables]({docs}guia/variables.html)" in texto
+        and f"[la guía]({docs}guia/datos.html)" in texto
+    )
+    assert (
+        f"({docs}guia/eam.html#microagregación)" in texto and "(https://www.dane.gov.co)" in texto
+    )
     assert act.extraer_novedades(NOVEDADES, "0.5.0", "0.5.0") == ""
     assert act._numeros("0.10.0") > act._numeros("0.9.1")
 
@@ -573,24 +701,36 @@ def test_revisar_consulta_una_vez_al_dia(tmp_path, monkeypatch):
 
     def get(url, timeout):
         pedidos.append(url)
-        return _Respuesta({"info": {"version": "0.5.0"}}) if "pypi" in url else _Respuesta(texto=NOVEDADES)
+        return (
+            _Respuesta({"info": {"version": "0.5.0"}})
+            if "pypi" in url
+            else _Respuesta(texto=NOVEDADES)
+        )
 
     monkeypatch.setattr(act.requests, "get", get)
     version, novedades = act.revisar()
     assert version == "0.5.0" and "#### 0.4.0" in novedades
     assert pedidos == [act.URL_PYPI, act.URL_NOVEDADES.format(version="0.5.0")]
-    assert act.revisar()[0] == "0.5.0" and len(pedidos) == 2       # el mismo día, de la caché
+    assert act.revisar()[0] == "0.5.0" and len(pedidos) == 2  # el mismo día, de la caché
 
-    monkeypatch.setattr(dd, "__version__", "0.5.0")                  # ya actualizada
+    monkeypatch.setattr(dd, "__version__", "0.5.0")  # ya actualizada
     assert act.revisar() is None
 
     datos = json.loads((tmp_path / "version.json").read_text(encoding="utf-8"))
-    (tmp_path / "version.json").write_text(json.dumps({**datos, "fecha": datos["fecha"] - 2 * 86400}))
-    monkeypatch.setattr(act.requests, "get", lambda url, timeout: (_ for _ in ()).throw(act.requests.ConnectionError()))
-    assert act.revisar() is None                                    # sin internet: nada, y sin error
+    (tmp_path / "version.json").write_text(
+        json.dumps({**datos, "fecha": datos["fecha"] - 2 * 86400})
+    )
+    monkeypatch.setattr(
+        act.requests,
+        "get",
+        lambda url, timeout: (_ for _ in ()).throw(act.requests.ConnectionError()),
+    )
+    assert act.revisar() is None  # sin internet: nada, y sin error
 
     monkeypatch.setenv(act.DESACTIVAR, "1")
-    monkeypatch.setattr(act.requests, "get", lambda *a, **k: pytest.fail("consultó internet desactivado"))
+    monkeypatch.setattr(
+        act.requests, "get", lambda *a, **k: pytest.fail("consultó internet desactivado")
+    )
     assert act.revisar() is None
 
 
@@ -600,7 +740,7 @@ def test_carpeta_del_zip_para_estudiantes(tmp_path, monkeypatch):
     monkeypatch.setattr(act.sys, "prefix", str(tmp_path / ".venv"))
     assert act.carpeta_zip() is None
     (tmp_path / "pyproject.toml").write_text('[project]\nname = "dane-data"\n')
-    assert act.carpeta_zip() is None                                # el repositorio, no el zip
+    assert act.carpeta_zip() is None  # el repositorio, no el zip
     (tmp_path / "pyproject.toml").write_text('[project]\nname = "dane-data-estudiantes"\n')
     assert act.carpeta_zip() == tmp_path
 
@@ -617,7 +757,9 @@ def test_actualizar_zip_deja_el_lock_si_falla(tmp_path, monkeypatch):
         llamadas.append((comando, env))
         if comando[1] == "lock":
             (tmp_path / "uv.lock").write_text("nuevo")
-        return subprocess.CompletedProcess(comando, 1 if fallar and comando[1] == "sync" else 0, "", "sin red")
+        return subprocess.CompletedProcess(
+            comando, 1 if fallar and comando[1] == "sync" else 0, "", "sin red"
+        )
 
     monkeypatch.setattr(act.subprocess, "run", run)
     fallar = True
@@ -626,24 +768,30 @@ def test_actualizar_zip_deja_el_lock_si_falla(tmp_path, monkeypatch):
     lock, sync = llamadas
     assert lock[0] == ["uv-falso", "lock", "--upgrade-package", "dane-data==0.5.0"]
     assert sync[0][1:] == ["sync", "--frozen", "--extra", "app"]
-    assert "VIRTUAL_ENV" not in sync[1] and sync[1]["UV_PROJECT_ENVIRONMENT"] != str(tmp_path / ".venv")
+    assert "VIRTUAL_ENV" not in sync[1] and sync[1]["UV_PROJECT_ENVIRONMENT"] != str(
+        tmp_path / ".venv"
+    )
 
     fallar = False
     assert act.actualizar_zip(tmp_path, "0.5.0") is None
     assert (tmp_path / "uv.lock").read_text() == "nuevo"
-    assert not list(tmp_path.glob(".venv-actualizacion-*"))         # el entorno de prueba se borra
+    assert not list(tmp_path.glob(".venv-actualizacion-*"))  # el entorno de prueba se borra
 
 
 def test_inicio_avisa_la_version_nueva(tmp_path, monkeypatch):
     from dane_data.app import _actualizacion as act
 
-    monkeypatch.setattr(dd.config, "_session", {"geih": tmp_path / "g", "geih_empalme": tmp_path / "e",
-                                                "eam": tmp_path / "eam"})
+    monkeypatch.setattr(
+        dd.config,
+        "_session",
+        {"geih": tmp_path / "g", "geih_empalme": tmp_path / "e", "eam": tmp_path / "eam"},
+    )
     monkeypatch.setattr(act, "revisar", lambda: ("9.9.9", "#### 9.9.9\n\n* Algo nuevo."))
     at = AppTest.from_file(str(PAGINAS / "inicio.py"), default_timeout=60).run()
     assert not at.exception
     assert any("9.9.9" in m.value for m in at.markdown)
-    assert any("pip install --upgrade" in c.value for c in at.code)   # instalado con pip: el comando
+    # Instalado con pip: el comando
+    assert any("pip install --upgrade" in c.value for c in at.code)
 
     pedidas = []
     monkeypatch.setattr(act, "carpeta_zip", lambda: tmp_path)
@@ -654,10 +802,9 @@ def test_inicio_avisa_la_version_nueva(tmp_path, monkeypatch):
     assert pedidas == ["9.9.9"] and any("vuelva a abrir" in s.value for s in at.success)
 
 
-
-# ---------------------------------------------------------------------------------------------------- #
+# --------------------------------------------------------------------------- #
 # Estadísticas Vitales
-# ---------------------------------------------------------------------------------------------------- #
+# --------------------------------------------------------------------------- #
 @pytest.fixture
 def app_eevv(eevv_root, tmp_path, monkeypatch):
     monkeypatch.setitem(dd.config._session, "eevv", eevv_root)
@@ -689,9 +836,13 @@ def test_eevv_indicadores_por_certificado(app_eevv):
     _seleccionar(at, "Certificado", "Nacimientos")
     assert at.metric[0].label == "Nacimientos" and at.metric[0].value == "3"
     variables = next(s for s in at.selectbox if s.label == "Variable").options
-    assert "Bajo peso al nacer, pretérmino (%)" in variables and "Bajo peso al nacer, a término (%)" in variables
+    assert (
+        "Bajo peso al nacer, pretérmino (%)" in variables
+        and "Bajo peso al nacer, a término (%)" in variables
+    )
     _seleccionar(at, "Variable", "Bajo peso al nacer, a término (%)")
-    assert any("prematuros" in c.value and "a término" in c.value for c in at.caption)  # explica por qué se separa
+    # Explica por qué se separa
+    assert any("prematuros" in c.value and "a término" in c.value for c in at.caption)
     _seleccionar(at, "Variable", "Prematuros (%)")
     _seleccionar(at, "Certificado", "Defunciones fetales")
     assert at.metric[0].label == "Defunciones fetales" and at.metric[1].label == "Mortinatos"
@@ -700,13 +851,16 @@ def test_eevv_indicadores_por_certificado(app_eevv):
 
 
 def test_eevv_otra_carpeta_sin_reiniciar(app_eevv, eevv_root, tmp_path, monkeypatch):
-    """Si la carpeta cambia por fuera de la app (dane-data config, un notebook), no quedan los datos de la anterior."""
+    """Si la carpeta cambia por fuera de la app (dane-data config, un notebook), no quedan los
+    datos de la anterior.
+    """
     at = app_eevv.run()
     assert at.metric[0].value == "3"
     otra = tmp_path / "otra"
     shutil.copytree(eevv_root, otra)
     archivo = otra / "datos" / "defunciones" / "2025" / "BD-EEVV-Defuncionesnofetales-2025.csv"
-    archivo.write_bytes(b"".join(archivo.read_bytes().splitlines(keepends=True)[:2]))  # encabezado y una defunción
+    # Encabezado y una defunción
+    archivo.write_bytes(b"".join(archivo.read_bytes().splitlines(keepends=True)[:2]))
     monkeypatch.setitem(dd.config._session, "eevv", otra)
     at.run()
     assert not at.exception
@@ -738,7 +892,9 @@ def test_eevv_tasas(app_eevv):
     _seleccionar(at, "Tasa", "Mortalidad infantil (por 1.000 nacidos vivos)")
     _seleccionar(at, "Desagregar por", "Departamento de residencia")
     assert any("dd.eevv.tasas" in c.value and "por='departamento'" in c.value for c in at.code)
-    # Por sexo solo la mortalidad general y la infantil; la materna se dividiría por las nacidas mujeres
+
+    # Por sexo solo la mortalidad general y la infantil; la materna se dividiría por las nacidas
+    # mujeres
     def opciones_por():
         return next(s for s in at.selectbox if s.label == "Desagregar por").options
 
@@ -769,7 +925,9 @@ def test_descargar_eevv(tmp_path, monkeypatch):
     for clave in ("geih", "geih_empalme", "eam", "eevv"):
         monkeypatch.setitem(dd.config._session, clave, tmp_path / clave)
     pedidos = []
-    monkeypatch.setattr(dd.eevv, "download", lambda anios, **kw: pedidos.append((list(anios), kw["tipos"])) or [])
+    monkeypatch.setattr(
+        dd.eevv, "download", lambda anios, **kw: pedidos.append((list(anios), kw["tipos"])) or []
+    )
     at = AppTest.from_file(str(PAGINAS / "descargar.py")).run()
     at.radio[0].set_value("Estadísticas Vitales (nacimientos y defunciones)").run()
     assert not at.exception
@@ -778,8 +936,12 @@ def test_descargar_eevv(tmp_path, monkeypatch):
     assert not at.exception
     assert pedidos == [([2025], ["nacimientos"])]
     next(b for b in at.button if b.label.startswith("Seleccionar toda")).click().run()
-    assert next(m for m in at.multiselect if m.label == "Años").value == dd.eevv.ANIOS_DISPONIBLES["nacimientos"]
-    # Sin certificados no se puede descargar, y sin defunciones no sobran los años anteriores a 1998
+    assert (
+        next(m for m in at.multiselect if m.label == "Años").value
+        == dd.eevv.ANIOS_DISPONIBLES["nacimientos"]
+    )
+    # Sin certificados no se puede descargar, y sin defunciones no sobran los años anteriores a
+    # 1998
     next(m for m in at.multiselect if m.label == "Certificados").set_value([]).run()
     assert not at.exception
     assert next(b for b in at.button if b.label.endswith("Descargar")).disabled
@@ -788,20 +950,32 @@ def test_descargar_eevv(tmp_path, monkeypatch):
 def test_inicio_con_eevv(eevv_root, tmp_path, monkeypatch):
     archivo = tmp_path / "config.json"
     monkeypatch.setattr(dd.config, "CONFIG_FILE", archivo)
-    monkeypatch.setattr(dd.config, "_session", {"geih": tmp_path / "g", "geih_empalme": tmp_path / "e", "eam": tmp_path / "eam",
-                                                "eevv": eevv_root})
+    monkeypatch.setattr(
+        dd.config,
+        "_session",
+        {
+            "geih": tmp_path / "g",
+            "geih_empalme": tmp_path / "e",
+            "eam": tmp_path / "eam",
+            "eevv": eevv_root,
+        },
+    )
     at = AppTest.from_file(str(PAGINAS / "inicio.py"), default_timeout=60).run()
     assert not at.exception
     metrica = next(m for m in at.metric if m.label == "Estadísticas Vitales")
     assert metrica.value == "5 años"
-    next(t for t in at.text_input if t.label == "Estadísticas Vitales").set_value(str(tmp_path / "otra"))
+    next(t for t in at.text_input if t.label == "Estadísticas Vitales").set_value(
+        str(tmp_path / "otra")
+    )
     next(b for b in at.button if b.label == "Guardar").click().run()
     assert not at.exception
     assert json.loads(archivo.read_text(encoding="utf-8")) == {"eevv": str(tmp_path / "otra")}
 
 
-@pytest.mark.parametrize("encuesta", ["GEIH", "EAM", "Defunciones", "Nacimientos", "Defunciones fetales", "EMICRON",
-                                      "ECV"])
+@pytest.mark.parametrize(
+    "encuesta",
+    ["GEIH", "EAM", "Defunciones", "Nacimientos", "Defunciones fetales", "EMICRON", "ECV"],
+)
 def test_diccionario_eevv(encuesta):
     at = AppTest.from_file(str(PAGINAS / "diccionario.py"), default_timeout=60).run()
     at.radio[0].set_value(encuesta).run()
@@ -822,17 +996,23 @@ def test_descargar_emicron(tmp_path, monkeypatch):
     for clave in ("geih", "geih_empalme", "eam", "eevv", "emicron"):
         monkeypatch.setitem(dd.config._session, clave, tmp_path / clave)
     pedidos = []
-    monkeypatch.setattr(dd.emicron, "download", lambda anios, **kw: pedidos.append((list(anios), kw["modulos"])) or [])
+    monkeypatch.setattr(
+        dd.emicron,
+        "download",
+        lambda anios, **kw: pedidos.append((list(anios), kw["modulos"])) or [],
+    )
     monkeypatch.setattr(dd.eam, "download", lambda *a, **kw: pytest.fail("se llamó a la EAM"))
     at = AppTest.from_file(str(PAGINAS / "descargar.py")).run()
     at.radio[0].set_value("EMICRON (micronegocios, anual)").run()
     assert not at.exception
-    assert next(m for m in at.multiselect if m.label == "Años").value == [2024]  # el último año nacional
+    # El último año nacional
+    assert next(m for m in at.multiselect if m.label == "Años").value == [2024]
     next(b for b in at.button if b.label.endswith("Descargar")).click().run()
     assert not at.exception
     assert pedidos == [([2024], None)]  # todos los módulos
     modulos = next(m for m in at.multiselect if m.label == "Módulos")
-    assert "fex_dpto" not in modulos.options and "identificacion" not in modulos.options  # se bajan siempre
+    # Se bajan siempre
+    assert "fex_dpto" not in modulos.options and "identificacion" not in modulos.options
     modulos.set_value(["ventas", "costos"]).run()
     next(b for b in at.button if b.label.endswith("Descargar")).click().run()
     assert pedidos[-1] == ([2024], ["ventas", "costos"])
@@ -842,8 +1022,17 @@ def test_descargar_emicron(tmp_path, monkeypatch):
 def test_inicio_con_emicron(emicron_root, tmp_path, monkeypatch):
     archivo = tmp_path / "config.json"
     monkeypatch.setattr(dd.config, "CONFIG_FILE", archivo)
-    monkeypatch.setattr(dd.config, "_session", {"geih": tmp_path / "g", "geih_empalme": tmp_path / "e", "eam": tmp_path / "eam",
-                                                "eevv": tmp_path / "v", "emicron": emicron_root})
+    monkeypatch.setattr(
+        dd.config,
+        "_session",
+        {
+            "geih": tmp_path / "g",
+            "geih_empalme": tmp_path / "e",
+            "eam": tmp_path / "eam",
+            "eevv": tmp_path / "v",
+            "emicron": emicron_root,
+        },
+    )
     at = AppTest.from_file(str(PAGINAS / "inicio.py"), default_timeout=60).run()
     assert not at.exception
     assert next(m for m in at.metric if m.label == "EMICRON").value == "4 años"
@@ -858,12 +1047,14 @@ def test_citar_incluye_la_emicron():
     assert not at.exception
     assert "EMICRON" in at.code[0].value  # el título del software
     assert "Encuesta de Micronegocios (EMICRON) [microdatos]" in at.code[2].value
-    assert "Estadísticas Vitales, EMICRON, ECV y pobreza monetaria" in Path(dd.__file__).parents[2].joinpath("CITATION.cff").read_text(encoding="utf-8")
+    assert "Estadísticas Vitales, EMICRON, ECV y pobreza monetaria" in Path(dd.__file__).parents[
+        2
+    ].joinpath("CITATION.cff").read_text(encoding="utf-8")
 
 
-# ---------------------------------------------------------------------------------------------------- #
+# --------------------------------------------------------------------------- #
 # EMICRON: página Micronegocios
-# ---------------------------------------------------------------------------------------------------- #
+# --------------------------------------------------------------------------- #
 @pytest.fixture
 def app_emicron(emicron_root, monkeypatch):
     monkeypatch.setitem(dd.config._session, "emicron", emicron_root)
@@ -873,33 +1064,47 @@ def app_emicron(emicron_root, monkeypatch):
 def _indicadores_emicron(root, anios, ciudades=False):
     import warnings
     from dane_data.app._ui import fmt_num, fmt_pct
+
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         e = dd.emicron.load(anios, raiz=root)
         e = e[e["ciudad"].notna()] if ciudades else e
         r = dd.emicron.indicadores(e).iloc[-1]
-    return fmt_num(r["micronegocios"]), fmt_num(r["valor_agregado"] / 1e9, 1), fmt_pct(r["pct_rut"])
+    return (
+        fmt_num(r["micronegocios"]),
+        fmt_num(r["valor_agregado"] / 1e9, 1),
+        fmt_pct(r["pct_rut"]),
+    )
 
 
 def test_emicron_pagina_nacional(app_emicron, emicron_root):
     at = app_emicron.run()
     assert not at.exception
-    assert next(m for m in at.multiselect if m.label == "Años").value == [2019, 2021, 2024]  # sin 2025
+    # Sin 2025
+    assert next(m for m in at.multiselect if m.label == "Años").value == [2019, 2021, 2024]
     metricas = {m.label: m.value for m in at.metric}
     micronegocios, va, rut = _indicadores_emicron(emicron_root, [2019, 2021, 2024])
     assert metricas["Micronegocios"] == micronegocios
     assert metricas["Valor agregado (billones de $)"] == va  # de miles de pesos a billones
     assert metricas["Con RUT"] == rut
     assert next(m for m in at.metric if m.label == "Micronegocios").delta.endswith("% vs 2021")
-    assert not next(m for m in at.metric if m.label == "Con RUT").delta  # 2021 no trae el RUT: sin variación
+    assert not next(
+        m for m in at.metric if m.label == "Con RUT"
+    ).delta  # 2021 no trae el RUT: sin variación
     # Los avisos de la carga se ven en la página, también después de la caché
-    assert any("2021: sin el módulo" in w.value or "2019" in w.value for w in [*at.main.warning, *at.main.info])
+    assert any(
+        "2021: sin el módulo" in w.value or "2019" in w.value
+        for w in [*at.main.warning, *at.main.info]
+    )
     at.radio[1].set_value("Un año").run()
     assert not at.exception
     next(s for s in at.selectbox if s.label == "Variable").set_value("Ventas o ingresos").run()
-    next(s for s in at.selectbox if s.label == "Desagregar por").set_value("Sexo del propietario").run()
+    next(s for s in at.selectbox if s.label == "Desagregar por").set_value(
+        "Sexo del propietario"
+    ).run()
     assert not at.exception
-    assert any("no publica este cruce" in c.value for c in at.caption)  # ventas por sexo: el DANE no lo publica
+    # Ventas por sexo: el DANE no lo publica
+    assert any("no publica este cruce" in c.value for c in at.caption)
 
 
 def test_emicron_pagina_24_ciudades(app_emicron, emicron_root):
@@ -907,9 +1112,12 @@ def test_emicron_pagina_24_ciudades(app_emicron, emicron_root):
     at.radio[0].set_value("24 ciudades (2019–2025)").run()
     assert not at.exception
     assert next(m for m in at.multiselect if m.label == "Años").value == [2019, 2021, 2024, 2025]
-    assert next(m for m in at.metric if m.label == "Micronegocios").value == _indicadores_emicron(
-        emicron_root, [2019, 2021, 2024, 2025], ciudades=True)[0]
-    assert not any("24 ciudades principales" in w.value for w in at.main.warning)  # ya se eligió esa cobertura
+    assert (
+        next(m for m in at.metric if m.label == "Micronegocios").value
+        == _indicadores_emicron(emicron_root, [2019, 2021, 2024, 2025], ciudades=True)[0]
+    )
+    # Ya se eligió esa cobertura
+    assert not any("24 ciudades principales" in w.value for w in at.main.warning)
     assert 'emi = emi[emi["ciudad"].notna()]' in at.code[0].value
     assert "Ciudad" in next(s for s in at.selectbox if s.label == "Desagregar por").options
 
@@ -922,9 +1130,9 @@ def test_emicron_pagina_sin_datos(tmp_path, monkeypatch):
     assert any("EMICRON" in w.value for w in at.main.warning)
 
 
-# ---------------------------------------------------------------------------------------------------- #
+# --------------------------------------------------------------------------- #
 # ECV
-# ---------------------------------------------------------------------------------------------------- #
+# --------------------------------------------------------------------------- #
 @pytest.fixture
 def app_ecv(ecv_completo, tmp_path, monkeypatch):
     monkeypatch.setitem(dd.config._session, "ecv", ecv_completo)
@@ -943,7 +1151,12 @@ def test_ecv_sin_datos(tmp_path, monkeypatch):
 def test_ecv_indicadores(app_ecv):
     at = app_ecv.run()
     assert not at.exception
-    assert [m.label for m in at.metric] == ["Hogares", "Personas por hogar", "Hogares con internet", "Afiliados a salud"]
+    assert [m.label for m in at.metric] == [
+        "Hogares",
+        "Personas por hogar",
+        "Hogares con internet",
+        "Afiliados a salud",
+    ]
     assert at.metric[0].value == "150" and at.metric[2].value == "66,7 %"
     _seleccionar(at, "Variable", "Personas afiliadas a salud (%)")
     _seleccionar(at, "Desagregar por", "Departamento")
@@ -975,12 +1188,16 @@ def test_descargar_ecv(tmp_path, monkeypatch):
     for clave in ("geih", "geih_empalme", "eam", "eevv", "ecv"):
         monkeypatch.setitem(dd.config._session, clave, tmp_path / clave)
     pedidos = []
-    monkeypatch.setattr(dd.ecv, "download", lambda anios, **kw: pedidos.append((list(anios), kw["modulos"])) or [])
+    monkeypatch.setattr(
+        dd.ecv, "download", lambda anios, **kw: pedidos.append((list(anios), kw["modulos"])) or []
+    )
     at = AppTest.from_file(str(PAGINAS / "descargar.py")).run()
     at.radio[0].set_value("ECV (calidad de vida y pobreza multidimensional)").run()
     assert not at.exception
     assert any("1,4 GB" in i.value for i in at.info)  # 2025, con los once capítulos
-    next(m for m in at.multiselect if m.label == "Capítulos").set_value(["caracteristicas", "salud"]).run()
+    next(m for m in at.multiselect if m.label == "Capítulos").set_value(
+        ["caracteristicas", "salud"]
+    ).run()
     next(b for b in at.button if b.label.endswith("Descargar")).click().run()
     assert not at.exception
     assert pedidos == [([2025], ["caracteristicas", "salud"])]
@@ -992,8 +1209,17 @@ def test_descargar_ecv(tmp_path, monkeypatch):
 def test_inicio_con_ecv(ecv_root, tmp_path, monkeypatch):
     archivo = tmp_path / "config.json"
     monkeypatch.setattr(dd.config, "CONFIG_FILE", archivo)
-    monkeypatch.setattr(dd.config, "_session", {"geih": tmp_path / "g", "geih_empalme": tmp_path / "e", "eam": tmp_path / "eam",
-                                                "eevv": tmp_path / "v", "ecv": ecv_root})
+    monkeypatch.setattr(
+        dd.config,
+        "_session",
+        {
+            "geih": tmp_path / "g",
+            "geih_empalme": tmp_path / "e",
+            "eam": tmp_path / "eam",
+            "eevv": tmp_path / "v",
+            "ecv": ecv_root,
+        },
+    )
     at = AppTest.from_file(str(PAGINAS / "inicio.py"), default_timeout=60).run()
     assert not at.exception
     assert next(m for m in at.metric if m.label == "ECV").value == "3 años"
@@ -1003,9 +1229,9 @@ def test_inicio_con_ecv(ecv_root, tmp_path, monkeypatch):
     assert json.loads(archivo.read_text(encoding="utf-8")) == {"ecv": str(tmp_path / "otra")}
 
 
-# ---------------------------------------------------------------------------------------------------- #
+# --------------------------------------------------------------------------- #
 # Pobreza monetaria
-# ---------------------------------------------------------------------------------------------------- #
+# --------------------------------------------------------------------------- #
 @pytest.fixture
 def app_pobreza(pobreza_root, tmp_path, monkeypatch):
     monkeypatch.setitem(dd.config._session, "pobreza", pobreza_root)
@@ -1030,7 +1256,8 @@ def test_pobreza_indicadores_con_y_sin_empalme(app_pobreza):
     assert not at.main.warning  # la serie empalmada se puede comparar: sin avisos
     at.toggle(key="pobreza_empalme").set_value(False).run()
     assert not at.exception
-    assert any("MESEP" in w.value for w in at.main.warning)  # el aviso de la librería se ve en la página
+    # El aviso de la librería se ve en la página
+    assert any("MESEP" in w.value for w in at.main.warning)
     _seleccionar(at, "Desagregar por", "Gran dominio")
     _seleccionar(at, "Indicador", "Coeficiente de Gini")
     assert any("por='grupo_dominio'" in c.value for c in at.code)
@@ -1039,16 +1266,21 @@ def test_pobreza_indicadores_con_y_sin_empalme(app_pobreza):
 def test_pobreza_por_departamento(app_pobreza):
     at = app_pobreza.run()
     _seleccionar(at, "Desagregar por", "Departamento")
-    # Con empalme, antes de 2021 no hay serie departamental: se avisa y se muestran solo 2021 en adelante, sin error
+    # Con empalme, antes de 2021 no hay serie departamental: se avisa y se muestran solo 2021 en
+    # adelante, sin error
     assert any("desde 2021" in w.value for w in at.main.warning)
-    assert any("departamental=True" in c.value and "[2021, 2022, 2023, 2025]" in c.value for c in at.code)
+    assert any(
+        "departamental=True" in c.value and "[2021, 2022, 2023, 2025]" in c.value for c in at.code
+    )
     at.toggle(key="pobreza_empalme").set_value(False).run()
     assert not at.exception
     assert any("departamental=True" in c.value and "2012" in c.value for c in at.code)
 
 
 def test_pobreza_falta_el_factor_departamental(app_pobreza, pobreza_root):
-    """Sin el archivo departamental de 2021, la combinación da un error en la página, no una excepción."""
+    """Sin el archivo departamental de 2021, la combinación da un error en la página, no una
+    excepción.
+    """
     (pobreza_root / "datos" / "empalme" / "hogares_empalmado_dpto_2021.csv").unlink()
     at = app_pobreza.run()
     _seleccionar(at, "Desagregar por", "Departamento")
@@ -1060,11 +1292,16 @@ def test_descargar_pobreza(tmp_path, monkeypatch):
         monkeypatch.setitem(dd.config._session, clave, tmp_path / clave)
     llamadas = []
     monkeypatch.setattr(dd.pobreza, "download", lambda *a, **kw: llamadas.append((a, kw)) or [])
-    monkeypatch.setattr(dd.eam, "download", lambda *a, **kw: pytest.fail("pobreza no debe ir a la EAM"))
+    monkeypatch.setattr(
+        dd.eam, "download", lambda *a, **kw: pytest.fail("pobreza no debe ir a la EAM")
+    )
     at = AppTest.from_file(str(PAGINAS / "descargar.py")).run()
     at.radio[0].set_value("Pobreza monetaria (hogares, anual)").run()
     assert not at.exception
-    assert "dd.pobreza.download([2023, 2024, 2025], archivos=['hogares'], empalme=True, borrar_zips=True)" in at.code[0].value
+    assert (
+        "dd.pobreza.download([2023, 2024, 2025], archivos=['hogares'], empalme=True, "
+        "borrar_zips=True)" in at.code[0].value
+    )
     next(b for b in at.button if b.label.endswith("Descargar")).click().run()
     assert not at.exception and len(llamadas) == 1
     assert llamadas[0][1]["empalme"] and llamadas[0][1]["archivos"] == ["hogares"]
@@ -1079,17 +1316,25 @@ def test_inicio_con_pobreza(pobreza_root, tmp_path, monkeypatch):
     assert not at.exception
     m = next(x for x in at.metric if x.label == "Pobreza monetaria")
     assert m.value == "9 años"  # las filas del empalme no cuentan como años
-    next(t for t in at.text_input if t.label == "Pobreza monetaria").set_value(str(tmp_path / "otra"))
+    next(t for t in at.text_input if t.label == "Pobreza monetaria").set_value(
+        str(tmp_path / "otra")
+    )
     next(b for b in at.button if b.label == "Guardar").click().run()
     assert not at.exception
     assert json.loads((tmp_path / "c.json").read_text()) == {"pobreza": str(tmp_path / "otra")}
 
 
 def test_avisos_de_dos_sesiones_a_la_vez(monkeypatch):
-    """Cada sesión es un hilo: el «ignore» de las Estadísticas Vitales no se traga el aviso que recoge la pobreza."""
+    """Cada sesión es un hilo: el «ignore» de las Estadísticas Vitales no se traga el aviso que
+    recoge la pobreza.
+    """
     from dane_data.app import _ui
 
-    pobreza_adentro, eevv_adentro, aviso_dado = threading.Event(), threading.Event(), threading.Event()
+    pobreza_adentro, eevv_adentro, aviso_dado = (
+        threading.Event(),
+        threading.Event(),
+        threading.Event(),
+    )
 
     def pobreza(*a, **kw):
         pobreza_adentro.set()
@@ -1107,11 +1352,16 @@ def test_avisos_de_dos_sesiones_a_la_vez(monkeypatch):
     monkeypatch.setattr(dd.eevv, "serie_indicadores", eevv)
     filtros = list(warnings.filters)
     salida = {}
-    hilo = threading.Thread(target=lambda: salida.update(
-        p=_ui.indicadores_pobreza.__wrapped__([2024], None, False, False, ())))
+    hilo = threading.Thread(
+        target=lambda: salida.update(
+            p=_ui.indicadores_pobreza.__wrapped__([2024], None, False, False, ())
+        )
+    )
     hilo.start()
     pobreza_adentro.wait(5)
-    otro = threading.Thread(target=lambda: _ui.indicadores_eevv.__wrapped__([2024], "defunciones", None, {}, ()))
+    otro = threading.Thread(
+        target=lambda: _ui.indicadores_eevv.__wrapped__([2024], "defunciones", None, {}, ())
+    )
     otro.start()
     hilo.join(5)
     otro.join(5)

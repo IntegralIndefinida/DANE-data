@@ -1,9 +1,9 @@
 """
 Indicadores de pobreza año por año, con cada año armonizado guardado en disco.
 
-Leer y armonizar un año (y unirle el empalme) es lo que tarda; los indicadores se calculan en una fracción de segundo.
-Por eso la caché guarda el año armonizado, en ``~/.cache/dane_data/pobreza/``, y se invalida sola si cambian los
-archivos que usa ese año o el código.
+Leer y armonizar un año (y unirle el empalme) es lo que tarda; los indicadores se calculan en una
+fracción de segundo. Por eso la caché guarda el año armonizado, en ``~/.cache/dane_data/pobreza/``,
+y se invalida sola si cambian los archivos que usa ese año o el código.
 """
 
 from __future__ import annotations
@@ -22,7 +22,8 @@ from ..stats import _as_list, _enteros
 from .indicadores import indicadores
 from .loader import _archivo, _avisar_metodologias, _root, find_files, load
 
-# Lo que produce el año armonizado (para _firma_codigo). indicadores.py y stats.py no: se recalculan en cada llamada.
+# Lo que produce el año armonizado (para _firma_codigo). indicadores.py y stats.py no: se
+# recalculan en cada llamada.
 _CODIGO = ("pobreza/loader.py", "pobreza/agregados.py", "_io.py", "referencias.py")
 
 
@@ -30,8 +31,8 @@ def clear_cache(dias: float | None = None) -> int:
     """
     Borra la caché de la pobreza monetaria.
 
-    Nunca hace falta para tener resultados correctos, porque se invalida sola cuando cambian los datos o el código: sirve
-    para liberar espacio.
+    Nunca hace falta para tener resultados correctos, porque se invalida sola cuando cambian los
+    datos o el código: sirve para liberar espacio.
 
     Parámetros
     ----------
@@ -58,19 +59,30 @@ def _firma(ruta: Path) -> str:
 
 
 def _usados(anio: int, ruta: Path, empalme: bool, raiz) -> list[Path]:
-    """Los archivos de los que sale el año armonizado: el de hogares y, con empalme, los de empalme de ese año."""
+    """Los archivos de los que sale el año armonizado: el de hogares y, con empalme, los de empalme
+    de ese año.
+    """
     usados = [ruta]
     if empalme and anio <= 2021:
-        nombres = (["empalme_2012_2020"] if anio <= 2020 else []) + (["lineas_2012_2018"] if anio <= 2018 else []) \
-                  + (["hogares_empalmado_2021", "hogares_empalmado_dpto_2021"] if anio == 2021 else [])
+        nombres = (
+            (["empalme_2012_2020"] if anio <= 2020 else [])
+            + (["lineas_2012_2018"] if anio <= 2018 else [])
+            + (["hogares_empalmado_2021", "hogares_empalmado_dpto_2021"] if anio == 2021 else [])
+        )
         carpeta = _root(raiz) / "datos" / "empalme"
         usados += [r for n in nombres if (r := _archivo(carpeta, n))]  # si falta, load lo reporta
     return usados
 
 
 def _armonizado(anio: int, ruta: Path, empalme: bool, raiz) -> pd.DataFrame:
-    """Un año de :func:`load`, leído de la caché si ya se armonizó con los mismos archivos y el mismo código."""
-    partes = [_firma_codigo(_CODIGO), f"empalme={empalme}", *map(_firma, _usados(anio, ruta, empalme, raiz))]
+    """Un año de :func:`load`, leído de la caché si ya se armonizó con los mismos archivos y el
+    mismo código.
+    """
+    partes = [
+        _firma_codigo(_CODIGO),
+        f"empalme={empalme}",
+        *map(_firma, _usados(anio, ruta, empalme, raiz)),
+    ]
     digest = hashlib.sha1("|".join(partes).encode()).hexdigest()[:16]
 
     def leer() -> pd.DataFrame:
@@ -78,7 +90,9 @@ def _armonizado(anio: int, ruta: Path, empalme: bool, raiz) -> pd.DataFrame:
             warnings.simplefilter("ignore", UserWarning)  # serie_indicadores avisa una sola vez
             return load(anio, empalme=empalme, raiz=raiz)
 
-    return _desde_cache(config.CACHE_DIR / "pobreza" / "anios" / f"{anio}_{digest}.parquet", leer, "pobreza")
+    return _desde_cache(
+        config.CACHE_DIR / "pobreza" / "anios" / f"{anio}_{digest}.parquet", leer, "pobreza"
+    )
 
 
 def serie_indicadores(
@@ -94,15 +108,17 @@ def serie_indicadores(
     """
     Indicadores de pobreza por año sin tener toda la serie en memoria.
 
-    Da lo mismo que ``indicadores(load(years, empalme=empalme), por=["anio", *por])``, pero lee un año a la vez y guarda
-    cada año armonizado en disco: la segunda vez no vuelve a leer los archivos del DANE.
+    Da lo mismo que ``indicadores(load(years, empalme=empalme), por=["anio", *por])``, pero lee un
+    año a la vez y guarda cada año armonizado en disco: la segunda vez no vuelve a leer los
+    archivos del DANE.
 
     Parámetros
     ----------
     years
         Año o lista de años. ``None`` para todos los descargados.
     por
-        Columna o lista de columnas para desagregar, además del año, por ejemplo ``"grupo_dominio"``.
+        Columna o lista de columnas para desagregar, además del año, por ejemplo
+        ``"grupo_dominio"``.
     empalme
         La serie empalmada al marco 2018, comparable en 2012–2025 (vea :func:`load`).
     filtros
@@ -114,7 +130,8 @@ def serie_indicadores(
     progreso
         Función ``progreso(fraccion, mensaje)`` que recibe el avance.
     departamental
-        Con el factor y el ingreso departamentales, como el anexo departamental del DANE (vea :func:`indicadores`).
+        Con el factor y el ingreso departamentales, como el anexo departamental del DANE (vea
+        :func:`indicadores`).
 
     Devuelve
     --------
@@ -150,18 +167,26 @@ def serie_indicadores(
     archivos = find_files(_enteros(years), raiz=raiz)
     if not archivos:
         raise FileNotFoundError(
-            f"No hay datos de pobreza para años={years} en {_root(raiz)}. "
-            "Descárguelos con dane_data.pobreza.download(...) o revise dane_data.set_paths(...)."
+            f"No hay datos de pobreza para años={years} en {_root(raiz)}. Descárguelos con "
+            "dane_data.pobreza.download(...) o revise dane_data.set_paths(...)."
         )
     _avisar_metodologias(archivos, empalme)
     llaves = ["anio", *_as_list(por)]
     partes = []
     for i, (anio, ruta) in enumerate(sorted(archivos.items())):
         if progreso:
-            progreso(i / len(archivos), f"Pobreza {anio} (la primera vez lee los archivos del DANE)")
+            progreso(
+                i / len(archivos), f"Pobreza {anio} (la primera vez lee los archivos del DANE)"
+            )
         d = _armonizado(anio, ruta, empalme, raiz)
-        partes.append(indicadores(d[_mascara(d, filtros)] if filtros else d, por=llaves, dropna=dropna,
-                                  departamental=departamental))
+        partes.append(
+            indicadores(
+                d[_mascara(d, filtros)] if filtros else d,
+                por=llaves,
+                dropna=dropna,
+                departamental=departamental,
+            )
+        )
     if progreso:
         progreso(1.0, "Listo")
     return pd.concat(partes, ignore_index=True)

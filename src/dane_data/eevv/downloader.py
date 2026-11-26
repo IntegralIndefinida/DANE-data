@@ -15,8 +15,8 @@ El empaque cambia con los años:
 * 2014–2019: un ZIP con un ZIP por año adentro (2017 y 2018 van juntos).
 * 2020–2025: un ZIP por año y tipo, con CSV, Stata y SPSS.
 
-Se extrae solo el año pedido y se prefiere CSV, luego TXT y luego Stata. SPSS no se usa: leerlo pediría otra
-dependencia, y siempre hay otro formato. Un año nuevo se agrega a ``_CATALOGOS``.
+Se extrae solo el año pedido y se prefiere CSV, luego TXT y luego Stata. SPSS no se usa: leerlo
+pediría otra dependencia, y siempre hay otro formato. Un año nuevo se agrega a ``_CATALOGOS``.
 """
 
 from __future__ import annotations
@@ -30,38 +30,105 @@ import zipfile
 import zlib
 from pathlib import Path
 
-from .._hooks import DescargadorANDA, archivos_datos, extraer_aparte, extraer_miembro, sanitize_member_name
+from .._hooks import (
+    DescargadorANDA,
+    archivos_datos,
+    extraer_aparte,
+    extraer_miembro,
+    sanitize_member_name,
+)
 from .loader import EXTENSIONES, TIPOS
 
 log = logging.getLogger("dane_data.eevv")
 
 _DEF, _NAC, _FET = TIPOS
 
-# Años de cada catálogo del ANDA -> {tipo: (nombre del ZIP, número de descarga)}. El nombre lleva {a} si cambia con el año.
+# Años de cada catálogo del ANDA -> {tipo: (nombre del ZIP, número de descarga)}. El nombre lleva
+# {a} si cambia con el año.
 _CATALOGOS = {
-    "375": (range(2008, 2012), {_DEF: ("Defunciones.zip", 21417), _FET: ("Fetales.zip", 21416),
-                                _NAC: ("Nacidos.zip", 21415)}),
+    "375": (
+        range(2008, 2012),
+        {
+            _DEF: ("Defunciones.zip", 21417),
+            _FET: ("Fetales.zip", 21416),
+            _NAC: ("Nacidos.zip", 21415),
+        },
+    ),
     # De 2012–2013 se usa el ZIP de TXT: el otro trae solo SPSS
-    "377": (range(2012, 2014), {_DEF: ("Defunciones txt.zip", 5822), _NAC: ("Nacidos vivos txt.zip", 5824)}),
-    "420": (range(2014, 2015), {_DEF: ("Defunciones.zip", 21433), _FET: ("Fetales.zip", 21434),
-                                _NAC: ("Nacimientos.zip", 21435)}),
-    "475": (range(2015, 2016), {_DEF: ("Defunciones.zip", 21430), _FET: ("Fetales.zip", 21431),
-                                _NAC: ("Nacimientos.zip", 21432)}),
-    "519": (range(2016, 2017), {_DEF: ("Defunciones.zip", 21427), _FET: ("Fetales.zip", 21428),
-                                _NAC: ("Nacimientos.zip", 21429)}),
-    "652": (range(2017, 2019), {_DEF: ("Defunciones.zip", 21421), _FET: ("Fetales.zip", 21422),
-                                _NAC: ("Nacimientos.zip", 21423)}),
-    "696": (range(2019, 2020), {_DEF: ("Defunciones.zip", 21424), _FET: ("Fetales.zip", 21425),
-                                _NAC: ("Nacimientos.zip", 21426)}),
-    "732": (range(2020, 2021), {_DEF: ("nofetal2020.zip", 21082), _FET: ("fetal2020.zip", 21084),
-                                _NAC: ("nac2020.zip", 21085)}),
-    "775": (range(2021, 2022), {_DEF: ("nofetal2021.zip", 22162), _FET: ("fetal2021.zip", 22305),
-                                _NAC: ("nacimientos2021.zip", 22160)}),
-    "807": (range(2022, 2023), {_DEF: ("nofetal2022.zip", 23132), _FET: ("fetal2022.zip", 23131),
-                                _NAC: ("nac2022.zip", 23133)}),
+    "377": (
+        range(2012, 2014),
+        {_DEF: ("Defunciones txt.zip", 5822), _NAC: ("Nacidos vivos txt.zip", 5824)},
+    ),
+    "420": (
+        range(2014, 2015),
+        {
+            _DEF: ("Defunciones.zip", 21433),
+            _FET: ("Fetales.zip", 21434),
+            _NAC: ("Nacimientos.zip", 21435),
+        },
+    ),
+    "475": (
+        range(2015, 2016),
+        {
+            _DEF: ("Defunciones.zip", 21430),
+            _FET: ("Fetales.zip", 21431),
+            _NAC: ("Nacimientos.zip", 21432),
+        },
+    ),
+    "519": (
+        range(2016, 2017),
+        {
+            _DEF: ("Defunciones.zip", 21427),
+            _FET: ("Fetales.zip", 21428),
+            _NAC: ("Nacimientos.zip", 21429),
+        },
+    ),
+    "652": (
+        range(2017, 2019),
+        {
+            _DEF: ("Defunciones.zip", 21421),
+            _FET: ("Fetales.zip", 21422),
+            _NAC: ("Nacimientos.zip", 21423),
+        },
+    ),
+    "696": (
+        range(2019, 2020),
+        {
+            _DEF: ("Defunciones.zip", 21424),
+            _FET: ("Fetales.zip", 21425),
+            _NAC: ("Nacimientos.zip", 21426),
+        },
+    ),
+    "732": (
+        range(2020, 2021),
+        {
+            _DEF: ("nofetal2020.zip", 21082),
+            _FET: ("fetal2020.zip", 21084),
+            _NAC: ("nac2020.zip", 21085),
+        },
+    ),
+    "775": (
+        range(2021, 2022),
+        {
+            _DEF: ("nofetal2021.zip", 22162),
+            _FET: ("fetal2021.zip", 22305),
+            _NAC: ("nacimientos2021.zip", 22160),
+        },
+    ),
+    "807": (
+        range(2022, 2023),
+        {
+            _DEF: ("nofetal2022.zip", 23132),
+            _FET: ("fetal2022.zip", 23131),
+            _NAC: ("nac2022.zip", 23133),
+        },
+    ),
 }
-_BD = {_DEF: "BD-EEVV-Defuncionesnofetales-{a}.zip", _FET: "BD-EEVV-Defuncionesfetales-{a}.zip",
-       _NAC: "BD-EEVV-Nacimientos-{a}.zip"}
+_BD = {
+    _DEF: "BD-EEVV-Defuncionesnofetales-{a}.zip",
+    _FET: "BD-EEVV-Defuncionesfetales-{a}.zip",
+    _NAC: "BD-EEVV-Nacimientos-{a}.zip",
+}
 _RECIENTES = {  # Un catálogo por año, con el mismo nombre de archivo
     2023: ("876", {_DEF: 24249, _FET: 24248, _NAC: 24250}),
     2024: ("878", {_DEF: 24462, _FET: 24460, _NAC: 24461}),
@@ -88,7 +155,13 @@ def _armar_tabla() -> dict[tuple[int, str], tuple[str, str, str]]:
     for i, anio in enumerate(range(1998, 2008)):
         nombre_nac = f"Nacimientos_{anio}.zip" if anio >= 2006 else f"Nacimientos {anio}.zip"
         poner(anio, _NAC, "366", nombre_nac, 5599 + 2 * i)
-        poner(anio, _DEF, "366", f"Defunciones{'  ' if anio in espacios_dobles else ' '}{anio}.zip", 5600 + 2 * i)
+        poner(
+            anio,
+            _DEF,
+            "366",
+            f"Defunciones{'  ' if anio in espacios_dobles else ' '}{anio}.zip",
+            5600 + 2 * i,
+        )
         poner(anio, _FET, "366", f"fetal{anio}.zip", 6677 + i)
     for catalogo, (anios, archivos) in _CATALOGOS.items():
         for anio in anios:
@@ -117,7 +190,9 @@ class EEVVDownloader(DescargadorANDA):
     log = log
     pausa = 1  # segundos entre descargas
 
-    def __init__(self, base_dir="data", keep_zips=True, progress=None, should_stop=None, forzar=False):
+    def __init__(
+        self, base_dir="data", keep_zips=True, progress=None, should_stop=None, forzar=False
+    ):
         self.progress = progress
         self.should_stop = should_stop
         self.forzar = forzar
@@ -130,7 +205,9 @@ class EEVVDownloader(DescargadorANDA):
         self.data_dir.mkdir(parents=True, exist_ok=True)
 
     def _extraer_datos(self, z: zipfile.ZipFile, anio: int, destino: Path) -> list[Path]:
-        """Saca de ``z`` los datos de ``anio``, entrando a los ZIP anidados, en el formato preferido."""
+        """Saca de ``z`` los datos de ``anio``, entrando a los ZIP anidados, en el formato
+        preferido.
+        """
         miembros = [m for m in z.infolist() if not m.is_dir() and _es_del_anio(m.filename, anio)]
         extraidos = []
         for m in miembros:
@@ -155,16 +232,22 @@ class EEVVDownloader(DescargadorANDA):
 
     def _extraer(self, zip_path: Path, anio: int, carpeta: Path) -> bool:
         """
-        Extrae primero aparte y solo si salió bien mueve a ``carpeta`` y borra lo que había (con ``forzar``).
-        Si falla, queda lo de antes.
+        Extrae primero aparte y solo si salió bien mueve a ``carpeta`` y borra lo que había (con
+        ``forzar``). Si falla, queda lo de antes.
         """
+
         def extraer(nueva: Path) -> list[Path]:
             with zipfile.ZipFile(zip_path) as z:
                 return self._extraer_datos(z, anio, nueva)
 
         try:
             return extraer_aparte(extraer, carpeta, self.raw_dir, EXTENSIONES)
-        except (zipfile.BadZipFile, zlib.error, EOFError, OSError) as e:  # zlib/EOF: datos comprimidos dañados
+        except (
+            zipfile.BadZipFile,
+            zlib.error,
+            EOFError,
+            OSError,
+        ) as e:  # zlib/EOF: datos comprimidos dañados
             log.error(f"Error extrayendo {anio} de {zip_path.name}: {e}")
             return False
 
@@ -174,19 +257,30 @@ class EEVVDownloader(DescargadorANDA):
         self.fallidos = []
         if target_years is not None:  # [] es "ningún año", no "todos"
             anios = {int(a) for a in target_years}
-            # Un fallo y no solo un aviso: si no, pedir un año que no está devolvía "éxito" sin bajar nada
+            # Un fallo y no solo un aviso: si no, pedir un año que no está devolvía "éxito" sin
+            # bajar nada
             if desconocidos := sorted(anios - {a for a, _ in pedidos}):
-                self._fallo(f"Años sin archivos de {', '.join(tipos)} en el ANDA: "
-                            f"{', '.join(map(str, desconocidos))}.")
+                self._fallo(
+                    f"Años sin archivos de {', '.join(tipos)} en el ANDA: "
+                    f"{', '.join(map(str, desconocidos))}."
+                )
             pedidos = [k for k in pedidos if k[0] in anios]
 
-        faltantes = [k for k in pedidos if self.forzar or not archivos_datos(self.data_dir / k[1] / str(k[0]), EXTENSIONES)]
+        faltantes = [
+            k
+            for k in pedidos
+            if self.forzar or not archivos_datos(self.data_dir / k[1] / str(k[0]), EXTENSIONES)
+        ]
         for anio, tipo in pedidos:
             if (anio, tipo) not in faltantes:
                 log.info(f"{tipo} {anio} ya está extraído. Se salta.")
-        log.info(f"Estadísticas Vitales: {len(faltantes)} archivo(s) por descargar de {len(pedidos)} pedido(s).")
+        log.info(
+            f"Estadísticas Vitales: {len(faltantes)} archivo(s) por descargar de {len(pedidos)} "
+            "pedido(s)."
+        )
 
-        # Un ZIP puede traer varios años: se baja una vez y se borra (si se pidió) al terminar el último
+        # Un ZIP puede traer varios años: se baja una vez y se borra (si se pidió) al terminar el
+        # último
         pendientes: dict[str, int] = {}
         for k in faltantes:
             pendientes[EEVV_KNOWN_FILES[k][2]] = pendientes.get(EEVV_KNOWN_FILES[k][2], 0) + 1
@@ -207,8 +301,15 @@ class EEVVDownloader(DescargadorANDA):
             if not bajados[url]:
                 self._fallo(f"{tipo} {anio}: no se pudo descargar {nombre}.")
             elif not self._extraer(destino, anio, carpeta):
-                conserva = " Se conserva lo extraído antes." if archivos_datos(carpeta, EXTENSIONES) else ""
-                self._fallo(f"{tipo} {anio}: no se encontró un archivo CSV, TXT o Stata de ese año en {nombre}.{conserva}")
+                conserva = (
+                    " Se conserva lo extraído antes."
+                    if archivos_datos(carpeta, EXTENSIONES)
+                    else ""
+                )
+                self._fallo(
+                    f"{tipo} {anio}: no se encontró un archivo CSV, TXT o Stata de ese año en "
+                    f"{nombre}.{conserva}"
+                )
             if not self.keep_zips and pendientes[url] == 0:
                 destino.unlink(missing_ok=True)
         return self._terminar("las Estadísticas Vitales", self.data_dir)

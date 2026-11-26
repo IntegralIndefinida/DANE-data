@@ -22,36 +22,55 @@ import pandas as pd
 
 from .. import config
 from ..referencias import MESES
-from ..stats import (_as_list, _con_categorias, _enteros, _meses_anotados, peso_mensual_promedio,
-                     weighted_quantile)
+from ..stats import (
+    _as_list,
+    _con_categorias,
+    _enteros,
+    _meses_anotados,
+    peso_mensual_promedio,
+    weighted_quantile,
+)
 from .indicadores import _COLUMNAS, indicadores
-from .loader import (CATEGORIAS, MesGEIH, _desde_cache, _firma_archivos, _meses, _root,
-                     find_months, load)
+from .loader import (
+    CATEGORIAS,
+    MesGEIH,
+    _desde_cache,
+    _firma_archivos,
+    _meses,
+    _root,
+    find_months,
+    load,
+)
 
 # Lo que lee `indicadores` más las desagregaciones y filtros de la app.
-VARIABLES_INDICADORES = ["anio", "mes", "fex", "pet", "fuerza_trabajo", "ocupado", "desocupado", "inactivo",
-                         "formal", "formal_marco2005", "ingreso_laboral", "sexo", "zona", "edad", "grupo_edad", "nivel_educativo",
-                         "departamento"]
+# fmt: off
+VARIABLES_INDICADORES = ["anio", "mes", "fex", "pet", "fuerza_trabajo", "ocupado", "desocupado",
+                         "inactivo", "formal", "formal_marco2005", "ingreso_laboral", "sexo",
+                         "zona", "edad", "grupo_edad", "nivel_educativo", "departamento"]
+# fmt: on
 POR_PRECALCULADOS = (None, "sexo", "zona", "grupo_edad", "nivel_educativo", "departamento")
 POBLACIONES = ("pet", "fuerza_trabajo", "ocupado", "desocupado", "inactivo")
 
 
-def filtrar(df: pd.DataFrame, filtros: dict | None = None, poblacion: str | None = None) -> pd.DataFrame:
+def filtrar(
+    df: pd.DataFrame, filtros: dict | None = None, poblacion: str | None = None
+) -> pd.DataFrame:
     """
     Filas que cumplen los filtros y pertenecen a una población.
 
-    Es el formato de filtros que aceptan ``serie_indicadores``, ``serie_tabla``, ``serie_frecuencias`` y
-    ``exportar``.
+    Es el formato de filtros que aceptan ``serie_indicadores``, ``serie_tabla``,
+    ``serie_frecuencias`` y ``exportar``.
 
     Parámetros
     ----------
     df
         Microdatos armonizados.
     filtros
-        ``{columna: [valores]}`` para conservar esos valores, o ``{columna: (mínimo, máximo)}`` para un
-        rango con los extremos incluidos. Por ejemplo, ``{"sexo": ["Mujer"], "edad": (15, 28)}``. Si la
-        columna no existe (una variable que ese año no trae), ninguna fila cumple el filtro. En una variable
-        categórica (``sexo``, ``zona``...), un valor que no es una de sus categorías (``"mujer"``) es un error.
+        ``{columna: [valores]}`` para conservar esos valores, o ``{columna: (mínimo, máximo)}``
+        para un rango con los extremos incluidos. Por ejemplo, ``{"sexo": ["Mujer"], "edad": (15,
+        28)}``. Si la columna no existe (una variable que ese año no trae), ninguna fila cumple el
+        filtro. En una variable categórica (``sexo``, ``zona``...), un valor que no es una de sus
+        categorías (``"mujer"``) es un error.
     poblacion
         Una de ``POBLACIONES``: ``"pet"``, ``"fuerza_trabajo"``, ``"ocupado"``, ``"desocupado"`` o
         ``"inactivo"``.
@@ -63,17 +82,19 @@ def filtrar(df: pd.DataFrame, filtros: dict | None = None, poblacion: str | None
 
     Notas
     -----
-    El resultado anota en ``attrs["meses_por_anio"]`` cuántos meses tenía cada año antes de filtrar (si se
-    filtra por ``mes``, solo esos). Así, si el filtro deja un mes sin nadie, ``dd.tabla`` e ``indicadores``
-    lo cuentan como 0 en el promedio mensual de los niveles, como el DANE, y dan lo mismo que las
-    funciones ``serie_*``. Si después se toma un subconjunto (``df[df.mes <= 3]``), la anotación deja de
-    valer y se cuentan los meses que quedan.
+    El resultado anota en ``attrs["meses_por_anio"]`` cuántos meses tenía cada año antes de filtrar
+    (si se filtra por ``mes``, solo esos). Así, si el filtro deja un mes sin nadie, ``dd.tabla`` e
+    ``indicadores`` lo cuentan como 0 en el promedio mensual de los niveles, como el DANE, y dan lo
+    mismo que las funciones ``serie_*``. Si después se toma un subconjunto (``df[df.mes <= 3]``),
+    la anotación deja de valer y se cuentan los meses que quedan.
 
     Ejemplos
     --------
     >>> import pandas as pd
     >>> import dane_data as dd
-    >>> df = pd.DataFrame({"sexo": ["Mujer", "Hombre", "Mujer"], "edad": [17, 30, 45], "ocupado": [1, 1, 0]})
+    >>> df = pd.DataFrame(
+    ...     {"sexo": ["Mujer", "Hombre", "Mujer"], "edad": [17, 30, 45], "ocupado": [1, 1, 0]}
+    ... )
     >>> dd.geih.filtrar(df, {"sexo": ["Mujer"], "edad": (15, 28)})
         sexo  edad  ocupado
     0  Mujer    17        1
@@ -89,8 +110,11 @@ def filtrar(df: pd.DataFrame, filtros: dict | None = None, poblacion: str | None
     if {"anio", "mes"} <= set(df.columns):
         # Los meses de antes de filtrar (o los de un filtrar anterior), para peso_mensual_promedio
         previos = None if filtros and "mes" in filtros else _meses_anotados(df)
-        res.attrs = {**res.attrs, "meses_por_anio": previos or _meses_cargados(df, filtros),
-                     "meses_por_anio_filas": len(res)}
+        res.attrs = {
+            **res.attrs,
+            "meses_por_anio": previos or _meses_cargados(df, filtros),
+            "meses_por_anio_filas": len(res),
+        }
     return res
 
 
@@ -103,13 +127,19 @@ def _mascara(df: pd.DataFrame, filtros: dict | None, poblacion: str | None = Non
             mask &= df[col].between(*cond)
         else:
             # Un solo valor ("Mujer", 11) cuenta como lista: list("Mujer") lo partiría en letras
-            valores = [cond] if isinstance(cond, str) or not hasattr(cond, "__iter__") else list(cond)
-            # Las categóricas tienen categorías fijas: otro valor ("mujer") es un error de escritura, que antes daba una
-            # tabla vacía sin explicación. Como falla, nunca queda en la caché de las serie_*.
+            valores = (
+                [cond] if isinstance(cond, str) or not hasattr(cond, "__iter__") else list(cond)
+            )
+            # Las categóricas tienen categorías fijas: otro valor ("mujer") es un error de
+            # escritura, que antes daba una tabla vacía sin explicación. Como falla, nunca queda en
+            # la caché de las serie_*.
             if isinstance(df[col].dtype, pd.CategoricalDtype) and (
-                    raros := [v for v in valores if not pd.isna(v) and v not in df[col].cat.categories]):
-                raise ValueError(f"filtros: {col} no tiene {', '.join(map(repr, raros))}. Opciones: "
-                                 f"{', '.join(map(str, df[col].cat.categories))}.")
+                raros := [v for v in valores if not pd.isna(v) and v not in df[col].cat.categories]
+            ):
+                raise ValueError(
+                    f"filtros: {col} no tiene {', '.join(map(repr, raros))}. Opciones: "
+                    f"{', '.join(map(str, df[col].cat.categories))}."
+                )
             mask &= df[col].isin(valores)
     if poblacion:
         mask &= df[poblacion].eq(1).fillna(False).astype(bool)
@@ -120,13 +150,22 @@ def _mascara(df: pd.DataFrame, filtros: dict | None, poblacion: str | None = Non
 # Caché por año
 # --------------------------------------------------------------------------- #
 # El código que produce los resultados de la GEIH
-_CODIGO = ("geih/loader.py", "geih/indicadores.py", "geih/agregados.py", "stats.py", "referencias.py", "_io.py")
+_CODIGO = (
+    "geih/loader.py",
+    "geih/indicadores.py",
+    "geih/agregados.py",
+    "stats.py",
+    "referencias.py",
+    "_io.py",
+)
 
 
 @lru_cache(maxsize=None)
 def _firma_codigo(archivos: tuple[str, ...] = _CODIGO) -> str:
-    """Hash de la versión y de ``archivos`` (rutas dentro del paquete): si cambia el código que produce los
-    resultados, su caché se recalcula sola. Las Estadísticas Vitales la usan con sus propios archivos."""
+    """Hash de la versión y de ``archivos`` (rutas dentro del paquete): si cambia el código que
+    produce los resultados, su caché se recalcula sola. Las Estadísticas Vitales la usan con sus
+    propios archivos.
+    """
     from .. import __version__
 
     base = Path(__file__).resolve().parent.parent
@@ -157,8 +196,8 @@ def _meses_por_anio(anios, meses, empalme: bool, raiz) -> dict[int, list[MesGEIH
 def _meses_cargados(df: pd.DataFrame, filtros: dict | None) -> dict[int, int]:
     """
     ``{año: meses}`` sobre los que se promedian los niveles: los cargados, aunque un filtro deje
-    alguno sin filas (ese mes cuenta como 0, como en el promedio de los totales mensuales del DANE).
-    Si se filtra por ``mes``, solo esos meses.
+    alguno sin filas (ese mes cuenta como 0, como en el promedio de los totales mensuales del
+    DANE). Si se filtra por ``mes``, solo esos meses.
     """
     d = df[["anio", "mes"]]
     if filtros and "mes" in filtros:
@@ -167,8 +206,10 @@ def _meses_cargados(df: pd.DataFrame, filtros: dict | None) -> dict[int, int]:
 
 
 def _clave_json(obj):
-    """La solicitud lista para ``json.dumps``, que convierte las tuplas en listas: en ``filtros`` una
-    tupla es un rango (``between``) y una lista son valores (``isin``), así que se marcan distinto."""
+    """La solicitud lista para ``json.dumps``, que convierte las tuplas en listas: en ``filtros``
+    una tupla es un rango (``between``) y una lista son valores (``isin``), así que se marcan
+    distinto.
+    """
     if isinstance(obj, dict):
         return {str(k): _clave_json(v) for k, v in obj.items()}
     if isinstance(obj, tuple):
@@ -178,9 +219,20 @@ def _clave_json(obj):
     return obj
 
 
-def _por_anio(tipo: str, anios, solicitud: dict, calcular: Callable[[int], pd.DataFrame], *, meses=None,
-              empalme: bool = False, raiz=None, progreso=None) -> list[pd.DataFrame]:
-    """``calcular(anio)`` para cada año, leído de la caché si ya se hizo con los mismos archivos y solicitud."""
+def _por_anio(
+    tipo: str,
+    anios,
+    solicitud: dict,
+    calcular: Callable[[int], pd.DataFrame],
+    *,
+    meses=None,
+    empalme: bool = False,
+    raiz=None,
+    progreso=None,
+) -> list[pd.DataFrame]:
+    """``calcular(anio)`` para cada año, leído de la caché si ya se hizo con los mismos archivos y
+    solicitud.
+    """
     por_anio = _meses_por_anio(anios, meses, empalme, raiz)
     texto = json.dumps(_clave_json(solicitud), sort_keys=True, default=str, ensure_ascii=False)
     serie = "empalme" if empalme else "principal"
@@ -218,9 +270,9 @@ def serie_indicadores(
     """
     Indicadores del mercado laboral de muchos años, sin cargar los microdatos en memoria.
 
-    Da exactamente lo mismo que
-    ``indicadores(filtrar(load(years, meses=meses), filtros), por=por, anual=anual, dropna=dropna)``,
-    pero carga un año a la vez y guarda el resultado de cada año en disco.
+    Da exactamente lo mismo que ``indicadores(filtrar(load(years, meses=meses), filtros), por=por,
+    anual=anual, dropna=dropna)``, pero carga un año a la vez y guarda el resultado de cada año en
+    disco.
 
     Parámetros
     ----------
@@ -242,15 +294,15 @@ def serie_indicadores(
     meses
         Mes o lista de meses de cada año. Por defecto, todos los que haya.
     dropna
-        Dejar fuera la fila de las personas con ``por`` vacío (por ejemplo, el ``nivel_educativo`` de
-        los menores que no responden educación, casi todos fuera de la PET). Con False se conserva, como en
-        ``indicadores``, y los grupos suman el total.
+        Dejar fuera la fila de las personas con ``por`` vacío (por ejemplo, el ``nivel_educativo``
+        de los menores que no responden educación, casi todos fuera de la PET). Con False se
+        conserva, como en ``indicadores``, y los grupos suman el total.
 
     Devuelve
     --------
     DataFrame
-        Las mismas columnas de ``indicadores``: ``anio`` (y ``mes`` si ``anual=False``), la variable de
-        ``por``, niveles, tasas, ingresos y ``n_muestra``.
+        Las mismas columnas de ``indicadores``: ``anio`` (y ``mes`` si ``anual=False``), la
+        variable de ``por``, niveles, tasas, ingresos y ``n_muestra``.
 
     Lanza
     -----
@@ -267,9 +319,9 @@ def serie_indicadores(
     Notas
     -----
     Cada año se calcula una vez, con todas las desagregaciones de ``POR_PRECALCULADOS``, anual y
-    mensual, y se guarda en ``~/.cache/dane_data/geih/indicadores/``. La primera vez tarda unos segundos
-    por año; después es instantáneo, también al cambiar ``por`` o ``anual``. Se recalcula solo si cambian
-    los archivos del año, los filtros o meses, o el código de ``dane-data``.
+    mensual, y se guarda en ``~/.cache/dane_data/geih/indicadores/``. La primera vez tarda unos
+    segundos por año; después es instantáneo, también al cambiar ``por`` o ``anual``. Se recalcula
+    solo si cambian los archivos del año, los filtros o meses, o el código de ``dane-data``.
 
     Para desagregar por otras variables use ``indicadores`` sobre
     ``load(..., variables=[*VARIABLES_INDICADORES, "mi_variable"])``.
@@ -277,13 +329,17 @@ def serie_indicadores(
     Ejemplos
     --------
     >>> import dane_data as dd
-    >>> dd.geih.serie_indicadores(2024)[["anio", "tgp", "to", "td", "tasa_informalidad"]].round(1)  # doctest: +SKIP
+    >>> ind = dd.geih.serie_indicadores(2024)  # doctest: +SKIP
+    >>> ind[["anio", "tgp", "to", "td", "tasa_informalidad"]].round(1)  # doctest: +SKIP
        anio   tgp    to    td  tasa_informalidad
     0  2024  63.9  57.4  10.2               55.9
 
     Desempleo juvenil (15 a 28 años):
 
-    >>> dd.geih.serie_indicadores([2023, 2024, 2025], filtros={"edad": (15, 28)})[["anio", "td"]].round(1)  # doctest: +SKIP
+    >>> jovenes = dd.geih.serie_indicadores(
+    ...     [2023, 2024, 2025], filtros={"edad": (15, 28)}
+    ... )  # doctest: +SKIP
+    >>> jovenes[["anio", "td"]].round(1)  # doctest: +SKIP
        anio    td
     0  2023  17.2
     1  2024  17.4
@@ -294,25 +350,41 @@ def serie_indicadores(
     >>> dd.geih.serie_indicadores(range(2021, 2026), por="sexo", anual=False)  # doctest: +SKIP
     """
     if por not in POR_PRECALCULADOS:
-        raise ValueError(f"por={por!r} no está precalculado (opciones: {list(POR_PRECALCULADOS)}). Use "
-                         "dd.geih.indicadores(dd.geih.load(..., variables=dd.geih.VARIABLES_INDICADORES), por=...).")
+        raise ValueError(
+            f"por={por!r} no está precalculado (opciones: {list(POR_PRECALCULADOS)}). Use "
+            "dd.geih.indicadores(dd.geih.load(..., variables=dd.geih.VARIABLES_INDICADORES), "
+            "por=...)."
+        )
     variables = list(dict.fromkeys([*VARIABLES_INDICADORES, *(filtros or {})]))
 
     def calcular(anio):
-        df = filtrar(load(anio, meses=meses, empalme=empalme, raiz=raiz, variables=variables), filtros)
+        df = filtrar(
+            load(anio, meses=meses, empalme=empalme, raiz=raiz, variables=variables), filtros
+        )
         partes = []
         for p in POR_PRECALCULADOS:
             for a in (True, False):
-                r = indicadores(df, por=p, anual=a, dropna=False)  # el grupo vacío se guarda; dropna lo quita abajo
+                # El grupo vacío se guarda; dropna lo quita abajo
+                r = indicadores(df, por=p, anual=a, dropna=False)
                 if p:
                     r = r.rename(columns={p: "grupo"}).astype({"grupo": object})
                 partes.append(r.assign(desagregacion=p or "total", anual=a))
         return pd.concat(partes, ignore_index=True)
 
-    tablas = _por_anio("indicadores", years, {"filtros": filtros or {}, "meses": _enteros(meses)}, calcular,
-                       meses=meses, empalme=empalme, raiz=raiz, progreso=progreso)
-    res = pd.concat([t[(t["desagregacion"] == (por or "total")) & (t["anual"] == anual)] for t in tablas],
-                    ignore_index=True)
+    tablas = _por_anio(
+        "indicadores",
+        years,
+        {"filtros": filtros or {}, "meses": _enteros(meses)},
+        calcular,
+        meses=meses,
+        empalme=empalme,
+        raiz=raiz,
+        progreso=progreso,
+    )
+    res = pd.concat(
+        [t[(t["desagregacion"] == (por or "total")) & (t["anual"] == anual)] for t in tablas],
+        ignore_index=True,
+    )
     keys = ["anio"] + ([] if anual else ["mes"])
     if not anual:
         res["mes"] = res["mes"].astype("int64")
@@ -342,17 +414,17 @@ def serie_frecuencias(
     """
     Distribución ponderada de una variable en muchos años, calculada año por año.
 
-    Cuenta, para cada año y cada combinación de ``por``, cuántas personas (expandidas) tienen cada valor
-    de ``variable``. Es la base de ``serie_tabla``: de estas frecuencias salen totales, porcentajes,
-    medias y medianas exactas, también al juntar varios años.
+    Cuenta, para cada año y cada combinación de ``por``, cuántas personas (expandidas) tienen cada
+    valor de ``variable``. Es la base de ``serie_tabla``: de estas frecuencias salen totales,
+    porcentajes, medias y medianas exactas, también al juntar varios años.
 
     Parámetros
     ----------
     years
         Año o lista de años.
     variable
-        Variable cuya distribución se cuenta. Las filas donde está vacía se descartan. ``None`` cuenta
-        solo los grupos de ``por``.
+        Variable cuya distribución se cuenta. Las filas donde está vacía se descartan. ``None``
+        cuenta solo los grupos de ``por``.
     por
         Variable o lista de variables de agrupación (``anio`` siempre se incluye).
     poblacion
@@ -386,16 +458,22 @@ def serie_frecuencias(
     Mediana del ingreso laboral de los ocupados de 2024 y 2025 juntos:
 
     >>> import dane_data as dd
-    >>> f = dd.geih.serie_frecuencias([2024, 2025], "ingreso_laboral", poblacion="ocupado")  # doctest: +SKIP
+    >>> f = dd.geih.serie_frecuencias(
+    ...     [2024, 2025], "ingreso_laboral", poblacion="ocupado"
+    ... )  # doctest: +SKIP
     >>> dd.weighted_quantile(f["ingreso_laboral"], f["peso"], 0.5)  # doctest: +SKIP
     1300000.0
     """
     por = [p for p in _as_list(por) if p != "anio"]
     claves = ["anio", *por] + ([variable] if variable else [])
-    necesarias = list(dict.fromkeys(["fex", *claves, *(filtros or {}), *([poblacion] if poblacion else [])]))
+    necesarias = list(
+        dict.fromkeys(["fex", *claves, *(filtros or {}), *([poblacion] if poblacion else [])])
+    )
 
     def calcular(anio):
-        df = load(anio, meses=meses, columnas=columnas, empalme=empalme, raiz=raiz, variables=necesarias)
+        df = load(
+            anio, meses=meses, columnas=columnas, empalme=empalme, raiz=raiz, variables=necesarias
+        )
         for c in claves:  # una variable DANE que ese año no existe
             if c not in df.columns:
                 df[c] = np.nan
@@ -403,16 +481,34 @@ def serie_frecuencias(
         x = d[claves].assign(peso=peso_mensual_promedio(d).to_numpy(), n_muestra=1)
         if variable:
             x = x[x[variable].notna()]
-        res = x.groupby(claves, observed=True, dropna=False).agg(
-            peso=("peso", "sum"), n_muestra=("n_muestra", "sum")).reset_index()
-        # Como en tabla: pandas 2 quita aquí el orden de las categorías en algunos años, y al juntarlos con los
-        # demás pandas avisa (FutureWarning) que el resultado dejará de ser categórico
+        res = (
+            x.groupby(claves, observed=True, dropna=False)
+            .agg(peso=("peso", "sum"), n_muestra=("n_muestra", "sum"))
+            .reset_index()
+        )
+        # Como en tabla: pandas 2 quita aquí el orden de las categorías en algunos años, y al
+        # juntarlos con los demás pandas avisa (FutureWarning) que el resultado dejará de ser
+        # categórico
         return _con_categorias(res, x, claves)
 
-    solicitud = {"variable": variable, "por": sorted(por), "poblacion": poblacion, "filtros": filtros or {},
-                 "meses": _enteros(meses), "columnas": columnas}
-    tablas = _por_anio("frecuencias", years, solicitud, calcular, meses=meses, empalme=empalme, raiz=raiz,
-                       progreso=progreso)
+    solicitud = {
+        "variable": variable,
+        "por": sorted(por),
+        "poblacion": poblacion,
+        "filtros": filtros or {},
+        "meses": _enteros(meses),
+        "columnas": columnas,
+    }
+    tablas = _por_anio(
+        "frecuencias",
+        years,
+        solicitud,
+        calcular,
+        meses=meses,
+        empalme=empalme,
+        raiz=raiz,
+        progreso=progreso,
+    )
     return pd.concat(tablas, ignore_index=True)
 
 
@@ -433,17 +529,17 @@ def serie_tabla(
     """
     Tabla ponderada de muchos años, sin cargar los microdatos en memoria.
 
-    Da exactamente lo mismo que
-    ``dd.tabla(filtrar(load(years, meses=meses), filtros, poblacion), por, variable, estadistico)``,
-    pero calcula las frecuencias de un año a la vez y las guarda en disco.
+    Da exactamente lo mismo que ``dd.tabla(filtrar(load(years, meses=meses), filtros, poblacion),
+    por, variable, estadistico)``, pero calcula las frecuencias de un año a la vez y las guarda en
+    disco.
 
     Parámetros
     ----------
     years
         Año o lista de años.
     por
-        Variable o lista de variables que definen los grupos. Incluya ``"anio"`` para una fila por año;
-        sin él, los años se juntan.
+        Variable o lista de variables que definen los grupos. Incluya ``"anio"`` para una fila por
+        año; sin él, los años se juntan.
     variable
         Variable numérica para ``"media"`` y ``"mediana"``.
     estadistico
@@ -455,8 +551,8 @@ def serie_tabla(
     meses
         Mes o lista de meses de cada año.
     dropna
-        Dejar fuera a las personas con valor vacío en alguna variable de ``por`` (por ejemplo, la rama de
-        actividad de quien no trabaja).
+        Dejar fuera a las personas con valor vacío en alguna variable de ``por`` (por ejemplo, la
+        rama de actividad de quien no trabaja).
     columnas
         Variables del DANE que no están en ``CORE_RAW`` y hay que leer, como en ``load``.
     empalme
@@ -474,7 +570,8 @@ def serie_tabla(
     Lanza
     -----
     ValueError
-        Si ``estadistico`` no es uno de los cuatro, o falta ``variable`` para la media o la mediana.
+        Si ``estadistico`` no es uno de los cuatro, o falta ``variable`` para la media o la
+        mediana.
 
     Véase también
     -------------
@@ -483,42 +580,58 @@ def serie_tabla(
 
     Notas
     -----
-    Los totales de cada año son promedios mensuales; si ``por`` no incluye ``anio``, el total junta los
-    años (es la suma de los promedios de cada año). Las medias y medianas que juntan años son exactas,
-    porque salen de la distribución completa y no de promedios de cada año.
+    Los totales de cada año son promedios mensuales; si ``por`` no incluye ``anio``, el total junta
+    los años (es la suma de los promedios de cada año). Las medias y medianas que juntan años son
+    exactas, porque salen de la distribución completa y no de promedios de cada año.
 
     Ejemplos
     --------
     >>> import dane_data as dd
-    >>> dd.geih.serie_tabla([2024, 2025], por="sexo", variable="ingreso_laboral",
-    ...                     estadistico="mediana", poblacion="ocupado")  # doctest: +SKIP
+    >>> dd.geih.serie_tabla(
+    ...     [2024, 2025],
+    ...     por="sexo",
+    ...     variable="ingreso_laboral",
+    ...     estadistico="mediana",
+    ...     poblacion="ocupado",
+    ... )  # doctest: +SKIP
          sexo    mediana  n_muestra
     0  Hombre  1300000.0     385000
     1   Mujer  1300000.0     303382
 
     Distribución de los ocupados por nivel educativo, año por año:
 
-    >>> dd.geih.serie_tabla(range(2015, 2026), por=["anio", "nivel_educativo"], estadistico="porcentaje",
-    ...                     poblacion="ocupado", dropna=True)  # doctest: +SKIP
+    >>> dd.geih.serie_tabla(
+    ...     range(2015, 2026),
+    ...     por=["anio", "nivel_educativo"],
+    ...     estadistico="porcentaje",
+    ...     poblacion="ocupado",
+    ...     dropna=True,
+    ... )  # doctest: +SKIP
     """
     por = _as_list(por)
     if estadistico not in ("total", "porcentaje", "media", "mediana"):
         raise ValueError("estadistico debe ser 'total', 'porcentaje', 'media' o 'mediana'.")
     if estadistico in ("media", "mediana") and variable is None:
         raise ValueError("Indique `variable` para media/mediana.")
-    f = serie_frecuencias(years, variable, por, poblacion, filtros, meses, columnas, empalme, raiz, progreso)
+    f = serie_frecuencias(
+        years, variable, por, poblacion, filtros, meses, columnas, empalme, raiz, progreso
+    )
     if dropna and por:
         f = f.dropna(subset=por)
     return tabla_de_frecuencias(f, por, variable, estadistico)
 
 
-def tabla_de_frecuencias(f: pd.DataFrame, por: str | Iterable[str] | None = None, variable: str | None = None,
-                         estadistico: str = "total") -> pd.DataFrame:
+def tabla_de_frecuencias(
+    f: pd.DataFrame,
+    por: str | Iterable[str] | None = None,
+    variable: str | None = None,
+    estadistico: str = "total",
+) -> pd.DataFrame:
     """
     Tabla ponderada a partir de frecuencias.
 
-    Es el segundo paso de ``serie_tabla``: convierte la salida de ``serie_frecuencias`` (o cualquier
-    tabla con ``peso`` y ``n_muestra``) en la tabla que daría ``dd.tabla``.
+    Es el segundo paso de ``serie_tabla``: convierte la salida de ``serie_frecuencias`` (o
+    cualquier tabla con ``peso`` y ``n_muestra``) en la tabla que daría ``dd.tabla``.
 
     Parámetros
     ----------
@@ -545,8 +658,14 @@ def tabla_de_frecuencias(f: pd.DataFrame, por: str | Iterable[str] | None = None
     --------
     >>> import pandas as pd
     >>> import dane_data as dd
-    >>> f = pd.DataFrame({"anio": [2023, 2023, 2024, 2024], "sexo": ["Hombre", "Mujer", "Hombre", "Mujer"],
-    ...                   "peso": [60.0, 40.0, 70.0, 30.0], "n_muestra": [6, 4, 7, 3]})
+    >>> f = pd.DataFrame(
+    ...     {
+    ...         "anio": [2023, 2023, 2024, 2024],
+    ...         "sexo": ["Hombre", "Mujer", "Hombre", "Mujer"],
+    ...         "peso": [60.0, 40.0, 70.0, 30.0],
+    ...         "n_muestra": [6, 4, 7, 3],
+    ...     }
+    ... )
     >>> dd.geih.tabla_de_frecuencias(f, por=["anio", "sexo"], estadistico="porcentaje")
        anio    sexo  total  n_muestra  porcentaje
     0  2023  Hombre   60.0          6        60.0
@@ -556,8 +675,14 @@ def tabla_de_frecuencias(f: pd.DataFrame, por: str | Iterable[str] | None = None
 
     Una mediana que junta años sale de la distribución completa:
 
-    >>> f = pd.DataFrame({"anio": [2023, 2023, 2024], "ingreso": [1.0, 2.0, 3.0],
-    ...                   "peso": [10.0, 30.0, 20.0], "n_muestra": [1, 3, 2]})
+    >>> f = pd.DataFrame(
+    ...     {
+    ...         "anio": [2023, 2023, 2024],
+    ...         "ingreso": [1.0, 2.0, 3.0],
+    ...         "peso": [10.0, 30.0, 20.0],
+    ...         "n_muestra": [1, 3, 2],
+    ...     }
+    ... )
     >>> dd.geih.tabla_de_frecuencias(f, variable="ingreso", estadistico="mediana")
        mediana  n_muestra
     0      2.0          6
@@ -565,27 +690,43 @@ def tabla_de_frecuencias(f: pd.DataFrame, por: str | Iterable[str] | None = None
     por = _as_list(por)
     if estadistico in ("total", "porcentaje"):
         if not por:
-            res = pd.DataFrame({"total": [f["peso"].sum()], "n_muestra": [int(f["n_muestra"].sum())]})
+            res = pd.DataFrame(
+                {"total": [f["peso"].sum()], "n_muestra": [int(f["n_muestra"].sum())]}
+            )
         else:
-            res = f.groupby(por, observed=True, dropna=False).agg(
-                total=("peso", "sum"), n_muestra=("n_muestra", "sum")).reset_index()
+            res = (
+                f.groupby(por, observed=True, dropna=False)
+                .agg(total=("peso", "sum"), n_muestra=("n_muestra", "sum"))
+                .reset_index()
+            )
         if estadistico == "porcentaje":
             outer = por[:-1]
             # dropna=False como en la agregación: un grupo exterior vacío (NaN) también suma 100 %
-            denom = (res.groupby(outer, observed=True, dropna=False)["total"].transform("sum") if outer
-                     else res["total"].sum())
+            denom = (
+                res.groupby(outer, observed=True, dropna=False)["total"].transform("sum")
+                if outer
+                else res["total"].sum()
+            )
             res["porcentaje"] = 100 * res["total"] / denom
         return res
 
     if estadistico == "media":
+
         def fn(x):
-            return float(np.average(x[variable], weights=x["peso"])) if x["peso"].sum() > 0 else np.nan
+            return (
+                float(np.average(x[variable], weights=x["peso"]))
+                if x["peso"].sum() > 0
+                else np.nan
+            )
     else:
+
         def fn(x):
             return weighted_quantile(x[variable], x["peso"], 0.5)
+
     if not por:
         return pd.DataFrame({estadistico: [fn(f)], "n_muestra": [int(f["n_muestra"].sum())]})
-    if f.empty:  # nadie con la variable (ingreso_laboral en 2007): apply daría un DataFrame y rename fallaría
+    # Nadie con la variable (ingreso_laboral en 2007): apply daría un DataFrame y rename fallaría
+    if f.empty:
         return pd.DataFrame(columns=[*por, estadistico, "n_muestra"])
     g = f.groupby(por, observed=True, dropna=False)
     stat = g[[variable, "peso"]].apply(fn).rename(estadistico)
@@ -641,9 +782,9 @@ def exportar(
     progreso
         Función ``progreso(fraccion, mensaje)`` que recibe el avance.
     sep
-        Separador de columnas. Un Excel con la configuración regional de Colombia (coma decimal) abre todo
-        en una sola columna un CSV separado por comas: para abrirlo con doble clic use ``sep=";"`` y
-        ``decimal=","``.
+        Separador de columnas. Un Excel con la configuración regional de Colombia (coma decimal)
+        abre todo en una sola columna un CSV separado por comas: para abrirlo con doble clic use
+        ``sep=";"`` y ``decimal=","``.
     decimal
         Separador decimal.
 
@@ -661,8 +802,13 @@ def exportar(
     --------
     >>> import dane_data as dd
     >>> dd.geih.exportar(range(2015, 2026), "ocupados.csv", poblacion="ocupado")  # doctest: +SKIP
-    >>> dd.geih.exportar(2024, "salarios.csv", variables=["fex", "sexo", "ingreso_laboral", "P6500"],
-    ...                  columnas=["P6500"], poblacion="ocupado")  # doctest: +SKIP
+    >>> dd.geih.exportar(
+    ...     2024,
+    ...     "salarios.csv",
+    ...     variables=["fex", "sexo", "ingreso_laboral", "P6500"],
+    ...     columnas=["P6500"],
+    ...     poblacion="ocupado",
+    ... )  # doctest: +SKIP
     >>> dd.geih.exportar(2024, "para_excel.csv", sep=";", decimal=",")  # doctest: +SKIP
     """
     ruta = Path(ruta)
@@ -671,7 +817,9 @@ def exportar(
     necesarias = leer = None  # sin variables: se leen y escriben todas las armonizadas
     if variables is not None:
         necesarias = list(dict.fromkeys(["anio", "mes", *_as_list(variables)]))
-        leer = list(dict.fromkeys([*necesarias, *(filtros or {}), *([poblacion] if poblacion else [])]))
+        leer = list(
+            dict.fromkeys([*necesarias, *(filtros or {}), *([poblacion] if poblacion else [])])
+        )
     ruta.parent.mkdir(parents=True, exist_ok=True)
     tmp = ruta.with_name(f"{ruta.name}.{uuid.uuid4().hex}.tmp")
     filas = 0
@@ -679,13 +827,29 @@ def exportar(
         for i, m in enumerate(lista):
             if progreso:
                 progreso(i / len(lista), f"Exportando {MESES[m.mes]} {m.anio}")
-            df = filtrar(load(m.anio, meses=m.mes, columnas=columnas, empalme=empalme, raiz=raiz, variables=leer),
-                         filtros, poblacion)
+            df = filtrar(
+                load(
+                    m.anio,
+                    meses=m.mes,
+                    columnas=columnas,
+                    empalme=empalme,
+                    raiz=raiz,
+                    variables=leer,
+                ),
+                filtros,
+                poblacion,
+            )
             if necesarias is None:  # las armonizadas (minúscula), iguales en todos los meses
                 necesarias = [c for c in df.columns if c == c.lower()]
-            df.reindex(columns=necesarias).to_csv(tmp, mode="w" if i == 0 else "a", header=i == 0, index=False,
-                                                  encoding="utf-8-sig" if i == 0 else "utf-8", sep=sep,
-                                                  decimal=decimal)
+            df.reindex(columns=necesarias).to_csv(
+                tmp,
+                mode="w" if i == 0 else "a",
+                header=i == 0,
+                index=False,
+                encoding="utf-8-sig" if i == 0 else "utf-8",
+                sep=sep,
+                decimal=decimal,
+            )
             filas += len(df)
         tmp.replace(ruta)
     finally:
