@@ -154,7 +154,9 @@ diccionario oficial de 2022–2025 repite las categorías anteriores, pero los d
 `dane-data` etiqueta cada fila según su año. Vea {doc}`diferencias`.
 ```
 
-La GEIH de 2007 no trae `INGLABO`, así que `ingreso_laboral` está vacío ese año.
+La GEIH de 2007 no trae `INGLABO`, así que `ingreso_laboral` está vacío ese año. También queda vacío si `INGLABO`
+es de 999.999.999 o más: en abril de 2010 el DANE sumó en un ocupado un «no informa» de 999.999.999 como si fuera
+un monto (vea {doc}`diferencias`).
 
 ## Otros ingresos y migración
 
@@ -173,7 +175,7 @@ hay módulo, quedan vacías.
 pensiones y pensión alimenticia del mes pasado, y lo recibido en los últimos doce meses de otros hogares (en
 el país o desde el exterior), de instituciones y por intereses o dividendos, dividido entre 12. No incluye
 las cesantías ni «otras fuentes» (loterías, indemnizaciones, venta de propiedades). Vale 0 para quien
-respondió que no recibió nada, y queda vacío si algún monto es 98 o 99 («no sabe», «no informa»): el 0,8 %
+respondió que no recibió nada, y queda vacío si algún monto es 98, 99 o 999.999.999 («no sabe», «no informa»): el 0,8 %
 de la PET en enero de 2024 y el 2,5 % en abril de 2015. **No es el ingreso de la pobreza monetaria del
 DANE**, que imputa los faltantes y desde 2020 completa pensiones y ayudas con registros administrativos.
 

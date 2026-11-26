@@ -234,18 +234,27 @@ def test_aviso_de_partes_y_de_modulos_sin_extraer(geih_root, caplog):
 
 
 def test_ingreso_no_laboral_y_lugares():
-    """Lo de 12 meses va por mes; 98 y 99 son «no sabe» y «no informa»; las residencias corren los códigos en uno."""
-    df = pd.DataFrame({"anio": 2024, "mes": 1, "P7495": [1, 2, 1, None, 2], "P7505": [1, 2, 2, None, 1],
-                       "P7500S2A1": [1_000_000, None, 98, None, None], "P7510S3A1": [1_200_000, None, None, None, 99],
-                       "P7510S7A1": [5_000_000, None, None, None, None],     # «otras fuentes»: no cuenta
-                       "P3373": [1, 2, 3, 3, None], "P3373S3": [".", ".", "862", "840", None],
-                       "P3384": [1, 2, 4, 3, None], "P3384S3": [".", ".", "862", ".", None]})
+    """Lo de 12 meses va por mes; 98, 99 y 999.999.999 son «no sabe» y «no informa»; las residencias corren los códigos
+    en uno."""
+    df = pd.DataFrame({"anio": 2024, "mes": 1, "P7495": [1, 2, 1, None, 2, 1], "P7505": [1, 2, 2, None, 1, 2],
+                       "P7500S2A1": [1_000_000, None, 98, None, None, 999_999_999],
+                       "P7510S3A1": [1_200_000, None, None, None, 99, None],
+                       "P7510S7A1": [5_000_000, None, None, None, None, None],     # «otras fuentes»: no cuenta
+                       "P3373": [1, 2, 3, 3, None, None], "P3373S3": [".", ".", "862", "840", None, None],
+                       "P3384": [1, 2, 4, 3, None, None], "P3384S3": [".", ".", "862", ".", None, None]})
     h = dd.geih.harmonize(df)
     assert h["ingreso_no_laboral"].tolist()[:2] == [1_100_000, 0] and h["ingreso_no_laboral"][2:].isna().all()
     assert h["lugar_nacimiento"].tolist()[:4] == ["Este municipio", "Otro municipio", "Venezuela", "Otro país"]
     assert h["residencia_hace_12_meses"].tolist()[:4] == ["No había nacido", "Este municipio", "Venezuela",
                                                           "Otro municipio"]
     assert h["residencia_hace_5_anios"].isna().all()                    # sin P3382: vacía, sin error
+
+
+def test_ingreso_laboral_con_un_no_informa():
+    """INGLABO suma el «no informa» de 999.999.999 como si fuera un monto (abril de 2010): queda vacío."""
+    df = pd.DataFrame({"anio": 2010, "mes": 4, "OCI": [1, 1], "INGLABO": [1_000_199_999, 900_000]})
+    ingreso = dd.geih.harmonize(df)["ingreso_laboral"]
+    assert pd.isna(ingreso[0]) and ingreso[1] == 900_000
 
 
 def test_posicion_ocupacional_cambia_en_2022():

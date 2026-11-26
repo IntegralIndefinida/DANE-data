@@ -99,6 +99,11 @@
 * En la GEIH desde 2024, `P3373S3`, `P3382S3` y `P3384S3` (el país de nacimiento y de residencia) quedaban como texto,
   porque casi todas sus celdas traen `"."`, la marca de vacío de Stata. Ahora son numéricas, con esas celdas vacías.
   Las variables armonizadas de lugar no cambian.
+* En la GEIH, un monto de 999.999.999 en Otros ingresos (el campo lleno de nueves, «no informa») contaba como mil
+  millones de pesos en `ingreso_no_laboral` (74 personas-mes en la serie principal 2007–2026). Ahora deja vacío su `ingreso_no_laboral`,
+  como el 98 y el 99. Por lo mismo, `ingreso_laboral` queda vacío si `INGLABO` es de 999.999.999 o más: en abril de
+  2010 el DANE sumó ese código en el `INGLABO` de un ocupado (1.000.199.999), y el ingreso laboral medio de ese mes
+  subía de 702.387 a 717.177 pesos.
 
 ## 0.6.0 (20 de noviembre de 2026)
 

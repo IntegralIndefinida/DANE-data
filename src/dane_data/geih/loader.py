@@ -54,6 +54,8 @@ _COMPACTAS = (
     "P6775", "P3068", "P6100", "P6110", "P6450", "P6930", "P6940",
     "P7495", "P7505", "P3373", "P3382", "P3384",
 )
+# Un monto de pesos lleno de nueves: «no informa», no un monto (ver harmonize)
+_NO_INFORMA = 999_999_999
 # Montos de Otros ingresos que entran en ingreso_no_laboral: los del mes pasado y los de los últimos 12 meses
 _INGRESOS_MES = ("P7500S1A1", "P7500S2A1", "P7500S3A1")      # arriendos, pensiones, pensión alimenticia
 _INGRESOS_ANIO = ("P7510S1A1", "P7510S2A1", "P7510S3A1", "P7510S5A1")  # hogares, exterior, instituciones, intereses
@@ -866,7 +868,9 @@ def harmonize(df: pd.DataFrame, edad_minima_pet: int | None = None) -> pd.DataFr
     df["cotiza_pension"] = cotiza.astype("Int8").where(ocupado)
 
     ing = _num(df, "INGLABO")
-    df["ingreso_laboral"] = ing.where(ocupado)
+    # INGLABO suma los montos como vienen, también un «no informa» de 999.999.999: en abril de 2010 da 1.000.199.999
+    # (200.000 de P6500 más P6590S1 = 999.999.999). Ver README, "Diferencias con la documentación del DANE"
+    df["ingreso_laboral"] = ing.mask(ing >= _NO_INFORMA).where(ocupado)
     df["smlv"] = anio.map(SMLV)
     df["ratio_smlv"] = df["ingreso_laboral"] / df["smlv"]
     df["horas_semana"] = _num(df, "P6800").where(ocupado)
@@ -876,8 +880,10 @@ def harmonize(df: pd.DataFrame, edad_minima_pet: int | None = None) -> pd.DataFr
     # Sin cesantías ni «otras fuentes» (loterías, venta de propiedades) y sin las imputaciones del DANE.
     mes_pasado = pd.concat([_num(df, c) for c in _INGRESOS_MES], axis=1)
     doce_meses = pd.concat([_num(df, c) for c in _INGRESOS_ANIO], axis=1)
-    # El DDI no lo dice, pero en los montos 98 y 99 son «no sabe» y «no informa», como el 9 de las preguntas sí/no
-    no_sabe = mes_pasado.isin([98, 99]).any(axis=1) | doce_meses.isin([98, 99]).any(axis=1)
+    # El DDI no lo dice, pero en los montos 98 y 99 son «no sabe» y «no informa», como el 9 de las preguntas sí/no,
+    # y 999.999.999 (el monto lleno de nueves) también es «no informa»
+    no_sabe = (mes_pasado.isin([98, 99, _NO_INFORMA]).any(axis=1)
+               | doce_meses.isin([98, 99, _NO_INFORMA]).any(axis=1))
     respondio = _num(df, "P7495").notna() | _num(df, "P7505").notna()
     total = mes_pasado.sum(axis=1) + doce_meses.sum(axis=1) / 12
     df["ingreso_no_laboral"] = total.where(respondio & ~no_sabe)
