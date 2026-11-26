@@ -14,6 +14,17 @@ uv run --extra dev --extra app pytest -q      # todas las pruebas
 uv run --extra app dane-data app              # la aplicación con el código local
 ```
 
+El código sigue PEP 8 con líneas de hasta 99 caracteres, revisado con [ruff](https://docs.astral.sh/ruff/)
+(la configuración está en `pyproject.toml` y las pruebas de GitHub también lo revisan):
+
+```bash
+uv run --extra dev ruff format .     # da formato, también a los ejemplos de los docstrings
+uv run --extra dev ruff check .      # revisa PEP 8 (reglas E, W y N)
+```
+
+Las tablas de códigos del DANE (`CORE_RAW`, `COLUMNAS_IPM`…) están agrupadas a mano entre `# fmt: off` y
+`# fmt: on`, para que el formateador no las ponga una por línea.
+
 ## Organización del código
 
 ```text

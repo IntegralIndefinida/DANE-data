@@ -1,5 +1,11 @@
 # Novedades
 
+## Sin publicar
+
+* El código sigue PEP 8 y se formatea con ruff. Nada cambia en los resultados, pero los resultados guardados
+  año por año (la caché de `serie_*` y de las Estadísticas Vitales) se recalculan una vez, la primera vez que
+  se piden después de actualizar.
+
 ## 0.6.0 (25 de noviembre de 2026)
 
 **Al actualizar**

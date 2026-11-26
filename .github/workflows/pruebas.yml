@@ -26,5 +26,10 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
 
+      - name: Estilo (PEP 8)
+        run: |
+          uv run --locked --extra dev ruff check .
+          uv run --locked --extra dev ruff format --check .
+
       - name: Pruebas
         run: uv run --locked --extra dev --extra app pytest -q
