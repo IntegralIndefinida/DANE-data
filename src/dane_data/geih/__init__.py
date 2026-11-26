@@ -129,7 +129,7 @@ def download(
     >>> dd.geih.download(2024, forzar=True)  # el DANE volvió a publicar 2024  # doctest: +SKIP
     """
     years = _enteros(years)
-    dl = GEIHDownloader(
+    descargador = GEIHDownloader(
         base_dir=_root(empalme, raiz),
         keep_zips=not borrar_zips,
         is_empalme=empalme,
@@ -138,7 +138,7 @@ def download(
         should_stop=detener,
         forzar=forzar,
     )
-    return dl.run_pipeline(target_years=years, limit_files=limite_archivos)
+    return descargador.run_pipeline(target_years=years, limit_files=limite_archivos)
 
 
 __all__ = [

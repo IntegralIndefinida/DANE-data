@@ -101,7 +101,7 @@ def download(
     >>> dd.eam.download()  # toda la serie, 1992–2024  # doctest: +SKIP
     """
     years = _enteros(years)
-    dl = EAMDownloader(
+    descargador = EAMDownloader(
         base_dir=_root(raiz),
         keep_zips=not borrar_zips,
         include_tic=incluir_tic,
@@ -109,7 +109,7 @@ def download(
         should_stop=detener,
         forzar=forzar,
     )
-    return dl.run_pipeline(target_years=years)
+    return descargador.run_pipeline(target_years=years)
 
 
 __all__ = [

@@ -263,7 +263,7 @@ def buscar_variable(texto: str, encuesta: str = "geih"):
     import pandas as pd
 
     encuesta = encuesta.lower()
-    q = strip_accents(texto)
+    consulta = strip_accents(texto)
     rows = [
         {
             "variable": var,
@@ -274,12 +274,12 @@ def buscar_variable(texto: str, encuesta: str = "geih"):
             "modulo": "",
         }
         for var, etiqueta in _armonizadas(encuesta).items()
-        if q in strip_accents(f"{var} {etiqueta}")
+        if consulta in strip_accents(f"{var} {etiqueta}")
     ]
     _, ddi = _DICCIONARIOS[encuesta]
     for var, info in diccionario(encuesta).items():
         blob = strip_accents(f"{var} {info['etiqueta']} {info['pregunta']}")
-        if q in blob:
+        if consulta in blob:
             rows.append(
                 {
                     "variable": var,

@@ -220,7 +220,7 @@ def indicadores(
 
     # Solo las sumas ponderadas que hacen falta: copiar el frame entero duplica la memoria
     # con muchos años.
-    w = (peso_mensual_promedio(df) if anual else df["fex"]).to_numpy("float64")
+    pesos = (peso_mensual_promedio(df) if anual else df["fex"]).to_numpy("float64")
 
     def es(col: str) -> np.ndarray:
         return df[col].to_numpy("float64", na_value=0) == 1
@@ -228,13 +228,13 @@ def indicadores(
     ocupado = es("ocupado")
     sumas = pd.DataFrame(
         {
-            "pet": np.where(es("pet"), w, 0.0),
-            "fuerza_trabajo": np.where(es("fuerza_trabajo"), w, 0.0),
-            "ocupados": np.where(ocupado, w, 0.0),
-            "desocupados": np.where(es("desocupado"), w, 0.0),
-            "inactivos": np.where(es("inactivo"), w, 0.0),
-            **_informales(df, "formal", "", ocupado, w),
-            **_informales(df, "formal_marco2005", "_2005", ocupado, w),
+            "pet": np.where(es("pet"), pesos, 0.0),
+            "fuerza_trabajo": np.where(es("fuerza_trabajo"), pesos, 0.0),
+            "ocupados": np.where(ocupado, pesos, 0.0),
+            "desocupados": np.where(es("desocupado"), pesos, 0.0),
+            "inactivos": np.where(es("inactivo"), pesos, 0.0),
+            **_informales(df, "formal", "", ocupado, pesos),
+            **_informales(df, "formal_marco2005", "_2005", ocupado, pesos),
         },
         index=df.index,
     )
@@ -256,7 +256,7 @@ def indicadores(
     ingreso = df["ingreso_laboral"].to_numpy("float64", na_value=np.nan)
     con_ingreso = ocupado & (ingreso > 0)
     if con_ingreso.any():
-        ocup = df.loc[con_ingreso, keys].assign(_y=ingreso[con_ingreso], _w=w[con_ingreso])
+        ocup = df.loc[con_ingreso, keys].assign(_y=ingreso[con_ingreso], _w=pesos[con_ingreso])
         # Solo _y y _w: con las columnas de grupo dentro, pandas 2 avisa que dejarán de pasarse a
         # apply
         gi = ocup.groupby(keys, observed=True, dropna=dropna)[["_y", "_w"]]
@@ -327,7 +327,7 @@ def trimestre_movil(serie: pd.DataFrame, empalme: bool = False) -> pd.DataFrame:
         )
     niveles = ["pet", "fuerza_trabajo", "ocupados", "desocupados", "inactivos"]
     informalidad = ["tasa_informalidad", "tasa_informalidad_marco2005"]
-    d = serie.assign(
+    datos = serie.assign(
         _periodo=serie["anio"] * 12 + serie["mes"] - 1,
         _marco=serie["anio"].map(lambda a: marco_muestral(int(a), empalme)),
         **{f"_inf_{c}": serie[c] / 100 * serie["ocupados"] for c in informalidad},
@@ -335,20 +335,20 @@ def trimestre_movil(serie: pd.DataFrame, empalme: bool = False) -> pd.DataFrame:
     sumas = [*niveles, "n_muestra", *(f"_inf_{c}" for c in informalidad)]
     partes = []
     # Cada marco muestral por aparte: un trimestre que cruza el cambio juntaría dos PET distintas
-    for _, g in d.groupby([*grupos, "_marco"], observed=True, dropna=False, sort=False):
+    for _, g in datos.groupby([*grupos, "_marco"], observed=True, dropna=False, sort=False):
         s = g.set_index("_periodo")[sumas].astype("float64").sort_index()
         # Un mes que falta corta los trimestres que lo tocan
         s = s.reindex(range(s.index.min(), s.index.max() + 1))
         partes.append(s.rolling(3, min_periods=3).sum().reindex(g["_periodo"]).set_axis(g.index))
-    t = pd.concat(partes).reindex(serie.index)
+    acumulado = pd.concat(partes).reindex(serie.index)
 
     res = serie.copy()
-    res[niveles] = t[niveles] / 3
-    res["n_muestra"] = t["n_muestra"]
-    res["tgp"] = 100 * t["fuerza_trabajo"] / t["pet"]
-    res["to"] = 100 * t["ocupados"] / t["pet"]
-    res["td"] = 100 * t["desocupados"] / t["fuerza_trabajo"]
+    res[niveles] = acumulado[niveles] / 3
+    res["n_muestra"] = acumulado["n_muestra"]
+    res["tgp"] = 100 * acumulado["fuerza_trabajo"] / acumulado["pet"]
+    res["to"] = 100 * acumulado["ocupados"] / acumulado["pet"]
+    res["td"] = 100 * acumulado["desocupados"] / acumulado["fuerza_trabajo"]
     for c in informalidad:  # informales sobre ocupados, como en indicadores
-        res[c] = 100 * t[f"_inf_{c}"] / t["ocupados"]
+        res[c] = 100 * acumulado[f"_inf_{c}"] / acumulado["ocupados"]
     res["ingreso_medio"] = res["ingreso_mediano"] = np.nan
     return res.replace([np.inf, -np.inf], np.nan)

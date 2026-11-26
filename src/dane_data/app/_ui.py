@@ -622,32 +622,34 @@ def _excel(df: pd.DataFrame) -> bytes:
 
 def _stata(df: pd.DataFrame) -> bytes:
     buf = io.BytesIO()
-    d = df.copy()
+    datos = df.copy()
     largos = []
     # Stata no acepta categorías/nullable, objetos que no son todos texto ni nombres largos. Se
     # decide por el tipo de la columna y no por sus valores, para que una muestra
     # (botones_descarga) diga si se puede.
-    for c in d.columns:
+    for columna in datos.columns:
         if (
-            isinstance(d[c].dtype, pd.CategoricalDtype)
-            or pd.api.types.is_string_dtype(d[c].dtype)
-            or pd.api.types.is_object_dtype(d[c].dtype)
+            isinstance(datos[columna].dtype, pd.CategoricalDtype)
+            or pd.api.types.is_string_dtype(datos[columna].dtype)
+            or pd.api.types.is_object_dtype(datos[columna].dtype)
         ):
-            d[c] = d[c].astype(object).where(d[c].notna(), "").astype(str)
-            if d[c].str.len().max() > 2045:  # más largo, solo como strL
-                largos.append(c[:32])
-        elif pd.api.types.is_extension_array_dtype(d[c]):
-            d[c] = d[c].astype("float64")
-    d.columns = [c[:32] for c in d.columns]
-    d.to_stata(buf, write_index=False, version=118, convert_strl=largos)
+            datos[columna] = (
+                datos[columna].astype(object).where(datos[columna].notna(), "").astype(str)
+            )
+            if datos[columna].str.len().max() > 2045:  # más largo, solo como strL
+                largos.append(columna[:32])
+        elif pd.api.types.is_extension_array_dtype(datos[columna]):
+            datos[columna] = datos[columna].astype("float64")
+    datos.columns = [c[:32] for c in datos.columns]
+    datos.to_stata(buf, write_index=False, version=118, convert_strl=largos)
     return buf.getvalue()
 
 
 def botones_descarga(df: pd.DataFrame, nombre: str, key: str) -> None:
     # Cada archivo se arma al hacer clic (data como función): armar los tres formatos en cada
     # interacción hacía lenta la página aunque nadie descargara.
-    c1, c2, c3 = st.columns(3)
-    c1.download_button(
+    col_csv, col_excel, col_stata = st.columns(3)
+    col_csv.download_button(
         "CSV",
         lambda: df.to_csv(index=False).encode("utf-8-sig"),
         f"{nombre}.csv",
@@ -657,7 +659,7 @@ def botones_descarga(df: pd.DataFrame, nombre: str, key: str) -> None:
         icon=":material/download:",
     )
     if len(df) < 1_000_000:
-        c2.download_button(
+        col_excel.download_button(
             "Excel",
             lambda: _excel(df),
             f"{nombre}.xlsx",
@@ -667,14 +669,14 @@ def botones_descarga(df: pd.DataFrame, nombre: str, key: str) -> None:
             icon=":material/download:",
         )
     else:
-        c2.caption("Excel no admite más de 1 millón de filas.")
+        col_excel.caption("Excel no admite más de 1 millón de filas.")
     try:
         # Basta una muestra: _stata decide por el tipo de cada columna, no por sus valores
         _stata(df.head(50))
     except Exception as e:  # noqa: BLE001
-        c3.caption(f"Stata no disponible: {e}")
+        col_stata.caption(f"Stata no disponible: {e}")
     else:
-        c3.download_button(
+        col_stata.download_button(
             "Stata (.dta)",
             lambda: _stata(df),
             f"{nombre}.dta",
@@ -831,12 +833,12 @@ def seleccion_geih(
             ),
         )
     empalme = serie != "Principal"
-    av = disponibles("geih", rutas_actuales(), empalme)
-    if av.empty:
+    descargados = disponibles("geih", rutas_actuales(), empalme)
+    if descargados.empty:
         sin_datos("GEIH")
-    av = av[av.completo]
+    descargados = descargados[descargados.completo]
     if (
-        av.empty
+        descargados.empty
     ):  # hay meses, pero a todos les falta algo: sin esto, pedía elegir un año de una lista vacía
         sin_datos(
             "GEIH",
@@ -844,7 +846,7 @@ def seleccion_geih(
             "Vea cuáles y qué les falta en Inicio, y vuelva a descargarlos.",
         )
     with st.sidebar:
-        anios_disp = sorted(av.anio.unique())
+        anios_disp = sorted(descargados.anio.unique())
         defecto = anios_disp[-2:] if varios_anios else anios_disp[-1:]
         anios = st.multiselect(
             "Años",
@@ -857,7 +859,7 @@ def seleccion_geih(
         if not anios:
             st.info("Elija al menos un año.")
             st.stop()
-        meses_disp = sorted(av[av.anio.isin(anios)].mes.unique())
+        meses_disp = sorted(descargados[descargados.anio.isin(anios)].mes.unique())
         todos = st.toggle("Todos los meses", True, key=f"{clave}_todos")
         meses = None
         if not todos:
@@ -903,7 +905,7 @@ def seleccion_geih(
     if edad != (0, 100):
         partes.append(f"edad {edad[0]}+" if edad[1] == 100 else f"edad {edad[0]}–{edad[1]}")
 
-    elegidos = av[av.anio.isin(anios)]
+    elegidos = descargados[descargados.anio.isin(anios)]
     seleccion = {
         "anios": sorted(map(int, anios)),
         "meses": sorted(map(int, meses)) if meses else None,
@@ -956,7 +958,7 @@ def seleccion_eevv(clave: str = "eevv") -> dict:
         inicio = next(a for a in anios_disp if a >= anios_disp[-1] - 9)
         # La llave lleva el tipo: los años disponibles cambian, y un rango viejo de otro tipo no
         # sería válido
-        lo, hi = (
+        desde, hasta = (
             st.select_slider(
                 "Años",
                 options=anios_disp,
@@ -967,7 +969,7 @@ def seleccion_eevv(clave: str = "eevv") -> dict:
             if len(anios_disp) > 1
             else (anios_disp[0], anios_disp[0])
         )
-        anios = [a for a in anios_disp if lo <= a <= hi]
+        anios = [a for a in anios_disp if desde <= a <= hasta]
 
         st.header("Filtros")
         # Fetales casi siempre traen sexo indeterminado
@@ -984,23 +986,23 @@ def seleccion_eevv(clave: str = "eevv") -> dict:
             key=f"{clave}_dpto",
             placeholder="Todos",
         )
-    if tipo == "defunciones" and (lo <= 1980):
+    if tipo == "defunciones" and (desde <= 1980):
         st.warning(
             "Los archivos de 1979 y 1980 están incompletos: faltan departamentos enteros en 1979 "
             "y parte de otros en 1980. Esos totales nacionales no son comparables con los de "
             "otros años.",
             icon=":material/warning:",
         )
-    if tipo == "defunciones" and lo <= 1991 <= hi:
+    if tipo == "defunciones" and desde <= 1991 <= hasta:
         st.warning(
             "En enero–junio de 1991 no se pueden separar las edades de los menores de 10 años: "
             "las defunciones de menores de un año de ese año quedan vacías.",
             icon=":material/warning:",
         )
     partes = [
-        f"{TITULOS_CERTIFICADO[tipo]} {lo}–{hi}"
-        if lo != hi
-        else f"{TITULOS_CERTIFICADO[tipo]} {lo}"
+        f"{TITULOS_CERTIFICADO[tipo]} {desde}–{hasta}"
+        if desde != hasta
+        else f"{TITULOS_CERTIFICADO[tipo]} {desde}"
     ]
     for nombre, val in (("sexo", sexo), ("residencia", dptos)):
         if val:
@@ -1029,27 +1031,27 @@ def serie_anual(
     fuente: str,
 ) -> None:
     """Gráfico de la variable por año, o por grupo en el único año elegido."""
-    g = res[res[columna].notna()].copy()
+    datos = res[res[columna].notna()].copy()
     todos = None
     if por:
-        g = g[g[por].notna()]
+        datos = datos[datos[por].notna()]
         # Antes del texto: con las categorías, un filtro no cambia los colores y se sabe si hay
         # orden
-        todos = g[por]
-        g[por] = g[por].astype(str)
-    if g.empty:
+        todos = datos[por]
+        datos[por] = datos[por].astype(str)
+    if datos.empty:
         st.info("Esta variable no existe en los años elegidos.")
         return
-    if por and g["anio"].nunique() == 1:
+    if por and datos["anio"].nunique() == 1:
         grafico(
-            barras(g, x=por, y=columna, pct=tipo_valor == "pct", horizontal=True),
-            f"{titulo}, {g['anio'].iloc[0]}",
+            barras(datos, x=por, y=columna, pct=tipo_valor == "pct", horizontal=True),
+            f"{titulo}, {datos['anio'].iloc[0]}",
             fuente,
             subtitulo,
         )
         return
-    if por and g[por].nunique() > MAX_SERIES:
-        orden = g.groupby(por)[columna].sum().sort_values(ascending=False).index.tolist()
+    if por and datos[por].nunique() > MAX_SERIES:
+        orden = datos.groupby(por)[columna].sum().sort_values(ascending=False).index.tolist()
         elegidos = st.multiselect(
             f"Hay {len(orden)} grupos; elija hasta {MAX_SERIES}",
             orden,
@@ -1057,9 +1059,9 @@ def serie_anual(
             max_selections=MAX_SERIES,
             placeholder="Elija los grupos",
         )
-        g = g[g[por].isin(elegidos)]
+        datos = datos[datos[por].isin(elegidos)]
     grafico(
-        linea(g, x="anio", y=columna, color=por, pct=tipo_valor == "pct", todos=todos),
+        linea(datos, x="anio", y=columna, color=por, pct=tipo_valor == "pct", todos=todos),
         titulo,
         fuente,
         subtitulo,
@@ -1078,7 +1080,7 @@ def seleccion_ecv(clave: str = "ecv") -> dict:
     with st.sidebar:
         st.header("ECV")
         anios_disp = sorted(int(a) for a in av["anio"])
-        lo, hi = (
+        desde, hasta = (
             st.select_slider(
                 "Años",
                 options=anios_disp,
@@ -1089,8 +1091,11 @@ def seleccion_ecv(clave: str = "ecv") -> dict:
             if len(anios_disp) > 1
             else (anios_disp[0],) * 2
         )
-    anios = [a for a in anios_disp if lo <= a <= hi]
-    return {"anios": anios, "descripcion": f"ECV {lo}–{hi}" if lo != hi else f"ECV {lo}"}
+    anios = [a for a in anios_disp if desde <= a <= hasta]
+    return {
+        "anios": anios,
+        "descripcion": f"ECV {desde}–{hasta}" if desde != hasta else f"ECV {desde}",
+    }
 
 
 # --------------------------------------------------------------------------- #
@@ -1106,10 +1111,10 @@ def selector_eam(extra: tuple = (), clave: str = "eam"):
         # Los últimos 10 años; el inicio tiene que ser un año descargado (pueden no ser
         # consecutivos)
         inicio = next(a for a in anios_disp if a >= anios_disp[-1] - 9)
-        lo, hi = st.select_slider(
+        desde, hasta = st.select_slider(
             "Años", options=anios_disp, value=(inicio, anios_disp[-1]), key=f"{clave}_rango"
         )
-        anios = [a for a in anios_disp if lo <= a <= hi]
+        anios = [a for a in anios_disp if desde <= a <= hasta]
         st.caption(
             "CIIU Rev. 2 hasta 2000, Rev. 3 2001–2011 y Rev. 4 desde 2012 (según los archivos del "
             "DANE): los sectores no son comparables entre revisiones."
@@ -1137,7 +1142,7 @@ def selector_eam(extra: tuple = (), clave: str = "eam"):
         st.warning("Ningún establecimiento cumple los filtros elegidos.")
         st.stop()
     carga = (
-        f"eam = dd.eam.load(range({lo}, {hi + 1})"
+        f"eam = dd.eam.load(range({desde}, {hasta + 1})"
         + (f", columnas={sorted(extra)!r}" if extra else "")
         + ")"
     )
@@ -1146,7 +1151,7 @@ def selector_eam(extra: tuple = (), clave: str = "eam"):
     if dptos:
         carga += f'\neam = eam[eam["departamento"].isin({dptos!r})]'
     desc = (
-        f"{lo}–{hi}"
+        f"{desde}–{hasta}"
         + (f" · {', '.join(sectores)}" if sectores else "")
         + (f" · {', '.join(dptos)}" if dptos else "")
     )

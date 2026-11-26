@@ -695,19 +695,19 @@ class GEIHDownloader(DescargadorANDA):
         if carpeta.is_dir():
             log.info(f"Se reemplaza lo extraído antes en {carpeta.name}.")
         nuevos = set()
-        for f in sorted(nueva.rglob("*")):
-            if f.is_file():
-                destino = carpeta / f.relative_to(nueva)
+        for archivo in sorted(nueva.rglob("*")):
+            if archivo.is_file():
+                destino = carpeta / archivo.relative_to(nueva)
                 destino.parent.mkdir(parents=True, exist_ok=True)
-                f.replace(destino)
+                archivo.replace(destino)
                 nuevos.add(destino)
-        for f in list(carpeta.rglob("*")):
+        for archivo in list(carpeta.rglob("*")):
             if (
-                f.is_file()
-                and f not in nuevos
-                and is_target_csv(f.name, self.modules, tuple(EXTENSIONES))
+                archivo.is_file()
+                and archivo not in nuevos
+                and is_target_csv(archivo.name, self.modules, tuple(EXTENSIONES))
             ):
-                f.unlink()
+                archivo.unlink()
 
     def run_pipeline(self, target_years=None, limit_files: int = None) -> list[str]:
         """Descarga todos los años o los seleccionados. Devuelve lo que no se pudo bajar o

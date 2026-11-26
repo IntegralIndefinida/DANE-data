@@ -471,19 +471,19 @@ def tabla(
         *(c for c in ("anio", "mes") if c in df.columns),
         *([peso] if peso else []),
     ]
-    d = df[list(dict.fromkeys(usadas))].copy()
+    datos = df[list(dict.fromkeys(usadas))].copy()
     if peso is None:
-        d["_w"] = 1.0
+        datos["_w"] = 1.0
     else:
-        d[peso] = pd.to_numeric(d[peso], errors="coerce")
-        d["_w"] = peso_mensual_promedio(d, peso)
+        datos[peso] = pd.to_numeric(datos[peso], errors="coerce")
+        datos["_w"] = peso_mensual_promedio(datos, peso)
         # Un peso vacío no es cero: la fila no se puede expandir. Se quita después de calcular _w,
         # que divide por los meses de antes (geih.filtrar los anota con el número de filas);
         # quitarla antes cambiaría ese divisor.
-        if (sin_peso := d["_w"].isna()).any():
+        if (sin_peso := datos["_w"].isna()).any():
             anios = (
-                d.loc[sin_peso, "anio"].value_counts().sort_index()
-                if "anio" in d.columns
+                datos.loc[sin_peso, "anio"].value_counts().sort_index()
+                if "anio" in datos.columns
                 else None
             )
             motivo = _motivo_sin_peso(peso, [] if anios is None else anios.index.tolist())
@@ -499,17 +499,19 @@ def tabla(
                 "grupos que se "
                 f"quedan sin filas no aparecen." + motivo
             )
-            d = d[~sin_peso]
+            datos = datos[~sin_peso]
     if variable is not None:
-        d = d[d[variable].notna()]
-    g = d.groupby(por, observed=True, dropna=False) if por else None
+        datos = datos[datos[variable].notna()]
+    agrupado = datos.groupby(por, observed=True, dropna=False) if por else None
 
     if estadistico in ("total", "porcentaje"):
-        if g is None:
-            res = pd.DataFrame({"total": [d["_w"].sum()], "n_muestra": [len(d)]})
+        if agrupado is None:
+            res = pd.DataFrame({"total": [datos["_w"].sum()], "n_muestra": [len(datos)]})
         else:
             res = _con_categorias(
-                g.agg(total=("_w", "sum"), n_muestra=("_w", "size")).reset_index(), d, por
+                agrupado.agg(total=("_w", "sum"), n_muestra=("_w", "size")).reset_index(),
+                datos,
+                por,
             )
         if estadistico == "porcentaje":
             outer = por[:-1]
@@ -525,14 +527,14 @@ def tabla(
     if variable is None:
         raise ValueError("Indique `variable` para media/mediana.")
     if estadistico == "media":
-        fn = lambda x: weighted_mean(x[variable], x["_w"])  # noqa: E731
+        calcular = lambda x: weighted_mean(x[variable], x["_w"])  # noqa: E731
     else:
-        fn = lambda x: weighted_quantile(x[variable], x["_w"], 0.5)  # noqa: E731
-    if g is None:
-        return pd.DataFrame({estadistico: [fn(d)], "n_muestra": [len(d)]})
+        calcular = lambda x: weighted_quantile(x[variable], x["_w"], 0.5)  # noqa: E731
+    if agrupado is None:
+        return pd.DataFrame({estadistico: [calcular(datos)], "n_muestra": [len(datos)]})
     # Nadie con la variable (ingreso_laboral en 2007): apply daría un DataFrame y rename fallaría
-    if d.empty:
+    if datos.empty:
         return pd.DataFrame(columns=[*por, estadistico, "n_muestra"])
-    stat = g[[variable, "_w"]].apply(fn).rename(estadistico)
-    n = g.size().rename("n_muestra")
-    return _con_categorias(pd.concat([stat, n], axis=1).reset_index(), d, por)
+    stat = agrupado[[variable, "_w"]].apply(calcular).rename(estadistico)
+    n = agrupado.size().rename("n_muestra")
+    return _con_categorias(pd.concat([stat, n], axis=1).reset_index(), datos, por)

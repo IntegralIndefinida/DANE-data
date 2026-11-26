@@ -300,10 +300,10 @@ def _csv_dir(raiz: Path) -> Path:
 def _pick_files(files: list[Path]) -> dict[str, list[Path]]:
     """Agrupa por módulo y elige el dominio nacional (Cabecera + Resto)."""
     grouped: dict[str, dict[str | None, list[Path]]] = {}
-    for f in files:
-        modulo, dominio = classify_file(f.name)
+    for archivo in files:
+        modulo, dominio = classify_file(archivo.name)
         if modulo:
-            grouped.setdefault(modulo, {}).setdefault(dominio, []).append(f)
+            grouped.setdefault(modulo, {}).setdefault(dominio, []).append(archivo)
     out = {}
     for modulo, by_dom in grouped.items():
         if "cabecera" in by_dom or "resto" in by_dom:
@@ -316,13 +316,13 @@ def _pick_files(files: list[Path]) -> dict[str, list[Path]]:
         # módulo lógico; se conservan ambos. Duplicados exactos de nombre no.
         seen, uniq = set(), []
         # Archivos del nivel superior primero; las copias en subcarpetas se ignoran.
-        for f in sorted(
+        for archivo in sorted(
             chosen, key=lambda p: (len(p.parts), EXTENSIONES.get(p.suffix.lower(), 9), str(p))
         ):
-            key = re.sub(r"\s*\(\d+\)", "", f.stem.lower())
+            key = re.sub(r"\s*\(\d+\)", "", archivo.stem.lower())
             if key not in seen:
                 seen.add(key)
-                uniq.append(f)
+                uniq.append(archivo)
         out[modulo] = uniq
     return out
 
@@ -388,19 +388,23 @@ def find_months(
     # lo reemplaza. Se usa una sola (sumar las dos duplicaría el mes): la completa, la que
     # trae más módulos y, si empatan, la más reciente.
     por_mes: dict[tuple[int, int], list[MesGEIH]] = {}
-    for m in result:
-        por_mes.setdefault((m.anio, m.mes), []).append(m)
+    for mes_geih in result:
+        por_mes.setdefault((mes_geih.anio, mes_geih.mes), []).append(mes_geih)
     result = []
-    for (anio, mes), ms in por_mes.items():
-        if len(ms) > 1:
-            ms = sorted(ms, key=lambda m: (m.completo, len(m.archivos), _mtime(m)), reverse=True)
-            if ms[1].completo:  # el caso esperado (una dañada y su reemplazo) no merece aviso
+    for (anio, mes), candidatos in por_mes.items():
+        if len(candidatos) > 1:
+            candidatos = sorted(
+                candidatos, key=lambda m: (m.completo, len(m.archivos), _mtime(m)), reverse=True
+            )
+            if candidatos[
+                1
+            ].completo:  # el caso esperado (una dañada y su reemplazo) no merece aviso
                 log.warning(
                     f"{MESES[mes]} {anio} está completo en varias carpetas; se usa "
-                    f"{ms[0].carpeta.name!r} y se ignora "
-                    f"{', '.join(repr(m.carpeta.name) for m in ms[1:] if m.completo)}."
+                    f"{candidatos[0].carpeta.name!r} y se ignora "
+                    f"{', '.join(repr(m.carpeta.name) for m in candidatos[1:] if m.completo)}."
                 )
-        result.append(ms[0])
+        result.append(candidatos[0])
     return sorted(result, key=lambda m: (m.anio, m.mes))
 
 
@@ -638,104 +642,111 @@ def _formal_dane(df: pd.DataFrame, anio: pd.Series) -> pd.Series:
     nada = pd.Series(np.nan, index=df.index)
     if any(c not in df.columns for c in COLUMNAS_INFORMALIDAD):
         return nada
-    v = {c: _num(df, c) for c in COLUMNAS_INFORMALIDAD}
-    p = v["P6430"]
+    col = {c: _num(df, c) for c in COLUMNAS_INFORMALIDAD}
+    posicion = col["P6430"]
 
     def es(c, *k):
-        return v[c].isin(k)  # noqa: E301,E704
+        return col[c].isin(k)  # noqa: E301,E704
 
     def ge(c, k):
-        return v[c] >= k  # noqa: E301,E704  vacío: no
+        return col[c] >= k  # noqa: E301,E704  vacío: no
 
     def le(c, k):
-        return v[c].isna() | (v[c] <= k)  # noqa: E301,E704  vacío: sí, como en SAS
+        return col[c].isna() | (col[c] <= k)  # noqa: E301,E704  vacío: sí, como en SAS
 
     # Un código con decimales queda sin oficio: astype("Int64") fallaría para todo el mes
-    of = v["OFICIO_C8"]
-    oficio = of.where(of % 1 == 0).astype("Int64").astype("string").str.zfill(4).str[:2]
+    oficio_c8 = col["OFICIO_C8"]
+    oficio = (
+        oficio_c8.where(oficio_c8 % 1 == 0).astype("Int64").astype("string").str.zfill(4).str[:2]
+    )
     of_bajo = oficio.between("00", "20").fillna(False).astype(bool)  # directivos y profesionales
     of_alto = (oficio >= "21").fillna(False).astype(bool)
     rama = es("RAMA2D_R4", 84, 99)  # administración pública, organismos extraterritoriales
-    asal, ind, cp, pat = p.isin([1, 7]), p.isin([4, 5]), p == 4, p == 5
-    sin_neg, con_neg = ind & ~es("P6765", 7), ind & es("P6765", 7)
-    s1 = es("P3045S1", 2, 9)
-    sn = sin_neg & es("P3065", 2, 9)
-    reg, no_reg = con_neg & (v["P3067"] == 1), con_neg & (v["P3067"] == 2)
-    renovo, no_renovo = reg & (v["P3067S1"] == 1), reg & (v["P3067S1"] == 2)
+    asalariado, independiente, cuenta_propia, patron = (
+        posicion.isin([1, 7]),
+        posicion.isin([4, 5]),
+        posicion == 4,
+        posicion == 5,
+    )
+    sin_neg, con_neg = independiente & ~es("P6765", 7), independiente & es("P6765", 7)
+    empresa_no_registrada = es("P3045S1", 2, 9)
+    sin_neg_no_registrado = sin_neg & es("P3065", 2, 9)
+    reg, no_reg = con_neg & (col["P3067"] == 1), con_neg & (col["P3067"] == 2)
+    renovo, no_renovo = reg & (col["P3067S1"] == 1), reg & (col["P3067S1"] == 2)
     anterior = anio - 1  # ANIOS=(PER-1)
-    renovado = v["P3067S2"] >= anterior
+    renovado = col["P3067S2"] >= anterior
     # /*SECTOR INFORMAL*/
     sector = [
-        (p == 3, np.nan),
-        (p == 6, 0),
+        (posicion == 3, np.nan),
+        (posicion == 6, 0),
         (rama, 1),
-        (p == 8, 0),
-        (p == 2, 1),
+        (posicion == 8, 0),
+        (posicion == 2, 1),
         # /*ASALARIADOS*/
-        (asal & (v["P3045S1"] == 1), 1),
-        (asal & s1 & (v["P3046"] == 1), 1),
-        (asal & s1 & (v["P3046"] == 2), 0),
-        (asal & s1 & (v["P3046"] == 9) & ge("P3069", 4), 1),
-        (asal & s1 & (v["P3046"] == 9) & le("P3069", 3), 0),
+        (asalariado & (col["P3045S1"] == 1), 1),
+        (asalariado & empresa_no_registrada & (col["P3046"] == 1), 1),
+        (asalariado & empresa_no_registrada & (col["P3046"] == 2), 0),
+        (asalariado & empresa_no_registrada & (col["P3046"] == 9) & ge("P3069", 4), 1),
+        (asalariado & empresa_no_registrada & (col["P3046"] == 9) & le("P3069", 3), 0),
         # /*INDEPENDIENTES*/ /*SIN NEGOCIO*/
-        (sin_neg & (v["P3065"] == 1), 1),
-        (sn & (v["P3066"] == 1), 1),
-        (sn & (v["P3066"] == 2), 0),
-        (sn & pat & (v["P3066"] == 9) & ge("P3069", 4), 1),
-        (sn & pat & (v["P3066"] == 9) & le("P3069", 3), 0),
-        (sn & cp & (v["P3066"] == 9) & of_bajo, 1),
-        (sn & cp & (v["P3066"] == 9) & of_alto, 0),
+        (sin_neg & (col["P3065"] == 1), 1),
+        (sin_neg_no_registrado & (col["P3066"] == 1), 1),
+        (sin_neg_no_registrado & (col["P3066"] == 2), 0),
+        (sin_neg_no_registrado & patron & (col["P3066"] == 9) & ge("P3069", 4), 1),
+        (sin_neg_no_registrado & patron & (col["P3066"] == 9) & le("P3069", 3), 0),
+        (sin_neg_no_registrado & cuenta_propia & (col["P3066"] == 9) & of_bajo, 1),
+        (sin_neg_no_registrado & cuenta_propia & (col["P3066"] == 9) & of_alto, 0),
         # /*CON NEGOCIO*/ /*CON REGISTRO MERCANTIL*/
         (renovo & renovado, 1),
         (renovo & ~renovado, 0),  # P3067S2 < ANIOS, también vacío
-        (no_renovo & (v["P6775"] == 1), 1),
-        (no_renovo & (v["P6775"] == 3) & of_bajo, 1),
-        (no_renovo & (v["P6775"] == 3) & of_alto, 0),
-        (no_renovo & (v["P6775"] == 2), 0),
-        (no_renovo & cp & (v["P6775"] == 9) & of_bajo, 1),
-        (no_renovo & cp & (v["P6775"] == 9) & of_alto, 0),
-        (no_renovo & pat & (v["P6775"] == 9) & ge("P3069", 4), 1),
-        (no_renovo & pat & (v["P6775"] == 9) & le("P3069", 3), 0),
+        (no_renovo & (col["P6775"] == 1), 1),
+        (no_renovo & (col["P6775"] == 3) & of_bajo, 1),
+        (no_renovo & (col["P6775"] == 3) & of_alto, 0),
+        (no_renovo & (col["P6775"] == 2), 0),
+        (no_renovo & cuenta_propia & (col["P6775"] == 9) & of_bajo, 1),
+        (no_renovo & cuenta_propia & (col["P6775"] == 9) & of_alto, 0),
+        (no_renovo & patron & (col["P6775"] == 9) & ge("P3069", 4), 1),
+        (no_renovo & patron & (col["P6775"] == 9) & le("P3069", 3), 0),
         # /*SIN REGISTRO MERCANTIL*/
-        (no_reg & (v["P6775"] == 1) & (v["P3068"] == 1), 1),
-        (no_reg & (v["P6775"] == 1) & (v["P3068"] == 2), 0),
-        (no_reg & (v["P6775"] == 3) & of_bajo, 1),
-        (no_reg & (v["P6775"] == 3) & of_alto, 0),
+        (no_reg & (col["P6775"] == 1) & (col["P3068"] == 1), 1),
+        (no_reg & (col["P6775"] == 1) & (col["P3068"] == 2), 0),
+        (no_reg & (col["P6775"] == 3) & of_bajo, 1),
+        (no_reg & (col["P6775"] == 3) & of_alto, 0),
         # El 3 reemplaza al 9 desde 2023, como dice el código del DANE; el DDI solo trae 1, 2 y 9
         # (ver README)
-        (no_reg & (v["P6775"] == 1) & es("P3068", 3, 9), 0),
-        (no_reg & (v["P6775"] == 2), 0),
-        (no_reg & pat & (v["P6775"] == 9) & ge("P3069", 4), 1),
-        (no_reg & pat & (v["P6775"] == 9) & le("P3069", 3), 0),
-        (no_reg & cp & (v["P6775"] == 9) & of_bajo, 1),
-        (no_reg & cp & (v["P6775"] == 9) & of_alto, 0),
+        (no_reg & (col["P6775"] == 1) & es("P3068", 3, 9), 0),
+        (no_reg & (col["P6775"] == 2), 0),
+        (no_reg & patron & (col["P6775"] == 9) & ge("P3069", 4), 1),
+        (no_reg & patron & (col["P6775"] == 9) & le("P3069", 3), 0),
+        (no_reg & cuenta_propia & (col["P6775"] == 9) & of_bajo, 1),
+        (no_reg & cuenta_propia & (col["P6775"] == 9) & of_alto, 0),
     ]
     formal_sector = np.select(
         [c.to_numpy(bool) for c, _ in sector], [k for _, k in sector], default=np.nan
     )
     # /*OCUPACIÓN INFORMAL*/: asalariados, empleados domésticos y jornaleros, por salud y pensión
-    a137 = p.isin([1, 3, 7])
+    a137 = posicion.isin([1, 3, 7])
     salud = (
         (a137 & es("P6100", 1, 2) & es("P6110", 1, 2, 4))
-        | (a137 & (v["P6100"] == 9) & (v["P6450"] == 2))
-        | (a137 & (v["P6110"] == 9) & (v["P6450"] == 2))
+        | (a137 & (col["P6100"] == 9) & (col["P6450"] == 2))
+        | (a137 & (col["P6110"] == 9) & (col["P6450"] == 2))
     )
-    pension = (a137 & (v["P6920"] == 3)) | (
-        a137 & (v["P6920"] == 1) & es("P6930", 1, 2, 3) & es("P6940", 1, 3)
+    pension = (a137 & (col["P6920"] == 3)) | (
+        a137 & (col["P6920"] == 1) & es("P6930", 1, 2, 3) & es("P6940", 1, 3)
     )
-    ei = np.select(
+    formal = np.select(
         [
-            (p == 2).to_numpy(bool),
-            p.isin([6, 8]).to_numpy(bool),
-            ind.to_numpy(bool),
+            (posicion == 2).to_numpy(bool),
+            posicion.isin([6, 8]).to_numpy(bool),
+            independiente.to_numpy(bool),
             (a137 & salud & pension).to_numpy(bool),
             a137.to_numpy(bool),
         ],
         [1, 0, formal_sector, 1, 0],
         default=np.nan,
     )
-    ei = np.where(rama & ~p.isin([6, 8]), 1, ei)
-    return pd.Series(ei, index=df.index).where(anio >= 2022)
+    formal = np.where(rama & ~posicion.isin([6, 8]), 1, formal)
+    return pd.Series(formal, index=df.index).where(anio >= 2022)
 
 
 # Las de la medición anterior: posición ocupacional, tamaño de la empresa y oficio (CNO 1970),
@@ -760,7 +771,7 @@ def _formal_marco2005(df: pd.DataFrame, anio: pd.Series) -> pd.Series:
     nada = pd.Series(np.nan, index=df.index)
     if any(c not in df.columns for c in COLUMNAS_INFORMALIDAD_2005):
         return nada
-    p, tamano, oficio = _num(df, "P6430"), _num(df, "P6870"), _num(df, "OFICIO")
+    posicion, tamano, oficio = _num(df, "P6430"), _num(df, "P6870"), _num(df, "OFICIO")
     hasta5 = tamano <= 3  # trabaja solo, 2 a 3 o 4 a 5 personas
     # Difiere de la metodología de 2009, que cuenta como informales a todos los empleados
     # domésticos, trabajadores sin remuneración y jornaleros: lo publicado solo cuadra si también
@@ -768,9 +779,13 @@ def _formal_marco2005(df: pd.DataFrame, anio: pd.Series) -> pd.Series:
     # son los oficios 1 a 20 de la CNO (profesionales, técnicos y directivos): el 0 no lo es (ver
     # README).
     profesional = oficio.between(1, 20)
-    informal = hasta5 & (p.isin([1, 3, 5, 6, 7, 8]) | ((p == 4) & ~profesional))
+    informal = hasta5 & (posicion.isin([1, 3, 5, 6, 7, 8]) | ((posicion == 4) & ~profesional))
     formal = pd.Series(np.where(informal, 0.0, 1.0), index=df.index)
-    sin_dato = p.isna() | (tamano.isna() & ~p.isin([2, 9])) | (hasta5 & (p == 4) & oficio.isna())
+    sin_dato = (
+        posicion.isna()
+        | (tamano.isna() & ~posicion.isin([2, 9]))
+        | (hasta5 & (posicion == 4) & oficio.isna())
+    )
     return formal.mask(sin_dato).where(anio <= 2021)
 
 
@@ -1414,13 +1429,15 @@ def load(
                 "modulos=None."
             )
     huecos: dict[tuple, list] = {}
-    for m in encontrados:
-        faltan = sorted((del_anio[m.anio] & pedidos) - set(m.archivos))
+    for mes_geih in encontrados:
+        faltan = sorted((del_anio[mes_geih.anio] & pedidos) - set(mes_geih.archivos))
         faltan += [
-            nombre for modulo, nombre in m.partes_faltantes(_OPCIONALES) if modulo in pedidos
+            nombre
+            for modulo, nombre in mes_geih.partes_faltantes(_OPCIONALES)
+            if modulo in pedidos
         ]
         if faltan:
-            huecos.setdefault(tuple(faltan), []).append(f"{MESES[m.mes]} {m.anio}")
+            huecos.setdefault(tuple(faltan), []).append(f"{MESES[mes_geih.mes]} {mes_geih.anio}")
     if huecos:
         detalle = "; ".join(f"{', '.join(mods)} en {', '.join(ms)}" for mods, ms in huecos.items())
         log.warning(

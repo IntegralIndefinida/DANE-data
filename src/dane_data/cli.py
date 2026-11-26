@@ -123,55 +123,59 @@ def _cmd_estado(args) -> int:
         print(f"{label:15s} {config.get_path(key)}")
     hay = False
     for emp in (False, True):
-        av = geih.available(empalme=emp)
-        hay |= not av.empty
+        descargados = geih.available(empalme=emp)
+        hay |= not descargados.empty
         nombre = "GEIH empalme" if emp else "GEIH principal"
-        if av.empty:
+        if descargados.empty:
             print(f"\n{nombre}: sin datos")
             continue
-        resumen = av.groupby("anio").agg(
+        resumen = descargados.groupby("anio").agg(
             meses=("mes", "size"), incompletos=("completo", lambda s: (~s).sum())
         )
         print(f"\n{nombre}:")
         print(resumen.to_string())
-    av = eam.available()
-    hay |= not av.empty
+    descargados = eam.available()
+    hay |= not descargados.empty
     print(
-        "\nEAM:", "sin datos" if av.empty else f"{len(av)} años ({av.anio.min()}–{av.anio.max()})"
+        "\nEAM:",
+        "sin datos"
+        if descargados.empty
+        else f"{len(descargados)} años ({descargados.anio.min()}–{descargados.anio.max()})",
     )
-    av = eevv.available()
-    hay |= not av.empty
-    print("\nEstadísticas Vitales:", "sin datos" if av.empty else "")
-    for tipo, d in av.groupby("tipo", sort=False):
-        print(f"  {tipo}: {len(d)} años ({d.anio.min()}–{d.anio.max()})")
-    av = emicron.available()
-    hay |= not av.empty
-    anios = sorted(av.anio.unique())
+    descargados = eevv.available()
+    hay |= not descargados.empty
+    print("\nEstadísticas Vitales:", "sin datos" if descargados.empty else "")
+    for tipo, filas in descargados.groupby("tipo", sort=False):
+        print(f"  {tipo}: {len(filas)} años ({filas.anio.min()}–{filas.anio.max()})")
+    descargados = emicron.available()
+    hay |= not descargados.empty
+    anios = sorted(descargados.anio.unique())
     print(
         "\nEMICRON:",
         "sin datos"
-        if av.empty
-        else f"{len(anios)} años ({anios[0]}–{anios[-1]}), {len(av)} módulos",
+        if descargados.empty
+        else f"{len(anios)} años ({anios[0]}–{anios[-1]}), {len(descargados)} módulos",
     )
-    av = ecv.available()
-    av = av[av["modulo"].isin(ecv.MODULOS)]
-    hay |= not av.empty
-    print("\nECV:", "sin datos" if av.empty else "")
-    for anio, d in av.groupby("anio"):
-        print(f"  {anio}: {len(d)} de {len(ecv.MODULOS)} capítulos")
-    av = pobreza.available()
-    hay |= not av.empty
-    anios = av.anio.dropna()
+    descargados = ecv.available()
+    descargados = descargados[descargados["modulo"].isin(ecv.MODULOS)]
+    hay |= not descargados.empty
+    print("\nECV:", "sin datos" if descargados.empty else "")
+    for anio, filas in descargados.groupby("anio"):
+        print(f"  {anio}: {len(filas)} de {len(ecv.MODULOS)} capítulos")
+    descargados = pobreza.available()
+    hay |= not descargados.empty
+    anios = descargados.anio.dropna()
     # Los que usa load(empalme=True); el departamental de 2021 todavía no
     empalme = (
         "sí"
-        if {"empalme_2012_2020", "lineas_2012_2018", "hogares_empalmado_2021"} <= set(av.archivo)
+        if {"empalme_2012_2020", "lineas_2012_2018", "hogares_empalmado_2021"}
+        <= set(descargados.archivo)
         else "no"
     )
     print(
         "\nPobreza monetaria:",
         "sin datos"
-        if av.empty
+        if descargados.empty
         else (
             f"{anios.nunique()} años ({anios.min()}–{anios.max()})" if len(anios) else "sin años"
         )
@@ -338,26 +342,26 @@ def _parser() -> argparse.ArgumentParser:
     """Argumentos del comando; ``docs/conf.py`` arma con ellos la referencia de la línea de
     comandos.
     """
-    p = _Parser(
+    parser = _Parser(
         prog="dane-data",
         description=(
             "Microdatos DANE (GEIH, EAM, Estadísticas Vitales, EMICRON, ECV y pobreza monetaria) "
             "para economistas."
         ),
     )
-    sub = p.add_subparsers(dest="cmd")  # sin subcomando, main muestra la ayuda
+    sub = parser.add_subparsers(dest="cmd")  # sin subcomando, main muestra la ayuda
 
-    a = sub.add_parser("app", help="Abrir la aplicación gráfica en el navegador")
-    a.add_argument(
+    sub_app = sub.add_parser("app", help="Abrir la aplicación gráfica en el navegador")
+    sub_app.add_argument(
         "--port",
         type=int,
         default=8501,
         help="Puerto preferido (si está ocupado se usa el siguiente)",
     )
-    a.add_argument(
+    sub_app.add_argument(
         "--no-browser", action="store_true", help="No abrir el navegador automáticamente"
     )
-    a.add_argument(
+    sub_app.add_argument(
         "--address",
         default="localhost",
         help=(
@@ -365,32 +369,44 @@ def _parser() -> argparse.ArgumentParser:
             "red puede cambiar las carpetas y descargar en este computador"
         ),
     )
-    a.set_defaults(fn=_cmd_app)
+    sub_app.set_defaults(fn=_cmd_app)
 
     e = sub.add_parser("estado", help="Mostrar rutas y datos disponibles")
     e.set_defaults(fn=_cmd_estado)
 
-    c = sub.add_parser("config", help="Configurar carpetas de datos (se guarda para siempre)")
-    c.add_argument("--geih", help="Carpeta de la GEIH principal (la que contiene datos_csv/)")
-    c.add_argument("--empalme", help="Carpeta de la GEIH empalme (la que contiene datos_csv/)")
-    c.add_argument("--eam", help="Carpeta de la EAM (la que contiene datos/)")
-    c.add_argument("--eevv", help="Carpeta de las Estadísticas Vitales (la que contiene datos/)")
-    c.add_argument("--emicron", help="Carpeta de la EMICRON (la que contiene datos/)")
-    c.add_argument(
+    sub_config = sub.add_parser(
+        "config", help="Configurar carpetas de datos (se guarda para siempre)"
+    )
+    sub_config.add_argument(
+        "--geih", help="Carpeta de la GEIH principal (la que contiene datos_csv/)"
+    )
+    sub_config.add_argument(
+        "--empalme", help="Carpeta de la GEIH empalme (la que contiene datos_csv/)"
+    )
+    sub_config.add_argument("--eam", help="Carpeta de la EAM (la que contiene datos/)")
+    sub_config.add_argument(
+        "--eevv", help="Carpeta de las Estadísticas Vitales (la que contiene datos/)"
+    )
+    sub_config.add_argument("--emicron", help="Carpeta de la EMICRON (la que contiene datos/)")
+    sub_config.add_argument(
         "--ecv", help="Carpeta de la Encuesta Nacional de Calidad de Vida (la que contiene datos/)"
     )
-    c.add_argument("--pobreza", help="Carpeta de la pobreza monetaria (la que contiene datos/)")
-    c.set_defaults(fn=_cmd_config)
+    sub_config.add_argument(
+        "--pobreza", help="Carpeta de la pobreza monetaria (la que contiene datos/)"
+    )
+    sub_config.set_defaults(fn=_cmd_config)
 
-    d = sub.add_parser("descargar", help="Descargar microdatos del DANE")
-    d.add_argument("encuesta", choices=["geih", "eam", "eevv", "emicron", "ecv", "pobreza"])
-    d.add_argument("--anios", nargs="+", type=int, help="Años (por defecto todos)")
+    sub_descargar = sub.add_parser("descargar", help="Descargar microdatos del DANE")
+    sub_descargar.add_argument(
+        "encuesta", choices=["geih", "eam", "eevv", "emicron", "ecv", "pobreza"]
+    )
+    sub_descargar.add_argument("--anios", nargs="+", type=int, help="Años (por defecto todos)")
     # Sin choices: los de las tres encuestas juntos daban un error en inglés con 29 nombres;
     # _cmd_descargar valida los de cada encuesta
-    d.add_argument(
+    sub_descargar.add_argument(
         "--modulos", nargs="+", help="GEIH, EMICRON o ECV: módulos a bajar (por defecto todos)"
     )
-    d.add_argument(
+    sub_descargar.add_argument(
         "--empalme",
         action="store_true",
         help=(
@@ -398,17 +414,19 @@ def _parser() -> argparse.ArgumentParser:
             "2012–2021 con el marco 2018"
         ),
     )
-    d.add_argument(
+    sub_descargar.add_argument(
         "--limite", type=int, help="GEIH: máximo de archivos mensuales por año (pruebas)"
     )
-    d.add_argument("--tic", action="store_true", help="EAM: incluir módulo TIC 2008–2018")
-    d.add_argument(
+    sub_descargar.add_argument(
+        "--tic", action="store_true", help="EAM: incluir módulo TIC 2008–2018"
+    )
+    sub_descargar.add_argument(
         "--tipos",
         nargs="+",
         choices=list(eevv.TIPOS),
         help="Estadísticas Vitales (por defecto los tres)",
     )
-    d.add_argument(
+    sub_descargar.add_argument(
         "--archivos",
         nargs="+",
         choices=list(pobreza.ARCHIVOS),
@@ -417,14 +435,16 @@ def _parser() -> argparse.ArgumentParser:
             "por defecto los dos. Desde 2023 vienen en el mismo ZIP"
         ),
     )
-    d.add_argument("--borrar-zips", action="store_true", help="Borrar los ZIP tras extraer")
-    d.add_argument(
+    sub_descargar.add_argument(
+        "--borrar-zips", action="store_true", help="Borrar los ZIP tras extraer"
+    )
+    sub_descargar.add_argument(
         "--forzar",
         action="store_true",
         help="Volver a bajar lo que ya está en disco (si el DANE corrigió los archivos)",
     )
-    d.set_defaults(fn=_cmd_descargar)
-    return p
+    sub_descargar.set_defaults(fn=_cmd_descargar)
+    return parser
 
 
 def main(argv=None) -> int:

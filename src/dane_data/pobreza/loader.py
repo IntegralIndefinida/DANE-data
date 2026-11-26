@@ -635,17 +635,21 @@ def load(
         if not armonizar:
             partes.append(crudo.assign(anio=anio))
             continue
-        d = harmonize(crudo, anio)
+        datos = harmonize(crudo, anio)
         if empalme and anio <= 2021:
-            d = _empalmar(d, anio, fuentes)
-        d["empalmado"] = (
+            datos = _empalmar(datos, anio, fuentes)
+        datos["empalmado"] = (
             empalme  # desde 2022 ya está en el marco 2018: con empalme=True es la misma serie
         )
         if columnas != "all":
-            d = d[
-                [*LLAVES, *ETIQUETAS, *[c for c in extras if c in d.columns and c not in LLAVES]]
+            datos = datos[
+                [
+                    *LLAVES,
+                    *ETIQUETAS,
+                    *[c for c in extras if c in datos.columns and c not in LLAVES],
+                ]
             ]
-        partes.append(d)
+        partes.append(datos)
     if progreso:
         progreso(1.0, "Listo")
     return pd.concat(partes, ignore_index=True)

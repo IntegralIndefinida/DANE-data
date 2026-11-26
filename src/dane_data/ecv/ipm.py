@@ -215,13 +215,13 @@ def privaciones(df: pd.DataFrame) -> pd.DataFrame:
     anios = _anios_ipm(num, estudia)
     mayor = edad >= 15
     sin_mayores = ~alguno(mayor)
-    p = pd.DataFrame(index=edad.groupby(hogar).size().index)
-    p["personas"] = edad.groupby(hogar).size()
+    privacion = pd.DataFrame(index=edad.groupby(hogar).size().index)
+    privacion["personas"] = edad.groupby(hogar).size()
 
     # Condiciones educativas: el promedio de los de 15 años y más, y si alguno no sabe leer y
     # escribir
-    p["logro_educativo"] = (anios.where(mayor).groupby(hogar).mean() < 9) | sin_mayores
-    p["analfabetismo"] = alguno(mayor & num("P6160").eq(2)) | sin_mayores
+    privacion["logro_educativo"] = (anios.where(mayor).groupby(hogar).mean() < 9) | sin_mayores
+    privacion["analfabetismo"] = alguno(mayor & num("P6160").eq(2)) | sin_mayores
     # Niñez y juventud
     virtual = num("P3336S1").eq(2) & num("P3336S2").eq(1) & num("P3336S3").eq(2)
     sin_clase = virtual & (num("P1075").eq(2) | num("P3337").eq(2))
@@ -241,82 +241,90 @@ def privaciones(df: pd.DataFrame) -> pd.DataFrame:
     )
     en_casa = (num("ESTRATEGIAS").eq(2) & ~conectado) | (num("ESTRATEGIAS").eq(1) & ~atendido)
     sin_clase = sin_clase | (df["anio"].eq(2020) & en_casa)
-    p["inasistencia_escolar"] = alguno(edad.between(6, 16) & (num("P8586").eq(2) | sin_clase))
-    p["rezago_escolar"] = alguno(edad.between(7, 17) & (anios < edad - 6))
+    privacion["inasistencia_escolar"] = alguno(
+        edad.between(6, 16) & (num("P8586").eq(2) | sin_clase)
+    )
+    privacion["rezago_escolar"] = alguno(edad.between(7, 17) & (anios < edad - 6))
     asegurado = num("P6090").eq(1)  # «no sabe» es no asegurado
     # Gratis o pago simbólico
     jardin_sin_comida = num("P51").eq(1) & ~(num("P55").eq(1) & num("P774").isin([2, 3]))
     menor_de_5 = edad.between(0, 4) & (~asegurado | num("P51").isin([3, 6, 7]) | jardin_sin_comida)
     de_5 = edad.eq(5) & (~asegurado | num("P8586").eq(2) | (estudia & num("P6180").eq(2)))
-    p["atencion_integral"] = alguno(menor_de_5 | de_5)
+    privacion["atencion_integral"] = alguno(menor_de_5 | de_5)
     ocupado = num("P6240").eq(1) | num("P6250").eq(1) | num("P6260").eq(1) | num("P6270").eq(1)
-    p["trabajo_infantil"] = alguno(edad.between(12, 17) & ocupado)
+    privacion["trabajo_infantil"] = alguno(edad.between(12, 17) & ocupado)
     # Trabajo
     pet = edad >= 12
     desocupado = pet & ~ocupado & num("P6351").eq(1)
     pea = pet & (ocupado | desocupado)
     larga = desocupado & (num("P7250") >= 52)
     pensionado = num("P6920").eq(3)
-    solo_pensionados = cuantos(pensionado) == p["personas"]
-    p["desempleo_larga_duracion"] = alguno(larga) | (cuantos(pea) == 0) | solo_pensionados
+    solo_pensionados = cuantos(pensionado) == privacion["personas"]
+    privacion["desempleo_larga_duracion"] = alguno(larga) | (cuantos(pea) == 0) | solo_pensionados
     # Sin los ya contados en trabajo infantil y desempleo
     pea_formal = pea & ~(ocupado & (edad < 18)) & ~larga
     formales = cuantos(pea_formal & ocupado & (num("P6920").eq(1) | pensionado))
-    p["empleo_formal"] = (
+    privacion["empleo_formal"] = (
         (formales != cuantos(pea_formal)) | (cuantos(pea_formal) == 0)
     ) & ~solo_pensionados
     # Salud
-    p["aseguramiento_salud"] = alguno((edad > 5) & ~asegurado)
+    privacion["aseguramiento_salud"] = alguno((edad > 5) & ~asegurado)
     # No acudió a la entidad o a un médico
-    p["barreras_acceso_salud"] = alguno(num("P5665").eq(1) & ~num("P8563").isin([1, 2]))
+    privacion["barreras_acceso_salud"] = alguno(num("P5665").eq(1) & ~num("P8563").isin([1, 2]))
 
     # Vivienda y servicios, y lo que describe al hogar: del jefe
     jefe = df["parentesco"].eq("Jefe(a) del hogar").fillna(False).astype(bool)
-    j = df[jefe].set_index(["anio", *KEYS_HOGAR]).reindex(p.index)
-    jn = lambda c: pd.to_numeric(j[c], errors="coerce")  # noqa: E731
-    rural = j["area"].eq(_RURAL).fillna(False).astype(bool)
-    p["acueducto"] = np.where(rural, jn("P8530").isin([4, 5, 6, 8, 9, 10]), ~jn("P8520S5").eq(1))
-    p["alcantarillado"] = np.where(rural, jn("P8526").isin([3, 5, 6]), ~jn("P8520S3").eq(1))
-    p["pisos"] = jn("P4015").eq(7)
+    del_jefe = df[jefe].set_index(["anio", *KEYS_HOGAR]).reindex(privacion.index)
+    num_jefe = lambda c: pd.to_numeric(del_jefe[c], errors="coerce")  # noqa: E731
+    rural = del_jefe["area"].eq(_RURAL).fillna(False).astype(bool)
+    privacion["acueducto"] = np.where(
+        rural, num_jefe("P8530").isin([4, 5, 6, 8, 9, 10]), ~num_jefe("P8520S5").eq(1)
+    )
+    privacion["alcantarillado"] = np.where(
+        rural, num_jefe("P8526").isin([3, 5, 6]), ~num_jefe("P8520S3").eq(1)
+    )
+    privacion["pisos"] = num_jefe("P4015").eq(7)
     # Códigos de 2020 en adelante, pero el DANE siguió con los de 2018–2019 en 2020: «sin paredes»
     # (10) no se priva
-    recientes = j.index.get_level_values("anio") >= 2021
+    recientes = del_jefe.index.get_level_values("anio") >= 2021
     vegetal_y_desechos = np.where(
-        recientes, jn("P4005").isin([7, 8, 9, 10]), jn("P4005").isin([7, 8, 9])
+        recientes, num_jefe("P4005").isin([7, 8, 9, 10]), num_jefe("P4005").isin([7, 8, 9])
     )
     # Madera burda: privación solo urbana
-    p["paredes"] = vegetal_y_desechos | (~rural & jn("P4005").eq(5))
-    por_cuarto = p["personas"] / jn("P5010").where(lambda v: v > 0)
-    p["hacinamiento"] = np.where(rural, por_cuarto > 3, por_cuarto >= 3)
+    privacion["paredes"] = vegetal_y_desechos | (~rural & num_jefe("P4005").eq(5))
+    por_cuarto = privacion["personas"] / num_jefe("P5010").where(lambda v: v > 0)
+    privacion["hacinamiento"] = np.where(rural, por_cuarto > 3, por_cuarto >= 3)
 
     for nombre in PRIVACIONES:
-        p[nombre] = p[nombre].fillna(False).astype(bool).astype("int8")
-    p["puntaje"] = sum(p[nombre] * peso for nombre, (_, peso) in PRIVACIONES.items())
-    p["pobre"] = p["puntaje"] >= UMBRAL - 1e-9
+        privacion[nombre] = privacion[nombre].fillna(False).astype(bool).astype("int8")
+    privacion["puntaje"] = sum(
+        privacion[nombre] * peso for nombre, (_, peso) in PRIVACIONES.items()
+    )
+    privacion["pobre"] = privacion["puntaje"] >= UMBRAL - 1e-9
     departamento = (
-        j["departamento"].astype("object")
-        if "departamento" in j
-        else pd.Series(np.nan, index=j.index)
+        del_jefe["departamento"].astype("object")
+        if "departamento" in del_jefe
+        else pd.Series(np.nan, index=del_jefe.index)
     )
     region_ipm = departamento.map(_REGION_IPM).mask(
         departamento.eq("Bogotá D.C."), np.where(rural, "Oriental", "Bogotá (cabecera)")
     )
     describe = pd.DataFrame(
         {
-            "fex": j["fex"],
-            "area": j["area"],
-            "region": j.get("region"),
+            "fex": del_jefe["fex"],
+            "area": del_jefe["area"],
+            "region": del_jefe.get("region"),
             "region_ipm": region_ipm.astype(REGIONES_IPM),
-            "departamento": j.get("departamento"),
-            "sexo_jefe": j.get("sexo"),
+            "departamento": del_jefe.get("departamento"),
+            "sexo_jefe": del_jefe.get("sexo"),
         },
-        index=p.index,
+        index=privacion.index,
     )
     # fmt: off
     columnas = ["anio", *KEYS_HOGAR, "fex", "personas", "area", "region", "region_ipm",
                 "departamento", "sexo_jefe", *PRIVACIONES, "puntaje", "pobre"]
     # fmt: on
-    return pd.concat([describe, p], axis=1).reset_index()[columnas]
+    return pd.concat([describe, privacion], axis=1).reset_index()[columnas]
 
 
 def _muestra_nacional(hogares: pd.DataFrame) -> pd.Series:

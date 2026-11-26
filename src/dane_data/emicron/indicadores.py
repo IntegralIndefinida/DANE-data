@@ -161,10 +161,10 @@ def indicadores(
             "en cada año, así que la suma no es un total.",
             UserWarning,
         )
-    w = pd.to_numeric(df[peso], errors="coerce")
+    pesos = pd.to_numeric(df[peso], errors="coerce")
     # Un factor ausente no es un peso cero: esas filas no se pueden expandir (fex_dpto no existe en
     # 2025)
-    if (sin_peso := w.isna()).any():
+    if (sin_peso := pesos.isna()).any():
         anios = (
             df.loc[sin_peso, "anio"].value_counts().sort_index() if "anio" in df.columns else None
         )
@@ -177,13 +177,13 @@ def indicadores(
         if sin_peso.all():
             raise ValueError(f"Ningún micronegocio tiene {peso} ({detalle})." + motivo)
         _avisar(f"Sin {peso}: se dejan fuera {detalle} micronegocios." + motivo, UserWarning)
-        df, w = df[~sin_peso], w[~sin_peso]
-    d = pd.DataFrame({"micronegocios": w, "n_muestra": 1.0}, index=df.index)
+        df, pesos = df[~sin_peso], pesos[~sin_peso]
+    ponderado = pd.DataFrame({"micronegocios": pesos, "n_muestra": 1.0}, index=df.index)
     for c in _CONTEOS:
-        d[c] = pd.to_numeric(df[c], errors="coerce") * w if c in df.columns else np.nan
+        ponderado[c] = pd.to_numeric(df[c], errors="coerce") * pesos if c in df.columns else np.nan
     for origen, nombre in _MONTOS.items():
-        d[nombre] = (
-            pd.to_numeric(df[origen], errors="coerce") * w if origen in df.columns else np.nan
+        ponderado[nombre] = (
+            pd.to_numeric(df[origen], errors="coerce") * pesos if origen in df.columns else np.nan
         )
     pct = {"pct_rut": "rut", "pct_camara_comercio": "camara_comercio"}
     for nombre, origen in pct.items():
@@ -192,23 +192,23 @@ def indicadores(
             if origen in df.columns
             else pd.Series(pd.NA, index=df.index, dtype="boolean")
         )
-        d[f"_{nombre}_si"], d[f"_{nombre}_con"] = (
-            w.where(si.fillna(False), 0.0),
-            w.where(si.notna(), 0.0),
+        ponderado[f"_{nombre}_si"], ponderado[f"_{nombre}_con"] = (
+            pesos.where(si.fillna(False), 0.0),
+            pesos.where(si.notna(), 0.0),
         )
     sp = df["salud_pension"] if "salud_pension" in df.columns else pd.Series(pd.NA, index=df.index)
-    d["_pct_salud_pension_si"] = w.where(
+    ponderado["_pct_salud_pension_si"] = pesos.where(
         sp.astype("string").eq("Salud y pensión").fillna(False), 0.0
     )
-    d["_pct_salud_pension_con"] = w.where(sp.notna(), 0.0)
+    ponderado["_pct_salud_pension_con"] = pesos.where(sp.notna(), 0.0)
 
     if por:
-        g = d.groupby([df[c] for c in por], observed=True, dropna=dropna, sort=True)
+        g = ponderado.groupby([df[c] for c in por], observed=True, dropna=dropna, sort=True)
         res = g.sum(
             min_count=1
         ).reset_index()  # min_count: un monto que nadie del grupo tiene queda vacío, no cero
     else:
-        res = d.sum(min_count=1).to_frame().T
+        res = ponderado.sum(min_count=1).to_frame().T
     for nombre in _MONTOS.values():
         res[nombre] = a_miles_anuales(res[nombre])
     res["coeficiente_tecnico"] = (

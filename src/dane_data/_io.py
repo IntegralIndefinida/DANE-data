@@ -53,13 +53,13 @@ def _coerce_numeric(
     se avisa en el registro (``origen`` es el archivo, para el mensaje).
     """
     for col in df.columns:
-        s = df[col]
-        if not (pd.api.types.is_object_dtype(s) or pd.api.types.is_string_dtype(s)):
+        serie = df[col]
+        if not (pd.api.types.is_object_dtype(serie) or pd.api.types.is_string_dtype(serie)):
             continue
         # "." es la marca de vacío de Stata y SAS (RAMA4D_D_R4 de 2022+; P3373S3, P3382S3 y P3384S3
         # desde 2024, donde es casi toda la columna y antes la dejaba como texto)
-        s = s.astype("string").str.strip().replace(["", "."], pd.NA)
-        nonnull = s.notna().sum()
+        serie = serie.astype("string").str.strip().replace(["", "."], pd.NA)
+        nonnull = serie.notna().sum()
         if nonnull == 0:
             df[col] = np.nan
             continue
@@ -67,14 +67,14 @@ def _coerce_numeric(
         # 2006) casi todo es entero y solo las plantas anonimizadas por promedio traen
         # coma decimal ("83779570,6666667"); decidir con una muestra las volvía NaN.
         # Si la columna es texto genuino, la conversión de abajo falla y no se toca.
-        if s.str.contains(",", regex=False).any():
-            s = s.str.replace(",", "" if miles else ".", regex=False)
-        converted = pd.to_numeric(s, errors="coerce").astype("float64")
+        if serie.str.contains(",", regex=False).any():
+            serie = serie.str.replace(",", "" if miles else ".", regex=False)
+        converted = pd.to_numeric(serie, errors="coerce").astype("float64")
         # Solo si no se pierden datos (texto genuino se deja como está)
         if converted.notna().sum() >= nonnull * 0.99:
-            perdidos = s.notna() & converted.isna()
+            perdidos = serie.notna() & converted.isna()
             if perdidos.any():
-                ejemplos = ", ".join(repr(v) for v in s[perdidos].unique()[:3])
+                ejemplos = ", ".join(repr(v) for v in serie[perdidos].unique()[:3])
                 log.warning(
                     f"{origen or 'Archivo'}: {col} es numérica salvo {perdidos.sum()} valor(es) "
                     f"de texto, que quedan vacíos ({ejemplos})."

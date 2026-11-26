@@ -122,13 +122,15 @@ def resumen(df: pd.DataFrame, por: str | Iterable[str] | None = ("anio",)) -> pd
     2  2024              6583                   21.7
     """
     por = _as_list(por)
-    d = df.copy()
+    datos = df.copy()
     # Un vacío en las prestaciones no borra los salarios de la planta (NaN + 30 daría NaN y la suma
     # del grupo la saltaría entera); sin ninguna de las dos, la planta queda vacía.
     rem = [
-        pd.to_numeric(d[c], errors="coerce") for c in ("salpeyte", "prespyte") if c in d.columns
+        pd.to_numeric(datos[c], errors="coerce")
+        for c in ("salpeyte", "prespyte")
+        if c in datos.columns
     ]
-    d["_rem"] = pd.concat(rem, axis=1).sum(axis=1, min_count=1) if len(rem) == 2 else np.nan
+    datos["_rem"] = pd.concat(rem, axis=1).sum(axis=1, min_count=1) if len(rem) == 2 else np.nan
     sums = {
         "produccion_bruta": "prodbr2",
         "consumo_intermedio": "consin2",
@@ -141,22 +143,22 @@ def resumen(df: pd.DataFrame, por: str | Iterable[str] | None = ("anio",)) -> pd
         "inversion_bruta": "invebrta",
         "energia_kwh": "eelec",
     }
-    sumas = {k: v for k, v in sums.items() if v in d.columns}
+    sumas = {k: v for k, v in sums.items() if v in datos.columns}
     agg = {}
     agg["establecimientos"] = (
-        ("nordest", "nunique") if "nordest" in d.columns else ("anio", "size")
+        ("nordest", "nunique") if "nordest" in datos.columns else ("anio", "size")
     )
-    if "nordemp" in d.columns:
+    if "nordemp" in datos.columns:
         agg["empresas"] = ("nordemp", "nunique")
     for v in set(sums.values()):
-        if v in d.columns:
-            d[v] = pd.to_numeric(d[v], errors="coerce")
+        if v in datos.columns:
+            datos[v] = pd.to_numeric(datos[v], errors="coerce")
 
     # min_count=1: un grupo sin ningún dato queda vacío, no en 0 (pandas suma NaN como 0)
     g = (
-        d.groupby(por, observed=True, dropna=False)
+        datos.groupby(por, observed=True, dropna=False)
         if por
-        else d.groupby(np.zeros(len(d), dtype=int))
+        else datos.groupby(np.zeros(len(datos), dtype=int))
     )
     res = g[list(sumas.values())].sum(min_count=1).set_axis(list(sumas), axis=1).join(g.agg(**agg))
     res = res[[*sumas, *agg]]
@@ -371,7 +373,7 @@ def deflactar(
     2  2024    230.0         209.1
     """
     llaves = _as_list(llaves)
-    d = df.drop(columns="deflactor", errors="ignore")  # de una llamada anterior: se reemplaza
+    datos = df.drop(columns="deflactor", errors="ignore")  # de una llamada anterior: se reemplaza
     if isinstance(deflactor, pd.Series):
         deflactor = deflactor.rename("deflactor").rename_axis(llaves[0]).reset_index()
     if deflactor.duplicated(subset=llaves).any():
@@ -382,13 +384,15 @@ def deflactar(
             f"El deflactor repite {', '.join(llaves)}: {repetidos.to_dict('records')}. Cada fila "
             "de df se uniría con varios valores y quedaría duplicada."
         )
-    d = d.merge(deflactor[llaves + ["deflactor"]], on=llaves, how="left")
+    datos = datos.merge(deflactor[llaves + ["deflactor"]], on=llaves, how="left")
     for c in _as_list(columnas):  # una sola columna ("valagri") no se parte en letras
-        d[f"{c}{sufijo}"] = pd.to_numeric(d[c], errors="coerce") / d["deflactor"] * base
-    faltan = d["deflactor"].isna().mean()
+        datos[f"{c}{sufijo}"] = (
+            pd.to_numeric(datos[c], errors="coerce") / datos["deflactor"] * base
+        )
+    faltan = datos["deflactor"].isna().mean()
     if faltan > 0:
         _avisar(f"{faltan:.1%} de las filas no encontraron deflactor.")
-    return d
+    return datos
 
 
 def panel(
@@ -467,29 +471,30 @@ def panel(
     >>> dd.eam.panel(eam, balanceado=True).index.tolist()
     [(1, 2023), (1, 2024)]
     """
-    d = df.dropna(subset=["nordest"]).copy()
-    years = sorted(set(years) if years is not None else d["anio"].unique())
-    d = d[d["anio"].isin(years)]
+    datos = df.dropna(subset=["nordest"]).copy()
+    years = sorted(set(years) if years is not None else datos["anio"].unique())
+    datos = datos[datos["anio"].isin(years)]
     if excluir_microagregados:
-        if "microagregado" not in d.columns:
+        if "microagregado" not in datos.columns:
             raise ValueError(
                 "excluir_microagregados=True necesita la columna microagregado: cargue con "
                 "dd.eam.load(..., armonizar=True)."
             )
-        d = d[~d["microagregado"].astype(bool)]
-    d = d.drop_duplicates(subset=["nordest", "anio"])
+        datos = datos[~datos["microagregado"].astype(bool)]
+    datos = datos.drop_duplicates(subset=["nordest", "anio"])
     if balanceado:
-        n = d.groupby("nordest")["anio"].nunique()
-        d = d[d["nordest"].isin(n[n == len(years)].index)]
-    if "microagregado" in d.columns and d["microagregado"].any():
-        micro = d.loc[d["microagregado"].astype(bool), "nordest"].nunique()
+        n = datos.groupby("nordest")["anio"].nunique()
+        datos = datos[datos["nordest"].isin(n[n == len(years)].index)]
+    if "microagregado" in datos.columns and datos["microagregado"].any():
+        micro = datos.loc[datos["microagregado"].astype(bool), "nordest"].nunique()
+        total = datos["nordest"].nunique()
         _avisar(
-            f"{micro} de {d['nordest'].nunique()} establecimientos del panel tienen algún año con "
+            f"{micro} de {total} establecimientos del panel tienen algún año con "
             "valores microagregados (el promedio de su grupo, no los propios). Para análisis por "
             "establecimiento use excluir_microagregados=True o controle con la columna "
             "microagregado."
         )
-    return d.set_index(["nordest", "anio"]).sort_index()
+    return datos.set_index(["nordest", "anio"]).sort_index()
 
 
 def supervivencia(df: pd.DataFrame) -> pd.DataFrame:

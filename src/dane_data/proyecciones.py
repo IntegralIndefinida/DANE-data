@@ -125,34 +125,34 @@ def poblacion(
     por = [por] if isinstance(por, str) else list(por or [])
     if desconocidas := [c for c in por if c not in _POR]:
         raise ValueError(f"No se puede desagregar por {desconocidas}. Opciones: {list(_POR)}")
-    d = _datos()
-    mascara = pd.Series(True, index=d.index)
+    datos = _datos()
+    mascara = pd.Series(True, index=datos.index)
     pedidos = _enteros(years)
     if pedidos is not None:
-        mascara &= d["anio"].isin(pedidos)
+        mascara &= datos["anio"].isin(pedidos)
     if sexo is not None:
-        if sexo not in d["sexo"].cat.categories:
+        if sexo not in datos["sexo"].cat.categories:
             raise ValueError(
-                f"Sexo desconocido {sexo!r}. Opciones: {list(d['sexo'].cat.categories)}"
+                f"Sexo desconocido {sexo!r}. Opciones: {list(datos['sexo'].cat.categories)}"
             )
-        mascara &= d["sexo"] == sexo
+        mascara &= datos["sexo"] == sexo
     if edades is not None:
         minima, maxima = (edades, edades) if isinstance(edades, numbers.Integral) else edades
-        mascara &= d["edad"].between(minima, maxima)
+        mascara &= datos["edad"].between(minima, maxima)
     if area is not None:
-        areas = [a for a in d["area"].cat.categories if a != "Total"]
+        areas = [a for a in datos["area"].cat.categories if a != "Total"]
         if area not in areas:
             raise ValueError(f"Área desconocida {area!r}. Opciones: {areas}")
-        mascara &= d["area"] == area
+        mascara &= datos["area"] == area
     if departamento is not None:
         lista = (
             [departamento] if isinstance(departamento, (str, numbers.Integral)) else departamento
         )
-        mascara &= d["dpto"].isin([_dpto(v) for v in lista])
+        mascara &= datos["dpto"].isin([_dpto(v) for v in lista])
     elif "departamento" in por or "dpto" in por:
-        mascara &= d["dpto"] != _NACIONAL
+        mascara &= datos["dpto"] != _NACIONAL
 
-    res = d[mascara]
+    res = datos[mascara]
     if pedidos and (sin_datos := sorted(set(pedidos) - set(res["anio"].unique()))):
         _avisar(
             f"Sin proyecciones con esa desagregación para: {', '.join(map(str, sin_datos))}. Por "

@@ -378,25 +378,27 @@ def _leer_anio(
         archivos["identificacion"],
     )
     df = df.rename(columns={"clase": "clase_te"})  # 2019
-    for m in modulos:
-        if m == "identificacion":
+    for modulo in modulos:
+        if modulo == "identificacion":
             continue
-        if m not in archivos:
+        if modulo not in archivos:
             from .downloader import EMICRON_KNOWN_FILES  # aquí: el descargador importa este módulo
 
             motivo = (
                 f"no está descargado: use dane_data.emicron.download({anio})"
-                if (anio, m) in EMICRON_KNOWN_FILES
+                if (anio, modulo) in EMICRON_KNOWN_FILES
                 else "el DANE no lo aplicó ese año"
             )
             _avisar(
-                f"EMICRON {anio}: sin el módulo {m} ({motivo}); sus variables quedan vacías.",
+                f"EMICRON {anio}: sin el módulo {modulo} ({motivo}); sus variables quedan vacías.",
                 UserWarning,
             )
             continue
         mod = _con_clave(
-            read_table(archivos[m], columns=_selector(m, columnas, extras), case="lower"),
-            archivos[m],
+            read_table(
+                archivos[modulo], columns=_selector(modulo, columnas, extras), case="lower"
+            ),
+            archivos[modulo],
         )
         mod = mod.drop(
             columns=[

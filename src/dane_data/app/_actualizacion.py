@@ -82,17 +82,17 @@ def _consultar(timeout: float) -> dict | None:
     conexión.
     """
     try:
-        r = requests.get(URL_PYPI, timeout=timeout)
-        r.raise_for_status()
-        ultima = r.json()["info"]["version"]
+        respuesta = requests.get(URL_PYPI, timeout=timeout)
+        respuesta.raise_for_status()
+        ultima = respuesta.json()["info"]["version"]
     except (requests.RequestException, ValueError, KeyError, TypeError):
         return None
     novedades = None
     if _es_nueva(ultima):
         try:
-            r = requests.get(URL_NOVEDADES.format(version=ultima), timeout=timeout)
-            r.raise_for_status()
-            novedades = r.text
+            respuesta = requests.get(URL_NOVEDADES.format(version=ultima), timeout=timeout)
+            respuesta.raise_for_status()
+            novedades = respuesta.text
         except requests.RequestException:
             pass
     return {"fecha": time.time(), "ultima": ultima, "novedades": novedades}
@@ -169,7 +169,7 @@ def actualizar_zip(carpeta: Path, version: str) -> str | None:
                 ([uv, "lock", "--upgrade-package", f"dane-data=={version}"], {}),
                 ([uv, "sync", "--frozen", "--extra", "app"], {"UV_PROJECT_ENVIRONMENT": prueba}),
             ):
-                r = subprocess.run(
+                resultado = subprocess.run(
                     comando,
                     cwd=carpeta,
                     env={**entorno, **extra},
@@ -178,9 +178,10 @@ def actualizar_zip(carpeta: Path, version: str) -> str | None:
                     errors="replace",
                     timeout=1800,
                 )
-                if r.returncode != 0:
+                if resultado.returncode != 0:
                     raise RuntimeError(
-                        (r.stderr or r.stdout).strip() or f"uv {comando[1]} terminó con error"
+                        (resultado.stderr or resultado.stdout).strip()
+                        or f"uv {comando[1]} terminó con error"
                     )
     except (OSError, RuntimeError, subprocess.SubprocessError) as e:
         if antes is not None:
