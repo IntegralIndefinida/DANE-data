@@ -147,6 +147,16 @@ def test_nombres_de_los_parametros(geih_root):
         dd.geih.load(2016, months=1, raiz=geih_root, cache=False)
 
 
+def test_columna_casi_toda_con_la_marca_de_vacio(tmp_path):
+    """Desde 2024 P3373S3 es casi toda ".", la marca de vacío de Stata: igual es numérica."""
+    from dane_data._io import read_table
+
+    archivo = tmp_path / "Migracion.CSV"
+    archivo.write_text("P3373S3\n.\n.\n.\n862\n", encoding="utf-8")
+    pais = read_table(archivo)["P3373S3"]
+    assert pd.api.types.is_numeric_dtype(pais) and pais.isna().sum() == 3 and pais[3] == 862
+
+
 def test_texto_que_se_pierde_al_convertir_se_avisa(tmp_path, caplog):
     """Hasta 1 % de texto en una columna numérica queda vacío: se avisa, salvo la marca de vacío "."."""
     from dane_data._io import read_table

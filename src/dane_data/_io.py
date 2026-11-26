@@ -44,7 +44,7 @@ def sniff(path: Path) -> tuple[str, str]:
 def _coerce_numeric(df: pd.DataFrame, origen: str | None = None, miles: bool = False) -> pd.DataFrame:
     """
     Convierte a número las columnas de texto que en realidad son numéricas:
-    celdas en blanco escritas como ``" "`` y coma decimal (``"71,22"``), o coma de miles si ``miles``
+    celdas en blanco escritas como ``" "`` o ``"."`` y coma decimal (``"71,22"``), o coma de miles si ``miles``
     (``"6,000,013"``, ver ``_coma_de_miles``).
 
     Una columna con hasta 1 % de valores de texto se convierte igual; esos valores quedan vacíos y se
@@ -54,7 +54,9 @@ def _coerce_numeric(df: pd.DataFrame, origen: str | None = None, miles: bool = F
         s = df[col]
         if not (pd.api.types.is_object_dtype(s) or pd.api.types.is_string_dtype(s)):
             continue
-        s = s.astype("string").str.strip().replace("", pd.NA)
+        # "." es la marca de vacío de Stata y SAS (RAMA4D_D_R4 de 2022+; P3373S3, P3382S3 y P3384S3 desde 2024, donde
+        # es casi toda la columna y antes la dejaba como texto)
+        s = s.astype("string").str.strip().replace(["", "."], pd.NA)
         nonnull = s.notna().sum()
         if nonnull == 0:
             df[col] = np.nan
@@ -68,8 +70,7 @@ def _coerce_numeric(df: pd.DataFrame, origen: str | None = None, miles: bool = F
         converted = pd.to_numeric(s, errors="coerce").astype("float64")
         # Solo si no se pierden datos (texto genuino se deja como está)
         if converted.notna().sum() >= nonnull * 0.99:
-            # "." es la marca de vacío de Stata y SAS (RAMA4D_D_R4 de 2022+): no es un dato que se pierda
-            perdidos = s.notna() & converted.isna() & s.ne(".")
+            perdidos = s.notna() & converted.isna()
             if perdidos.any():
                 ejemplos = ", ".join(repr(v) for v in s[perdidos].unique()[:3])
                 log.warning(f"{origen or 'Archivo'}: {col} es numérica salvo {perdidos.sum()} valor(es) de texto, "

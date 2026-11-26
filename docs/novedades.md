@@ -96,6 +96,9 @@
   decimal. Por lo mismo, las variables del DANE con montos (`P6500`, `P7070`, los de Otros ingresos…) y `DIRECTORIO`
   quedaban como texto, y otras salían divididas por mil (el año de nacimiento `P6030S3` era 1,989). Ahora se leen
   bien, y ese mes ya se guarda en la caché, en vez de volver a leerse de los CSV en cada carga.
+* En la GEIH desde 2024, `P3373S3`, `P3382S3` y `P3384S3` (el país de nacimiento y de residencia) quedaban como texto,
+  porque casi todas sus celdas traen `"."`, la marca de vacío de Stata. Ahora son numéricas, con esas celdas vacías.
+  Las variables armonizadas de lugar no cambian.
 
 ## 0.6.0 (20 de noviembre de 2026)
 
