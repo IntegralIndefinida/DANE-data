@@ -35,7 +35,7 @@ Changelog = "https://github.com/IntegralIndefinida/DANE-data/releases"
 
 [project.optional-dependencies]
 app = ["streamlit>=1.52", "plotly>=5.18", "openpyxl>=3.1"]
-dev = ["pytest>=7"]
+dev = ["pytest>=7", "ruff>=0.15"]
 docs = [
     "sphinx>=8",
     "pydata-sphinx-theme>=0.16",
@@ -56,3 +56,18 @@ dane_data = ["data/*.json", "data/*.parquet", "app/*.py", "app/*.svg", "app/pagi
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.ruff]
+# PEP 8 permite hasta 99 caracteres si el proyecto lo acuerda; 79 partía las tablas de códigos
+# del DANE.
+line-length = 99
+target-version = "py310"
+# Los notebooks se publican con sus salidas guardadas, y los ejemplos de los .md alinean a mano
+# sus comentarios: el formateador no los toca.
+extend-exclude = ["*.ipynb", "*.md"]
+
+[tool.ruff.lint]
+select = ["E", "W", "N"]
+
+[tool.ruff.format]
+docstring-code-format = true
