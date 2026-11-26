@@ -162,6 +162,21 @@ def test_texto_que_se_pierde_al_convertir_se_avisa(tmp_path, caplog):
     assert "2016/Enero/Ocupados.csv: CODIGO" in caplog.text and "'A1'" in caplog.text
 
 
+def test_coma_de_miles_y_punto_decimal(tmp_path):
+    """GEIH de noviembre de 2021: coma de miles y punto decimal en el mismo archivo."""
+    from dane_data._io import read_table
+
+    archivo = tmp_path / "Ocupados.CSV"
+    archivo.write_text("DIRECTORIO;P6030S3;P6120;P7500S1A1;FEX_C_2011\n"
+                       "6,000,013;1,971;96,000;98;1030.3000973\n6,000,014;1,989;;1,200,000;99.5\n", encoding="latin-1")
+    df = read_table(archivo)
+    assert df["DIRECTORIO"].tolist() == [6000013, 6000014]
+    assert df["P6030S3"].tolist() == [1971, 1989]
+    assert df["P6120"][0] == 96000 and pd.isna(df["P6120"][1])
+    assert df["P7500S1A1"].tolist() == [98, 1200000]
+    assert df["FEX_C_2011"].tolist() == [1030.3000973, 99.5]
+
+
 def test_coma_decimal_minoritaria_no_se_pierde(tmp_path):
     """EAM 1998: casi todo entero, pero las plantas anonimizadas por promedio traen coma decimal."""
     filas = [f"{i};{i};5;3111;1998;100;60;40;10;8;10;2" for i in range(1, 301)]

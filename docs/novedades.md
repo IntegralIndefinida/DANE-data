@@ -91,6 +91,11 @@
   vacías como `1.79769313486232e+308`. Ahora se leen como vacías. Los promedios de ingreso de 2017 salían infinitos, y
   las medianas y los porcentajes por salarios mínimos contaban a esas personas como si ganaran más que todas. Como cambia la lectura, la caché de
   cada mes se rehace una vez.
+* En la GEIH de noviembre de 2021, `ingreso_no_laboral` salía en 0 para casi todos (12 personas con ingreso, frente a
+  unas 12.000 en los demás meses): los CSV de ese mes usan la coma para los miles (`1,200,000`) y se leía como coma
+  decimal. Por lo mismo, las variables del DANE con montos (`P6500`, `P7070`, los de Otros ingresos…) y `DIRECTORIO`
+  quedaban como texto, y otras salían divididas por mil (el año de nacimiento `P6030S3` era 1,989). Ahora se leen
+  bien, y ese mes ya se guarda en la caché, en vez de volver a leerse de los CSV en cada carga.
 
 ## 0.6.0 (20 de noviembre de 2026)
 

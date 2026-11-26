@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import io
 import logging
+import re
 from pathlib import Path
 from typing import Callable, Iterable
 
@@ -40,10 +41,11 @@ def sniff(path: Path) -> tuple[str, str]:
     return sep, encoding
 
 
-def _coerce_numeric(df: pd.DataFrame, origen: str | None = None) -> pd.DataFrame:
+def _coerce_numeric(df: pd.DataFrame, origen: str | None = None, miles: bool = False) -> pd.DataFrame:
     """
     Convierte a número las columnas de texto que en realidad son numéricas:
-    celdas en blanco escritas como ``" "`` y coma decimal (``"71,22"``).
+    celdas en blanco escritas como ``" "`` y coma decimal (``"71,22"``), o coma de miles si ``miles``
+    (``"6,000,013"``, ver ``_coma_de_miles``).
 
     Una columna con hasta 1 % de valores de texto se convierte igual; esos valores quedan vacíos y se
     avisa en el registro (``origen`` es el archivo, para el mensaje).
@@ -62,7 +64,7 @@ def _coerce_numeric(df: pd.DataFrame, origen: str | None = None) -> pd.DataFrame
         # coma decimal ("83779570,6666667"); decidir con una muestra las volvía NaN.
         # Si la columna es texto genuino, la conversión de abajo falla y no se toca.
         if s.str.contains(",", regex=False).any():
-            s = s.str.replace(",", ".", regex=False)
+            s = s.str.replace(",", "" if miles else ".", regex=False)
         converted = pd.to_numeric(s, errors="coerce").astype("float64")
         # Solo si no se pierden datos (texto genuino se deja como está)
         if converted.notna().sum() >= nonnull * 0.99:
@@ -163,13 +165,27 @@ def columnas(path: Path, case: str = "upper") -> list[str]:
 _VACIO_DBL_MAX = "1.79769313486232e+308"
 
 
+def _coma_de_miles(path: Path, sep: str) -> bool:
+    """
+    Si el archivo usa la coma para los miles y el punto para los decimales, como la GEIH de noviembre de 2021
+    (``6,000,013``, ``1030.3000973``; ver README, "Diferencias con la documentación del DANE"). Lo delata un número
+    con dos o más grupos ``,ddd``: la coma decimal de los demás archivos nunca se ve así.
+    """
+    if sep == ",":
+        return False
+    with open(path, "rb") as fh:
+        muestra = fh.read(64_000).decode("latin-1")
+    s = re.escape(sep)
+    return re.search(rf"(?:^|{s})-?\d{{1,3}}(?:,\d{{3}}){{2,}}(?:\.\d+)?(?={s}|\r?$)", muestra, re.M) is not None
+
+
 def read_table(
     path: Path,
     columns: Iterable[str] | Callable[[str], bool] | None = None,
     case: str = "upper",
 ) -> pd.DataFrame:
     """
-    Lee un CSV/TXT del DANE detectando separador, codificación y coma decimal.
+    Lee un CSV/TXT del DANE detectando separador, codificación y coma decimal (o de miles).
     También lee Stata (``.dta``), el formato que se usa cuando el CSV del ANDA está dañado.
 
     ``columns`` puede ser una lista de nombres (en cualquier mayúscula/minúscula)
@@ -204,4 +220,4 @@ def read_table(
         df = pd.read_csv(path, encoding="latin-1", **kwargs)
     df.columns = normalize_columns(df.columns, case)
     df = df.loc[:, ~df.columns.duplicated()]
-    return _coerce_numeric(df, "/".join(path.parts[-3:]))
+    return _coerce_numeric(df, "/".join(path.parts[-3:]), miles=_coma_de_miles(path, sep))
