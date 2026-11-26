@@ -348,17 +348,26 @@ def test_cli_descargar_geih_y_eam(descargador_falso, tmp_path):
     assert cli_main(["descargar", "geih", "--anios", "2024", "2025", "--modulos", "ocupados",
                      "--empalme", "--limite", "1", "--borrar-zips"]) == 0
     # fmt: on
-    dl = descargador_falso[-1]
-    assert dl.anios == [2024, 2025] and dl.extra == {"limit_files": 1}
-    assert dl.kw["base_dir"] == tmp_path / "e"  # empalme: su propia carpeta
-    assert dl.kw["modules"] == ["ocupados"] and dl.kw["is_empalme"] and not dl.kw["keep_zips"]
+    descargador = descargador_falso[-1]
+    assert descargador.anios == [2024, 2025] and descargador.extra == {"limit_files": 1}
+    assert descargador.kw["base_dir"] == tmp_path / "e"  # empalme: su propia carpeta
+    assert (
+        descargador.kw["modules"] == ["ocupados"]
+        and descargador.kw["is_empalme"]
+        and not descargador.kw["keep_zips"]
+    )
 
     assert cli_main(["descargar", "eam", "--tic"]) == 0
-    dl = descargador_falso[-1]
-    assert dl.anios is None and dl.kw["include_tic"] and dl.kw["keep_zips"] and not dl.kw["forzar"]
+    descargador = descargador_falso[-1]
+    assert (
+        descargador.anios is None
+        and descargador.kw["include_tic"]
+        and descargador.kw["keep_zips"]
+        and not descargador.kw["forzar"]
+    )
     assert cli_main(["descargar", "eam", "--forzar"]) == 0
     assert descargador_falso[-1].kw["forzar"]
-    assert dl.kw["base_dir"] == tmp_path / "eam"
+    assert descargador.kw["base_dir"] == tmp_path / "eam"
 
 
 def test_download_expande_la_carpeta_personal(descargador_falso, monkeypatch, tmp_path):

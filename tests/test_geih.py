@@ -1193,28 +1193,33 @@ def test_real_serie_mensual_sin_saltos(empalme):
     cambio de más de 1 % delata un factor de expansión dañado o una PET con otra definición.
     """
     root, av = _disponibles_reales(empalme)
-    m = dd.geih.serie_indicadores(
+    serie = dd.geih.serie_indicadores(
         sorted(av.anio.unique()), anual=False, empalme=empalme, raiz=root
     )
 
     problemas = []
     faltan = set(zip(av.loc[av.completo, "anio"], av.loc[av.completo, "mes"])) - set(
-        zip(m.anio, m.mes)
+        zip(serie.anio, serie.mes)
     )
     problemas += [
         f"{a}-{ms:02d}: mes completo en disco sin filas en la serie" for a, ms in sorted(faltan)
     ]
-    validos = (m["pet"] > 0) & m[["td", "tgp", "to"]].notna().all(axis=1)
+    validos = (serie["pet"] > 0) & serie[["td", "tgp", "to"]].notna().all(axis=1)
     problemas += [
         f"{a}-{ms:02d}: sin población expandida o tasas vacías (¿fex dañado?)"
-        for a, ms in zip(m.loc[~validos, "anio"], m.loc[~validos, "mes"])
+        for a, ms in zip(serie.loc[~validos, "anio"], serie.loc[~validos, "mes"])
     ]
 
-    m = m[validos].sort_values(["anio", "mes"]).reset_index(drop=True)
-    indice = m["anio"] * 12 + m["mes"]
+    serie = serie[validos].sort_values(["anio", "mes"]).reset_index(drop=True)
+    indice = serie["anio"] * 12 + serie["mes"]
     seguidos = indice.diff() == 1  # solo meses consecutivos: tras un hueco no se compara
-    for i in m.index[seguidos]:
-        a, ms, antes, ahora = int(m.at[i, "anio"]), int(m.at[i, "mes"]), m.loc[i - 1], m.loc[i]
+    for i in serie.index[seguidos]:
+        a, ms, antes, ahora = (
+            int(serie.at[i, "anio"]),
+            int(serie.at[i, "mes"]),
+            serie.loc[i - 1],
+            serie.loc[i],
+        )
         cambio_pet = 100 * (ahora["pet"] / antes["pet"] - 1)
         if abs(cambio_pet) > 1 and (a, ms) not in QUIEBRES_PET[empalme]:
             problemas.append(f"{a}-{ms:02d}: la PET cambia {cambio_pet:+.1f} %")

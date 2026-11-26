@@ -269,20 +269,24 @@ def test_nacimientos(eevv_root):
     d = dd.eevv.load([1998, 2025], tipo="nacimientos", raiz=eevv_root)
     assert set(d.columns) == set(dd.eevv.ETIQUETAS["nacimientos"])
     a = d[d.anio == 1998].set_index("sexo")
-    h, m = a.loc["Hombre"], a.loc["Mujer"]
-    assert h["peso_grupo"] == "2.000 a 2.499" and bool(h["bajo_peso"]) and not m["bajo_peso"]
+    nino, nina = a.loc["Hombre"], a.loc["Mujer"]
     assert (
-        h["edad_madre"] == "De 15 a 19 años"
-        and bool(h["madre_adolescente"])
-        and not m["madre_adolescente"]
+        nino["peso_grupo"] == "2.000 a 2.499" and bool(nino["bajo_peso"]) and not nina["bajo_peso"]
     )
-    assert bool(h["cesarea"]) and not m["cesarea"]
-    assert not h["parto_multiple"] and bool(m["parto_multiple"])
-    assert h["consultas"] == 3 and pd.isna(m["consultas"])
-    assert h["edad_padre"] == 25 and pd.isna(m["edad_padre"])
-    assert pd.isna(m["hijos_nacidos_vivos"]) and h["hijos_nacidos_vivos"] == 1
-    assert h["nivel_educativo_madre"] == "Primaria" and m["nivel_educativo_madre"] == "Ninguno"
-    assert h["gestacion_grupo"] == "De 38 a 41"
+    assert (
+        nino["edad_madre"] == "De 15 a 19 años"
+        and bool(nino["madre_adolescente"])
+        and not nina["madre_adolescente"]
+    )
+    assert bool(nino["cesarea"]) and not nina["cesarea"]
+    assert not nino["parto_multiple"] and bool(nina["parto_multiple"])
+    assert nino["consultas"] == 3 and pd.isna(nina["consultas"])
+    assert nino["edad_padre"] == 25 and pd.isna(nina["edad_padre"])
+    assert pd.isna(nina["hijos_nacidos_vivos"]) and nino["hijos_nacidos_vivos"] == 1
+    assert (
+        nino["nivel_educativo_madre"] == "Primaria" and nina["nivel_educativo_madre"] == "Ninguno"
+    )
+    assert nino["gestacion_grupo"] == "De 38 a 41"
     assert d[d.anio == 1998]["prematuro"].isna().all()  # no existe antes de 2008
 
     b = d[d.anio == 2025].set_index("sexo")
@@ -540,30 +544,30 @@ def _poblacion(anio, **kw):
 
 
 def test_tasas_a_mano(eevv_root, cache):
-    r = dd.eevv.tasas(2025, raiz=eevv_root).iloc[0]
+    tasas = dd.eevv.tasas(2025, raiz=eevv_root).iloc[0]
     pob = _poblacion(2025)
-    assert r["poblacion"] == pob
-    assert (r["nacimientos"], r["defunciones"], r["fetales"]) == (3, 3, 1)
-    assert r["tasa_natalidad"] == pytest.approx(1000 * 3 / pob)
-    assert r["tasa_mortalidad"] == pytest.approx(1000 * 3 / pob)
-    assert r["defunciones_menores_1"] == 1
-    assert r["mortalidad_infantil"] == pytest.approx(1000 * 1 / 3)
-    assert r["defunciones_maternas"] == 1
-    assert r["razon_mortalidad_materna"] == pytest.approx(100_000 * 1 / 3)
+    assert tasas["poblacion"] == pob
+    assert (tasas["nacimientos"], tasas["defunciones"], tasas["fetales"]) == (3, 3, 1)
+    assert tasas["tasa_natalidad"] == pytest.approx(1000 * 3 / pob)
+    assert tasas["tasa_mortalidad"] == pytest.approx(1000 * 3 / pob)
+    assert tasas["defunciones_menores_1"] == 1
+    assert tasas["mortalidad_infantil"] == pytest.approx(1000 * 1 / 3)
+    assert tasas["defunciones_maternas"] == 1
+    assert tasas["razon_mortalidad_materna"] == pytest.approx(100_000 * 1 / 3)
     # El fetal de 2025 tiene de 38 a 41 semanas: es mortinato. La defunción de menos de un día es
     # neonatal precoz.
     assert (
-        r["mortinatos"],
-        r["defunciones_neonatales"],
-        r["defunciones_neonatales_precoces"],
+        tasas["mortinatos"],
+        tasas["defunciones_neonatales"],
+        tasas["defunciones_neonatales_precoces"],
     ) == (1, 1, 1)
-    assert r["mortalidad_neonatal"] == pytest.approx(1000 * 1 / 3)
-    assert r["mortalidad_perinatal"] == pytest.approx(1000 * (1 + 1) / (3 + 1))
+    assert tasas["mortalidad_neonatal"] == pytest.approx(1000 * 1 / 3)
+    assert tasas["mortalidad_perinatal"] == pytest.approx(1000 * (1 + 1) / (3 + 1))
     # Una madre de 25–29 y otra de 15–19; la que no tiene edad no entra. Los demás grupos fértiles
     # valen 0.
     mujeres_15 = _poblacion(2025, sexo="Mujer", edades=(15, 19))
     mujeres_25 = _poblacion(2025, sexo="Mujer", edades=(25, 29))
-    assert r["tasa_global_fecundidad"] == pytest.approx(5 * (1 / mujeres_15 + 1 / mujeres_25))
+    assert tasas["tasa_global_fecundidad"] == pytest.approx(5 * (1 / mujeres_15 + 1 / mujeres_25))
 
 
 def test_tasas_por_departamento_usa_la_residencia(eevv_root, cache):

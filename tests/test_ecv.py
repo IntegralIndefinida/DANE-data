@@ -489,23 +489,27 @@ def test_umbral_y_agregados_del_ipm():
         P8587S1=5,
         P4015=7,
     )
-    h = dd.ecv.privaciones(pd.concat([pobre, casi, lejos], ignore_index=True))
-    assert h.pobre.tolist() == [True, False, True]
-    assert h.puntaje.round(2).tolist() == [0.34, 0.3, 0.34] and h.personas.tolist() == [1, 1, 2]
-    r = dd.ecv.ipm(h).iloc[0]  # nacional: sin lo rural de Vaupés
+    hogares = dd.ecv.privaciones(pd.concat([pobre, casi, lejos], ignore_index=True))
+    assert hogares.pobre.tolist() == [True, False, True]
+    assert hogares.puntaje.round(2).tolist() == [
+        0.34,
+        0.3,
+        0.34,
+    ] and hogares.personas.tolist() == [1, 1, 2]
+    r = dd.ecv.ipm(hogares).iloc[0]  # nacional: sin lo rural de Vaupés
     assert (r.personas, r.personas_pobres, r.incidencia) == (20, 10, 50)
     assert r.intensidad == pytest.approx(34) and r.ipm == pytest.approx(0.17)
     # Privaciones: % de hogares
     assert r.hogares == 20 and r.pct_pisos == 50 and r.pct_aseguramiento_salud == 100
-    assert h.region_ipm.tolist() == [
+    assert hogares.region_ipm.tolist() == [
         "Bogotá (cabecera)",
         "Bogotá (cabecera)",
         "Orinoquía-Amazonía",
     ]
     # Por región, toda la muestra (Vaupés rural)
-    assert dd.ecv.ipm(h, por="region_ipm").personas.tolist() == [10, 20]
-    assert dd.ecv.ipm(h, muestra="completa").personas.tolist() == [30]
-    por_dpto = dd.ecv.ipm(h, por="departamento")  # con departamento, toda la muestra
+    assert dd.ecv.ipm(hogares, por="region_ipm").personas.tolist() == [10, 20]
+    assert dd.ecv.ipm(hogares, muestra="completa").personas.tolist() == [30]
+    por_dpto = dd.ecv.ipm(hogares, por="departamento")  # con departamento, toda la muestra
     assert por_dpto.set_index("departamento").incidencia.to_dict() == {
         "Bogotá D.C.": 50,
         "Vaupés": 100,
@@ -514,7 +518,7 @@ def test_umbral_y_agregados_del_ipm():
         pd.concat([pobre, casi], ignore_index=True), por="sexo_jefe"
     ).sexo_jefe.tolist() == ["Mujer"]
     with pytest.raises(ValueError, match="Muestra desconocida"):
-        dd.ecv.ipm(h, muestra="rural")
+        dd.ecv.ipm(hogares, muestra="rural")
     with pytest.warns(UserWarning, match="base complementaria"):
         dd.ecv.privaciones(pobre.assign(anio=2020))
     with pytest.raises(ValueError, match="MODULOS_IPM"):
