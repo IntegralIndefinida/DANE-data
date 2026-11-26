@@ -1,33 +1,14 @@
 # Novedades
 
-## Sin publicar
+## 0.6.0 (25 de noviembre de 2026)
 
-**Novedades**
-
-* `dd.geih.ETIQUETAS` dice qué es cada variable armonizada de la GEIH, como en las demás encuestas, y
-  `dd.eam.ETIQUETAS` ahora también describe las armonizadas de la EAM (`ciiu`, `sector`, `microagregado`…).
-* {dd}`buscar_variable()` también encuentra las variables armonizadas (`fex`, `condicion`, `ingreso_laboral`…), que
-  salen primero, y trae dos columnas nuevas: `origen` (`"dane-data"` o `"DANE"`) y `ddi`, el año del diccionario del
-  DANE de donde sale cada variable (`"armonizada"` en las de `dane-data`). Antes `dd.buscar_variable("fex")` solo encontraba `FEX_C18`, que existe desde 2022,
-  y no `fex`, el factor de expansión de todos los años. En la app, la página *Diccionario de variables* las muestra en la
-  misma tabla.
-* {dd}`eam.indicadores()` es otro nombre de {dd}`eam.resumen()`, como `dd.<encuesta>.indicadores(df)` en las demás
-  encuestas: antes `dd.eam.indicadores(df)` fallaba con `'module' object is not callable`.
-* La EAM se compara con las cifras del DANE, como las demás encuestas: los totales nacionales de 1992–2011 y 2015–2024
-  coinciden con la serie histórica y los anexos. En 2004–2014 `pertotal` cuenta a los aprendices de la Ley 789 de 2002,
-  que el DANE dejó fuera del total que publicó esos años (desde 2015 los incluye), y `pertem3` no cuenta a todos los
-  temporales directos en 2003–2019. Esto y lo que sigue sin explicar (los montos de 2011, los establecimientos de 1992)
-  está en {doc}`guia/diferencias`; las etiquetas de `pertotal` y `pertem3` lo dicen.
-* {doc}`guia/diferencias` explica que desde 2022 `P6050` (parentesco con el jefe) tiene 13 códigos, los del
-  cuestionario, y no los 9 del diccionario del DANE: por ejemplo, el nieto pasó del 4 al 8. `jefe_hogar` no cambia.
-
-**Cambios**
+**Al actualizar**
 
 * Los parámetros de toda la API pública se llaman igual en todas las encuestas, en español salvo `years`. Antes se
   mezclaban (`dd.geih.load(years, months, columns, modules)` frente a `dd.geih.serie_indicadores(anios, meses)`; la
   GEIH pedía `modules` y la EMICRON y la ECV, `modulos`), así que `dd.geih.load(meses=1)` o
   `dd.geih.serie_indicadores(years=2024)` daban error. Los nombres de las funciones no cambian. **Los nombres de antes
-  ya no se aceptan**: el código escrito para 0.6.0 que los use con nombre (`months=[1, 2, 3]`) da `TypeError` y hay que
+  ya no se aceptan**: el código escrito para 0.5.0 que los use con nombre (`months=[1, 2, 3]`) da `TypeError` y hay que
   cambiarlo; pasados por posición (`dd.geih.load(2025, [1, 2, 3])`) siguen funcionando.
 
   | Antes | Ahora | Dónde |
@@ -49,6 +30,61 @@
   | `on` | `llaves` | {dd}`eam.deflactar()` |
 
   El «código Python equivalente» de la aplicación ya usa los nombres nuevos.
+
+**Nuevo**
+
+* {doc}`Micronegocios <guia/emicron>` con `dd.emicron`: la Encuesta de Micronegocios (EMICRON, 2019–2025), los negocios de
+  hasta 9 personas ocupadas de los dueños que encuentra la GEIH. {dd}`emicron.download()` baja los módulos del ANDA,
+  {dd}`emicron.load()` los une en una fila por micronegocio con las variables armonizadas y el factor de la serie vigente,
+  y {dd}`emicron.indicadores()` da el cuadro I.1 del DANE (micronegocios, personal ocupado, ventas, valor agregado,
+  ingreso mixto) y la informalidad empresarial (RUT, Cámara de Comercio, salud y pensión). Comprobada contra 8 507 cifras
+  de los anexos. {dd}`emicron.load_personal()` carga el detalle de los trabajadores, socios y familiares.
+* El diccionario de la EMICRON en {dd}`diccionario()`, {dd}`buscar_variable()` y {dd}`describir()`
+  (`encuesta="emicron"`) y en la página de diccionario de la aplicación.
+* La EMICRON en la aplicación: una página nueva, *Micronegocios*, con el total nacional (2019–2024) o las 24 ciudades
+  (2019–2025), y en Descargar, Inicio y Cómo citar. También en la terminal: `dane-data descargar emicron`,
+  `dane-data config --emicron`.
+* {dd}`set_paths()` acepta `emicron=` y `ecv=`.
+* `dd.ecv`: la **Encuesta Nacional de Calidad de Vida** 2018–2025 (vea {doc}`guia/ecv`). {dd}`ecv.download()` baja del ANDA
+  los once capítulos del cuestionario de cada año y, en 2018, los factores de expansión del CNPV 2018; {dd}`ecv.load()` los
+  une en una fila por persona o por hogar, con variables armonizadas en minúscula; {dd}`ecv.indicadores()` y
+  {dd}`ecv.serie_indicadores()` dan los 27 indicadores de la serie del DANE, iguales a los publicados.
+* El **Índice de Pobreza Multidimensional**: {dd}`ecv.privaciones()`, {dd}`ecv.ipm()` y {dd}`ecv.serie_ipm()`. Reproduce la base
+  oficial del DANE hogar por hogar, salvo 5, 25 y 3 de unos 89.000 hogares en 2020, 2021 y 2022 (IPM 2025: 9,9 % y
+  0,040; 2020, con la base complementaria de estudio en casa, 18,1 %).
+* La ECV en la aplicación (página *Calidad de vida y pobreza*, Descargar datos, Inicio, Diccionario y Cómo citar), en la
+  línea de comandos (`dane-data descargar ecv`, `dane-data config --ecv`) y en {dd}`diccionario()` (`"ecv"`).
+* {doc}`Pobreza monetaria <guia/pobreza>` con `dd.pobreza`: los microdatos de la Medición de Pobreza Monetaria y Desigualdad
+  2012–2025, con el ingreso per cápita de la unidad de gasto, las líneas de pobreza y quién es pobre, ya calculados por el
+  DANE. {dd}`pobreza.download()`, {dd}`pobreza.load()` y `dane-data descargar pobreza`.
+* `empalme=True` reproduce la serie empalmada del DANE, comparable en 2012–2025: el factor de empalme al marco 2018, las
+  líneas actualizadas de 2012–2018 y el ingreso empalmado de 2021.
+* {dd}`pobreza.indicadores()` y {dd}`pobreza.serie_indicadores()`: incidencia, brecha y severidad de la pobreza y la pobreza
+  extrema, Gini e ingreso per cápita, nacional, por dominio y, con `departamental=True`, por departamento. Coinciden con los
+  anexos del DANE.
+* {dd}`pobreza.unir_geih()` pega a cada persona de la GEIH la pobreza de su hogar.
+* La aplicación tiene una página *Pobreza monetaria*, con la serie empalmada y las cifras departamentales, y la pobreza en *Descargar datos* e *Inicio*.
+* {dd}`weighted_gini()`: el coeficiente de Gini ponderado.
+* {dd}`set_paths()` acepta `pobreza=` y `dane-data config` acepta `--pobreza`.
+* `dd.geih.ETIQUETAS` dice qué es cada variable armonizada de la GEIH, como en las demás encuestas, y
+  `dd.eam.ETIQUETAS` ahora también describe las armonizadas de la EAM (`ciiu`, `sector`, `microagregado`…).
+* {dd}`buscar_variable()` también encuentra las variables armonizadas (`fex`, `condicion`, `ingreso_laboral`…), que
+  salen primero, y trae dos columnas nuevas: `origen` (`"dane-data"` o `"DANE"`) y `ddi`, el año del diccionario del
+  DANE de donde sale cada variable (`"armonizada"` en las de `dane-data`). Antes `dd.buscar_variable("fex")` solo encontraba `FEX_C18`, que existe desde 2022,
+  y no `fex`, el factor de expansión de todos los años. En la app, la página *Diccionario de variables* las muestra en la
+  misma tabla.
+* {dd}`eam.indicadores()` es otro nombre de {dd}`eam.resumen()`, como `dd.<encuesta>.indicadores(df)` en las demás
+  encuestas: antes `dd.eam.indicadores(df)` fallaba con `'module' object is not callable`.
+* La EAM se compara con las cifras del DANE, como las demás encuestas: los totales nacionales de 1992–2011 y 2015–2024
+  coinciden con la serie histórica y los anexos. En 2004–2014 `pertotal` cuenta a los aprendices de la Ley 789 de 2002,
+  que el DANE dejó fuera del total que publicó esos años (desde 2015 los incluye), y `pertem3` no cuenta a todos los
+  temporales directos en 2003–2019. Esto y lo que sigue sin explicar (los montos de 2011, los establecimientos de 1992)
+  está en {doc}`guia/diferencias`; las etiquetas de `pertotal` y `pertem3` lo dicen.
+* {doc}`guia/diferencias` explica que desde 2022 `P6050` (parentesco con el jefe) tiene 13 códigos, los del
+  cuestionario, y no los 9 del diccionario del DANE: por ejemplo, el nieto pasó del 4 al 8. `jefe_hogar` no cambia.
+
+**Cambios**
+
 * Los avisos de `dane-data` apuntan siempre a la línea del código de quien llama a la función, no a una línea de la
   librería.
 * {dd}`geih.indicadores()` deja fuera por defecto a quien no tiene valor en la variable de `por` (`dropna=True`), como
@@ -58,6 +94,13 @@
   en inglés. `dane-data` sin subcomando muestra la ayuda en vez de un error; `--modulos` con un módulo que no es de la
   encuesta dice cuáles sí son (antes mezclaba los 29 de la GEIH, la EMICRON y la ECV), y `dane-data estado` sin ningún
   dato dice cómo empezar.
+
+**Mejoras**
+
+* {dd}`tabla()` deja fuera las filas con el peso vacío, con un aviso que dice cuántas y de qué años, en vez de sumarlas
+  como cero y contarlas en `n_muestra`. Si ninguna fila tiene peso, es un error.
+* Las descargas del ANDA leen los ZIP comprimidos en Deflate64 (Educación 2021 de la ECV), con la dependencia nueva
+  `inflate64`.
 
 **Correcciones**
 
@@ -111,51 +154,6 @@
   telefónico): nueve de cada diez ocupados no respondieron, y la cobertura salía en 3 % y 4 %. Ahora sale en 14 % y
   19 %, pero solo con el 10 % que respondió, así que esos dos meses no son representativos. En un mes normal cambia
   poco (en junio de 2015, de 35,3 % a 36,2 %).
-
-## 0.6.0 (20 de noviembre de 2026)
-
-**Nuevo**
-
-* {doc}`Micronegocios <guia/emicron>` con `dd.emicron`: la Encuesta de Micronegocios (EMICRON, 2019–2025), los negocios de
-  hasta 9 personas ocupadas de los dueños que encuentra la GEIH. {dd}`emicron.download()` baja los módulos del ANDA,
-  {dd}`emicron.load()` los une en una fila por micronegocio con las variables armonizadas y el factor de la serie vigente,
-  y {dd}`emicron.indicadores()` da el cuadro I.1 del DANE (micronegocios, personal ocupado, ventas, valor agregado,
-  ingreso mixto) y la informalidad empresarial (RUT, Cámara de Comercio, salud y pensión). Comprobada contra 8 507 cifras
-  de los anexos. {dd}`emicron.load_personal()` carga el detalle de los trabajadores, socios y familiares.
-* El diccionario de la EMICRON en {dd}`diccionario()`, {dd}`buscar_variable()` y {dd}`describir()`
-  (`encuesta="emicron"`) y en la página de diccionario de la aplicación.
-* La EMICRON en la aplicación: una página nueva, *Micronegocios*, con el total nacional (2019–2024) o las 24 ciudades
-  (2019–2025), y en Descargar, Inicio y Cómo citar. También en la terminal: `dane-data descargar emicron`,
-  `dane-data config --emicron`.
-* {dd}`set_paths()` acepta `emicron=` y `ecv=`.
-* `dd.ecv`: la **Encuesta Nacional de Calidad de Vida** 2018–2025 (vea {doc}`guia/ecv`). {dd}`ecv.download()` baja del ANDA
-  los once capítulos del cuestionario de cada año y, en 2018, los factores de expansión del CNPV 2018; {dd}`ecv.load()` los
-  une en una fila por persona o por hogar, con variables armonizadas en minúscula; {dd}`ecv.indicadores()` y
-  {dd}`ecv.serie_indicadores()` dan los 27 indicadores de la serie del DANE, iguales a los publicados.
-* El **Índice de Pobreza Multidimensional**: {dd}`ecv.privaciones()`, {dd}`ecv.ipm()` y {dd}`ecv.serie_ipm()`. Reproduce la base
-  oficial del DANE hogar por hogar, salvo 5, 25 y 3 de unos 89.000 hogares en 2020, 2021 y 2022 (IPM 2025: 9,9 % y
-  0,040; 2020, con la base complementaria de estudio en casa, 18,1 %).
-* La ECV en la aplicación (página *Calidad de vida y pobreza*, Descargar datos, Inicio, Diccionario y Cómo citar), en la
-  línea de comandos (`dane-data descargar ecv`, `dane-data config --ecv`) y en {dd}`diccionario()` (`"ecv"`).
-* {doc}`Pobreza monetaria <guia/pobreza>` con `dd.pobreza`: los microdatos de la Medición de Pobreza Monetaria y Desigualdad
-  2012–2025, con el ingreso per cápita de la unidad de gasto, las líneas de pobreza y quién es pobre, ya calculados por el
-  DANE. {dd}`pobreza.download()`, {dd}`pobreza.load()` y `dane-data descargar pobreza`.
-* `empalme=True` reproduce la serie empalmada del DANE, comparable en 2012–2025: el factor de empalme al marco 2018, las
-  líneas actualizadas de 2012–2018 y el ingreso empalmado de 2021.
-* {dd}`pobreza.indicadores()` y {dd}`pobreza.serie_indicadores()`: incidencia, brecha y severidad de la pobreza y la pobreza
-  extrema, Gini e ingreso per cápita, nacional, por dominio y, con `departamental=True`, por departamento. Coinciden con los
-  anexos del DANE.
-* {dd}`pobreza.unir_geih()` pega a cada persona de la GEIH la pobreza de su hogar.
-* La aplicación tiene una página *Pobreza monetaria*, con la serie empalmada y las cifras departamentales, y la pobreza en *Descargar datos* e *Inicio*.
-* {dd}`weighted_gini()`: el coeficiente de Gini ponderado.
-* {dd}`set_paths()` acepta `pobreza=` y `dane-data config` acepta `--pobreza`.
-
-**Mejoras**
-
-* {dd}`tabla()` deja fuera las filas con el peso vacío, con un aviso que dice cuántas y de qué años, en vez de sumarlas
-  como cero y contarlas en `n_muestra`. Si ninguna fila tiene peso, es un error.
-* Las descargas del ANDA leen los ZIP comprimidos en Deflate64 (Educación 2021 de la ECV), con la dependencia nueva
-  `inflate64`.
 
 ## 0.5.0 (9 de noviembre de 2026)
 
