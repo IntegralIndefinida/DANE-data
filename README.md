@@ -21,7 +21,8 @@ Dos formas de usarlo:
 
 Ambas usan el mismo motor: descargan del ANDA del DANE, unen los módulos, armonizan las variables
 entre épocas (nombres, separadores, coma decimal, factores de expansión, revisiones CIIU) y calculan
-indicadores ponderados como lo hace el DANE.
+indicadores ponderados como lo hace el DANE
+([lo que resuelve](https://integralindefinida.github.io/DANE-data/guia/encuestas.html#lo-que-dane-data-resuelve-por-usted)).
 
 ## Instalación de la app
 
@@ -180,33 +181,6 @@ son las originales del DANE. La guía explica cada una: las de la
 [EMICRON](https://integralindefinida.github.io/DANE-data/guia/emicron.html), la
 [ECV](https://integralindefinida.github.io/DANE-data/guia/ecv.html) y la
 [pobreza monetaria](https://integralindefinida.github.io/DANE-data/guia/pobreza.html).
-
-### Lo que `dane-data` resuelve por usted
-
-| Problema en los archivos del DANE | Solución |
-|---|---|
-| 2007–2021: cada módulo partido en Área / Cabecera / Resto | Nacional = Cabecera + Resto (Área es un subconjunto de Cabecera) |
-| Separadores `;` `,` `\t`, UTF-8 / Latin-1, coma decimal, blancos `" "` | Detección automática; columnas numéricas quedan numéricas |
-| Factor de expansión `FEX_C_2011` / `FEX_C` / `FEX_C18` | Unificado en `fex` |
-| Sexo en `P6020` o `P3271`, educación en `P6210` o `P3042`, rama en `RAMA2D` o `RAMA2D_R4` | Unificados fila a fila (sirve al juntar años de distintas épocas) |
-| 2007 sin marcas `OCI`/`DSI`; 2020 y empalme con marcas en Características | La condición se deduce del módulo en que aparece cada persona |
-| Archivos en subcarpetas (`CSV 13/No ocupados.CSV`) | Búsqueda recursiva |
-| Nombres con erratas: «Deocupados» (2013), «Desoucpados», «Inativos» (octubre de 2020; septiembre en el empalme), «Fuerzo de trabajo» (noviembre de 2020) | Se reconocen igual |
-| Meses a los que les falta un módulo | Se omiten con aviso (si no, el desempleo saldría 0 %); `incluir_incompletos=True` los carga |
-| Marzo–julio de 2020 sin Vivienda, Otras actividades, Otros ingresos ni (serie principal) Desocupados e Inactivos: formulario telefónico | Se cargan con un aviso: las variables de esos módulos quedan vacías en esos meses |
-| Varios meses juntos | Niveles = promedio mensual, como el DANE |
-| EAM: `CIIU2N4`, `ciiu2`, `CIIU`, `ciiu3`, `ciiu4`, `ciiu_4`, códigos a 2–3 dígitos | `ciiu`, `ciiu_rev`, `division`, `sector` |
-| EAM: valores reemplazados por el promedio de un grupo de establecimientos | Marcados en `microagregado`; `dd.eam.panel(..., excluir_microagregados=True)` |
-| EMICRON: un ZIP por módulo y año; factor de 2019–2021 en un archivo aparte | Módulos unidos por la clave; `fex` es el factor de la serie vigente en todos los años |
-| EMICRON: la clave del módulo de personal ocupado con los nombres corridos | `load_personal` la corrige |
-
-Las cargas de la GEIH se guardan en caché (`~/.cache/dane_data`, parquet): un año completo tarda ~6 s la
-primera vez y ~1 s después. Los resultados de `dd.geih.serie_indicadores`, `serie_tabla` y
-`serie_frecuencias` se calculan un año a la vez y se guardan por año: toda la serie 2007–2026 tarda alrededor
-de un minuto la primera vez y es instantánea después. Se recalculan solos si cambia algún archivo del año,
-la consulta (filtros, meses, variables) o el código de dane-data. Todas las tablas y gráficas de la app salen
-de ahí, así que la app nunca tiene más de un año de microdatos en memoria. `dd.geih.clear_cache()` borra
-estas cachés.
 
 ### Validación
 

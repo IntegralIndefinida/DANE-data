@@ -113,7 +113,8 @@ Si ningún mes de un año trae `otros_ingresos` o `migracion`, porque se bajaron
 
 ## La caché
 
-La caché de cada mes se invalida sola si cambia algún archivo del mes (tamaño o fecha), las columnas o
+Un año completo tarda unos 6 segundos la primera vez y alrededor de 1 segundo después. La caché
+de cada mes se invalida sola si cambia algún archivo del mes (tamaño o fecha), las columnas o
 módulos pedidos, o el código de `dane-data` que lee y une los archivos. La armonización se hace después de leer
 la caché, así que un cambio en ella no obliga a leer de nuevo los archivos del DANE. Nunca hace falta borrarla
 para tener resultados correctos: los archivos que no se usan en 90 días se borran solos (vea {doc}`series_largas`),

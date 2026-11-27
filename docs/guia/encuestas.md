@@ -126,6 +126,27 @@ archivo de viviendas, de hogares o de personas: vivienda, servicios, tenencia, c
 salud, primera infancia, educación, fuerza de trabajo, tecnologías y trabajo infantil. Tiene factor de expansión, y con
 ella el DANE calcula el Índice de Pobreza Multidimensional (IPM). Vea {doc}`ecv`.
 
+## Lo que `dane-data` resuelve por usted
+
+Los archivos del DANE cambian de forma entre épocas, y algunos traen erratas. `dane-data` los lee igual:
+
+| Problema en los archivos del DANE | Solución |
+|---|---|
+| 2007–2021: cada módulo partido en Área / Cabecera / Resto | Nacional = Cabecera + Resto (Área es un subconjunto de Cabecera) |
+| Separadores `;` `,` `\t`, UTF-8 / Latin-1, coma decimal, blancos `" "` | Detección automática; columnas numéricas quedan numéricas |
+| Factor de expansión `FEX_C_2011` / `FEX_C` / `FEX_C18` | Unificado en `fex` |
+| Sexo en `P6020` o `P3271`, educación en `P6210` o `P3042`, rama en `RAMA2D` o `RAMA2D_R4` | Unificados fila a fila (sirve al juntar años de distintas épocas) |
+| 2007 sin marcas `OCI`/`DSI`; 2020 y empalme con marcas en Características | La condición se deduce del módulo en que aparece cada persona |
+| Archivos en subcarpetas (`CSV 13/No ocupados.CSV`) | Búsqueda recursiva |
+| Nombres con erratas: «Deocupados» (2013), «Desoucpados», «Inativos» (octubre de 2020; septiembre en el empalme), «Fuerzo de trabajo» (noviembre de 2020) | Se reconocen igual |
+| Meses a los que les falta un módulo | Se omiten con aviso (si no, el desempleo saldría 0 %); `incluir_incompletos=True` los carga |
+| Marzo–julio de 2020 sin Vivienda, Otras actividades, Otros ingresos ni (serie principal) Desocupados e Inactivos: formulario telefónico | Se cargan con un aviso: las variables de esos módulos quedan vacías en esos meses |
+| Varios meses juntos | Niveles = promedio mensual, como el DANE |
+| EAM: `CIIU2N4`, `ciiu2`, `CIIU`, `ciiu3`, `ciiu4`, `ciiu_4`, códigos a 2–3 dígitos | `ciiu`, `ciiu_rev`, `division`, `sector` |
+| EAM: valores reemplazados por el promedio de un grupo de establecimientos | Marcados en `microagregado`; `dd.eam.panel(..., excluir_microagregados=True)` |
+| EMICRON: un ZIP por módulo y año; factor de 2019–2021 en un archivo aparte | Módulos unidos por la clave; `fex` es el factor de la serie vigente en todos los años |
+| EMICRON: la clave del módulo de personal ocupado con los nombres corridos | `load_personal` la corrige |
+
 ## Los diccionarios oficiales
 
 `dane-data` trae los diccionarios de variables (DDI) que publica el ANDA: el de la GEIH 2025, el de la EAM 2024, el de la
