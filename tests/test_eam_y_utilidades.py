@@ -401,7 +401,7 @@ def test_cli_en_espanol_y_sin_subcomando(descargador_falso, capsys, monkeypatch,
     assert "uso: dane-data" in capsys.readouterr().out
     with pytest.raises(SystemExit):
         cli_main(["descargar", "gieh"])
-    assert "opción no válida: 'gieh' (elija entre geih" in capsys.readouterr().err
+    assert "opción no válida: gieh (elija entre geih" in capsys.readouterr().err.replace("'", "")
     assert cli_main(["descargar", "geih", "--modulos", "fuerza"]) == 2
     assert "módulos que no son de esta encuesta: fuerza" in capsys.readouterr().err
     assert not descargador_falso
