@@ -66,7 +66,8 @@ pip install -e ".[app]"        # librería + aplicación
 # o con uv:  uv run --extra app dane-data app
 ```
 
-Requiere Python ≥ 3.10.
+Requiere Python ≥ 3.10. La organización del código, las pruebas y cómo publicar una versión están en
+[Desarrollo](https://integralindefinida.github.io/DANE-data/desarrollo.html).
 
 ## La aplicación
 
@@ -201,30 +202,6 @@ Cuando los datos contradicen la documentación oficial del ANDA (diccionarios DD
 categorías), `dane-data` sigue los datos. Cada caso, con lo que dice el ANDA, lo que muestran los datos
 y lo que hace `dane-data`, está en
 [Diferencias con la documentación del DANE](https://integralindefinida.github.io/DANE-data/guia/diferencias.html).
-
-## Estructura
-
-```
-src/dane_data/
-├── config.py          rutas (set_paths, variables de entorno, ~/.config/dane_data/config.json)
-├── _io.py             lectura robusta de CSV/TXT/Stata del DANE
-├── _hooks.py          lo común de los descargadores: progreso, cancelación, descarga y extracción
-├── stats.py           tablas, medias y cuantiles ponderados
-├── referencias.py     SMLV, departamentos, diccionarios DDI
-├── proyecciones.py    proyecciones de población del DANE (dd.poblacion)
-├── data/              diccionarios DDI oficiales, causas de muerte y proyecciones de población
-├── geih/              downloader.py · loader.py · indicadores.py · agregados.py (serie_*, exportar)
-├── eam/               downloader.py · loader.py · indicadores.py
-├── eevv/              downloader.py · loader.py · indicadores.py · agregados.py (serie_*, tasas)
-├── emicron/           downloader.py · loader.py · indicadores.py
-├── ecv/               downloader.py · loader.py · indicadores.py · ipm.py · agregados.py (serie_*)
-├── pobreza/           downloader.py · loader.py (empalme) · indicadores.py · agregados.py · union.py (unir_geih)
-├── cli.py             comando `dane-data`
-└── app/               aplicación Streamlit (Inicio.py + paginas/)
-```
-
-Los descargadores provienen de los repositorios `GEIH` y `EAM` originales; se adaptaron para reportar
-progreso y permitir cancelar.
 
 ## Privacidad
 

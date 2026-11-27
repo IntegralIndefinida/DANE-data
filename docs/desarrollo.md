@@ -31,9 +31,11 @@ Las tablas de códigos del DANE (`CORE_RAW`, `COLUMNAS_IPM`…) están agrupadas
 src/dane_data/
 ├── config.py          carpetas de datos (set_paths, variables de entorno, config.json)
 ├── _io.py             lectura robusta de los archivos del DANE (separador, codificación, coma decimal)
+├── _hooks.py          lo común de los descargadores: progreso, cancelación, descarga y extracción
 ├── stats.py           tablas, medias y cuantiles ponderados
 ├── referencias.py     salario mínimo, departamentos, diccionarios DDI (data/*.json)
 ├── proyecciones.py    proyecciones de población del DANE (data/proyecciones_poblacion.parquet)
+├── data/              diccionarios DDI oficiales, causas de muerte y proyecciones de población
 ├── geih/              downloader.py · loader.py · indicadores.py · agregados.py
 ├── eam/               downloader.py · loader.py · indicadores.py
 ├── eevv/              downloader.py · loader.py · indicadores.py · agregados.py
@@ -43,6 +45,9 @@ src/dane_data/
 ├── cli.py             comando dane-data
 └── app/               aplicación Streamlit (Inicio.py + paginas/)
 ```
+
+Los descargadores provienen de los repositorios `GEIH` y `EAM` originales; se adaptaron para reportar
+progreso y permitir cancelar.
 
 Todo lo que ve el usuario está en español: nombres, docstrings, mensajes y textos de la aplicación. Las
 variables armonizadas van en minúscula y las originales del DANE en mayúscula. Los parámetros de las funciones
