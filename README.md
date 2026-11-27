@@ -182,43 +182,12 @@ son las originales del DANE. La guía explica cada una: las de la
 [ECV](https://integralindefinida.github.io/DANE-data/guia/ecv.html) y la
 [pobreza monetaria](https://integralindefinida.github.io/DANE-data/guia/pobreza.html).
 
-### Validación
+## Validación y advertencias
 
-Con los datos reales, TD, TGP, TO y ocupados de cada mes de 2007–2026 y del empalme 2010–2020 coinciden
-con los anexos del DANE, con diferencias menores a 0,01 puntos. También coinciden las cabeceras y cada sexo
-donde el DANE los publica por mes, y las tasas anuales, que son el promedio de los niveles mensuales. Por
-ejemplo, la desocupación promedio fue 10,5 % en 2019 y 10,2 % en 2023. Las pruebas (`pytest`) usan datos
-sintéticos con las rarezas de cada época. Si encuentran los datos reales, también los comparan mes a mes con
-las cifras publicadas (`tests/datos/dane_publicado.csv`) y buscan huecos o saltos bruscos en la serie.
-
-En la EAM, el número de establecimientos, el personal ocupado, la producción bruta, el consumo intermedio y el valor
-agregado nacionales de 1992–2011 y 2015–2024 coinciden con la serie histórica y los anexos del DANE: los montos y los
-establecimientos a menos de 0,05 % y el personal a menos de 0,15 %. En 2004–2011 el personal publicado no cuenta a los
-aprendices, que `pertotal` sí incluye; sin ellos también coincide. Quedan sin explicar los montos de 2011 y los
-establecimientos de 1992, que están abajo, en las diferencias con la documentación del DANE. 2012–2014 no tienen anexo en
-la página del DANE.
-
-En las Estadísticas Vitales, el total y el sexo de los tres certificados en 2008–2025 y los 33 departamentos en 2019–2025
-coinciden exactamente con los cuadros definitivos del DANE. Antes de 2008 no hay cuadros en la página del DANE con qué
-comparar.
-
-En la EMICRON, 8 507 cifras de los anexos anuales vigentes (nacional 2019–2024 y 24 ciudades 2019–2025: micronegocios por
-situación en el empleo, sexo, actividad, sitio, salud y pensión, RUT y Cámara de Comercio, y el cuadro I.1 con el
-personal ocupado, las ventas, el valor agregado y el ingreso mixto) coinciden con una tolerancia relativa de una
-milmillonésima, salvo tres diferencias de 2019 que están abajo, en las diferencias con la documentación del DANE. También
-las 5 330 de los anexos departamentales de 2020–2024 (24 departamentos y Bogotá, con `fex_dpto`), salvo una errata del
-anexo. Las trimestrales no: usan factores trimestrales que no vienen en los microdatos.
-
-En la ECV, los 27 indicadores de la serie 2018–2025 del DANE coinciden exactamente en el total nacional y por área, y a menos
-de 0,1 puntos por departamento. Las 15 privaciones del IPM coinciden hogar por hogar con la base oficial del DANE en 2018,
-2019, 2023, 2024 y 2025, y en 2020–2022 salvo 5, 25 y 3 hogares (el IPM nacional de 2025 da 9,9 % y 0,040, y el de 2020,
-18,1 %, como lo publicado).
-
-En la pobreza monetaria, la serie empalmada 2012–2025 coincide con los anexos del boletín de junio de 2026: las 5 644 cifras
-que se pueden comparar (incidencia, brecha y severidad de la pobreza y la pobreza extrema, Gini, ingreso per cápita, líneas,
-población y pobres, nacional, por grandes dominios, 23 ciudades y 24 departamentos) quedan dentro del redondeo publicado.
-
-## Advertencias metodológicas
+Las cifras se comparan con las que publica el DANE: la TD, la TGP, la TO y los ocupados de cada mes de
+2007–2026 y del empalme 2010–2020 coinciden con los anexos, con diferencias menores a 0,01 puntos, y
+también coinciden las cifras publicadas de la EAM, las Estadísticas Vitales, la EMICRON, la ECV y la pobreza
+monetaria ([qué se compara y con qué resultado](https://integralindefinida.github.io/DANE-data/guia/validacion.html)).
 
 Antes de usar las cifras, lea las
 [advertencias metodológicas](https://integralindefinida.github.io/DANE-data/guia/advertencias.html):

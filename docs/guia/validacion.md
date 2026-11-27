@@ -52,9 +52,16 @@ censo 2005. Las reglas de cada medición están en {doc}`variables`.
 
 ## EAM
 
-La EAM no tiene una prueba automática con datos reales. Se comparó a mano con los anexos del DANE de 1998, 2008–2011
-y 2024: los totales nacionales y por departamento coinciden, pero la composición por división industrial no, porque
-el ANDA oculta la actividad de muchos establecimientos grandes para anonimizarlos (vea {doc}`eam` y {doc}`diferencias`).
+Con los datos reales (en `$DANE_DATA_TEST_EAM` o la carpeta configurada), las pruebas comparan los totales nacionales de
+{dd}`eam.resumen()` con la serie histórica 1956–2011 y los anexos de cada año del DANE (`tests/datos/dane_eam_publicado.csv`).
+El número de establecimientos, el personal ocupado, la producción bruta, el consumo intermedio y el valor agregado de
+1992–2011 y 2015–2024 coinciden: los montos y los establecimientos a menos de 0,05 % y el personal a menos de 0,15 %. En
+2004–2011 el personal publicado no cuenta a los aprendices, que `pertotal` sí incluye; sin ellos también coincide. Quedan
+sin explicar los montos de 2011 y los establecimientos de 1992 (vea {doc}`diferencias`). 2012–2014 no tienen anexo en la
+página del DANE.
+
+La composición por división industrial no coincide, porque el ANDA oculta la actividad de muchos establecimientos grandes
+para anonimizarlos. Se comparó a mano con los anexos de 1998, 2008–2011 y 2024 (vea {doc}`eam` y {doc}`diferencias`).
 
 ## Estadísticas Vitales
 
