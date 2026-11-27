@@ -7,7 +7,7 @@ ANDA.
 Sin argumento se baja el DDI del catálogo más reciente. Solo van las variables de los capítulos que
 descarga ``dd.ecv.download``, y en ``modulos`` el nombre del capítulo en ``dd.ecv.MODULOS`` (el que
 se pide a ``dd.ecv.load``). Se guarda tal como lo publica el DANE: lo que contradice los datos va
-en la tabla de diferencias del README.
+en la tabla de diferencias de la guía (``docs/guia/diferencias.md``).
 """
 
 from __future__ import annotations

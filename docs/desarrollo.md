@@ -134,7 +134,7 @@ uv run --extra docs sphinx-build -W -b html docs docs/_build/html
 Cuando los datos contradicen lo que publica el DANE (diccionarios, etiquetas, notas metodológicas):
 
 1. Se sigue a los datos, después de verificarlo con los datos reales o en el ANDA.
-2. Se agrega una fila a la tabla de {doc}`guia/diferencias` (en el README), con lo que dice el ANDA, lo que
+2. Se agrega una fila a la tabla de {doc}`guia/diferencias`, con lo que dice el ANDA, lo que
    muestran los datos, lo que hace `dane-data` y los años afectados.
 3. Los diccionarios de `data/*.json` se dejan como los publica el DANE.
 4. Se deja un comentario en el código donde se aparta de la documentación.

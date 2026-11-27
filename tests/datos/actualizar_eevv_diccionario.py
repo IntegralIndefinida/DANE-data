@@ -7,7 +7,7 @@ Regenera los diccionarios de las Estadísticas Vitales
 Sin argumento se baja el DDI del catálogo más reciente. Son tres diccionarios porque una misma
 variable cambia de etiqueta según el certificado (``SEXO`` es «del nacido vivo» o «del fallecido»).
 Se guardan tal como los publica el DANE: lo que contradice los datos va en la tabla de diferencias
-del README.
+de la guía (``docs/guia/diferencias.md``).
 """
 
 from __future__ import annotations
