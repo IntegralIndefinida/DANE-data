@@ -73,23 +73,12 @@ Requiere Python ≥ 3.10.
 dane-data app          # o doble clic en el lanzador; el navegador se abre solo
 ```
 
-| Página | Qué hace |
-|---|---|
-| Inicio | Explica las encuestas, muestra qué datos hay y configura las carpetas |
-| Descargar datos | Elige encuesta y años y descarga |
-| Indicadores laborales | TD, TGP, TO, informalidad e ingresos, por sexo, edad, zona, educación o departamento; anual o mensual |
-| Tablas y microdatos | Tablas ponderadas a la medida, distribución de ingresos frente al salario mínimo, exportación |
-| Indicadores industriales | Producción, valor agregado, empleo, productividad y participación laboral por sector o departamento |
-| Panel y microdatos EAM | Panel de establecimientos (balanceado o no), supervivencia, exportación |
-| Pobreza monetaria | Incidencia, brecha y severidad de la pobreza y la pobreza extrema, Gini e ingreso per cápita, con la serie empalmada 2012–2025 |
-| Nacimientos y defunciones | Indicadores de los tres certificados, tasas sobre la población y causas de muerte |
-| Micronegocios | Indicadores de la EMICRON: ventas, valor agregado, empleo y registros, por ciudad o zona, sexo del propietario, actividad o sitio del negocio |
-| Calidad de vida y pobreza | Indicadores de la ECV (servicios, internet, salud, educación, TIC) y el Índice de Pobreza Multidimensional, por área, región, departamento o sexo del jefe |
-| Diccionario | Buscador de variables con las etiquetas y categorías oficiales del DANE |
-| Cómo citar | La cita de dane-data y de los datos del DANE, en APA y BibTeX |
-
-Cada tabla se descarga en CSV, Excel o Stata, y cada página muestra el código Python equivalente, que se
-puede copiar a un notebook para seguir desde ahí.
+Tiene una página por tema: indicadores laborales, tablas y microdatos de la GEIH, indicadores industriales
+y panel de la EAM, pobreza monetaria, nacimientos y defunciones, micronegocios, calidad de vida e IPM, la
+descarga de los datos y el diccionario de variables
+([qué hace cada una](https://integralindefinida.github.io/DANE-data/guia/app.html)). Cada tabla se
+descarga en CSV, Excel o Stata, y cada página muestra el código Python equivalente, que se puede copiar a
+un notebook para seguir desde ahí.
 
 Para usarla en un aula (el profesor la sirve y los estudiantes entran desde la red local):
 `dane-data app --address 0.0.0.0`. La aplicación no tiene usuarios ni contraseña: cualquiera en esa red
@@ -183,31 +172,14 @@ dane-data config --geih RUTA --empalme RUTA --eam RUTA --ecv RUTA
 Vea [Primeros pasos](https://integralindefinida.github.io/DANE-data/primeros_pasos.html) para un recorrido completo,
 con los resultados de cada paso.
 
-### Variables armonizadas
-
-Las variables en minúscula las crea `dane-data` y significan lo mismo en todos los años. Las de
-MAYÚSCULA (GEIH) son las originales del DANE.
-
-**GEIH**: `anio`, `mes`, `fex`, `sexo`, `edad`, `grupo_edad`, `dpto`, `departamento`, `zona`,
-`condicion` (Ocupado / Desocupado / Inactivo / Fuera de la PET), `pet`, `fuerza_trabajo`, `ocupado`,
-`desocupado`, `inactivo`, `formal`, `formal_marco2005`, `cotiza_pension`, `ingreso_laboral`, `smlv`, `ratio_smlv`,
-`horas_semana`, `posicion_ocupacional`, `rama2d`, `rama_rev`, `nivel_educativo`, `jefe_hogar`,
-`ingreso_no_laboral`, `lugar_nacimiento`, `residencia_hace_12_meses`, `residencia_hace_5_anios`.
-
-**EAM**: todas las columnas en minúscula, más `anio`, `ciiu`, `ciiu_rev`, `division`, `sector`,
-`departamento`, `microagregado`, `grupo_microagregacion`.
-
-**Estadísticas Vitales**: en todos, `anio`, `mes`, `sexo`, `departamento_ocurrencia`, `departamento_residencia`, sus códigos,
-`mpio_ocurrencia`, `mpio_residencia`, `area_ocurrencia`, `area_residencia` y `regimen_salud`. En defunciones, además,
-`grupo_edad`, `grupo_edad_amplio`, `menor_un_anio`, `neonatal`, `neonatal_precoz`, `causa_cie`, `cie_rev`, `causa_105`, `causa_667`, `gran_causa`,
-`manera_muerte`, `materna`, `materna_tardia`, `sitio`, `estado_civil`, `nivel_educativo` y `etnia`. En nacimientos, `edad_madre`,
-`madre_adolescente`, `peso_grupo`, `bajo_peso`, `gestacion_grupo`, `prematuro`, `cesarea`, `parto_multiple`, `consultas` y otras. En fetales, las de la madre y las causas, más `mortinato`.
-
-**EMICRON**: la clave del propietario en la GEIH (`directorio`, `secuencia_p`, `secuencia_encuesta`), `anio`, `mes_ref`,
-`fex`, `fex_dpto`, `departamento`, `ciudad`, `clase`, `sexo`, `edad`, `situacion_empleo`, `actividad`, `actividad12`,
-`trabajadores_remunerados`, `socios`, `familiares_sin_remuneracion`, `personal_ocupado`, `rut`, `camara_comercio`,
-`salud_pension`, `sitio` y los montos mensuales del DANE (`ventas_mes_anterior`, `consumo_intermedio`, `valor_agregado`,
-`ingreso_mixto`, `sueldos`, `prestaciones`, `remuneracion_total`).
+Las variables en minúscula las crea `dane-data` y significan lo mismo en todos los años; las de MAYÚSCULA
+son las originales del DANE. La guía explica cada una: las de la
+[GEIH](https://integralindefinida.github.io/DANE-data/guia/variables.html), la
+[EAM](https://integralindefinida.github.io/DANE-data/guia/eam.html), las
+[Estadísticas Vitales](https://integralindefinida.github.io/DANE-data/guia/eevv.html), la
+[EMICRON](https://integralindefinida.github.io/DANE-data/guia/emicron.html), la
+[ECV](https://integralindefinida.github.io/DANE-data/guia/ecv.html) y la
+[pobreza monetaria](https://integralindefinida.github.io/DANE-data/guia/pobreza.html).
 
 ### Lo que `dane-data` resuelve por usted
 
