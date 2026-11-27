@@ -21,8 +21,24 @@ Dos formas de usarlo:
 
 Ambas usan el mismo motor: descargan del ANDA del DANE, unen los módulos, armonizan las variables
 entre épocas (nombres, separadores, coma decimal, factores de expansión, revisiones CIIU) y calculan
-indicadores ponderados como lo hace el DANE
-([lo que resuelve](https://integralindefinida.github.io/DANE-data/guia/encuestas.html#lo-que-dane-data-resuelve-por-usted)).
+indicadores ponderados como lo hace el DANE.
+
+## Lo que `dane-data` resuelve
+
+Trabajar con los microdatos tal como los publica el ANDA del DANE es un trabajo arduo. Hay que
+encontrar el catálogo de cada año y bajar sus ZIP uno por uno. Adentro, la información está repartida en
+varios archivos, a veces partidos por zona, y hay que saber cuáles se suman y cómo se unen. Los archivos
+no se escriben igual todos los años: cambian el formato, el separador, la codificación y la forma de
+escribir los decimales, y algunos llegan dañados o incompletos sin que nada lo advierta. Las variables
+también cambian de nombre, de códigos y de clasificación de una época a otra, y la documentación oficial
+no siempre coincide con lo que traen los datos. Y aun con todo unido, las cifras solo salen como las
+publica el DANE si se ponderan y se agregan con la metodología del DANE.
+
+`dane-data` hace todo ese trabajo. Descarga solo lo necesario y, sin archivos dañados.Encuentra los archivos
+aunque cambien de nombre o de carpeta, reconoce el formato de cada uno, une los módulos y avisa cuando falta 
+algo. Después crea variables que significan lo mismo en todos los años, así que épocas distintas caben en una
+misma tabla, y calcula los indicadores con la misma ponderación del DANE. Los casos concretos de cada encuesta 
+están en [la guía](https://integralindefinida.github.io/DANE-data/guia/encuestas.html#lo-que-dane-data-resuelve-por-usted).
 
 ## Instalación de la app
 
@@ -82,7 +98,7 @@ descarga de los datos y el diccionario de variables
 descarga en CSV, Excel o Stata, y cada página muestra el código Python equivalente, que se puede copiar a
 un notebook para seguir desde ahí.
 
-Para usarla en un aula (el profesor la sirve y los estudiantes entran desde la red local):
+Para usarla en un aula o un servidor (el profesor la sirve y los estudiantes entran desde la red local):
 `dane-data app --address 0.0.0.0`. La aplicación no tiene usuarios ni contraseña: cualquiera en esa red
 puede cambiar las carpetas de datos, descargar y exportar en el computador del profesor. Úsela solo en
 una red de confianza.
@@ -183,18 +199,27 @@ son las originales del DANE. La guía explica cada una: las de la
 [ECV](https://integralindefinida.github.io/DANE-data/guia/ecv.html) y la
 [pobreza monetaria](https://integralindefinida.github.io/DANE-data/guia/pobreza.html).
 
-## Validación y advertencias
+## Validación
 
-Las cifras se comparan con las que publica el DANE: la TD, la TGP, la TO y los ocupados de cada mes de
-2007–2026 y del empalme 2010–2020 coinciden con los anexos, con diferencias menores a 0,01 puntos, y
-también coinciden las cifras publicadas de la EAM, las Estadísticas Vitales, la EMICRON, la ECV y la pobreza
-monetaria ([qué se compara y con qué resultado](https://integralindefinida.github.io/DANE-data/guia/validacion.html)).
+Las cifras de `dane-data` coinciden con las que publica el DANE:
+
+| Encuesta | Qué se compara | Resultado |
+|---|---|---|
+| GEIH | TD, TGP, TO y ocupados de cada mes, 2007–2026 y empalme 2010–2020; informalidad | Tasas a menos de 0,01 puntos; ocupados e informales, a menos de 0,01 % |
+| EAM | Establecimientos, personal, producción, consumo intermedio y valor agregado nacionales, 1992–2011 y 2015–2024 | Montos y establecimientos a menos de 0,05 %; personal, a menos de 0,15 % |
+| Estadísticas Vitales | Nacimientos, defunciones y defunciones fetales por sexo (2008–2025) y por departamento (2019–2025) | Exactos |
+| EMICRON | 13 837 cifras de los anexos anuales y departamentales, 2019–2025 | Iguales, salvo tres de 2019 y una errata del anexo |
+| ECV e IPM | 27 indicadores, 2018–2025; las 15 privaciones del IPM, hogar por hogar | Exactos en el total nacional y por área; el IPM, salvo 33 hogares en 2020–2022 |
+| Pobreza monetaria | 5 644 cifras de la serie empalmada 2012–2025 | Dentro del redondeo publicado |
+
+Son pruebas automáticas (`pytest`), que hacen la comparación cuando encuentran los microdatos reales. Las
+pocas cifras que no coinciden están documentadas junto a su justificación en
+[Validación](https://integralindefinida.github.io/DANE-data/guia/validacion.html).
+
+## Advertencias metodológicas
 
 Antes de usar las cifras, lea las
-[advertencias metodológicas](https://integralindefinida.github.io/DANE-data/guia/advertencias.html):
-las dos mediciones de informalidad, la serie de empalme y la PET, las revisiones de la CIIU y la
-anonimización de la EAM, el subregistro en las Estadísticas Vitales, la cobertura de la EMICRON y los
-tamaños de muestra.
+[advertencias metodológicas](https://integralindefinida.github.io/DANE-data/guia/advertencias.html).
 
 ## Diferencias con la documentación del DANE (ANDA)
 
