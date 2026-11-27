@@ -704,8 +704,8 @@ def test_tabla_sin_peso_conserva_el_divisor_de_meses():
 
 
 REAL_EAM = Path(__import__("os").environ.get("DANE_DATA_TEST_EAM", dd.get_path("eam")))
-# Diferencias del archivo del ANDA con lo publicado que no se explican (README, «Diferencias con la
-# documentación del DANE», EAM): 2011 frente a la serie 1956–2011 «con mezcla de combustibles»
+# Diferencias del archivo del ANDA con lo publicado que no se explican (docs/guia/diferencias.md,
+# EAM): 2011 frente a la serie 1956–2011 «con mezcla de combustibles»
 # (montos y personal permanente) y los 41 establecimientos que faltan en 1992
 EAM_SIN_COMPARAR = {
     (2011, "produccion_bruta"),

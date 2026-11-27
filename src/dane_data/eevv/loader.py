@@ -5,8 +5,8 @@ Hay tres tipos de certificado (``TIPOS``): defunciones no fetales desde 1979, na
 defunciones fetales desde 1998. No es una encuesta sino un registro: no hay factor de expansión y
 los agregados son conteos.
 
-Los códigos cambian con los años, y varias veces contradicen el DDI (ver la tabla de diferencias
-del README):
+Los códigos cambian con los años, y varias veces contradicen el DDI (ver la tabla de
+``docs/guia/diferencias.md``):
 
 * ``GRU_ED1``: 25 grupos en 1979–1997, 26 en 1998–2007 y 30 desde 2008. ``grupo_edad`` los lleva a
   los grupos que se pueden comparar en toda la serie.
@@ -610,7 +610,7 @@ def _lugar(
 ) -> tuple[pd.Series, pd.Series, pd.Series]:
     """``(código de departamento, nombre, municipio de 5 dígitos)``."""
     # El DDI no trae el 83, pero 1979–1981 tienen miles de registros con él y ninguno en 18, y
-    # desde 1982 al revés: es Caquetá con su código antiguo (ver README).
+    # desde 1982 al revés: es Caquetá con su código antiguo (ver docs/guia/diferencias.md).
     dpto = _numero(df, col_dpto).replace(_CODIGO_ANTIGUO_CAQUETA, _CAQUETA)
     # 1 es «sin información» y 75 «residente en el extranjero», según el DDI: no son departamentos
     valido = dpto.isin(list(DEPARTAMENTOS))
@@ -628,7 +628,7 @@ def _grupo_edad(df: pd.DataFrame, anio: int) -> pd.Series:
     if anio == 1991:
         # Enero–junio de 1991 no sigue el DDI: casi no hay códigos del 1 al 5, y las muertes de
         # menores de 10 años (también las perinatales) están en el 6, 7 y 8. No se pueden separar
-        # (ver README).
+        # (ver docs/guia/diferencias.md).
         grupos = grupos.mask(_numero(df, "MES").le(6) & codigos.le(8), _SIN_DETALLE)
     return grupos.astype(CATEGORIAS["grupo_edad"])
 
@@ -745,8 +745,9 @@ def _mortinato(gestacion: pd.Series, peso: pd.Series) -> pd.Series:
     Los microdatos agrupan el peso desde «menos de 1.000 gramos», así que solo se puede confirmar
     con 1.000 gramos o más. Sin gestación y con menos de 1.000 gramos queda vacío: el DANE, con el
     peso exacto, sabe si pesaba 500 o más. Con menos de 22 semanas y de 1.000 gramos se toma como
-    aborto, aunque el DANE contaría como mortinato el que pesara de 500 a 999 gramos (ver README).
-    Sin gestación ni peso no cumple ningún criterio, y no es mortinato.
+    aborto, aunque el DANE contaría como mortinato el que pesara de 500 a 999 gramos (ver
+    ``docs/guia/diferencias.md``). Sin gestación ni peso no cumple ningún criterio, y no es
+    mortinato.
     """
     gestacion, peso = gestacion.astype("object"), peso.astype("object")
     si = gestacion.isin(_GESTACION_22_O_MAS) | peso.isin(_PESOS[1:8])
@@ -887,7 +888,7 @@ def harmonize(df: pd.DataFrame, tipo: str, anio: int) -> pd.DataFrame:
             "tipo_parto": parto.map(_TIPO_PARTO).astype(CATEGORIAS["tipo_parto"]),
             "cesarea": _booleana(parto, si=(2,), no=(1, 3)),
             # El DDI dice que en 2008–2011 y 2014–2019 «sin información» es 5; en los datos siempre
-            # es 9 (ver README)
+            # es 9 (ver docs/guia/diferencias.md)
             "parto_multiple": _booleana(_numero(df, "MUL_PARTO"), si=(2, 3, 4), no=(1,)),
             "consultas": _conteo(df, "NUMCONSUL"),
             "hijos_nacidos_vivos": _conteo(df, "N_HIJOSV"),
@@ -941,7 +942,9 @@ def _avisar_cobertura(tipo: str, anios: Iterable[int]) -> None:
         )
     if avisos:
         _avisar(
-            "Defunciones: " + "; ".join(avisos) + ". Vea la tabla de diferencias del README.",
+            "Defunciones: "
+            + "; ".join(avisos)
+            + ". Vea https://integralindefinida.github.io/DANE-data/guia/diferencias.html",
             UserWarning,
         )
 

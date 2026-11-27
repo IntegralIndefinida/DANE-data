@@ -2,6 +2,10 @@
 
 ## Sin publicar
 
+* Las advertencias metodológicas, las diferencias con la documentación del DANE y la validación quedan en esta guía
+  ({doc}`guia/advertencias`, {doc}`guia/diferencias`, {doc}`guia/validacion`); el README las resume y enlaza aquí. El
+  aviso de las Estadísticas Vitales sobre 1979, 1980 y 1991 da el enlace a {doc}`guia/diferencias`, en vez de mandar
+  al README.
 * El código sigue PEP 8 y se formatea con ruff. Nada cambia en los resultados, pero los resultados guardados
   año por año (la caché de `serie_*` y de las Estadísticas Vitales) se recalculan una vez, la primera vez que
   se piden después de actualizar.

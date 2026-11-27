@@ -1074,8 +1074,8 @@ GRUPOS_PUBLICADOS = {
     "hombres": ("sexo", "Hombre"),
     "mujeres": ("sexo", "Mujer"),
 }
-# Diferencias que vienen de los microdatos del ANDA y no tienen arreglo (ver README): no se
-# comparan.
+# Diferencias que vienen de los microdatos del ANDA y no tienen arreglo (ver
+# docs/guia/diferencias.md): no se comparan.
 SIN_COMPARAR = {
     # Putumayo sin características (Mocoa no se encuestó en abril ni mayo); los totales sí
     # coinciden

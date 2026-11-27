@@ -67,8 +67,7 @@ ETIQUETAS = {
     "valorven": "Ventas totales",
     "valorcom": "Compras de materias primas, materiales y empaques",
     # Desde 2004 el total del archivo cuenta a los aprendices de la Ley 789 de 2002, que el DANE
-    # dejó fuera del total que publicó en 2004–2014 (README, «Diferencias con la documentación del
-    # DANE», EAM)
+    # dejó fuera del total que publicó en 2004–2014 (docs/guia/diferencias.md, EAM)
     "pertotal": (
         "Personal total (permanente + propietarios + temporal directo + agencias; desde 2004, "
         "también aprendices)"
@@ -269,7 +268,7 @@ def _ciiu_rev(colname: str, anio: int) -> int:
         return int(m.group(1))
     # Cortes según los códigos de los archivos, no según el ANDA: su documentación dice
     # Rev. 3 desde 2000 y Rev. 4 desde las cifras de 2013, pero el archivo de 2000 trae
-    # códigos Rev. 2 y el de 2012 ya trae Rev. 4 (ver README).
+    # códigos Rev. 2 y el de 2012 ya trae Rev. 4 (ver docs/guia/diferencias.md).
     return 2 if anio <= 2000 else 3 if anio <= 2011 else 4
 
 
@@ -277,8 +276,8 @@ def _microagregacion(df: pd.DataFrame) -> tuple[pd.Series, pd.Series]:
     """
     ``(microagregado, grupo_microagregacion)``. El ANDA reemplaza los valores de grupos de
     establecimientos del mismo departamento y CIIU por el promedio del grupo (deducido de los
-    datos; el DANE no lo documenta, ver README). Se reconocen porque comparten todos los montos de
-    ``CORE`` que haya, salvo las ventas.
+    datos; el DANE no lo documenta, ver ``docs/guia/diferencias.md``). Se reconocen porque
+    comparten todos los montos de ``CORE`` que haya, salvo las ventas.
     """
     montos = [c for c in CORE if c in df.columns and c not in _FUERA_DE_LA_CLAVE]
     if not montos:
@@ -332,7 +331,8 @@ def harmonize(df: pd.DataFrame, anio: int) -> pd.DataFrame:
     En los demás años, el ANDA anonimiza publicando muchos establecimientos grandes, de cualquier
     actividad, con el código residual de la revisión («otras industrias manufactureras»: 3909 en la
     Rev. 2, 3699 en la Rev. 3, 3290 en la Rev. 4), así que su ``division`` puede no ser la real. El
-    código se deja como lo publica el ANDA (ver README).
+    código se deja como lo publica el ANDA (vea la página «Diferencias con la documentación
+    del DANE»).
 
     Además, el ANDA **microagrega**: reemplaza los valores de grupos de establecimientos (casi
     siempre 3) del mismo departamento y CIIU por el promedio del grupo. ``microagregado`` marca los
@@ -361,8 +361,8 @@ def harmonize(df: pd.DataFrame, anio: int) -> pd.DataFrame:
     df["sector"] = df["division"].map(SECTORES.get(rev, {}))
     # Lo publicado como 3290 (o 3909, 3699) no siempre es esa clase, aunque el DDI la describe como
     # una más: el ANDA esconde ahí la actividad de establecimientos grandes, y los anexos del DANE
-    # muestran muchos menos (ver README). Se deja así, sin marcarlos ni deducir su actividad, para
-    # no deshacer la anonimización.
+    # muestran muchos menos (ver docs/guia/diferencias.md). Se deja así, sin marcarlos ni deducir
+    # su actividad, para no deshacer la anonimización.
     if "dpto" in df.columns:
         df["departamento"] = pd.to_numeric(df["dpto"], errors="coerce").map(DEPARTAMENTOS)
     else:

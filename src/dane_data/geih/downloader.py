@@ -164,7 +164,7 @@ DEFAULT_MODULES = (
 _MODULO_DESCARGA = {"fuerza": "fuerza_trabajo", "otras": "otras_formas_trabajo"}
 
 # CSV del ANDA (serie principal) que no se pueden leer bien: para esos meses se baja otro
-# formato del mismo catálogo. Ver README, "Diferencias con la documentación del DANE".
+# formato del mismo catálogo. Ver docs/guia/diferencias.md.
 # Año -> {mes: formato}; el mes None vale para todo el año.
 CSV_DANADOS = {
     "2008": {None: "txt"},  # FEX_C_2011 sin punto decimal ("849.491.032.387.525")

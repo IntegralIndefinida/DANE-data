@@ -176,8 +176,8 @@ def _header_sellado(path: Path, sello: tuple[int, int]) -> frozenset[str]:
 @lru_cache(maxsize=4096)
 def _defecto_sellado(path: Path, sello: tuple[int, int]) -> str | None:
     """
-    Defectos conocidos de los CSV del ANDA que hacen inservible un archivo (ver README,
-    "Diferencias con la documentación del DANE"). En septiembre de 2021 el CSV viene
+    Defectos conocidos de los CSV del ANDA que hacen inservible un archivo (ver
+    ``docs/guia/diferencias.md``). En septiembre de 2021 el CSV viene
     separado por espacios, y el texto libre también los tiene. En 2008 y 2011 el factor
     de expansión perdió el punto decimal ("849.491.032.387.525" es 84,9491032387525).
     """
@@ -633,8 +633,8 @@ def _formal_dane(df: pd.DataFrame, anio: pd.Series) -> pd.Series:
 
     * ``OFICIO_C8`` viene como número en los archivos del ANDA y pierde el cero inicial (``110`` es
       el código ``0110``): se completa a 4 dígitos antes de tomar los 2 primeros, como el texto del
-      DANE (ver README, «Diferencias con la documentación del DANE»). Hay independientes con código
-      ``0`` que el DANE cuenta como formales; sin completar, quedarían sin clasificar.
+      DANE (ver ``docs/guia/diferencias.md``). Hay independientes con código ``0`` que el DANE
+      cuenta como formales; sin completar, quedarían sin clasificar.
     * ``PER``, «el año de análisis», es ``anio``.
     * Un vacío se compara como en SAS, menor que cualquier número (``P3069 <= 3`` se cumple, ``>=
       4`` no). En 2022–2026 ningún registro llega a esas reglas con un vacío.
@@ -713,7 +713,7 @@ def _formal_dane(df: pd.DataFrame, anio: pd.Series) -> pd.Series:
         (no_reg & (col["P6775"] == 3) & of_bajo, 1),
         (no_reg & (col["P6775"] == 3) & of_alto, 0),
         # El 3 reemplaza al 9 desde 2023, como dice el código del DANE; el DDI solo trae 1, 2 y 9
-        # (ver README)
+        # (ver docs/guia/diferencias.md)
         (no_reg & (col["P6775"] == 1) & es("P3068", 3, 9), 0),
         (no_reg & (col["P6775"] == 2), 0),
         (no_reg & patron & (col["P6775"] == 9) & ge("P3069", 4), 1),
@@ -777,7 +777,7 @@ def _formal_marco2005(df: pd.DataFrame, anio: pd.Series) -> pd.Series:
     # domésticos, trabajadores sin remuneración y jornaleros: lo publicado solo cuadra si también
     # están en empresas de hasta 5 personas, como dice la presentación de 2022. Y «profesionales»
     # son los oficios 1 a 20 de la CNO (profesionales, técnicos y directivos): el 0 no lo es (ver
-    # README).
+    # docs/guia/diferencias.md).
     profesional = oficio.between(1, 20)
     informal = hasta5 & (posicion.isin([1, 3, 5, 6, 7, 8]) | ((posicion == 4) & ~profesional))
     formal = pd.Series(np.where(informal, 0.0, 1.0), index=df.index)
@@ -1011,8 +1011,8 @@ def harmonize(df: pd.DataFrame, edad_minima_pet: int | None = None) -> pd.DataFr
     df["grupo_edad"] = pd.cut(
         df["edad"], bins=[-1, 14, 24, 34, 44, 54, 64, 200], labels=GRUPOS_EDAD
     )
-    # Desde 2022 P6050 tiene 13 códigos y no los 9 del DDI (ver README), pero el 1 sigue siendo el
-    # jefe
+    # Desde 2022 P6050 tiene 13 códigos y no los 9 del DDI (ver docs/guia/diferencias.md), pero el
+    # 1 sigue siendo el jefe
     df["jefe_hogar"] = (_num(df, "P6050") == 1).astype("Int8")
 
     dpto = _num(df, "DPTO")
@@ -1059,8 +1059,7 @@ def harmonize(df: pd.DataFrame, edad_minima_pet: int | None = None) -> pd.DataFr
 
     ing = _num(df, "INGLABO")
     # INGLABO suma los montos como vienen, también un «no informa» de 999.999.999: en abril de 2010
-    # da 1.000.199.999 (200.000 de P6500 más P6590S1 = 999.999.999). Ver README, "Diferencias con
-    # la documentación del DANE"
+    # da 1.000.199.999 (200.000 de P6500 más P6590S1 = 999.999.999). Ver docs/guia/diferencias.md.
     df["ingreso_laboral"] = ing.mask(ing >= _NO_INFORMA).where(ocupado)
     df["smlv"] = anio.map(SMLV)
     df["ratio_smlv"] = df["ingreso_laboral"] / df["smlv"]
@@ -1478,7 +1477,7 @@ def load(
         if armonizar:
             # El DANE publica el empalme con la PET de 15 años o más, pero el archivo de
             # octubre de 2012 (catálogo 760) la marca con la definición anterior (12+ urbano,
-            # 10+ rural). Ver README, "Diferencias con la documentación del DANE".
+            # 10+ rural). Ver docs/guia/diferencias.md.
             df = harmonize(df, edad_minima_pet=15 if empalme else None)
         if conservar is not None:
             df = df[

@@ -18,7 +18,7 @@ Con ``empalme=True`` la serie 2012–2021 queda comparable con la de 2022 en ade
 publica el DANE: factor de empalme al marco 2018 (``FEX_G``) en 2012–2020, líneas actualizadas en
 2012–2018 y el ingreso empalmado de 2021.
 
-Lo que el DANE escribe distinto según el año (ver la tabla de diferencias del README):
+Lo que el DANE escribe distinto según el año (ver la tabla de ``docs/guia/diferencias.md``):
 
 * El departamento es ``DPTO`` o ``DEPTO``; en 2014 es un número de 1 a 24 que no es el código DANE,
   y en 2025 viene el nombre en vez del código.

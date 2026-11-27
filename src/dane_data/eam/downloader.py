@@ -16,7 +16,7 @@ NOTAS METODOLÓGICAS IMPORTANTES:
       * 2001 - 2011: CIIU Rev. 3 A.C. (códigos de 4 dígitos, ej. 1511).
       * 2012 - 2024: CIIU Rev. 4 A.C. (códigos de 4 dígitos, ej. 1011).
     La documentación del ANDA ubica la Rev. 3 desde 2000 y la Rev. 4 desde las
-    cifras de 2013; los archivos de 2000 y 2012 la contradicen (ver README).
+    cifras de 2013; los archivos de 2000 y 2012 la contradicen (ver docs/guia/diferencias.md).
     Para construir series continuas entre décadas, se requiere aplicar tablas
     de correlación/concordancia CIIU.
   - Identificación de Panel (Seguimiento longitudinal):

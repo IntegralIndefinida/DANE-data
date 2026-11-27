@@ -174,16 +174,16 @@ def columnas(path: Path, case: str = "upper") -> list[str]:
 
 # GEIH de septiembre a diciembre de 2017 (catálogo 458): el CSV del ANDA escribe las celdas vacías
 # como el mayor double redondeado a 15 cifras, que se pasa del máximo y pandas lo lee como
-# infinito. Es un vacío (ver README, "Diferencias con la documentación del DANE").
+# infinito. Es un vacío (ver docs/guia/diferencias.md).
 _VACIO_DBL_MAX = "1.79769313486232e+308"
 
 
 def _coma_de_miles(path: Path, sep: str) -> bool:
     """
     Si el archivo usa la coma para los miles y el punto para los decimales, como la GEIH de
-    noviembre de 2021 (``6,000,013``, ``1030.3000973``; ver README, "Diferencias con la
-    documentación del DANE"). Lo delata un número con dos o más grupos ``,ddd``: la coma decimal de
-    los demás archivos nunca se ve así.
+    noviembre de 2021 (``6,000,013``, ``1030.3000973``; ver ``docs/guia/diferencias.md``). Lo
+    delata un número con dos o más grupos ``,ddd``: la coma decimal de los demás archivos nunca se
+    ve así.
     """
     if sep == ",":
         return False
